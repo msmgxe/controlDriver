@@ -1,26 +1,381 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ===========================================================================
+   RutaLog — tokens de diseño (§9)
+   Salieron del prototipo de Fase 0: prototipo/rutalog-prototipo.html
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+   Dos superficies, decididas tras comparar tres direcciones:
+     · La app del driver usa la dirección **Moderna**: contenedores teñidos sin
+       bordes, esquinas muy redondeadas, aire, hojas inferiores. Es lo que hoy
+       espera cualquiera de una app de celular.
+     · El panel /admin usa la dirección **Profesional**: reglas finas en vez de
+       tarjetas, esquinas casi rectas, densidad alta, sin sombras. Se lee en un
+       monitor y se parece a un documento de liquidación.
+
+   Los valores viven en :root y se redefinen bajo prefers-color-scheme, así que
+   el tema cambia solo y no hace falta la variante dark: de Tailwind para nada
+   que use estos tokens.
+   =========================================================================== */
+
+:root {
+  /* — superficies y tinta — */
+  --papel: #eff3f2;
+  --sup: #ffffff;
+  --sup-2: #e7efed;
+  --tinta: #0c1a18;
+  --tinta-2: #465956;
+  --tinta-3: #7a8b88;
+  --linea: #dce6e4;
+  --linea-fuerte: #c2d2cf;
+
+  /* — acento: identidad, rutas y montos — */
+  --acento: #0e9488;
+  --acento-tinta: #0a6f66;
+  --acento-suave: #d7edea;
+  --acento-texto: #ffffff;
+
+  /* — gráfico: rampa ordinal de un solo tono.
+       Validada con la herramienta de la skill dataviz: monotonía de
+       luminosidad, salto ≥ 0.06 entre pasos y contraste del extremo claro
+       contra la superficie. — */
+  --barra: #0e9488;
+  --barra-extra: #57b8ae;
+
+  /* — estados de entrega. Escala reservada: no se reutiliza como serie de
+       datos. Verde/ámbar/rojo no puede pasar la separación para daltonismo de
+       todos los pares, así que en la interfaz SIEMPRE van con icono y etiqueta
+       de texto, nunca color solo. Es también lo que pide §9. — */
+  --bien: #0e8a5f;
+  --bien-suave: #dcf2e8;
+  --aviso: #a3690a;
+  --aviso-suave: #fbf0da;
+  --mal: #c0392f;
+  --mal-suave: #fbe7e4;
+
+  /* — tipografía — */
+  --f-display: var(--fuente-jakarta), system-ui, sans-serif;
+  --f-texto: var(--fuente-jakarta), system-ui, sans-serif;
+  --f-mono: var(--fuente-dm-mono), ui-monospace, Menlo, monospace;
+
+  /* — forma y densidad — */
+  --r-chip: 999px;
+  --r-btn: 14px;
+  --r-card: 20px;
+  --r-hoja: 28px;
+  --borde-ancho: 0px;
+  --pad-card: 20px;
+  --peso-titulo: 700;
+  --track-titulo: -0.02em;
+  --sombra-card: 0 1px 2px rgb(12 26 24 / 0.05), 0 14px 34px -22px rgb(12 26 24 / 0.35);
+  --sombra-alta: 0 8px 20px -6px rgb(12 26 24 / 0.18), 0 30px 60px -30px rgb(12 26 24 / 0.5);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --papel: #081210;
+    --sup: #121c1b;
+    --sup-2: #1b2a28;
+    --tinta: #e6efee;
+    --tinta-2: #a0b4b1;
+    --tinta-3: #708381;
+    --linea: #22322f;
+    --linea-fuerte: #31443f;
+    --acento: #2dd4bf;
+    --acento-tinta: #7ee8da;
+    --acento-suave: #10312d;
+    --acento-texto: #081210;
+    --barra: #2dd4bf;
+    --barra-extra: #14776e;
+    --bien: #34d399;
+    --bien-suave: #0d2b22;
+    --aviso: #e0a53c;
+    --aviso-suave: #2c2313;
+    --mal: #f87171;
+    --mal-suave: #331a1a;
+    --sombra-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 14px 34px -22px rgb(0 0 0 / 0.8);
+    --sombra-alta: 0 8px 20px -6px rgb(0 0 0 / 0.5), 0 30px 60px -30px rgb(0 0 0 / 0.9);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ---------------------------------------------------------------------------
+   Superficie de administración: dirección Profesional.
+   Se activa con data-superficie="admin" en el contenedor de /admin.
+   --------------------------------------------------------------------------- */
+[data-superficie="admin"] {
+  --papel: #f4f4f1;
+  --sup: #ffffff;
+  --sup-2: #edede8;
+  --tinta: #14202e;
+  --tinta-2: #4b5563;
+  --tinta-3: #7c8694;
+  --linea: #dedad8;
+  --linea-fuerte: #bfbfb7;
+  --acento: #2b4c7e;
+  --acento-tinta: #1e3a63;
+  --acento-suave: #e4eaf3;
+  --acento-texto: #ffffff;
+  --barra: #2b4c7e;
+  --barra-extra: #86a3c6;
+  --bien: #1a6b46;
+  --bien-suave: #e3f0e9;
+  --aviso: #8a6410;
+  --aviso-suave: #f6efdd;
+  --mal: #9e2b25;
+  --mal-suave: #f6e6e4;
+  --f-display: var(--fuente-lora), Georgia, serif;
+  --f-texto: var(--fuente-plex), system-ui, sans-serif;
+  --f-mono: var(--fuente-plex-mono), ui-monospace, Menlo, monospace;
+  --r-chip: 4px;
+  --r-btn: 4px;
+  --r-card: 6px;
+  --r-hoja: 8px;
+  --borde-ancho: 1px;
+  --pad-card: 16px;
+  --peso-titulo: 600;
+  --track-titulo: -0.01em;
+  --sombra-card: none;
+  --sombra-alta: 0 10px 30px -12px rgb(20 32 46 / 0.35);
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-superficie="admin"] {
+    --papel: #0e1217;
+    --sup: #171c22;
+    --sup-2: #1f252d;
+    --tinta: #e6e9ec;
+    --tinta-2: #a3acb7;
+    --tinta-3: #76818e;
+    --linea: #2a313a;
+    --linea-fuerte: #3a424d;
+    --acento: #7fa8dc;
+    --acento-tinta: #aac6ea;
+    --acento-suave: #1a2433;
+    --acento-texto: #0e1217;
+    --barra: #7fa8dc;
+    --barra-extra: #3e5b84;
+    --bien: #4fa37c;
+    --bien-suave: #15271f;
+    --aviso: #c79a45;
+    --aviso-suave: #2a2315;
+    --mal: #d9736a;
+    --mal-suave: #2e1a18;
+    --sombra-card: none;
+    --sombra-alta: 0 10px 30px -12px rgb(0 0 0 / 0.7);
+  }
+}
+
+@theme inline {
+  --color-papel: var(--papel);
+  --color-sup: var(--sup);
+  --color-sup-2: var(--sup-2);
+  --color-tinta: var(--tinta);
+  --color-tinta-2: var(--tinta-2);
+  --color-tinta-3: var(--tinta-3);
+  --color-linea: var(--linea);
+  --color-linea-fuerte: var(--linea-fuerte);
+  --color-acento: var(--acento);
+  --color-acento-tinta: var(--acento-tinta);
+  --color-acento-suave: var(--acento-suave);
+  --color-acento-texto: var(--acento-texto);
+  --color-barra: var(--barra);
+  --color-barra-extra: var(--barra-extra);
+  --color-bien: var(--bien);
+  --color-bien-suave: var(--bien-suave);
+  --color-aviso: var(--aviso);
+  --color-aviso-suave: var(--aviso-suave);
+  --color-mal: var(--mal);
+  --color-mal-suave: var(--mal-suave);
+
+  --font-display: var(--f-display);
+  --font-sans: var(--f-texto);
+  --font-mono: var(--f-mono);
+
+  --radius-chip: var(--r-chip);
+  --radius-btn: var(--r-btn);
+  --radius-card: var(--r-card);
+  --radius-hoja: var(--r-hoja);
+
+  --shadow-card: var(--sombra-card);
+  --shadow-alta: var(--sombra-alta);
+}
+
+@layer base {
+  html {
+    /* Evita el zoom de Android al enfocar un input */
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background: var(--papel);
+    color: var(--tinta);
+    font-family: var(--f-texto);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--f-display);
+    font-weight: var(--peso-titulo);
+    letter-spacing: var(--track-titulo);
+    text-wrap: balance;
+  }
+
+  /* §9: foco siempre visible */
+  :focus-visible {
+    outline: 2px solid var(--acento);
+    outline-offset: 2px;
+  }
+
+  /* §9: códigos y montos en monoespaciada con cifras alineadas */
+  code,
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* §9: respetar prefers-reduced-motion en toda la app */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Utilidades propias. Son las pocas piezas que se repiten en casi toda la app;
+   el resto se escribe con clases de Tailwind sobre los tokens de arriba.
+   --------------------------------------------------------------------------- */
+@layer components {
+  .rotulo {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--tinta-3);
+  }
+
+  .tarjeta {
+    background: var(--sup);
+    border: var(--borde-ancho) solid var(--linea-fuerte);
+    border-radius: var(--r-card);
+    padding: var(--pad-card);
+    box-shadow: var(--sombra-card);
+  }
+
+  .boton-principal {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 60px;
+    padding: 12px 16px;
+    border-radius: var(--r-btn);
+    background: var(--acento);
+    color: var(--acento-texto);
+    font-family: var(--f-display);
+    font-size: 22px;
+    font-weight: var(--peso-titulo);
+    box-shadow: 0 10px 24px -14px var(--acento);
+    transition: filter 0.12s, transform 0.12s;
+  }
+  .boton-principal:hover:not(:disabled) {
+    filter: brightness(1.06);
+  }
+  .boton-principal:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+  .boton-principal:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  .boton-sec {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 8px 16px;
+    border: 1px solid var(--linea-fuerte);
+    border-radius: var(--r-btn);
+    background: var(--sup);
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .boton-sec:hover:not(:disabled) {
+    background: var(--sup-2);
+  }
+  .boton-sec:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .codigo {
+    font-family: var(--f-mono);
+    font-size: 13px;
+  }
+
+  .monto {
+    font-family: var(--f-mono);
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+  }
+
+  /* Tabla del listado de pedidos y del panel de admin (§11) */
+  .tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .tabla th {
+    text-align: left;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--tinta-3);
+    font-weight: 700;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--linea-fuerte);
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    background: var(--sup);
+    z-index: 1;
+  }
+  .tabla td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--linea);
+  }
+  .tabla .num {
+    text-align: right;
+    font-family: var(--f-mono);
+    font-variant-numeric: tabular-nums;
+  }
+  .tabla tr.subtotal td {
+    background: var(--sup-2);
+    font-weight: 600;
+  }
+  .tabla tfoot tr td {
+    background: var(--acento-suave);
+    color: var(--acento-tinta);
+    font-weight: 700;
+    border-bottom: none;
+  }
+  .tabla th:first-child,
+  .tabla td:first-child {
+    padding-left: 16px;
+  }
+  .tabla th:last-child,
+  .tabla td:last-child {
+    padding-right: 16px;
+  }
 }

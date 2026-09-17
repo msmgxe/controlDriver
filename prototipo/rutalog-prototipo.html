@@ -1,0 +1,1880 @@
+<title>RutaLog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Figtree:wght@400;500;600;700&family=Lora:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap">
+
+<style>
+/* ===========================================================================
+   RutaLog — prototipo Fase 0
+   Tres direcciones visuales sobre la misma aplicación:
+     data-dir="ludica"      · cercana, con premio y racha
+     data-dir="profesional" · documento de liquidación, sobria y densa
+     data-dir="moderna"     · estándar móvil actual, contenedores teñidos
+   Cada una define color, tipografía, forma y densidad. La estructura no cambia.
+   =========================================================================== */
+
+:root {
+  /* — escala y espaciado, comunes a las tres — */
+  --t-xs: 11px;  --t-sm: 13px;  --t-md: 15px;  --t-lg: 18px;
+  --t-xl: 22px;  --t-2xl: 30px; --t-3xl: 44px;
+  --e1: 4px;  --e2: 8px;  --e3: 12px; --e4: 16px;
+  --e5: 20px; --e6: 24px; --e7: 32px; --e8: 44px;
+  --lateral-ancho: 268px;
+
+  /* Base = moderna claro, para que la página se sostenga aunque falte data-dir */
+  --papel: #EFF3F2; --sup: #FFFFFF; --sup-2: #E7EFED;
+  --tinta: #0C1A18; --tinta-2: #465956; --tinta-3: #7A8B88;
+  --linea: #DCE6E4; --linea-fuerte: #C2D2CF;
+  --acento: #0E9488; --acento-tinta: #0A6F66; --acento-suave: #D7EDEA; --acento-texto: #FFFFFF;
+  --barra: #0E9488; --barra-extra: #57B8AE;
+  --bien: #0E8A5F; --bien-suave: #DCF2E8;
+  --aviso: #A3690A; --aviso-suave: #FBF0DA;
+  --mal: #C0392F;  --mal-suave: #FBE7E4;
+  --f-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --f-texto:   'Plus Jakarta Sans', system-ui, sans-serif;
+  --f-mono:    'DM Mono', ui-monospace, Menlo, monospace;
+  --r-chip: 999px; --r-btn: 14px; --r-card: 20px; --r-hoja: 28px;
+  --borde-ancho: 0px;
+  --pad-card: 20px;
+  --peso-titulo: 700; --track-titulo: -.02em;
+  --sombra-card: 0 1px 2px rgb(12 26 24 / .05), 0 14px 34px -22px rgb(12 26 24 / .35);
+  --sombra-alta: 0 8px 20px -6px rgb(12 26 24 / .18), 0 30px 60px -30px rgb(12 26 24 / .5);
+}
+
+/* ------------------------------- LÚDICA ------------------------------- */
+[data-dir="ludica"] {
+  --papel: #EEF0FF; --sup: #FFFFFF; --sup-2: #F4F5FF;
+  --tinta: #1B1340; --tinta-2: #55508A; --tinta-3: #8A85B8;
+  --linea: #DEDCF5; --linea-fuerte: #B9B4E8;
+  --acento: #F2610C; --acento-tinta: #C24A06; --acento-suave: #FFE8D8; --acento-texto: #FFFFFF;
+  --barra: #F2610C; --barra-extra: #E8944E;
+  --bien: #12855A; --bien-suave: #DBF3E8;
+  --aviso: #C2740A; --aviso-suave: #FDF0D9;
+  --mal: #D6402F;  --mal-suave: #FFE5E1;
+  --f-display: 'Fredoka', system-ui, sans-serif;
+  --f-texto:   'Figtree', system-ui, sans-serif;
+  --f-mono:    'DM Mono', ui-monospace, Menlo, monospace;
+  --r-chip: 999px; --r-btn: 18px; --r-card: 24px; --r-hoja: 28px;
+  --borde-ancho: 2px;
+  --pad-card: 20px;
+  --peso-titulo: 600; --track-titulo: 0em;
+  --sombra-card: 0 3px 0 var(--linea-fuerte);
+  --sombra-alta: 0 6px 0 var(--linea-fuerte), 0 24px 50px -24px rgb(27 19 64 / .5);
+}
+@media (prefers-color-scheme: dark) { [data-dir="ludica"]:not([data-theme="light"]) {
+  --papel: #140E2C; --sup: #221845; --sup-2: #2C2156;
+  --tinta: #F0ECFF; --tinta-2: #B6ADE4; --tinta-3: #837AB5;
+  --linea: #362A63; --linea-fuerte: #4A3B80;
+  --acento: #FF8A3D; --acento-tinta: #FFB584; --acento-suave: #3A2416; --acento-texto: #1B1340;
+  --barra: #FF8A3D; --barra-extra: #B85A1E;
+  --bien: #34C98A; --bien-suave: #123528;
+  --aviso: #E7A93F; --aviso-suave: #3A2C12;
+  --mal: #FF7A66;  --mal-suave: #3D1D18;
+  --sombra-card: 0 3px 0 var(--linea-fuerte);
+  --sombra-alta: 0 6px 0 var(--linea-fuerte), 0 24px 50px -24px rgb(0 0 0 / .8);
+} }
+[data-dir="ludica"][data-theme="dark"] {
+  --papel: #140E2C; --sup: #221845; --sup-2: #2C2156;
+  --tinta: #F0ECFF; --tinta-2: #B6ADE4; --tinta-3: #837AB5;
+  --linea: #362A63; --linea-fuerte: #4A3B80;
+  --acento: #FF8A3D; --acento-tinta: #FFB584; --acento-suave: #3A2416; --acento-texto: #1B1340;
+  --barra: #FF8A3D; --barra-extra: #B85A1E;
+  --bien: #34C98A; --bien-suave: #123528;
+  --aviso: #E7A93F; --aviso-suave: #3A2C12;
+  --mal: #FF7A66;  --mal-suave: #3D1D18;
+  --sombra-card: 0 3px 0 var(--linea-fuerte);
+  --sombra-alta: 0 6px 0 var(--linea-fuerte), 0 24px 50px -24px rgb(0 0 0 / .8);
+}
+
+/* ----------------------------- PROFESIONAL ----------------------------- */
+[data-dir="profesional"] {
+  --papel: #F4F4F1; --sup: #FFFFFF; --sup-2: #EDEDE8;
+  --tinta: #14202E; --tinta-2: #4B5563; --tinta-3: #7C8694;
+  --linea: #DEDED8; --linea-fuerte: #BFBFB7;
+  --acento: #2B4C7E; --acento-tinta: #1E3A63; --acento-suave: #E4EAF3; --acento-texto: #FFFFFF;
+  --barra: #2B4C7E; --barra-extra: #86A3C6;
+  --bien: #1A6B46; --bien-suave: #E3F0E9;
+  --aviso: #8A6410; --aviso-suave: #F6EFDD;
+  --mal: #9E2B25;  --mal-suave: #F6E6E4;
+  --f-display: 'Lora', Georgia, serif;
+  --f-texto:   'IBM Plex Sans', system-ui, sans-serif;
+  --f-mono:    'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  --r-chip: 4px; --r-btn: 4px; --r-card: 6px; --r-hoja: 8px;
+  --borde-ancho: 1px;
+  --pad-card: 16px;
+  --peso-titulo: 600; --track-titulo: -.01em;
+  --sombra-card: none;
+  --sombra-alta: 0 10px 30px -12px rgb(20 32 46 / .35);
+}
+@media (prefers-color-scheme: dark) { [data-dir="profesional"]:not([data-theme="light"]) {
+  --papel: #0E1217; --sup: #171C22; --sup-2: #1F252D;
+  --tinta: #E6E9EC; --tinta-2: #A3ACB7; --tinta-3: #76818E;
+  --linea: #2A313A; --linea-fuerte: #3A424D;
+  --acento: #7FA8DC; --acento-tinta: #AAC6EA; --acento-suave: #1A2433; --acento-texto: #0E1217;
+  --barra: #7FA8DC; --barra-extra: #3E5B84;
+  --bien: #4FA37C; --bien-suave: #15271F;
+  --aviso: #C79A45; --aviso-suave: #2A2315;
+  --mal: #D9736A;  --mal-suave: #2E1A18;
+  --sombra-card: none;
+  --sombra-alta: 0 10px 30px -12px rgb(0 0 0 / .7);
+} }
+[data-dir="profesional"][data-theme="dark"] {
+  --papel: #0E1217; --sup: #171C22; --sup-2: #1F252D;
+  --tinta: #E6E9EC; --tinta-2: #A3ACB7; --tinta-3: #76818E;
+  --linea: #2A313A; --linea-fuerte: #3A424D;
+  --acento: #7FA8DC; --acento-tinta: #AAC6EA; --acento-suave: #1A2433; --acento-texto: #0E1217;
+  --barra: #7FA8DC; --barra-extra: #3E5B84;
+  --bien: #4FA37C; --bien-suave: #15271F;
+  --aviso: #C79A45; --aviso-suave: #2A2315;
+  --mal: #D9736A;  --mal-suave: #2E1A18;
+  --sombra-card: none;
+  --sombra-alta: 0 10px 30px -12px rgb(0 0 0 / .7);
+}
+
+/* ------------------------------- MODERNA ------------------------------- */
+[data-dir="moderna"] {
+  --papel: #EFF3F2; --sup: #FFFFFF; --sup-2: #E7EFED;
+  --tinta: #0C1A18; --tinta-2: #465956; --tinta-3: #7A8B88;
+  --linea: #DCE6E4; --linea-fuerte: #C2D2CF;
+  --acento: #0E9488; --acento-tinta: #0A6F66; --acento-suave: #D7EDEA; --acento-texto: #FFFFFF;
+  --barra: #0E9488; --barra-extra: #57B8AE;
+  --bien: #0E8A5F; --bien-suave: #DCF2E8;
+  --aviso: #A3690A; --aviso-suave: #FBF0DA;
+  --mal: #C0392F;  --mal-suave: #FBE7E4;
+  --f-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --f-texto:   'Plus Jakarta Sans', system-ui, sans-serif;
+  --f-mono:    'DM Mono', ui-monospace, Menlo, monospace;
+  --r-chip: 999px; --r-btn: 14px; --r-card: 20px; --r-hoja: 28px;
+  --borde-ancho: 0px;
+  --pad-card: 20px;
+  --peso-titulo: 700; --track-titulo: -.02em;
+  --sombra-card: 0 1px 2px rgb(12 26 24 / .05), 0 14px 34px -22px rgb(12 26 24 / .35);
+  --sombra-alta: 0 8px 20px -6px rgb(12 26 24 / .18), 0 30px 60px -30px rgb(12 26 24 / .5);
+}
+@media (prefers-color-scheme: dark) { [data-dir="moderna"]:not([data-theme="light"]) {
+  --papel: #081210; --sup: #121C1B; --sup-2: #1B2A28;
+  --tinta: #E6EFEE; --tinta-2: #A0B4B1; --tinta-3: #708381;
+  --linea: #22322F; --linea-fuerte: #31443F;
+  --acento: #2DD4BF; --acento-tinta: #7EE8DA; --acento-suave: #10312D; --acento-texto: #081210;
+  --barra: #2DD4BF; --barra-extra: #14776E;
+  --bien: #34D399; --bien-suave: #0D2B22;
+  --aviso: #E0A53C; --aviso-suave: #2C2313;
+  --mal: #F87171;  --mal-suave: #331A1A;
+  --sombra-card: 0 1px 2px rgb(0 0 0 / .4), 0 14px 34px -22px rgb(0 0 0 / .8);
+  --sombra-alta: 0 8px 20px -6px rgb(0 0 0 / .5), 0 30px 60px -30px rgb(0 0 0 / .9);
+} }
+[data-dir="moderna"][data-theme="dark"] {
+  --papel: #081210; --sup: #121C1B; --sup-2: #1B2A28;
+  --tinta: #E6EFEE; --tinta-2: #A0B4B1; --tinta-3: #708381;
+  --linea: #22322F; --linea-fuerte: #31443F;
+  --acento: #2DD4BF; --acento-tinta: #7EE8DA; --acento-suave: #10312D; --acento-texto: #081210;
+  --barra: #2DD4BF; --barra-extra: #14776E;
+  --bien: #34D399; --bien-suave: #0D2B22;
+  --aviso: #E0A53C; --aviso-suave: #2C2313;
+  --mal: #F87171;  --mal-suave: #331A1A;
+  --sombra-card: 0 1px 2px rgb(0 0 0 / .4), 0 14px 34px -22px rgb(0 0 0 / .8);
+  --sombra-alta: 0 8px 20px -6px rgb(0 0 0 / .5), 0 30px 60px -30px rgb(0 0 0 / .9);
+}
+
+/* =========================== base =========================== */
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: var(--papel); color: var(--tinta);
+       font-family: var(--f-texto); font-size: var(--t-md); line-height: 1.5;
+       -webkit-font-smoothing: antialiased; }
+:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; border-radius: var(--r-chip); }
+button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+input, select { font: inherit; color: inherit; }
+h1, h2, h3 { margin: 0; text-wrap: balance; font-family: var(--f-display);
+             font-weight: var(--peso-titulo); letter-spacing: var(--track-titulo); }
+p { margin: 0; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+/* =========================== armazón =========================== */
+.app { display: grid; grid-template-columns: 1fr; min-height: 100vh; min-height: 100dvh; }
+@media (min-width: 900px) { .app { grid-template-columns: var(--lateral-ancho) 1fr; } }
+
+.lateral {
+  position: fixed; inset: 0 auto 0 0; z-index: 40;
+  width: min(var(--lateral-ancho), 84vw);
+  display: flex; flex-direction: column; gap: var(--e2);
+  padding: calc(var(--e4) + env(safe-area-inset-top, 0px)) var(--e3)
+           calc(var(--e4) + env(safe-area-inset-bottom, 0px));
+  background: var(--sup);
+  border-right: 1px solid var(--linea);
+  transform: translateX(-100%); transition: transform .24s ease; overflow-y: auto;
+}
+.lateral.abierto { transform: none; box-shadow: var(--sombra-alta); }
+@media (min-width: 900px) {
+  .lateral { position: sticky; top: 0; height: 100vh; height: 100dvh; transform: none; box-shadow: none; width: auto; }
+}
+[data-dir="moderna"] .lateral { background: var(--papel); border-right-color: transparent; }
+[data-dir="ludica"] .lateral { border-right-width: var(--borde-ancho); border-right-color: var(--linea-fuerte); }
+
+.velo { position: fixed; inset: 0; z-index: 30; background: rgb(0 0 0 / .45); }
+@media (min-width: 900px) { .velo { display: none; } }
+
+.marca-lateral { display: flex; align-items: baseline; gap: var(--e2); padding: var(--e2) var(--e3) var(--e4); }
+.marca-lateral strong { font-family: var(--f-display); font-size: var(--t-2xl);
+                        font-weight: var(--peso-titulo); letter-spacing: var(--track-titulo); }
+.marca-lateral span { font-family: var(--f-mono); font-size: var(--t-xs); color: var(--tinta-3); }
+
+.menu { display: flex; flex-direction: column; gap: 2px; }
+.menu-item { display: flex; align-items: center; gap: var(--e3); width: 100%;
+             min-height: 48px; padding: 0 var(--e3); border-radius: var(--r-btn);
+             font-size: var(--t-md); font-weight: 500; color: var(--tinta-2); text-align: left; }
+.menu-item svg { width: 19px; height: 19px; flex-shrink: 0; }
+.menu-item:hover { background: var(--sup-2); color: var(--tinta); }
+.menu-item[aria-current="page"] { background: var(--acento-suave); color: var(--acento-tinta); font-weight: 600; }
+[data-dir="profesional"] .menu-item[aria-current="page"] { background: transparent; color: var(--acento);
+  border-left: 3px solid var(--acento); border-radius: 0; padding-left: calc(var(--e3) - 3px); }
+[data-dir="moderna"] .menu-item { border-radius: 999px; }
+.menu-item .pastilla { margin-left: auto; font-family: var(--f-mono); font-size: var(--t-xs);
+                       background: var(--acento); color: var(--acento-texto);
+                       border-radius: 999px; padding: 1px 7px; }
+.menu-sep { height: 1px; background: var(--linea); margin: var(--e3); }
+.menu-titulo { font-family: var(--f-mono); font-size: var(--t-xs); letter-spacing: .08em;
+               text-transform: uppercase; color: var(--tinta-3); padding: var(--e2) var(--e3); }
+
+.usuario-lateral { margin-top: auto; display: flex; align-items: center; gap: var(--e3);
+                   padding: var(--e3); border-radius: var(--r-btn); background: var(--sup-2); }
+.avatar { display: grid; place-items: center; width: 34px; height: 34px; flex-shrink: 0;
+          border-radius: 999px; background: var(--acento); color: var(--acento-texto);
+          font-family: var(--f-display); font-size: var(--t-lg); font-weight: 700; }
+.usuario-lateral .datos { display: flex; flex-direction: column; min-width: 0; }
+.usuario-lateral b { font-size: var(--t-sm); font-weight: 600; }
+.usuario-lateral span { font-size: var(--t-xs); color: var(--tinta-3);
+                        overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.principal { display: flex; flex-direction: column; min-width: 0; }
+.cabecera { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+            display: flex; align-items: center; gap: var(--e3); padding: var(--e3) var(--e4);
+            background: color-mix(in srgb, var(--papel) 86%, transparent);
+            backdrop-filter: blur(12px); border-bottom: 1px solid var(--linea); }
+[data-dir="moderna"] .cabecera { border-bottom-color: transparent; }
+.hamburguesa { display: grid; place-items: center; width: 44px; height: 44px; margin-left: -6px;
+               border-radius: var(--r-btn); color: var(--tinta); }
+.hamburguesa:hover { background: var(--sup-2); }
+.hamburguesa svg { width: 22px; height: 22px; }
+@media (min-width: 900px) { .hamburguesa { display: none; } }
+.cabecera h1 { font-size: var(--t-xl); }
+.cabecera .der { margin-left: auto; display: flex; align-items: center; gap: var(--e2); }
+
+.contenido { flex: 1; padding: var(--e4) var(--e4) var(--e8); }
+.pantalla { display: flex; flex-direction: column; gap: var(--e4); max-width: 880px; margin: 0 auto; }
+.pantalla.ancha { max-width: 1180px; }
+
+/* =========================== piezas =========================== */
+.rotulo { font-family: var(--f-mono); font-size: var(--t-xs); letter-spacing: .08em;
+          text-transform: uppercase; color: var(--tinta-3); }
+.titulo-seccion { display: flex; align-items: flex-end; justify-content: space-between;
+                  gap: var(--e3); flex-wrap: wrap; }
+.titulo-seccion h2 { font-size: var(--t-2xl); line-height: 1.1; }
+
+.tarjeta { background: var(--sup); border: var(--borde-ancho) solid var(--linea-fuerte);
+           border-radius: var(--r-card); padding: var(--pad-card); box-shadow: var(--sombra-card); }
+[data-dir="profesional"] .tarjeta { border-color: var(--linea); }
+
+.boton-principal { display: flex; align-items: center; justify-content: center; gap: var(--e2);
+                   width: 100%; min-height: 60px; padding: var(--e3) var(--e4);
+                   border-radius: var(--r-btn); background: var(--acento); color: var(--acento-texto);
+                   font-family: var(--f-display); font-size: var(--t-xl); font-weight: var(--peso-titulo);
+                   transition: transform .12s, filter .12s; }
+[data-dir="ludica"] .boton-principal { box-shadow: 0 4px 0 var(--acento-tinta); }
+[data-dir="ludica"] .boton-principal:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--acento-tinta); }
+[data-dir="moderna"] .boton-principal { box-shadow: 0 10px 24px -14px var(--acento); }
+[data-dir="profesional"] .boton-principal { min-height: 52px; font-size: var(--t-lg); }
+.boton-principal:hover { filter: brightness(1.06); }
+.boton-principal:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+.boton-principal svg { width: 22px; height: 22px; }
+
+.boton-sec { display: inline-flex; align-items: center; justify-content: center; gap: var(--e2);
+             min-height: 44px; padding: var(--e2) var(--e4);
+             border: 1px solid var(--linea-fuerte); border-radius: var(--r-btn);
+             background: var(--sup); font-size: var(--t-sm); font-weight: 500; }
+[data-dir="moderna"] .boton-sec { border-color: transparent; background: var(--sup-2); }
+.boton-sec:hover { background: var(--sup-2); }
+.boton-sec svg { width: 16px; height: 16px; color: var(--tinta-2); }
+.boton-texto { color: var(--acento); font-size: var(--t-sm); font-weight: 600; min-height: 44px; padding: 0 var(--e2); }
+.boton-texto:disabled { color: var(--tinta-3); cursor: not-allowed; }
+
+.aviso { display: flex; gap: var(--e3); padding: var(--e3) var(--e4);
+         border-radius: var(--r-btn); font-size: var(--t-sm); line-height: 1.45; }
+[data-dir="profesional"] .aviso { border-radius: 0; border-left: 3px solid currentColor; }
+.aviso svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px; }
+.aviso strong { display: block; font-weight: 700; }
+.aviso-bien { background: var(--bien-suave); color: var(--bien); }
+.aviso-atento { background: var(--aviso-suave); color: var(--aviso); }
+.aviso-mal { background: var(--mal-suave); color: var(--mal); }
+
+/* Estado: color + icono + etiqueta. Nunca color solo (§9). */
+.estado { display: inline-flex; align-items: center; gap: 5px; font-size: var(--t-xs); font-weight: 600; }
+.estado svg { width: 13px; height: 13px; }
+.estado-entregado { color: var(--bien); }
+.estado-parcial { color: var(--aviso); }
+.estado-no { color: var(--mal); }
+
+.chip-tramo { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px;
+              border-radius: var(--r-chip); border: 1px solid var(--linea-fuerte);
+              font-size: var(--t-xs); font-family: var(--f-mono); color: var(--tinta-3); }
+.chip-tramo.destacado { border-color: transparent; background: var(--acento-suave);
+                        color: var(--acento-tinta); font-weight: 500; }
+
+.codigo { font-family: var(--f-mono); font-size: var(--t-sm); }
+.monto { font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-weight: 500; }
+
+.cifras { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--e2); }
+@media (min-width: 620px) { .cifras { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.cifra { background: var(--sup); border: var(--borde-ancho) solid var(--linea-fuerte);
+         border-radius: var(--r-card); padding: var(--e3) var(--e4) var(--e4);
+         display: flex; flex-direction: column; gap: 2px; box-shadow: var(--sombra-card); }
+[data-dir="profesional"] .cifra { border-color: var(--linea); border-radius: var(--r-card); }
+[data-dir="moderna"] .cifra { background: var(--sup-2); box-shadow: none; }
+.cifra .et { font-size: var(--t-xs); color: var(--tinta-3); font-weight: 500; }
+.cifra .va { font-family: var(--f-display); font-size: var(--t-xl); font-weight: var(--peso-titulo);
+             line-height: 1.1; font-variant-numeric: tabular-nums; }
+.cifra small { font-family: var(--f-texto); font-size: var(--t-sm); font-weight: 500; color: var(--tinta-2); }
+
+.hero-monto { display: flex; flex-direction: column; gap: 2px; }
+.hero-monto .valor { font-family: var(--f-display); font-size: var(--t-3xl); font-weight: var(--peso-titulo);
+                     line-height: 1; letter-spacing: var(--track-titulo);
+                     font-variant-numeric: tabular-nums; color: var(--acento); }
+[data-dir="profesional"] .hero-monto .valor { color: var(--tinta); }
+.hero-monto .pie { font-size: var(--t-sm); color: var(--tinta-2); }
+
+.rejilla-2 { display: grid; grid-template-columns: 1fr; gap: var(--e4); }
+@media (min-width: 760px) { .rejilla-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
+
+/* =========================== acceso =========================== */
+.acceso { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: var(--e5) var(--e4); }
+.acceso-caja { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: var(--e5); }
+.acceso-marca { display: flex; flex-direction: column; gap: var(--e1); }
+.acceso-marca strong { font-family: var(--f-display); font-size: var(--t-3xl);
+                       font-weight: var(--peso-titulo); line-height: 1; letter-spacing: var(--track-titulo); }
+.acceso-marca span { font-size: var(--t-sm); color: var(--tinta-2); }
+
+.campo { display: flex; flex-direction: column; gap: 6px; }
+.campo label { font-size: var(--t-sm); font-weight: 600; }
+.campo input[type="email"] { width: 100%; min-height: 52px; padding: 0 var(--e4);
+  border: 1px solid var(--linea-fuerte); border-radius: var(--r-btn);
+  background: var(--sup); font-size: 16px; } /* 16px evita el zoom de Android al enfocar */
+.campo input[type="email"]:focus { border-color: var(--acento); }
+.campo .ayuda { font-size: var(--t-xs); color: var(--tinta-3); }
+
+.digitos { display: flex; gap: var(--e2); justify-content: space-between; }
+.digitos input { width: 100%; max-width: 54px; min-height: 58px; text-align: center;
+  font-family: var(--f-mono); font-size: 24px; font-weight: 500;
+  border: 1px solid var(--linea-fuerte); border-radius: var(--r-btn); background: var(--sup); }
+.digitos input:focus { border-color: var(--acento); box-shadow: 0 0 0 3px var(--acento-suave); }
+.digitos input.lleno { border-color: var(--acento); }
+.acceso-pie { display: flex; align-items: center; justify-content: space-between; gap: var(--e2); flex-wrap: wrap; }
+
+/* =========================== hoy =========================== */
+.fila-enlace { display: flex; align-items: center; justify-content: space-between; gap: var(--e3);
+               width: 100%; padding: var(--e3) var(--e4);
+               border: var(--borde-ancho) solid var(--linea-fuerte); border-radius: var(--r-card);
+               background: var(--sup); text-align: left; box-shadow: var(--sombra-card); }
+[data-dir="profesional"] .fila-enlace { border: 1px solid var(--linea); box-shadow: none; }
+[data-dir="moderna"] .fila-enlace { background: var(--sup-2); box-shadow: none; }
+.fila-enlace:hover { filter: brightness(.985); }
+.fila-enlace .izq { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.fila-enlace .izq b { font-weight: 600; font-size: var(--t-sm); }
+.fila-enlace .izq span { font-size: var(--t-sm); color: var(--tinta-2); }
+.fila-enlace .der { display: flex; align-items: center; gap: var(--e2); flex-shrink: 0; }
+.fila-enlace svg { width: 16px; height: 16px; color: var(--tinta-3); }
+
+.dias-semana { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--e1); }
+.dia-celda { display: flex; flex-direction: column; align-items: center; gap: 4px;
+             padding: var(--e2) 0; border-radius: var(--r-chip); font-size: 10px; color: var(--tinta-3); }
+.dia-celda .marca { width: 100%; height: 4px; border-radius: 999px; background: var(--linea); }
+.dia-celda.cargado { color: var(--tinta); }
+.dia-celda.cargado .marca { background: var(--acento); }
+.dia-celda.hoy { background: var(--sup-2); font-weight: 700; }
+.dia-celda .n { font-family: var(--f-mono); font-size: var(--t-xs); }
+
+/* Solo en lúdica: la racha se muestra como premio */
+.racha { display: none; align-items: center; gap: var(--e3); padding: var(--e3) var(--e4);
+         border-radius: var(--r-card); background: var(--acento-suave); color: var(--acento-tinta);
+         border: var(--borde-ancho) solid var(--acento); }
+[data-dir="ludica"] .racha { display: flex; }
+.racha .emo { font-size: 28px; line-height: 1; }
+.racha b { display: block; font-family: var(--f-display); font-size: var(--t-lg); }
+.racha span { font-size: var(--t-sm); }
+
+/* =========================== revisión =========================== */
+.fecha-jornada { display: flex; align-items: center; justify-content: space-between;
+                 gap: var(--e3); flex-wrap: wrap; padding: var(--e3) var(--e4);
+                 border-radius: var(--r-card); background: var(--acento-suave); }
+.fecha-jornada .etiqueta { font-size: var(--t-xs); color: var(--acento-tinta); font-weight: 700;
+                           letter-spacing: .04em; text-transform: uppercase; }
+.fecha-jornada input[type="date"] { font-family: var(--f-display); font-size: var(--t-xl);
+  font-weight: var(--peso-titulo); color: var(--tinta); background: transparent; border: none;
+  border-bottom: 2px dashed var(--acento); padding: 0 0 2px; max-width: 100%; }
+
+.ruta-bloque { border: var(--borde-ancho) solid var(--linea-fuerte); border-radius: var(--r-card);
+               overflow: hidden; background: var(--sup); box-shadow: var(--sombra-card); }
+[data-dir="profesional"] .ruta-bloque { border: 1px solid var(--linea); box-shadow: none; }
+[data-dir="moderna"] .ruta-bloque { box-shadow: none; background: var(--sup); }
+.ruta-cab { display: flex; align-items: center; gap: var(--e3); padding: var(--e3) var(--e4);
+            background: var(--sup-2); border-bottom: 1px solid var(--linea); }
+.ruta-num { display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0;
+            border-radius: 999px; background: var(--acento); color: var(--acento-texto);
+            font-family: var(--f-display); font-size: var(--t-lg); font-weight: 700; }
+[data-dir="profesional"] .ruta-num { border-radius: var(--r-chip); }
+.ruta-horario { display: flex; flex-direction: column; min-width: 0; }
+.ruta-horario b { font-family: var(--f-mono); font-size: var(--t-sm); font-weight: 500; }
+.ruta-horario span { font-size: var(--t-xs); color: var(--tinta-3); }
+.ruta-dur { margin-left: auto; font-family: var(--f-mono); font-size: var(--t-sm);
+            color: var(--tinta-2); white-space: nowrap; }
+
+.pedido { display: flex; align-items: center; gap: var(--e3); width: 100%;
+          padding: var(--e3) var(--e4); border-bottom: 1px solid var(--linea); text-align: left; }
+.ruta-bloque .pedido:last-child { border-bottom: none; }
+.pedido:hover { background: var(--sup-2); }
+.pedido.alerta { background: var(--aviso-suave); }
+.pedido .info { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+.pedido .linea-1, .pedido .linea-2 { display: flex; align-items: center; gap: var(--e2); flex-wrap: wrap; }
+.pedido .monto { font-size: var(--t-sm); white-space: nowrap; }
+.pedido.fuera-tramo .codigo { color: var(--acento-tinta); }
+
+.pie-accion { position: sticky; bottom: 0; z-index: 10;
+              margin: 0 calc(var(--e4) * -1) calc(var(--e8) * -1);
+              padding: var(--e3) var(--e4) calc(var(--e4) + env(safe-area-inset-bottom, 0px));
+              background: color-mix(in srgb, var(--papel) 92%, transparent);
+              backdrop-filter: blur(12px); border-top: 1px solid var(--linea); }
+.pie-accion > * { max-width: 880px; margin: 0 auto; }
+
+/* =========================== tablas =========================== */
+.tabla { width: 100%; border-collapse: collapse; font-size: var(--t-sm); }
+.tabla th { text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: .06em;
+            color: var(--tinta-3); font-weight: 700; padding: var(--e2) var(--e3);
+            border-bottom: 1px solid var(--linea-fuerte); white-space: nowrap; }
+.tabla td { padding: var(--e2) var(--e3); border-bottom: 1px solid var(--linea); }
+.tabla td.num, .tabla th.num { text-align: right; font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.tabla tr.subtotal td { background: var(--sup-2); font-weight: 600; }
+.tabla tfoot tr.total td { background: var(--acento-suave); color: var(--acento-tinta);
+                           font-weight: 700; border-bottom: none; }
+.tabla th:first-child, .tabla td:first-child { padding-left: var(--e4); }
+.tabla th:last-child, .tabla td:last-child { padding-right: var(--e4); }
+.tabla-densa { min-width: 700px; }
+.tabla-densa thead th { position: sticky; top: 0; z-index: 1; background: var(--sup); }
+.caja-tabla { overflow-x: auto; border: var(--borde-ancho) solid var(--linea-fuerte);
+              border-radius: var(--r-card); background: var(--sup); box-shadow: var(--sombra-card); }
+[data-dir="profesional"] .caja-tabla { border: 1px solid var(--linea); box-shadow: none; }
+[data-dir="moderna"] .caja-tabla { box-shadow: none; }
+
+.chips { display: flex; gap: var(--e2); overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chips button { flex-shrink: 0; min-height: 36px; padding: 0 var(--e3);
+                border: 1px solid var(--linea-fuerte); border-radius: var(--r-chip);
+                font-size: var(--t-sm); color: var(--tinta-2); white-space: nowrap; background: var(--sup); }
+.chips button[aria-pressed="true"] { background: var(--acento); border-color: var(--acento);
+                                     color: var(--acento-texto); font-weight: 600; }
+
+.segmentado { display: inline-grid; grid-auto-flow: column; gap: 3px; padding: 3px;
+              background: var(--sup-2); border-radius: var(--r-btn); }
+.segmentado button { min-height: 38px; padding: 0 var(--e4); border-radius: calc(var(--r-btn) - 3px);
+                     font-size: var(--t-sm); font-weight: 500; color: var(--tinta-2); }
+.segmentado button[aria-selected="true"] { background: var(--sup); color: var(--tinta); font-weight: 700; }
+
+.resumen-rango { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--e3);
+                 padding: var(--e3) var(--e4); background: var(--sup-2); border-radius: var(--r-card); }
+@media (min-width: 620px) { .resumen-rango { grid-template-columns: repeat(4, 1fr); } }
+.resumen-rango div { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.resumen-rango .et { font-size: 10px; color: var(--tinta-3); letter-spacing: .04em; text-transform: uppercase; }
+.resumen-rango .va { font-family: var(--f-mono); font-size: var(--t-sm); font-weight: 500; font-variant-numeric: tabular-nums; }
+
+.fila-dia { display: flex; align-items: center; gap: var(--e3); width: 100%;
+            padding: var(--e3) var(--e4); border: 1px solid var(--linea); border-radius: var(--r-card);
+            background: var(--sup); text-align: left; }
+.fila-dia:hover { background: var(--sup-2); }
+.fila-dia.hueco { border-style: dashed; background: transparent; cursor: default; }
+.fila-dia .fecha { display: flex; flex-direction: column; width: 86px; flex-shrink: 0; }
+.fila-dia .fecha b { font-size: var(--t-sm); font-weight: 700; text-transform: capitalize; }
+.fila-dia .fecha span { font-family: var(--f-mono); font-size: var(--t-xs); color: var(--tinta-3); }
+.fila-dia .metricas { display: flex; gap: var(--e4); flex: 1; min-width: 0; flex-wrap: wrap;
+                      font-size: var(--t-xs); color: var(--tinta-2); }
+.fila-dia .metricas i { font-style: normal; font-family: var(--f-mono); color: var(--tinta); font-weight: 500; }
+
+/* =========================== pagos =========================== */
+.semana-activa { border: var(--borde-ancho) solid var(--acento); border-radius: var(--r-card);
+                 overflow: hidden; box-shadow: var(--sombra-card); }
+[data-dir="profesional"] .semana-activa { border: 1px solid var(--linea); box-shadow: none; }
+[data-dir="moderna"] .semana-activa { border: 0; box-shadow: none; }
+.semana-activa .cinta { display: flex; align-items: center; justify-content: space-between; gap: var(--e2);
+                        padding: var(--e2) var(--e4); background: var(--acento); color: var(--acento-texto);
+                        font-size: var(--t-xs); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.semana-activa .cuerpo { padding: var(--pad-card); display: flex; flex-direction: column;
+                         gap: var(--e4); background: var(--sup); }
+[data-dir="moderna"] .semana-activa .cuerpo { background: var(--sup-2); }
+
+.fila-semana { display: flex; align-items: center; gap: var(--e3); width: 100%;
+               padding: var(--e3) var(--e4); border: 1px solid var(--linea);
+               border-radius: var(--r-card); background: var(--sup); text-align: left; }
+.fila-semana:hover { background: var(--sup-2); }
+.fila-semana .rango { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
+.fila-semana .rango b { font-family: var(--f-mono); font-size: var(--t-sm); font-weight: 500; }
+.fila-semana .rango span { font-size: var(--t-xs); color: var(--tinta-3); }
+
+.insignia { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px;
+            border-radius: var(--r-chip); font-size: 10px; font-weight: 700;
+            letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+.insignia svg { width: 11px; height: 11px; }
+.insignia-pagada { background: var(--bien-suave); color: var(--bien); }
+.insignia-cerrada { background: var(--acento-suave); color: var(--acento-tinta); }
+.insignia-dif { background: var(--aviso-suave); color: var(--aviso); }
+.insignia-baja { background: var(--mal-suave); color: var(--mal); }
+
+.lista-dato { display: flex; flex-direction: column; }
+.lista-dato > div { display: flex; align-items: baseline; justify-content: space-between; gap: var(--e3);
+                    padding: var(--e2) 0; border-bottom: 1px solid var(--linea); font-size: var(--t-sm); }
+.lista-dato > div:last-child { border-bottom: none; }
+.lista-dato .et { color: var(--tinta-2); }
+.lista-dato .va { font-family: var(--f-mono); font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* =========================== gráfico =========================== */
+.grafico-caja { display: flex; flex-direction: column; gap: var(--e3); }
+.grafico-top { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--e3); flex-wrap: wrap; }
+.interruptor { display: flex; gap: 2px; padding: 2px; background: var(--sup-2); border-radius: var(--r-chip); }
+.interruptor button { padding: 6px var(--e3); border-radius: var(--r-chip); font-size: var(--t-xs);
+                      font-weight: 700; color: var(--tinta-3); }
+.interruptor button[aria-pressed="true"] { background: var(--sup); color: var(--tinta); }
+
+.grafico-scroll { position: relative; overflow-x: auto; overscroll-behavior-x: contain; padding-bottom: var(--e2); }
+.grafico { position: relative; display: flex; align-items: flex-end; gap: 6px; height: 244px; padding-top: 38px; }
+.rejilla { position: absolute; inset: 38px 0 22px; pointer-events: none; }
+.rejilla span { position: absolute; left: 0; right: 0; border-top: 1px solid var(--linea); }
+.promedio { position: absolute; left: 0; right: 0; border-top: 2px dashed var(--acento); opacity: .6; pointer-events: none; }
+.promedio b { position: absolute; right: 0; top: -17px; font-family: var(--f-mono); font-size: 10px;
+              font-weight: 500; color: var(--acento); background: var(--papel); padding: 0 4px; }
+.base-eje { position: absolute; left: 0; right: 0; bottom: 22px; border-top: 1px solid var(--linea-fuerte); pointer-events: none; }
+
+.columna { position: relative; display: flex; flex-direction: column; align-items: center;
+           justify-content: flex-end; width: 54px; flex-shrink: 0; height: 100%;
+           border-radius: var(--r-chip); padding-bottom: 22px; }
+.columna:hover, .columna.activa { background: var(--sup-2); }
+.columna .etiquetas { display: flex; flex-direction: column; align-items: center; margin-bottom: 5px; }
+.columna .n-pedidos { font-family: var(--f-display); font-size: var(--t-md); font-weight: var(--peso-titulo);
+                      line-height: 1.1; font-variant-numeric: tabular-nums; }
+.columna .n-monto { font-family: var(--f-mono); font-size: 9px; color: var(--tinta-3); font-variant-numeric: tabular-nums; }
+.columna .pila { display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; width: 26px; }
+.columna .seg-base { background: var(--barra); border-radius: 0 0 2px 2px; }
+.columna .seg-extra { background: var(--barra-extra); border-radius: 4px 4px 0 0; }
+.columna .pila.sin-extra .seg-base { border-radius: 4px 4px 2px 2px; }
+[data-dir="ludica"] .columna .pila { width: 30px; }
+[data-dir="ludica"] .columna .seg-base { border-radius: 0 0 6px 6px; }
+[data-dir="ludica"] .columna .seg-extra { border-radius: 8px 8px 0 0; }
+[data-dir="ludica"] .columna .pila.sin-extra .seg-base { border-radius: 8px 8px 6px 6px; }
+[data-dir="profesional"] .columna .seg-base,
+[data-dir="profesional"] .columna .seg-extra,
+[data-dir="profesional"] .columna .pila.sin-extra .seg-base { border-radius: 0; }
+[data-dir="profesional"] .columna .pila { width: 22px; }
+.columna .eje { position: absolute; bottom: 0; left: 0; right: 0; text-align: center;
+                font-family: var(--f-mono); font-size: 9px; color: var(--tinta-3); }
+.columna.hueco .pila { width: 26px; height: 14px; border: 1px dashed var(--linea-fuerte);
+                       border-radius: var(--r-chip); background: none; }
+.columna.hueco .n-pedidos { color: var(--tinta-3); font-family: var(--f-mono); font-size: var(--t-sm); }
+
+.globo { position: absolute; z-index: 5; min-width: 176px; padding: var(--e3);
+         border-radius: var(--r-btn); background: var(--sup); border: 1px solid var(--linea-fuerte);
+         box-shadow: var(--sombra-alta); font-size: var(--t-xs); pointer-events: none; }
+.globo b { display: block; font-size: var(--t-sm); text-transform: capitalize; margin-bottom: var(--e1); }
+.globo dl { display: grid; grid-template-columns: 1fr auto; gap: 2px var(--e3); margin: 0; }
+.globo dt { color: var(--tinta-3); }
+.globo dd { margin: 0; font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+
+.leyenda { display: flex; flex-wrap: wrap; gap: var(--e3); font-size: var(--t-xs); color: var(--tinta-2); }
+.leyenda span { display: inline-flex; align-items: center; gap: 5px; }
+.leyenda i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.leyenda .marca-hueco { width: 10px; height: 10px; border: 1px dashed var(--linea-fuerte); border-radius: 3px; display: inline-block; }
+
+.records { display: flex; flex-direction: column; gap: var(--e3); }
+.record { display: flex; gap: var(--e3); align-items: flex-start; }
+.record .med { display: grid; place-items: center; flex-shrink: 0; width: 30px; height: 30px;
+               border-radius: var(--r-chip); background: var(--acento-suave); color: var(--acento-tinta); }
+.record .med svg { width: 16px; height: 16px; }
+.record .txt { display: flex; flex-direction: column; min-width: 0; }
+.record .txt b { font-size: var(--t-sm); font-weight: 700; }
+.record .txt span { font-size: var(--t-xs); color: var(--tinta-3); }
+
+/* =========================== admin =========================== */
+.barra-uso { display: flex; align-items: center; gap: 2px; height: 18px; }
+.barra-uso i { display: block; width: 4px; border-radius: 1px; background: var(--acento); opacity: .85; }
+.barra-uso i.vacio { background: var(--linea); }
+.acciones-fila { display: flex; gap: var(--e2); flex-wrap: wrap; }
+.mini-boton { min-height: 32px; padding: 0 var(--e3); border: 1px solid var(--linea-fuerte);
+              border-radius: var(--r-chip); font-size: var(--t-xs); font-weight: 600; white-space: nowrap; }
+.mini-boton:hover { background: var(--sup-2); }
+.mini-boton.peligro { color: var(--mal); border-color: color-mix(in srgb, var(--mal) 40%, transparent); }
+.conmutador { display: flex; align-items: center; gap: var(--e3); }
+.conmutador input { width: 20px; height: 20px; accent-color: var(--acento); }
+
+/* =========================== capas =========================== */
+.capa { position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-end; background: rgb(0 0 0 / .5); }
+.capa.centrada { align-items: center; justify-content: center; padding: var(--e5); }
+@media (min-width: 620px) { .capa { align-items: center; justify-content: center; padding: var(--e5); } }
+.hoja { width: 100%; max-width: 460px; background: var(--sup);
+        border-radius: var(--r-hoja) var(--r-hoja) 0 0;
+        padding: var(--e4) var(--e4) calc(var(--e5) + env(safe-area-inset-bottom, 0px));
+        display: flex; flex-direction: column; gap: var(--e4); box-shadow: var(--sombra-alta);
+        animation: subir .22s ease-out; }
+@media (min-width: 620px) { .hoja { border-radius: var(--r-hoja); padding-bottom: var(--e5); } }
+@keyframes subir { from { transform: translateY(16px); opacity: .5; } to { transform: none; opacity: 1; } }
+.hoja .asa { width: 36px; height: 4px; border-radius: 999px; background: var(--linea-fuerte); margin: 0 auto; }
+@media (min-width: 620px) { .hoja .asa { display: none; } }
+.hoja h3 { font-size: var(--t-xl); }
+
+.opcion-tramo { display: flex; align-items: center; gap: var(--e3); width: 100%; min-height: 54px;
+                padding: var(--e2) var(--e3); border: 1px solid var(--linea-fuerte);
+                border-radius: var(--r-btn); text-align: left; }
+.opcion-tramo:hover { background: var(--sup-2); }
+.opcion-tramo[aria-checked="true"] { border-color: var(--acento); background: var(--acento-suave); }
+.opcion-tramo .num { display: grid; place-items: center; width: 28px; height: 28px; flex-shrink: 0;
+                     border-radius: var(--r-chip); background: var(--sup-2);
+                     font-family: var(--f-mono); font-size: var(--t-xs); font-weight: 500; }
+.opcion-tramo[aria-checked="true"] .num { background: var(--acento); color: var(--acento-texto); }
+.opcion-tramo .desc { flex: 1; display: flex; flex-direction: column; }
+.opcion-tramo .desc b { font-size: var(--t-sm); font-weight: 700; }
+.opcion-tramo .desc span { font-size: var(--t-xs); color: var(--tinta-3); }
+
+.procesando { width: 100%; max-width: 420px; background: var(--sup); border-radius: var(--r-hoja);
+              padding: var(--e5); display: flex; flex-direction: column; gap: var(--e4); box-shadow: var(--sombra-alta); }
+.procesando h3 { font-size: var(--t-xl); }
+.barra-prog { height: 8px; border-radius: 999px; background: var(--sup-2); overflow: hidden; }
+.barra-prog i { display: block; height: 100%; background: var(--acento); border-radius: 999px; transition: width .35s ease; }
+.lista-img { display: flex; flex-direction: column; gap: var(--e2); }
+.lista-img div { display: flex; align-items: center; gap: var(--e2); font-size: var(--t-sm); color: var(--tinta-3); }
+.lista-img div.lista { color: var(--tinta); }
+.lista-img svg { width: 15px; height: 15px; }
+.lista-img .pendiente { color: var(--linea-fuerte); }
+
+.brindis { position: fixed; left: 50%; transform: translateX(-50%);
+           bottom: calc(var(--e8) + env(safe-area-inset-bottom, 0px) + 44px); z-index: 70;
+           width: min(420px, calc(100vw - 32px)); padding: var(--e3) var(--e4);
+           border-radius: var(--r-btn); background: var(--tinta); color: var(--papel);
+           font-size: var(--t-sm); box-shadow: var(--sombra-alta); }
+
+/* =========================== selector de dirección =========================== */
+.director {
+  position: fixed; z-index: 80;
+  left: 50%; transform: translateX(-50%);
+  bottom: calc(var(--e3) + env(safe-area-inset-bottom, 0px));
+  display: flex; align-items: center; gap: 3px; padding: 4px;
+  border-radius: 999px; background: var(--tinta); color: var(--papel);
+  box-shadow: 0 8px 24px -8px rgb(0 0 0 / .5);
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  max-width: calc(100vw - 24px); overflow-x: auto; scrollbar-width: none;
+}
+.director::-webkit-scrollbar { display: none; }
+@media (min-width: 900px) { .director { left: auto; right: var(--e5); transform: none; bottom: var(--e5); } }
+.director button { padding: 7px var(--e3); border-radius: 999px; font-size: var(--t-xs);
+                   font-weight: 600; color: inherit; opacity: .6; white-space: nowrap; }
+.director button:hover { opacity: 1; }
+.director button[aria-pressed="true"] { background: var(--papel); color: var(--tinta); opacity: 1; }
+.director .div { width: 1px; height: 18px; background: currentColor; opacity: .25; margin: 0 3px; }
+.director .et { font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+                opacity: .5; padding-left: var(--e2); }
+
+/* En celular el selector flota sobre el pie de página: se le deja hueco para
+   que nunca tape el botón de confirmar ni el último dato de una lista. */
+@media (max-width: 899px) {
+  .contenido { padding-bottom: calc(var(--e8) + 60px); }
+  .pie-accion { padding-bottom: calc(var(--e4) + 60px + env(safe-area-inset-bottom, 0px)); }
+  .acceso { padding-bottom: calc(var(--e5) + 60px); }
+  .brindis { bottom: calc(var(--e3) + 62px + env(safe-area-inset-bottom, 0px)); }
+}
+</style>
+
+<!-- ======================= Acceso ======================= -->
+<div class="acceso" id="acceso">
+  <div class="acceso-caja">
+    <div class="acceso-marca">
+      <strong>RutaLog</strong>
+      <span>Tu registro de rutas, pedidos y pagos.</span>
+    </div>
+
+    <form class="acceso-caja" id="paso-correo" style="gap:var(--e4)" novalidate>
+      <div class="campo">
+        <label for="correo">Tu correo</label>
+        <input type="email" id="correo" name="correo" value="marco@ejemplo.com"
+               autocomplete="email" inputmode="email" placeholder="nombre@correo.com" required>
+        <span class="ayuda">Te enviamos un código de 6 dígitos. No hay contraseña que recordar.</span>
+      </div>
+      <button class="boton-principal" type="submit">Enviarme el código</button>
+      <p style="font-size:var(--t-xs);color:var(--tinta-3)">
+        Las cuentas las crea el administrador. Si tu correo no está registrado, pídele acceso.</p>
+    </form>
+
+    <form class="acceso-caja" id="paso-codigo" style="gap:var(--e4)" hidden novalidate>
+      <div class="campo">
+        <label for="d1">Código de 6 dígitos</label>
+        <div class="digitos" id="digitos">
+          <input id="d1" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="1" aria-label="Dígito 1">
+          <input id="d2" type="text" inputmode="numeric" maxlength="1" aria-label="Dígito 2">
+          <input id="d3" type="text" inputmode="numeric" maxlength="1" aria-label="Dígito 3">
+          <input id="d4" type="text" inputmode="numeric" maxlength="1" aria-label="Dígito 4">
+          <input id="d5" type="text" inputmode="numeric" maxlength="1" aria-label="Dígito 5">
+          <input id="d6" type="text" inputmode="numeric" maxlength="1" aria-label="Dígito 6">
+        </div>
+        <span class="ayuda">Lo enviamos a <b id="correo-eco">marco@ejemplo.com</b>. Vence en 10 minutos.</span>
+        <span class="ayuda" style="color:var(--acento)">En este prototipo el código es <b class="codigo">481920</b>.</span>
+      </div>
+      <div class="aviso aviso-mal" id="error-codigo" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg>
+        <div><strong>Ese código no es correcto</strong><p>Revísalo o pide uno nuevo.</p></div>
+      </div>
+      <button class="boton-principal" type="submit" id="btn-entrar" disabled>Entrar</button>
+      <div class="acceso-pie">
+        <button class="boton-texto" type="button" id="btn-otro-correo">Usar otro correo</button>
+        <button class="boton-texto" type="button" id="btn-reenviar" disabled>Reenviar en 0:45</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ======================= Aplicación ======================= -->
+<div class="app" id="app" hidden>
+  <aside class="lateral" id="lateral" aria-label="Menú principal">
+    <div class="marca-lateral"><strong>RutaLog</strong><span>v0</span></div>
+    <nav class="menu" id="menu"></nav>
+    <div class="menu-sep"></div>
+    <span class="menu-titulo">Administración</span>
+    <nav class="menu" id="menu-extra"></nav>
+    <div class="usuario-lateral">
+      <span class="avatar">M</span>
+      <span class="datos"><b>Marco</b><span>marco@ejemplo.com</span></span>
+    </div>
+    <button class="menu-item" type="button" id="btn-salir">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/></svg>
+      Salir
+    </button>
+  </aside>
+
+  <div class="velo" id="velo" hidden></div>
+
+  <div class="principal">
+    <header class="cabecera">
+      <button class="hamburguesa" type="button" id="btn-menu" aria-label="Abrir menú" aria-expanded="false" aria-controls="lateral">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <h1 id="titulo-cabecera">Hoy</h1>
+      <div class="der">
+        <button class="boton-sec" type="button" data-toast="Ajustes: tema, retención de imágenes y datos de la cuenta (§9).">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.35.4.65.73.85.3.18.64.28 1 .28H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="contenido" id="contenido">
+      <section class="pantalla" id="p-hoy"></section>
+      <section class="pantalla" id="p-revision" hidden></section>
+      <section class="pantalla ancha" id="p-historial" hidden></section>
+      <section class="pantalla" id="p-pagos" hidden></section>
+      <section class="pantalla ancha" id="p-estadisticas" hidden></section>
+      <section class="pantalla ancha" id="p-admin" hidden></section>
+      <section class="pantalla" id="p-diseno" hidden></section>
+    </main>
+  </div>
+</div>
+
+<div class="capa centrada" id="capa-procesando" hidden></div>
+<div class="capa" id="capa-hoja" hidden></div>
+
+<!-- selector de dirección visual, chrome del prototipo -->
+<div class="director" role="group" aria-label="Dirección visual del prototipo">
+  <span class="et">Estilo</span>
+  <button type="button" data-dir-set="ludica">Lúdica</button>
+  <button type="button" data-dir-set="profesional">Profesional</button>
+  <button type="button" data-dir-set="moderna">Moderna</button>
+  <span class="div"></span>
+  <button type="button" data-tema="auto">Auto</button>
+  <button type="button" data-tema="light">Claro</button>
+  <button type="button" data-tema="dark">Oscuro</button>
+</div>
+
+<script>
+/* ===========================================================================
+   1. Datos
+   =========================================================================== */
+const HOY = '2026-09-17';
+
+const TARIFAS = [
+  { id: 1, desde: 0,  hasta: 3,  monto: 10.00, etiqueta: '0 a 3 km' },
+  { id: 2, desde: 3,  hasta: 8,  monto: 11.50, etiqueta: '3 a 8 km' },
+  { id: 3, desde: 8,  hasta: 10, monto: 13.00, etiqueta: '8 a 10 km' },
+  { id: 4, desde: 10, hasta: 11, monto: 14.50, etiqueta: '10 a 11 km' },
+  { id: 5, desde: 11, hasta: 12, monto: 16.00, etiqueta: '11 a 12 km' }
+];
+const pagoDe = (t) => (TARIFAS.find((x) => x.id === t) || TARIFAS[0]).monto;
+
+const DIAS_FUENTE = [
+  ['2026-08-19', 13, 7, 176, { 2: 1 }],       ['2026-08-20', 15, 7, 188, {}],
+  ['2026-08-21', 17, 8, 210, { 2: 2 }],       ['2026-08-22', 19, 9, 236, { 2: 1, 3: 1 }],
+  ['2026-08-24', 11, 6, 149, {}],             ['2026-08-25', 14, 7, 181, { 2: 1 }],
+  ['2026-08-26', 12, 6, 158, {}],             ['2026-08-27', 16, 8, 199, { 2: 2 }],
+  ['2026-08-28', 18, 9, 224, { 2: 1 }],       ['2026-08-29', 20, 9, 241, { 2: 2, 4: 1 }],
+  ['2026-08-31', 12, 6, 155, {}],             ['2026-09-01', 15, 7, 190, { 2: 1 }],
+  ['2026-09-02', 13, 7, 172, {}],             ['2026-09-03', 14, 7, 183, { 2: 1 }],
+  ['2026-09-04', 18, 8, 221, { 2: 2 }],       ['2026-09-05', 21, 10, 248, { 2: 2, 3: 1 }],
+  ['2026-09-07', 12, 6, 151, {}],             ['2026-09-08', 16, 8, 196, { 2: 1 }],
+  ['2026-09-09', 14, 7, 179, { 2: 1 }],       ['2026-09-10', 13, 7, 168, {}],
+  ['2026-09-11', 17, 8, 213, { 2: 2 }],       ['2026-09-12', 19, 9, 232, { 2: 1, 3: 1 }],
+  ['2026-09-14', 12, 6, 154, {}],             ['2026-09-15', 16, 8, 197, { 2: 2 }]
+];
+
+const JORNADA_REVISION = {
+  fecha: '2026-09-16', capturas: 5, contadorRutas: 7, contadorOrdenes: 14,
+  rutas: [
+    { numero: 1, inicio: '10:03', fin: '10:27', pedidos: [['v12238726wofp-01', 1], ['v12238812wofp-01', 1]] },
+    { numero: 2, inicio: '11:04', fin: '11:22', pedidos: [['v12239232wofp-01', 1], ['v12239089wofp-01', 1]] },
+    { numero: 3, inicio: '12:09', fin: '12:24', pedidos: [['v12239528wofp-01', 1], ['v12239312wofp-01', 1]] },
+    { numero: 4, inicio: '13:20', fin: '14:00', pedidos: [['v12239582wofp-01', 1], ['v12239681wofp-01', 2]] },
+    { numero: 5, inicio: '15:12', fin: '15:42', pedidos: [['v1224O224wofp-01', 1], ['v12237397wofp-01', 1]] },
+    { numero: 6, inicio: '16:52', fin: '17:10', pedidos: [['v12240699wofp-01', 1], ['v12240588wofp-01', 1]] },
+    { numero: 7, inicio: '18:20', fin: '18:57', pedidos: [['v12240721wofp-01', 1], ['v12240765wofp-01', 1]] }
+  ]
+};
+
+/* Drivers de la tienda, para el panel de administración */
+const DRIVERS = [
+  { nombre: 'Marco Salazar',    correo: 'marco@ejemplo.com',    rol: 'admin',  activo: true,  ultima: '2026-09-15', cargasMes: 19, imagenesMes: 94,  vigente: null,         uso: [3,4,5,4,5,3,0,4,5,4,3,5,4,0] },
+  { nombre: 'Luis Quispe',      correo: 'luisq@ejemplo.com',    rol: 'driver', activo: true,  ultima: '2026-09-16', cargasMes: 16, imagenesMes: 78,  vigente: '2026-12-31', uso: [4,4,3,5,4,4,0,3,5,5,4,4,5,4] },
+  { nombre: 'Ana Ccahuana',     correo: 'anac@ejemplo.com',     rol: 'driver', activo: true,  ultima: '2026-09-16', cargasMes: 17, imagenesMes: 83,  vigente: '2026-12-31', uso: [5,4,4,4,5,5,0,4,4,5,5,4,4,5] },
+  { nombre: 'Jorge Mamani',     correo: 'jorgem@ejemplo.com',   rol: 'driver', activo: true,  ultima: '2026-09-14', cargasMes: 14, imagenesMes: 71,  vigente: '2026-12-31', uso: [3,4,4,3,5,4,0,4,3,4,4,3,0,0] },
+  { nombre: 'Rosa Huamán',      correo: 'rosah@ejemplo.com',    rol: 'driver', activo: true,  ultima: '2026-09-16', cargasMes: 18, imagenesMes: 88,  vigente: '2026-12-31', uso: [4,5,5,4,4,5,0,5,4,4,5,5,4,4] },
+  { nombre: 'Carlos Pineda',    correo: 'carlosp@ejemplo.com',  rol: 'driver', activo: true,  ultima: '2026-09-09', cargasMes: 8,  imagenesMes: 39,  vigente: '2026-10-15', uso: [4,3,4,4,0,0,0,3,4,0,0,0,0,0] },
+  { nombre: 'Elena Torres',     correo: 'elenat@ejemplo.com',   rol: 'driver', activo: true,  ultima: '2026-09-15', cargasMes: 15, imagenesMes: 74,  vigente: '2026-12-31', uso: [4,4,4,4,4,4,0,4,4,4,4,4,4,0] },
+  { nombre: 'Diego Ramos',      correo: 'diegor@ejemplo.com',   rol: 'driver', activo: true,  ultima: '2026-09-16', cargasMes: 16, imagenesMes: 80,  vigente: '2026-12-31', uso: [5,4,4,5,4,4,0,4,5,4,4,5,4,4] },
+  { nombre: 'Sofía Béjar',      correo: 'sofiab@ejemplo.com',   rol: 'driver', activo: true,  ultima: '2026-09-13', cargasMes: 12, imagenesMes: 58,  vigente: '2026-11-30', uso: [3,4,3,4,4,3,0,4,3,4,3,0,0,0] },
+  { nombre: 'Pedro Ríos',       correo: 'pedror@ejemplo.com',   rol: 'driver', activo: false, ultima: '2026-08-28', cargasMes: 0,  imagenesMes: 0,   vigente: '2026-08-31', uso: [0,0,0,0,0,0,0,0,0,0,0,0,0,0] }
+];
+const COSTO_POR_IMAGEN = 0.042; /* S/ por imagen leída, estimado */
+
+/* ===========================================================================
+   2. Utilidades
+   =========================================================================== */
+const DIAS_SEM = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const DIAS_CORTO = ['D','L','M','X','J','V','S'];
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+const aFecha = (f) => new Date(f + 'T00:00:00Z');
+const ddmm = (f) => { const d = aFecha(f); return String(d.getUTCDate()).padStart(2,'0') + '/' + String(d.getUTCMonth()+1).padStart(2,'0'); };
+const ddmmyyyy = (f) => ddmm(f) + '/' + aFecha(f).getUTCFullYear();
+const diaSem = (f) => DIAS_SEM[aFecha(f).getUTCDay()];
+const largo = (f) => diaSem(f) + ' ' + aFecha(f).getUTCDate() + ' de ' + MESES[aFecha(f).getUTCMonth()];
+const soles = (n) => 'S/ ' + n.toFixed(2);
+const solesCorto = (n) => n.toFixed(2);
+const sumaMin = (m) => (m >= 60 ? Math.floor(m/60) + ' h ' + String(m%60).padStart(2,'0') + ' min' : m + ' min');
+function masDias(f, n) { const d = aFecha(f); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0,10); }
+function lunesDe(f) { return masDias(f, -((aFecha(f).getUTCDay() + 6) % 7)); }
+const diasEntre = (a, b) => Math.round((aFecha(b) - aFecha(a)) / 86400000);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const RE_CODIGO = /^v\d{8}wofp-\d{2}$/;
+
+const ICO = {
+  check:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  alerta: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>',
+  equis:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg>',
+  medio:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/></svg>',
+  subir:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17V4"/><path d="m6.5 9.5 5.5-5.5 5.5 5.5"/><path d="M4 18v2h16v-2"/></svg>',
+  flecha: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>',
+  reloj:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  hoja:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>',
+  trofeo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 5H4v2a3 3 0 0 0 3 3M17 5h3v2a3 3 0 0 1-3 3"/><path d="M9 20h6M12 14v6"/></svg>',
+  girar:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>',
+  casa:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>',
+  cal:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 3v3M16 3v3"/></svg>',
+  cartera:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5A2.5 2.5 0 0 1 5.5 6H19a2 2 0 0 1 2 2v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17z"/><path d="M3 8.5V7a2 2 0 0 1 2-2h11"/><circle cx="16.5" cy="12.5" r="1.3"/></svg>',
+  barras: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+  lista:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>',
+  gente:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V20"/><circle cx="9" cy="7" r="3.5"/><path d="M22 20v-1.5a4 4 0 0 0-3-3.87M16.5 3.6a4 4 0 0 1 0 6.8"/></svg>',
+  paleta: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1 0 1.7-.8 1.7-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.1 0-1 .8-1.7 1.7-1.7H16a5 5 0 0 0 5-5c0-4-4-7.3-9-7.3z"/><circle cx="7.5" cy="10.5" r="1"/><circle cx="12" cy="7.5" r="1"/><circle cx="16.5" cy="10.5" r="1"/></svg>',
+  correo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="m3 7 9 6 9-6"/></svg>'
+};
+const ESTADOS = {
+  'Entregado': { clase: 'estado-entregado', icono: ICO.check },
+  'Entrega parcial': { clase: 'estado-parcial', icono: ICO.medio },
+  'No entregado': { clase: 'estado-no', icono: ICO.equis }
+};
+const pintaEstado = (e) => {
+  const d = ESTADOS[e] || ESTADOS['Entregado'];
+  return '<span class="estado ' + d.clase + '">' + d.icono + esc(e) + '</span>';
+};
+
+/* ===========================================================================
+   3. Conjunto de datos
+   =========================================================================== */
+let semilla = 12236800;
+function nuevoCodigo() { semilla += 41 + (semilla % 17); return 'v' + semilla + 'wofp-01'; }
+function hhmm(m) { return String(Math.floor(m/60) % 24).padStart(2,'0') + ':' + String(m%60).padStart(2,'0'); }
+
+function construirJornada([fecha, nPedidos, nRutas, minutos, extras]) {
+  const base = Math.round(minutos / nRutas);
+  const rutas = [];
+  let reloj = 603;
+  for (let i = 0; i < nRutas; i++) {
+    const dur = Math.max(9, base + ((i * 7) % 9) - 4);
+    rutas.push({ numero: i + 1, ini: reloj, fin: reloj + dur, dur, pedidos: [] });
+    reloj += dur + 18 + ((i * 11) % 26);
+  }
+  const ajuste = minutos - rutas.reduce((a, r) => a + r.dur, 0);
+  const ult = rutas[rutas.length - 1];
+  ult.dur += ajuste; ult.fin += ajuste;
+
+  const tramos = new Array(nPedidos).fill(1);
+  let puntero = 2;
+  Object.keys(extras).forEach((t) => {
+    for (let k = 0; k < extras[t]; k++) { tramos[puntero % nPedidos] = Number(t); puntero += 5; }
+  });
+
+  const pedidos = [];
+  for (let i = 0; i < nPedidos; i++) {
+    const r = rutas[i % nRutas];
+    const p = { codigo: nuevoCodigo(), ruta: r.numero, estado: 'Entregado', tramo: tramos[i], posicion: i + 1, fecha };
+    if ((semilla % 53) === 0) p.estado = 'Entrega parcial';
+    else if ((semilla % 97) === 0) p.estado = 'No entregado';
+    p.monto = pagoDe(p.tramo);
+    r.pedidos.push(p); pedidos.push(p);
+  }
+  rutas.forEach((r) => { r.horaIni = hhmm(r.ini); r.horaFin = hhmm(r.fin); });
+
+  return { fecha, rutas, pedidos, nPedidos, nRutas, minutos,
+    monto: pedidos.reduce((a, p) => a + p.monto, 0),
+    fueraTramo1: pedidos.filter((p) => p.tramo > 1).length,
+    primera: hhmm(rutas[0].ini), ultima: hhmm(rutas[rutas.length - 1].fin) };
+}
+
+const JORNADAS = {};
+DIAS_FUENTE.forEach((d) => { JORNADAS[d[0]] = construirJornada(d); });
+
+function construirRevision() {
+  const rutas = JORNADA_REVISION.rutas.map((r) => {
+    const ini = Number(r.inicio.slice(0,2)) * 60 + Number(r.inicio.slice(3));
+    const fin = Number(r.fin.slice(0,2)) * 60 + Number(r.fin.slice(3));
+    return { numero: r.numero, horaIni: r.inicio, horaFin: r.fin, dur: fin - ini,
+      pedidos: r.pedidos.map(([codigo, tramo], i) => ({
+        codigo, ruta: r.numero, estado: 'Entregado', tramo, monto: pagoDe(tramo),
+        posicion: i + 1, fecha: JORNADA_REVISION.fecha, legible: RE_CODIGO.test(codigo) })) };
+  });
+  const pedidos = rutas.flatMap((r) => r.pedidos);
+  return { fecha: JORNADA_REVISION.fecha, rutas, pedidos,
+    nPedidos: pedidos.length, nRutas: rutas.length,
+    minutos: rutas.reduce((a, r) => a + r.dur, 0),
+    primera: rutas[0].horaIni, ultima: rutas[rutas.length - 1].horaFin,
+    monto: () => pedidos.reduce((a, p) => a + p.monto, 0) };
+}
+const REVISION = construirRevision();
+
+/* ===========================================================================
+   4. Agregados
+   =========================================================================== */
+function rangoDias(desde, hasta) { const o = []; for (let f = desde; f <= hasta; f = masDias(f, 1)) o.push(f); return o; }
+function agregarRango(desde, hasta) {
+  const dias = rangoDias(desde, hasta).map((f) => ({ fecha: f, j: JORNADAS[f] || null }));
+  const con = dias.filter((d) => d.j);
+  const t = { dias, diasTrabajados: con.length,
+    huecos: dias.filter((d) => !d.j && d.fecha <= HOY).length,
+    pedidos: con.reduce((a, d) => a + d.j.nPedidos, 0),
+    rutas: con.reduce((a, d) => a + d.j.nRutas, 0),
+    minutos: con.reduce((a, d) => a + d.j.minutos, 0),
+    monto: con.reduce((a, d) => a + d.j.monto, 0),
+    fueraTramo1: con.reduce((a, d) => a + d.j.fueraTramo1, 0) };
+  t.promPedidos = t.diasTrabajados ? t.pedidos / t.diasTrabajados : 0;
+  t.promMonto = t.diasTrabajados ? t.monto / t.diasTrabajados : 0;
+  return t;
+}
+function semana(lunes) {
+  const fin = masDias(lunes, 6);
+  return { inicio: lunes, fin, pago: masDias(fin, 5), ...agregarRango(lunes, fin) };
+}
+const LUNES_ACTUAL = lunesDe(HOY);
+const SEMANAS = [
+  { ...semana(LUNES_ACTUAL), estado: 'abierta' },
+  { ...semana(masDias(LUNES_ACTUAL, -7)), estado: 'cerrada' },
+  { ...semana(masDias(LUNES_ACTUAL, -14)), estado: 'pagada' },
+  { ...semana(masDias(LUNES_ACTUAL, -21)), estado: 'pagada', recibidoDelta: -10 }
+];
+SEMANAS.forEach((s) => { s.recibido = s.estado === 'pagada' ? s.monto + (s.recibidoDelta || 0) : null; });
+
+/* racha de días consecutivos con 100 % entregado, para la dirección lúdica */
+const RACHA = (() => {
+  let n = 0;
+  for (const f of Object.keys(JORNADAS).sort().reverse()) {
+    if (JORNADAS[f].pedidos.every((p) => p.estado === 'Entregado')) n++; else break;
+  }
+  return n;
+})();
+
+/* ===========================================================================
+   5. Pantallas
+   =========================================================================== */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+
+function pintaDiasSemana(s) {
+  return s.dias.map((d) => {
+    const c = ['dia-celda'];
+    if (d.j) c.push('cargado');
+    if (d.fecha === HOY) c.push('hoy');
+    return `<div class="${c.join(' ')}" title="${esc(diaSem(d.fecha))} ${ddmm(d.fecha)}${d.j ? ' · ' + d.j.nPedidos + ' pedidos' : ' · sin carga'}">
+      <span>${DIAS_CORTO[aFecha(d.fecha).getUTCDay()]}</span>
+      <span class="n">${aFecha(d.fecha).getUTCDate()}</span>
+      <span class="marca"></span></div>`;
+  }).join('');
+}
+
+/* --------------------------------- Hoy --------------------------------- */
+function pintaHoy() {
+  const s = SEMANAS[0];
+  const ultima = Object.keys(JORNADAS).sort().pop();
+  const uj = JORNADAS[ultima];
+  const faltantes = s.dias.filter((d) => !d.j && d.fecha < HOY);
+
+  $('#p-hoy').innerHTML = `
+    <div>
+      <span class="rotulo">Hoy</span>
+      <h2 style="font-size:var(--t-2xl);text-transform:capitalize;line-height:1.1">${esc(largo(HOY))}</h2>
+      <p style="font-size:var(--t-sm);color:var(--tinta-2);margin-top:2px">Todavía no has subido las capturas de hoy.</p>
+    </div>
+
+    <button class="boton-principal" type="button" data-accion="cargar">${ICO.subir} Cargar capturas</button>
+
+    <div class="racha">
+      <span class="emo">🔥</span>
+      <span><b>${RACHA} días seguidos al 100 %</b><span>Todos los pedidos entregados. No la rompas hoy.</span></span>
+    </div>
+
+    ${faltantes.length ? `<div class="aviso aviso-atento">${ICO.alerta}
+      <div><strong>Falta ${faltantes.length === 1 ? 'un día' : faltantes.length + ' días'} de esta semana</strong>
+      <p>${faltantes.map((d) => diaSem(d.fecha) + ' ' + ddmm(d.fecha)).join(', ')}. Puedes subirlo cuando quieras: manda la fecha de la captura, no la de carga.</p></div></div>` : ''}
+
+    <div class="rejilla-2">
+      <div class="tarjeta" style="display:flex;flex-direction:column;gap:var(--e4)">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:var(--e3)">
+          <div class="hero-monto">
+            <span class="valor">${soles(s.monto)}</span>
+            <span class="pie">${s.pedidos} pedidos · ${s.rutas} rutas · ${s.diasTrabajados} día${s.diasTrabajados === 1 ? '' : 's'}</span>
+          </div>
+          <span class="insignia insignia-cerrada">abierta</span>
+        </div>
+        <div class="dias-semana">${pintaDiasSemana(s)}</div>
+        <div style="display:flex;align-items:center;gap:var(--e2);font-size:var(--t-sm);color:var(--tinta-2)">
+          ${ICO.reloj}<span>Se paga el viernes ${ddmmyyyy(s.pago)}</span></div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:var(--e3)">
+        <button class="fila-enlace" type="button" data-ir="historial">
+          <span class="izq"><b>Última jornada · ${esc(diaSem(ultima))} ${ddmm(ultima)}</b>
+            <span>${uj.nPedidos} pedidos · ${uj.nRutas} rutas · ${sumaMin(uj.minutos)} en ruta</span></span>
+          <span class="der"><span class="monto">${soles(uj.monto)}</span>${ICO.flecha}</span></button>
+        <button class="fila-enlace" type="button" data-ir="pagos">
+          <span class="izq"><b>Semana pasada</b><span>Cerrada · se paga el ${ddmm(SEMANAS[1].pago)}</span></span>
+          <span class="der"><span class="monto">${soles(SEMANAS[1].monto)}</span>${ICO.flecha}</span></button>
+        <button class="fila-enlace" type="button" data-ir="estadisticas">
+          <span class="izq"><b>Últimos 30 días</b><span>Pedidos, tiempos e ingresos</span></span>
+          <span class="der">${ICO.flecha}</span></button>
+      </div>
+    </div>`;
+  $('#p-hoy [data-accion="cargar"]').addEventListener('click', abrirProcesando);
+  enlazaIr('#p-hoy');
+}
+
+/* ------------------------------ Revisión ------------------------------ */
+function pintaRevision() {
+  const j = REVISION;
+  const ilegibles = j.pedidos.filter((p) => !p.legible);
+  const fueraTramo = j.pedidos.filter((p) => p.tramo > 1).length;
+  const cuadra = j.nRutas === JORNADA_REVISION.contadorRutas && j.nPedidos === JORNADA_REVISION.contadorOrdenes;
+
+  $('#p-revision').innerHTML = `
+    <div class="titulo-seccion"><h2>Revisión</h2><span class="rotulo">${JORNADA_REVISION.capturas} capturas leídas</span></div>
+
+    <div class="fecha-jornada">
+      <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+        <span class="etiqueta">Fecha de la jornada</span>
+        <input type="date" id="fecha-jornada" value="${j.fecha}" max="${HOY}"></div>
+      <span style="font-size:var(--t-xs);color:var(--acento-tinta);max-width:17em">Leída en el encabezado de la captura. Se subió un día tarde: manda esta fecha, no la de hoy.</span>
+    </div>
+
+    ${cuadra ? `<div class="aviso aviso-bien">${ICO.check}
+      <div><strong>Los totales cuadran</strong><p>${j.nRutas} rutas y ${j.nPedidos} pedidos, igual que los contadores de la captura.</p></div></div>` : ''}
+
+    ${ilegibles.length ? `<div class="aviso aviso-atento">${ICO.alerta}
+      <div><strong>Un código no tiene el formato habitual</strong>
+      <p><span class="codigo">${esc(ilegibles[0].codigo)}</span> — puede ser un error de lectura de la imagen. Tócalo para corregirlo. No bloquea el guardado.</p></div></div>` : ''}
+
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:var(--e3);flex-wrap:wrap">
+      <div class="hero-monto">
+        <span class="valor">${soles(j.monto())}</span>
+        <span class="pie">${j.nPedidos} pedidos · ${j.nRutas} rutas · ${sumaMin(j.minutos)} en ruta</span></div>
+      <span class="rotulo">${fueraTramo} fuera del tramo 1</span>
+    </div>
+
+    <p style="font-size:var(--t-sm);color:var(--tinta-2)">Todos los pedidos entran en el tramo 1 (0 a 3 km). Toca solo los que pasaron de 3 km.</p>
+
+    <div style="display:flex;flex-direction:column;gap:var(--e3)">${j.rutas.map(pintaBloqueRuta).join('')}</div>
+
+    <div class="pie-accion">
+      <button class="boton-principal" type="button" data-accion="confirmar">${ICO.check} Confirmar y guardar</button></div>`;
+
+  $$('#p-revision .pedido').forEach((b) => b.addEventListener('click', () => abrirHojaTramo(b.dataset.codigo)));
+  $('#p-revision [data-accion="confirmar"]').addEventListener('click', () => {
+    brindis('Jornada del ' + ddmmyyyy($('#fecha-jornada').value) + ' guardada. La semana en curso se recalculó.');
+    irA('hoy');
+  });
+}
+
+function pintaBloqueRuta(r) {
+  return `<div class="ruta-bloque">
+    <div class="ruta-cab">
+      <span class="ruta-num">${r.numero}</span>
+      <span class="ruta-horario"><b>${r.horaIni} → ${r.horaFin}</b><span>${r.pedidos.length} pedidos</span></span>
+      <span class="ruta-dur">${r.dur} min</span></div>
+    ${r.pedidos.map(pintaPedidoRevision).join('')}</div>`;
+}
+
+function pintaPedidoRevision(p) {
+  const t = TARIFAS.find((x) => x.id === p.tramo);
+  const c = ['pedido'];
+  if (p.tramo > 1) c.push('fuera-tramo');
+  if (!p.legible) c.push('alerta');
+  return `<button class="${c.join(' ')}" type="button" data-codigo="${esc(p.codigo)}">
+    <span class="info">
+      <span class="linea-1"><span class="codigo">${esc(p.codigo)}</span>
+        ${!p.legible ? '<span class="estado estado-parcial">' + ICO.alerta + 'revisar</span>' : ''}</span>
+      <span class="linea-2">${pintaEstado(p.estado)}
+        <span class="chip-tramo ${p.tramo > 1 ? 'destacado' : ''}">T${p.tramo} · ${esc(t.etiqueta)}</span></span>
+    </span><span class="monto">${soles(p.monto)}</span></button>`;
+}
+
+function abrirHojaTramo(codigo) {
+  const p = REVISION.pedidos.find((x) => x.codigo === codigo);
+  if (!p) return;
+  const capa = $('#capa-hoja');
+  capa.innerHTML = `<div class="hoja" role="dialog" aria-modal="true" aria-label="Tramo del pedido">
+    <span class="asa"></span>
+    <div><h3>Tramo del pedido</h3>
+      <p style="font-size:var(--t-sm);color:var(--tinta-2)"><span class="codigo">${esc(p.codigo)}</span> · ruta ${p.ruta}</p></div>
+    <div style="display:flex;flex-direction:column;gap:var(--e2)" role="radiogroup" aria-label="Tramo de distancia">
+      ${TARIFAS.map((t) => `<button class="opcion-tramo" type="button" role="radio" data-tramo="${t.id}" aria-checked="${t.id === p.tramo}">
+        <span class="num">${t.id}</span>
+        <span class="desc"><b>${esc(t.etiqueta)}</b><span>${t.id === 1 ? 'el caso normal' : 'excepción, se marca a mano'}</span></span>
+        <span class="monto">${soles(t.monto)}</span></button>`).join('')}</div>
+    <div style="display:flex;gap:var(--e2)">
+      <button class="boton-sec" type="button" style="flex:1" data-cerrar>Cerrar</button>
+      <button class="boton-sec" type="button" style="flex:1" data-km>Ingresar km exactos</button></div></div>`;
+  capa.hidden = false;
+  $$('#capa-hoja [data-tramo]').forEach((b) => b.addEventListener('click', () => {
+    p.tramo = Number(b.dataset.tramo); p.monto = pagoDe(p.tramo); cerrarHoja(); pintaRevision();
+  }));
+  $('#capa-hoja [data-cerrar]').addEventListener('click', cerrarHoja);
+  $('#capa-hoja [data-km]').addEventListener('click', () => { cerrarHoja(); brindis('En la app: campo de km que asigna el tramo solo (§13).'); });
+}
+function cerrarHoja() { const c = $('#capa-hoja'); c.hidden = true; c.innerHTML = ''; }
+$('#capa-hoja').addEventListener('click', (e) => { if (e.target.id === 'capa-hoja') cerrarHoja(); });
+
+/* ------------------------------ Procesando ------------------------------ */
+function abrirProcesando() {
+  const capa = $('#capa-procesando');
+  const total = JORNADA_REVISION.capturas;
+  const nombres = ['rutas-1.jpg','rutas-2.jpg','ordenes-1.jpg','ordenes-2.jpg','ordenes-3.jpg'];
+  let leidas = 0;
+  const dibuja = () => {
+    capa.innerHTML = `<div class="procesando" role="status" aria-live="polite">
+      <div><h3>Leyendo capturas</h3>
+        <p style="font-size:var(--t-sm);color:var(--tinta-2)">${leidas} de ${total} leídas</p></div>
+      <div class="barra-prog"><i style="width:${(leidas/total)*100}%"></i></div>
+      <div class="lista-img">${nombres.map((n, i) => `<div class="${i < leidas ? 'lista' : ''}">
+        <span class="${i < leidas ? '' : 'pendiente'}">${i < leidas ? ICO.check : ICO.girar}</span>
+        <span class="codigo">${n}</span></div>`).join('')}</div>
+      <p style="font-size:var(--t-xs);color:var(--tinta-3)">Una llamada por imagen, en paralelo. La fusión y la deduplicación se hacen después, con código.</p></div>`;
+  };
+  dibuja(); capa.hidden = false;
+  const rapido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const paso = () => {
+    leidas++; dibuja();
+    if (leidas < total) setTimeout(paso, rapido ? 60 : 420);
+    else setTimeout(() => { capa.hidden = true; capa.innerHTML = ''; irA('revision'); }, rapido ? 60 : 500);
+  };
+  setTimeout(paso, rapido ? 60 : 420);
+}
+
+/* ------------------------------ Historial ------------------------------ */
+const RANGOS = [
+  { id: 'semana', etiqueta: 'Esta semana' }, { id: 'pasada', etiqueta: 'Semana pasada' },
+  { id: 'mes', etiqueta: 'Este mes' }, { id: 'anterior', etiqueta: 'Mes pasado' }
+];
+let rangoHistorial = 'semana';
+let vistaHistorial = 'pedidos';
+
+function limitesRango(id) {
+  if (id === 'semana') return [LUNES_ACTUAL, masDias(LUNES_ACTUAL, 6)];
+  if (id === 'pasada') return [masDias(LUNES_ACTUAL, -7), masDias(LUNES_ACTUAL, -1)];
+  if (id === 'mes') return [HOY.slice(0, 8) + '01', HOY];
+  const fin = masDias(HOY.slice(0, 8) + '01', -1);
+  return [fin.slice(0, 8) + '01', fin];
+}
+
+function pintaHistorial() {
+  const [desde, hasta] = limitesRango(rangoHistorial);
+  const a = agregarRango(desde, hasta);
+
+  $('#p-historial').innerHTML = `
+    <div class="titulo-seccion"><h2>Historial</h2>
+      <div class="segmentado" role="tablist">
+        <button type="button" role="tab" data-vista="dia" aria-selected="${vistaHistorial === 'dia'}">Por día</button>
+        <button type="button" role="tab" data-vista="pedidos" aria-selected="${vistaHistorial === 'pedidos'}">Pedidos</button>
+      </div></div>
+
+    <div class="chips">
+      ${RANGOS.map((r) => `<button type="button" data-rango="${r.id}" aria-pressed="${r.id === rangoHistorial}">${r.etiqueta}</button>`).join('')}
+      <button type="button" data-toast="Rango personalizado con dos selectores de fecha, máximo 12 meses por consulta (§11).">Personalizado</button>
+    </div>
+
+    <div class="resumen-rango">
+      <div><span class="et">Pedidos</span><span class="va">${a.pedidos}</span></div>
+      <div><span class="et">Rutas</span><span class="va">${a.rutas}</span></div>
+      <div><span class="et">Días</span><span class="va">${a.diasTrabajados}</span></div>
+      <div><span class="et">Monto</span><span class="va">${solesCorto(a.monto)}</span></div>
+    </div>
+
+    ${a.huecos ? `<div class="aviso aviso-atento">${ICO.alerta}
+      <div><strong>${a.huecos} día${a.huecos === 1 ? '' : 's'} sin carga en el rango</strong>
+      <p>No se cuentan como días sin trabajo. Súbelos y los totales se recalculan.</p></div></div>` : ''}
+
+    <div id="cuerpo-historial"></div>
+
+    <div style="display:flex;gap:var(--e2);flex-wrap:wrap">
+      <button class="boton-sec" style="flex:1;min-width:150px" type="button" data-toast="Fase 2: genera el .xlsx con ExcelJS en el propio celular — hojas Pedidos, Rutas y Resumen por día.">${ICO.hoja} Exportar Excel</button>
+      <button class="boton-sec" style="flex:1;min-width:150px" type="button" data-toast="Fase 2: PDF A4 con jsPDF, subtotales por día y «Página X de Y».">${ICO.hoja} Exportar PDF</button>
+    </div>`;
+
+  $('#cuerpo-historial').innerHTML = vistaHistorial === 'dia' ? cuerpoPorDia(a) : cuerpoPedidos(a);
+  $$('#p-historial [data-vista]').forEach((b) => b.addEventListener('click', () => { vistaHistorial = b.dataset.vista; pintaHistorial(); }));
+  $$('#p-historial [data-rango]').forEach((b) => b.addEventListener('click', () => { rangoHistorial = b.dataset.rango; pintaHistorial(); }));
+  enlazaToasts('#p-historial');
+}
+
+function cuerpoPorDia(a) {
+  return '<div style="display:flex;flex-direction:column;gap:var(--e2)">' + a.dias.map((d) => {
+    if (!d.j) return `<div class="fila-dia hueco">
+      <span class="fecha"><b>${esc(diaSem(d.fecha).slice(0,3))}</b><span>${ddmm(d.fecha)}</span></span>
+      <span class="metricas" style="color:var(--tinta-3)">${d.fecha > HOY ? 'Aún no ocurre' : 'Sin carga'}</span></div>`;
+    return `<button class="fila-dia" type="button" data-toast="Detalle de jornada: igual que Revisión pero de solo lectura, con editar y borrar (§9).">
+      <span class="fecha"><b>${esc(diaSem(d.fecha).slice(0,3))}</b><span>${ddmm(d.fecha)}</span></span>
+      <span class="metricas"><span><i>${d.j.nPedidos}</i> pedidos</span><span><i>${d.j.nRutas}</i> rutas</span>
+        <span><i>${sumaMin(d.j.minutos)}</i> en ruta</span><span><i>${d.j.primera}</i>–<i>${d.j.ultima}</i></span></span>
+      <span class="monto" style="font-size:var(--t-sm)">${soles(d.j.monto)}</span></button>`;
+  }).join('') + '</div>';
+}
+
+/* Presentación elegida: B · Tabla (§11) */
+function cuerpoPedidos(a) {
+  const con = a.dias.filter((d) => d.j);
+  if (!con.length) return '<p style="font-size:var(--t-sm);color:var(--tinta-3);padding:var(--e7) 0;text-align:center">No hay pedidos en este rango.</p>';
+
+  let n = 0;
+  const filas = con.map((d) => {
+    const j = d.j;
+    const cuerpo = j.pedidos.map((p) => {
+      const r = j.rutas.find((x) => x.numero === p.ruta);
+      n += 1;
+      return `<tr>
+        <td class="num">${n}</td><td style="white-space:nowrap">${ddmm(p.fecha)}</td>
+        <td><span class="codigo">${esc(p.codigo)}</span></td><td class="num">${p.ruta}</td>
+        <td><span class="codigo" style="white-space:nowrap">${r.horaIni}–${r.horaFin}</span></td>
+        <td>${pintaEstado(p.estado)}</td>
+        <td><span class="chip-tramo ${p.tramo > 1 ? 'destacado' : ''}">T${p.tramo}</span></td>
+        <td class="num">${soles(p.monto)}</td></tr>`;
+    }).join('');
+    return cuerpo + `<tr class="subtotal">
+      <td colspan="7">Subtotal ${esc(diaSem(j.fecha))} ${ddmm(j.fecha)} · ${j.nPedidos} pedidos · ${j.nRutas} rutas</td>
+      <td class="num">${soles(j.monto)}</td></tr>`;
+  }).join('');
+
+  return `<div class="caja-tabla"><table class="tabla tabla-densa">
+    <thead><tr><th class="num">N°</th><th>Fecha</th><th>Código de pedido</th><th class="num">Ruta</th>
+      <th>Horario de ruta</th><th>Estado</th><th>Tramo</th><th class="num">Monto</th></tr></thead>
+    <tbody>${filas}</tbody>
+    <tfoot><tr class="total"><td colspan="7">Total del rango · ${a.pedidos} pedidos</td>
+      <td class="num">${soles(a.monto)}</td></tr></tfoot>
+  </table></div>`;
+}
+
+/* -------------------------------- Pagos -------------------------------- */
+function pintaPagos() {
+  const s = SEMANAS[0];
+  const faltan = s.dias.filter((d) => !d.j && d.fecha < HOY);
+
+  $('#p-pagos').innerHTML = `
+    <div class="titulo-seccion"><h2>Pagos</h2><span class="rotulo">Lunes a domingo</span></div>
+
+    <div class="semana-activa">
+      <div class="cinta"><span>Semana en curso</span><span>${ddmm(s.inicio)} – ${ddmm(s.fin)}</span></div>
+      <div class="cuerpo">
+        <div class="hero-monto"><span class="valor">${soles(s.monto)}</span>
+          <span class="pie">${s.pedidos} pedidos · ${s.rutas} rutas · ${s.fueraTramo1} fuera del tramo 1</span></div>
+        <div class="dias-semana">${pintaDiasSemana(s)}</div>
+        <div class="lista-dato">
+          <div><span class="et">Se paga el</span><span class="va">viernes ${ddmmyyyy(s.pago)}</span></div>
+          <div><span class="et">Tiempo en ruta</span><span class="va">${sumaMin(s.minutos)}</span></div></div>
+        ${faltan.length ? `<div class="aviso aviso-atento">${ICO.alerta}
+          <div><strong>Faltan ${faltan.length} día${faltan.length === 1 ? '' : 's'} por subir</strong>
+          <p>${faltan.map((d) => diaSem(d.fecha)).join(' y ')}. ¿No trabajaste o falta la carga?</p></div></div>` : ''}
+      </div></div>
+
+    <div class="rejilla-2">
+      <div><span class="rotulo">Semanas anteriores</span>
+        <div style="display:flex;flex-direction:column;gap:var(--e2);margin-top:var(--e2)">
+          ${SEMANAS.slice(1).map(pintaFilaSemana).join('')}</div></div>
+
+      <div class="tarjeta">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:var(--e2)">
+          <span class="rotulo">Tarifa vigente</span>
+          <span style="font-size:var(--t-xs);color:var(--tinta-3)">desde 01/08/2026</span></div>
+        <table class="tabla"><thead><tr><th>Tramo</th><th>Distancia</th><th class="num">Por pedido</th></tr></thead>
+          <tbody>${TARIFAS.map((t) => `<tr><td>${t.id}</td><td>${esc(t.etiqueta)}</td><td class="num">${soles(t.monto)}</td></tr>`).join('')}</tbody></table>
+        <p style="font-size:var(--t-xs);color:var(--tinta-3);margin-top:var(--e3)">Se paga cada pedido, entregado o no: el recorrido se hizo igual. El estado solo cuenta para las estadísticas.</p>
+      </div></div>`;
+  enlazaToasts('#p-pagos');
+}
+
+function pintaFilaSemana(s) {
+  const dif = s.recibido != null ? s.recibido - s.monto : null;
+  return `<button class="fila-semana" type="button" data-toast="Desglose por día y por ruta de la semana ${ddmm(s.inicio)}–${ddmm(s.fin)}, exportable a PDF o imagen para WhatsApp (§13).">
+    <span class="rango"><b>${ddmm(s.inicio)} – ${ddmm(s.fin)}</b><span>${s.pedidos} pedidos · pago ${ddmm(s.pago)}</span></span>
+    <span style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">
+      <span class="monto" style="font-size:var(--t-sm)">${soles(s.monto)}</span>
+      ${dif !== null && Math.abs(dif) > 0.001
+        ? `<span class="insignia insignia-dif">${ICO.alerta} ${dif > 0 ? '+' : '−'}${solesCorto(Math.abs(dif))}</span>`
+        : `<span class="insignia ${s.estado === 'pagada' ? 'insignia-pagada' : 'insignia-cerrada'}">${s.estado === 'pagada' ? ICO.check : ICO.reloj} ${s.estado}</span>`}
+    </span></button>`;
+}
+
+/* ---------------------------- Estadísticas ---------------------------- */
+const RANGOS_STATS = [
+  { id: '7',   etiqueta: '7 días',   calc: () => [masDias(HOY, -6), HOY] },
+  { id: '30',  etiqueta: '30 días',  calc: () => [masDias(HOY, -29), HOY] },
+  { id: 'mes', etiqueta: 'Este mes', calc: () => [HOY.slice(0, 8) + '01', HOY] }
+];
+let rangoStats = '30';
+let metrica = 'pedidos';
+
+function pintaEstadisticas() {
+  const def = RANGOS_STATS.find((r) => r.id === rangoStats) || RANGOS_STATS[1];
+  const [desde, hasta] = def.calc();
+  const a = agregarRango(desde, hasta);
+  const con = a.dias.filter((d) => d.j);
+  const duraciones = con.flatMap((d) => d.j.rutas.map((r) => r.dur));
+  const durProm = Math.round(duraciones.reduce((x, y) => x + y, 0) / duraciones.length);
+  const rutaRapida = Math.min(...duraciones);
+  const rutaLenta = Math.max(...duraciones);
+  const mejorDia = con.slice().sort((x, y) => y.j.nPedidos - x.j.nPedidos)[0];
+  const mejorSemana = SEMANAS.slice().sort((x, y) => y.monto - x.monto)[0];
+
+  $('#p-estadisticas').innerHTML = `
+    <div class="titulo-seccion"><h2>Estadísticas</h2><span class="rotulo">${ddmm(desde)} – ${ddmm(hasta)}</span></div>
+
+    <div class="chips">
+      ${RANGOS_STATS.map((r) => `<button type="button" data-stats="${r.id}" aria-pressed="${r.id === rangoStats}">${r.etiqueta}</button>`).join('')}
+      <button type="button" data-toast="Rango personalizado y comparación de dos periodos, p. ej. este mes contra el anterior (§10).">Comparar periodos</button>
+    </div>
+
+    <div class="tarjeta grafico-caja">
+      <div class="grafico-top">
+        <div><span class="rotulo">Pedidos y soles por día</span>
+          <p style="font-size:var(--t-sm);color:var(--tinta-2)">La altura mide ${metrica === 'pedidos' ? 'pedidos' : 'soles'}</p></div>
+        <div class="interruptor" role="group" aria-label="Qué mide la altura de la barra">
+          <button type="button" data-metrica="pedidos" aria-pressed="${metrica === 'pedidos'}">Pedidos</button>
+          <button type="button" data-metrica="soles" aria-pressed="${metrica === 'soles'}">Soles</button></div></div>
+      <div class="grafico-scroll" id="grafico-scroll">${pintaGrafico(a)}</div>
+      <div class="leyenda">
+        <span><i style="background:var(--barra)"></i>Tramo 1</span>
+        <span><i style="background:var(--barra-extra)"></i>Más de 3 km</span>
+        <span><span class="marca-hueco"></span>Sin carga</span>
+        <span style="color:var(--acento)">– – promedio del rango</span></div></div>
+
+    <div class="cifras">
+      <div class="cifra"><span class="et">Pedidos</span><span class="va">${a.pedidos}</span></div>
+      <div class="cifra"><span class="et">Soles</span><span class="va">${solesCorto(a.monto)}</span></div>
+      <div class="cifra"><span class="et">Días trabajados</span><span class="va">${a.diasTrabajados}</span></div>
+      <div class="cifra"><span class="et">Promedio por día</span><span class="va">${a.promPedidos.toFixed(1)} <small>ped.</small></span></div>
+    </div>
+
+    <div class="rejilla-2">
+      <div class="tarjeta"><span class="rotulo">Tiempos</span>
+        <div class="lista-dato" style="margin-top:var(--e2)">
+          <div><span class="et">Tiempo total en ruta</span><span class="va">${sumaMin(a.minutos)}</span></div>
+          <div><span class="et">Duración media por ruta</span><span class="va">${durProm} min</span></div>
+          <div><span class="et">Ruta más rápida / más lenta</span><span class="va">${rutaRapida} / ${rutaLenta} min</span></div>
+          <div><span class="et">Minutos por pedido</span><span class="va">${Math.round(a.minutos / a.pedidos)} min</span></div>
+          <div><span class="et">Pedidos por ruta</span><span class="va">${(a.pedidos / a.rutas).toFixed(1)}</span></div></div></div>
+
+      <div class="tarjeta"><span class="rotulo">Ingresos</span>
+        <div class="lista-dato" style="margin-top:var(--e2)">
+          <div><span class="et">Promedio por día</span><span class="va">${soles(a.promMonto)}</span></div>
+          <div><span class="et">Promedio por pedido</span><span class="va">${soles(a.monto / a.pedidos)}</span></div>
+          <div><span class="et">Promedio por hora en ruta</span><span class="va">${soles(a.monto / (a.minutos / 60))}</span></div>
+          <div><span class="et">Pedidos fuera del tramo 1</span><span class="va">${a.fueraTramo1} de ${a.pedidos}</span></div></div></div>
+    </div>
+
+    <div class="tarjeta"><span class="rotulo">Récords</span>
+      <div class="records" style="margin-top:var(--e3)">
+        <div class="record"><span class="med">${ICO.trofeo}</span>
+          <span class="txt"><b>${soles(mejorSemana.monto)} · mejor semana</b><span>${ddmm(mejorSemana.inicio)} – ${ddmm(mejorSemana.fin)}</span></span></div>
+        <div class="record"><span class="med">${ICO.subir}</span>
+          <span class="txt"><b>${mejorDia.j.nPedidos} pedidos · día con más carga</b><span>${esc(diaSem(mejorDia.fecha))} ${ddmm(mejorDia.fecha)}, en ${mejorDia.j.nRutas} rutas</span></span></div>
+        <div class="record"><span class="med">${ICO.reloj}</span>
+          <span class="txt"><b>${RACHA} días al 100 %</b><span>racha actual de jornadas con todo entregado</span></span></div></div></div>
+
+    <button class="boton-sec" type="button" style="width:100%" data-toast="Fase 5: cada gráfico se pasa a imagen con html-to-image y se compone un PDF con portada y cifras clave, siempre en tema claro.">${ICO.hoja} Exportar estadísticas a PDF</button>`;
+
+  $$('#p-estadisticas [data-stats]').forEach((b) => b.addEventListener('click', () => { rangoStats = b.dataset.stats; pintaEstadisticas(); }));
+  $$('#p-estadisticas [data-metrica]').forEach((b) => b.addEventListener('click', () => { metrica = b.dataset.metrica; pintaEstadisticas(); }));
+  enlazaToasts('#p-estadisticas');
+  enlazaGrafico(a);
+}
+
+const valorDe = (j) => (metrica === 'pedidos' ? j.nPedidos : j.monto);
+
+function pintaGrafico(a) {
+  const con = a.dias.filter((d) => d.j);
+  const max = Math.max(...con.map((d) => valorDe(d.j)));
+  const prom = con.reduce((x, d) => x + valorDe(d.j), 0) / con.length;
+  const ALTO = 176;
+
+  const columnas = a.dias.map((d, i) => {
+    if (!d.j) return `<div class="columna hueco" data-i="${i}">
+      <span class="etiquetas"><span class="n-pedidos">—</span></span>
+      <span class="pila"></span><span class="eje">${aFecha(d.fecha).getUTCDate()}</span></div>`;
+    const v = valorDe(d.j);
+    const alto = Math.max(6, Math.round((v / max) * ALTO));
+    const altoExtra = d.j.fueraTramo1 ? Math.max(4, Math.round(alto * (d.j.fueraTramo1 / d.j.nPedidos))) : 0;
+    return `<div class="columna" data-i="${i}" tabindex="0" role="button"
+        aria-label="${diaSem(d.fecha)} ${ddmm(d.fecha)}: ${d.j.nPedidos} pedidos, ${soles(d.j.monto)}">
+      <span class="etiquetas">
+        <span class="n-pedidos">${metrica === 'pedidos' ? d.j.nPedidos : solesCorto(d.j.monto)}</span>
+        <span class="n-monto">${metrica === 'pedidos' ? solesCorto(d.j.monto) : d.j.nPedidos + ' ped.'}</span></span>
+      <span class="pila ${altoExtra ? '' : 'sin-extra'}" style="height:${alto}px">
+        ${altoExtra ? `<span class="seg-extra" style="height:${altoExtra}px"></span>` : ''}
+        <span class="seg-base" style="height:${alto - altoExtra}px"></span></span>
+      <span class="eje">${aFecha(d.fecha).getUTCDate()}</span></div>`;
+  }).join('');
+
+  return `<div class="grafico" id="grafico">
+    <div class="rejilla"><span style="top:0"></span><span style="top:33%"></span><span style="top:66%"></span></div>
+    <div class="promedio" style="bottom:${Math.round((prom / max) * ALTO) + 22}px">
+      <b>prom. ${metrica === 'pedidos' ? prom.toFixed(1) : solesCorto(prom)}</b></div>
+    <div class="base-eje"></div>${columnas}</div>`;
+}
+
+function enlazaGrafico(a) {
+  const cont = $('#grafico-scroll');
+  const graf = $('#grafico');
+  if (!graf) return;
+  let globo = null;
+  const ocultar = () => {
+    if (globo) { globo.remove(); globo = null; }
+    $$('.columna.activa', graf).forEach((c) => c.classList.remove('activa'));
+  };
+  const mostrar = (col) => {
+    const d = a.dias[Number(col.dataset.i)];
+    if (!d || !d.j) return;
+    ocultar();
+    globo = document.createElement('div');
+    globo.className = 'globo';
+    globo.innerHTML = `<b>${esc(diaSem(d.fecha))} ${ddmm(d.fecha)}</b>
+      <dl><dt>Pedidos</dt><dd>${d.j.nPedidos}</dd><dt>Rutas</dt><dd>${d.j.nRutas}</dd>
+      <dt>En ruta</dt><dd>${sumaMin(d.j.minutos)}</dd>
+      <dt>Fuera de tramo 1</dt><dd>${d.j.fueraTramo1}</dd>
+      <dt>Monto</dt><dd>${soles(d.j.monto)}</dd></dl>`;
+    graf.appendChild(globo);
+    const izq = col.offsetLeft + col.offsetWidth / 2 - 88;
+    globo.style.left = Math.max(0, Math.min(izq, graf.offsetWidth - 180)) + 'px';
+    globo.style.top = '6px';
+    col.classList.add('activa');
+  };
+  $$('.columna[data-i]', graf).forEach((col) => {
+    col.addEventListener('mouseenter', () => mostrar(col));
+    col.addEventListener('focus', () => mostrar(col));
+    col.addEventListener('click', () => mostrar(col));
+  });
+  cont.addEventListener('mouseleave', ocultar);
+  const ultimo = $$('.columna[data-i]:not(.hueco)', graf).pop();
+  if (ultimo) cont.scrollLeft = Math.max(0, ultimo.offsetLeft + ultimo.offsetWidth - cont.clientWidth * 0.78);
+}
+
+/* ------------------------- Admin (solo web) ------------------------- */
+let verMontos = false;
+
+function pintaAdmin() {
+  const activos = DRIVERS.filter((d) => d.activo);
+  const cargasMes = DRIVERS.reduce((a, d) => a + d.cargasMes, 0);
+  const imagenesMes = DRIVERS.reduce((a, d) => a + d.imagenesMes, 0);
+  const costoMes = imagenesMes * COSTO_POR_IMAGEN;
+
+  $('#p-admin').innerHTML = `
+    <div class="titulo-seccion"><h2>Usuarios</h2><span class="rotulo">Panel de administración · web</span></div>
+
+    <div class="aviso aviso-atento">${ICO.alerta}
+      <div><strong>Pantalla pensada para escritorio</strong>
+      <p>Es la única parte de RutaLog que no va en el celular: vive fuera de la PWA, en <span class="codigo">/admin</span>. En pantalla angosta la tabla se desplaza de lado.</p></div></div>
+
+    <div class="cifras">
+      <div class="cifra"><span class="et">Drivers activos</span><span class="va">${activos.length}<small> de ${DRIVERS.length}</small></span></div>
+      <div class="cifra"><span class="et">Cargas este mes</span><span class="va">${cargasMes}</span></div>
+      <div class="cifra"><span class="et">Imágenes leídas</span><span class="va">${imagenesMes}</span></div>
+      <div class="cifra"><span class="et">Costo de API</span><span class="va">${solesCorto(costoMes)}<small> S/</small></span></div>
+    </div>
+
+    <div class="tarjeta" style="display:flex;flex-direction:column;gap:var(--e3)">
+      <div class="conmutador">
+        <input type="checkbox" id="ver-montos" ${verMontos ? 'checked' : ''}>
+        <label for="ver-montos" style="font-size:var(--t-sm);font-weight:600">Ver los montos de cada driver</label>
+      </div>
+      <p style="font-size:var(--t-sm);color:var(--tinta-2)">
+        §12 dice que el administrador <b>no</b> ve las jornadas ni los montos de los demás, y lo vende como
+        argumento: los ingresos de cada uno son privados. Si activas esto hay que quitar esa promesa,
+        cambiar las políticas RLS y avisar a los drivers. Decisión tuya, pero conviene que sea consciente.</p>
+      ${verMontos ? `<div class="aviso aviso-mal">${ICO.alerta}
+        <div><strong>Estás viendo datos privados de otros drivers</strong>
+        <p>Con la privacidad de §12 activada, estas columnas no existirían.</p></div></div>` : ''}
+    </div>
+
+    <div style="display:flex;gap:var(--e2);flex-wrap:wrap;align-items:center">
+      <button class="boton-sec" type="button" data-toast="Alta: el admin escribe nombre y correo; el servidor crea la cuenta con auth.admin.createUser y el driver entra con su código. Ya no hay contraseña temporal que entregar.">${ICO.gente} Nuevo driver</button>
+      <button class="boton-sec" type="button" data-toast="Exporta la lista de cuentas y su uso a Excel.">${ICO.hoja} Exportar</button>
+    </div>
+
+    <div class="caja-tabla"><table class="tabla tabla-densa" style="min-width:${verMontos ? 1020 : 880}px">
+      <thead><tr>
+        <th>Driver</th><th>Correo</th><th>Rol</th><th>Estado</th>
+        <th>Última carga</th><th class="num">Cargas</th><th>Uso (14 días)</th>
+        ${verMontos ? '<th class="num">Semana en curso</th>' : ''}
+        <th class="num">Costo API</th><th>Vigencia</th><th>Acciones</th>
+      </tr></thead>
+      <tbody>${DRIVERS.map(filaDriver).join('')}</tbody>
+    </table></div>
+
+    <div class="tarjeta">
+      <span class="rotulo">Sobre el cambio de claves</span>
+      <p style="font-size:var(--t-sm);color:var(--tinta-2);margin-top:var(--e2)">
+        Con el acceso por correo y código <b>no hay contraseñas que cambiar</b>. Lo que el admin sí puede hacer
+        desde aquí es: reenviar un código, corregir el correo de alguien que se equivocó o cambió de buzón,
+        desactivar una cuenta sin borrar su historial, y ampliar la vigencia de la suscripción.</p>
+    </div>`;
+
+  $('#ver-montos').addEventListener('change', (e) => { verMontos = e.target.checked; pintaAdmin(); });
+  enlazaToasts('#p-admin');
+}
+
+function filaDriver(d) {
+  const dias = diasEntre(d.ultima, HOY);
+  const alDia = dias <= 1;
+  const max = Math.max(...d.uso, 1);
+  const semanaDelDriver = SEMANAS[0].monto * (0.75 + (d.nombre.length % 7) * 0.06);
+
+  return `<tr>
+    <td><b>${esc(d.nombre)}</b></td>
+    <td><span class="codigo">${esc(d.correo)}</span></td>
+    <td>${d.rol === 'admin' ? '<span class="insignia insignia-cerrada">admin</span>' : 'driver'}</td>
+    <td>${d.activo
+      ? `<span class="estado estado-entregado">${ICO.check}activa</span>`
+      : `<span class="estado estado-no">${ICO.equis}desactivada</span>`}</td>
+    <td>${d.activo
+      ? `<span style="white-space:nowrap">${ddmm(d.ultima)}</span>
+         ${alDia ? '' : `<span class="insignia insignia-dif" style="margin-left:6px">${ICO.alerta} ${dias} d</span>`}`
+      : `<span style="color:var(--tinta-3)">${ddmm(d.ultima)}</span>`}</td>
+    <td class="num">${d.cargasMes}</td>
+    <td><span class="barra-uso" aria-label="Cargas de los últimos 14 días">${d.uso.map((u) =>
+      `<i class="${u ? '' : 'vacio'}" style="height:${u ? Math.round((u / max) * 18) : 4}px"></i>`).join('')}</span></td>
+    ${verMontos ? `<td class="num">${soles(semanaDelDriver)}</td>` : ''}
+    <td class="num">${solesCorto(d.imagenesMes * COSTO_POR_IMAGEN)}</td>
+    <td>${d.vigente
+      ? `<span style="white-space:nowrap">${ddmm(d.vigente)}</span>${d.vigente < HOY ? ` <span class="insignia insignia-baja">vencida</span>` : ''}`
+      : '<span style="color:var(--tinta-3)">sin límite</span>'}</td>
+    <td><span class="acciones-fila">
+      <button class="mini-boton" type="button" data-toast="Reenvía un código de acceso a ${esc(d.correo)}. No hay contraseña que restablecer.">Reenviar acceso</button>
+      <button class="mini-boton" type="button" data-toast="Cambiar el correo de ${esc(d.nombre)}. Es lo que hay que hacer si pierde el acceso a su buzón.">Correo</button>
+      <button class="mini-boton peligro" type="button" data-toast="${d.activo ? 'Desactivar' : 'Reactivar'} la cuenta de ${esc(d.nombre)}. El historial se conserva siempre.">${d.activo ? 'Desactivar' : 'Reactivar'}</button>
+    </span></td></tr>`;
+}
+
+/* ------------------------------- Diseño ------------------------------- */
+const DIRECCIONES = {
+  ludica: {
+    nombre: 'Lúdica',
+    idea: 'Cierra el día y te llevas un premio. Racha, récords y cifras grandes; formas redondas, bordes marcados y sombra sólida tipo pegatina.',
+    tipos: 'Fredoka para cifras y títulos, Figtree para el texto, DM Mono para códigos.',
+    color: 'Fondo lavanda, tinta morada, acento mango. El mango también es la barra del gráfico.',
+    cuando: 'Si quieres que a los drivers les dé gusto abrirla y que la racha los empuje a cargar todos los días.',
+    riesgo: 'Es la que peor envejece y la que peor queda si algún día la enseñas a la tienda para reclamar un pago.'
+  },
+  profesional: {
+    nombre: 'Profesional',
+    idea: 'Un documento de liquidación. Reglas finas en vez de tarjetas, esquinas casi rectas, densidad alta y nada de sombra.',
+    tipos: 'Lora para los títulos, IBM Plex Sans para el texto, IBM Plex Mono para cifras y códigos.',
+    color: 'Papel cálido, tinta azul marino, un solo acento azul apagado. El color se reserva para los estados.',
+    cuando: 'Si el uso fuerte es revisar, cuadrar y sustentar un reclamo de pago ante la tienda.',
+    riesgo: 'En un celular al final del turno puede sentirse seca y apretada.'
+  },
+  moderna: {
+    nombre: 'Moderna',
+    idea: 'Lo que hoy espera cualquiera de una app de celular: contenedores teñidos sin bordes, esquinas muy redondeadas, aire, hojas inferiores y desenfoque en la cabecera.',
+    tipos: 'Plus Jakarta Sans en todo, DM Mono para códigos.',
+    color: 'Base verde grisácea, acento verde azulado. Superficies teñidas en vez de líneas.',
+    cuando: 'Si quieres que se sienta actual y familiar desde el primer día, sin llamar la atención.',
+    riesgo: 'Es la más segura y también la menos memorable: se parece a muchas apps.'
+  }
+};
+
+function pintaDiseno() {
+  const dir = document.documentElement.dataset.dir || 'moderna';
+  const d = DIRECCIONES[dir];
+
+  $('#p-diseno').innerHTML = `
+    <div class="titulo-seccion"><h2>Diseño</h2><span class="rotulo">§9 · tokens</span></div>
+    <p style="font-size:var(--t-sm);color:var(--tinta-2);max-width:62ch">
+      Tres direcciones sobre la misma aplicación. Cámbialas con el control de abajo a la derecha;
+      cada una toca color, tipografía, forma y densidad, no solo el color.</p>
+
+    <div class="tarjeta" style="display:flex;flex-direction:column;gap:var(--e3)">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:var(--e3);flex-wrap:wrap">
+        <h3 style="font-size:var(--t-xl)">${esc(d.nombre)}</h3>
+        <span class="rotulo">viendo ahora</span></div>
+      <div class="lista-dato">
+        <div><span class="et">La idea</span><span style="max-width:60%;text-align:right;font-size:var(--t-sm)">${esc(d.idea)}</span></div>
+        <div><span class="et">Tipografía</span><span style="max-width:60%;text-align:right;font-size:var(--t-sm)">${esc(d.tipos)}</span></div>
+        <div><span class="et">Color</span><span style="max-width:60%;text-align:right;font-size:var(--t-sm)">${esc(d.color)}</span></div>
+        <div><span class="et">Elígela si…</span><span style="max-width:60%;text-align:right;font-size:var(--t-sm)">${esc(d.cuando)}</span></div>
+        <div><span class="et">Lo que arriesgas</span><span style="max-width:60%;text-align:right;font-size:var(--t-sm);color:var(--aviso)">${esc(d.riesgo)}</span></div>
+      </div></div>
+
+    <div class="tarjeta">
+      <span class="rotulo">Color de esta dirección</span>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:var(--e3);margin-top:var(--e3)">
+        ${[['Papel','--papel'],['Superficie','--sup'],['Superficie 2','--sup-2'],['Tinta','--tinta'],
+           ['Línea','--linea-fuerte'],['Acento','--acento'],['Barra extra','--barra-extra'],
+           ['Entregado','--bien'],['Parcial','--aviso'],['No entregado','--mal']].map(([n, v]) =>
+          `<div style="display:flex;flex-direction:column;gap:5px">
+            <span style="height:40px;border-radius:var(--r-chip);background:var(${v});border:1px solid var(--linea)"></span>
+            <b style="font-size:var(--t-xs)">${n}</b></div>`).join('')}
+      </div>
+      <p style="font-size:var(--t-xs);color:var(--tinta-3);margin-top:var(--e3)">
+        Las seis paletas de gráfico (tres direcciones × claro y oscuro) pasan la validación de luminosidad,
+        salto y contraste. Los estados de entrega siempre llevan icono y etiqueta, nunca color solo.</p>
+    </div>
+
+    <div class="tarjeta">
+      <span class="rotulo">Forma y tipografía</span>
+      <div class="lista-dato" style="margin-top:var(--e2)">
+        <div><span class="et">Radio de tarjeta</span><span class="va">${getComputedStyle(document.documentElement).getPropertyValue('--r-card').trim()}</span></div>
+        <div><span class="et">Grosor de borde</span><span class="va">${getComputedStyle(document.documentElement).getPropertyValue('--borde-ancho').trim()}</span></div>
+        <div><span class="et">Relleno de tarjeta</span><span class="va">${getComputedStyle(document.documentElement).getPropertyValue('--pad-card').trim()}</span></div>
+        <div><span class="et">Cortes responsive</span><span class="va">620 · 760 · 900 px</span></div>
+      </div>
+      <div style="margin-top:var(--e4);display:flex;flex-direction:column;gap:var(--e2)">
+        <span style="font-family:var(--f-display);font-size:44px;font-weight:var(--peso-titulo);line-height:1;letter-spacing:var(--track-titulo)">S/ 141.50</span>
+        <span style="font-size:var(--t-md)">Toca los pedidos que pasaron de 3 km.</span>
+        <span class="codigo">v12239582wofp-01 · 13:20–14:00</span>
+      </div>
+    </div>
+
+    <div class="tarjeta">
+      <span class="rotulo">Decisiones ya tomadas</span>
+      <div class="lista-dato" style="margin-top:var(--e2)">
+        <div><span class="et">Historial · presentación</span><span class="va">B · Tabla</span></div>
+        <div><span class="et">Navegación</span><span class="va">hamburguesa + cajón</span></div>
+        <div><span class="et">Acceso</span><span class="va">correo + 6 dígitos</span></div>
+        <div><span class="et">Admin</span><span class="va">solo web, en /admin</span></div>
+      </div></div>`;
+}
+
+/* ===========================================================================
+   6. Navegación
+   =========================================================================== */
+const PANTALLAS = {
+  hoy:          { id: 'p-hoy',          pinta: pintaHoy,          nombre: 'Hoy',          icono: ICO.casa,    menu: 'principal' },
+  historial:    { id: 'p-historial',    pinta: pintaHistorial,    nombre: 'Historial',    icono: ICO.cal,     menu: 'principal' },
+  pagos:        { id: 'p-pagos',        pinta: pintaPagos,        nombre: 'Pagos',        icono: ICO.cartera, menu: 'principal' },
+  estadisticas: { id: 'p-estadisticas', pinta: pintaEstadisticas, nombre: 'Estadísticas', icono: ICO.barras,  menu: 'principal' },
+  revision:     { id: 'p-revision',     pinta: pintaRevision,     nombre: 'Revisión',     icono: ICO.lista,   menu: 'principal' },
+  admin:        { id: 'p-admin',        pinta: pintaAdmin,        nombre: 'Usuarios',     icono: ICO.gente,   menu: 'extra' },
+  diseno:       { id: 'p-diseno',       pinta: pintaDiseno,       nombre: 'Diseño',       icono: ICO.paleta,  menu: 'extra' }
+};
+let actual = 'hoy';
+
+function pintaMenus() {
+  const item = (k) => {
+    const p = PANTALLAS[k];
+    return `<button class="menu-item" type="button" data-ir="${k}" ${k === actual ? 'aria-current="page"' : ''}>
+      ${p.icono}${p.nombre}${k === 'revision' ? '<span class="pastilla">1</span>' : ''}</button>`;
+  };
+  $('#menu').innerHTML = Object.keys(PANTALLAS).filter((k) => PANTALLAS[k].menu === 'principal').map(item).join('');
+  $('#menu-extra').innerHTML = Object.keys(PANTALLAS).filter((k) => PANTALLAS[k].menu === 'extra').map(item).join('');
+  enlazaIr('#lateral');
+}
+
+function irA(clave) {
+  actual = clave;
+  Object.keys(PANTALLAS).forEach((k) => { document.getElementById(PANTALLAS[k].id).hidden = k !== clave; });
+  PANTALLAS[clave].pinta();
+  $('#titulo-cabecera').textContent = PANTALLAS[clave].nombre;
+  pintaMenus();
+  cerrarMenu();
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+function enlazaIr(raiz) {
+  $$((raiz || '') + ' [data-ir]').forEach((b) => b.addEventListener('click', () => irA(b.dataset.ir)));
+}
+
+const lateral = $('#lateral');
+const velo = $('#velo');
+const btnMenu = $('#btn-menu');
+function abrirMenu() {
+  lateral.classList.add('abierto'); velo.hidden = false;
+  btnMenu.setAttribute('aria-expanded', 'true');
+  const primero = $('.menu-item', lateral);
+  if (primero) primero.focus();
+}
+function cerrarMenu() {
+  lateral.classList.remove('abierto'); velo.hidden = true;
+  btnMenu.setAttribute('aria-expanded', 'false');
+}
+btnMenu.addEventListener('click', () => (lateral.classList.contains('abierto') ? cerrarMenu() : abrirMenu()));
+velo.addEventListener('click', cerrarMenu);
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if (!$('#capa-hoja').hidden) cerrarHoja(); else cerrarMenu();
+});
+$('#btn-salir').addEventListener('click', () => {
+  cerrarMenu(); $('#app').hidden = true; $('#acceso').hidden = false; reiniciarAcceso();
+});
+
+let tiempoBrindis = null;
+function brindis(texto) {
+  const previo = $('.brindis');
+  if (previo) previo.remove();
+  const el = document.createElement('div');
+  el.className = 'brindis';
+  el.setAttribute('role', 'status');
+  el.textContent = texto;
+  document.body.appendChild(el);
+  clearTimeout(tiempoBrindis);
+  tiempoBrindis = setTimeout(() => el.remove(), 4600);
+}
+function enlazaToasts(raiz) {
+  $$((raiz || '') + ' [data-toast]').forEach((b) => b.addEventListener('click', () => brindis(b.dataset.toast)));
+}
+
+/* ===========================================================================
+   7. Acceso
+   =========================================================================== */
+const CODIGO_DEMO = '481920';
+const pasoCorreo = $('#paso-correo');
+const pasoCodigo = $('#paso-codigo');
+const digitos = $$('#digitos input');
+const btnEntrar = $('#btn-entrar');
+const btnReenviar = $('#btn-reenviar');
+const errorCodigo = $('#error-codigo');
+let cuentaAtras = null;
+const codigoEscrito = () => digitos.map((d) => d.value).join('');
+
+function reiniciarAcceso() {
+  pasoCodigo.hidden = true; pasoCorreo.hidden = false;
+  digitos.forEach((d) => { d.value = ''; d.classList.remove('lleno'); });
+  btnEntrar.disabled = true; errorCodigo.hidden = true;
+  clearInterval(cuentaAtras);
+}
+pasoCorreo.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const correo = $('#correo').value.trim();
+  if (!correo.includes('@')) { $('#correo').focus(); return; }
+  $('#correo-eco').textContent = correo;
+  pasoCorreo.hidden = true; pasoCodigo.hidden = false;
+  digitos[0].focus(); arrancarCuentaAtras();
+});
+function arrancarCuentaAtras() {
+  let s = 45;
+  clearInterval(cuentaAtras);
+  const pinta = () => {
+    btnReenviar.disabled = s > 0;
+    btnReenviar.textContent = s > 0 ? `Reenviar en 0:${String(s).padStart(2, '0')}` : 'Reenviar código';
+  };
+  pinta();
+  cuentaAtras = setInterval(() => { s--; pinta(); if (s <= 0) clearInterval(cuentaAtras); }, 1000);
+}
+digitos.forEach((input, i) => {
+  input.addEventListener('input', () => {
+    input.value = input.value.replace(/\D/g, '').slice(0, 1);
+    input.classList.toggle('lleno', input.value !== '');
+    errorCodigo.hidden = true;
+    if (input.value && i < digitos.length - 1) digitos[i + 1].focus();
+    btnEntrar.disabled = codigoEscrito().length !== 6;
+  });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Backspace' && !input.value && i > 0) { digitos[i - 1].focus(); e.preventDefault(); }
+    if (e.key === 'ArrowLeft' && i > 0) { digitos[i - 1].focus(); e.preventDefault(); }
+    if (e.key === 'ArrowRight' && i < digitos.length - 1) { digitos[i + 1].focus(); e.preventDefault(); }
+  });
+  input.addEventListener('paste', (e) => {
+    const texto = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+    if (!texto) return;
+    e.preventDefault();
+    texto.split('').forEach((c, k) => { if (digitos[k]) { digitos[k].value = c; digitos[k].classList.add('lleno'); } });
+    digitos[Math.min(texto.length, 5)].focus();
+    btnEntrar.disabled = codigoEscrito().length !== 6;
+  });
+});
+pasoCodigo.addEventListener('submit', (e) => {
+  e.preventDefault();
+  if (codigoEscrito() !== CODIGO_DEMO) {
+    errorCodigo.hidden = false;
+    digitos.forEach((d) => { d.value = ''; d.classList.remove('lleno'); });
+    digitos[0].focus(); btnEntrar.disabled = true;
+    return;
+  }
+  clearInterval(cuentaAtras);
+  $('#acceso').hidden = true; $('#app').hidden = false; irA('hoy');
+});
+$('#btn-otro-correo').addEventListener('click', reiniciarAcceso);
+$('#btn-reenviar').addEventListener('click', () => { arrancarCuentaAtras(); brindis('Código reenviado: ' + CODIGO_DEMO); });
+
+/* ===========================================================================
+   8. Dirección visual y tema
+   =========================================================================== */
+const raiz = document.documentElement;
+
+function aplicaDireccion(dir) {
+  raiz.dataset.dir = dir;
+  $$('.director [data-dir-set]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.dirSet === dir)));
+  try { localStorage.setItem('rutalog-dir', dir); } catch (e) { /* sin almacenamiento: da igual */ }
+  if (actual === 'diseno' && !$('#p-diseno').hidden) pintaDiseno();
+}
+function aplicaTema(t) {
+  if (t === 'auto') raiz.removeAttribute('data-theme');
+  else raiz.setAttribute('data-theme', t);
+  $$('.director [data-tema]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tema === t)));
+  try { localStorage.setItem('rutalog-tema', t); } catch (e) { /* sin almacenamiento: da igual */ }
+}
+$$('.director [data-dir-set]').forEach((b) => b.addEventListener('click', () => aplicaDireccion(b.dataset.dirSet)));
+$$('.director [data-tema]').forEach((b) => b.addEventListener('click', () => aplicaTema(b.dataset.tema)));
+
+let dirInicial = 'moderna';
+let temaInicial = 'auto';
+try {
+  dirInicial = localStorage.getItem('rutalog-dir') || 'moderna';
+  temaInicial = localStorage.getItem('rutalog-tema') || 'auto';
+} catch (e) { /* sin almacenamiento: valores por defecto */ }
+if (!DIRECCIONES[dirInicial]) dirInicial = 'moderna';
+aplicaDireccion(dirInicial);
+aplicaTema(temaInicial);
+
+/* ===========================================================================
+   9. Arranque
+   =========================================================================== */
+enlazaToasts('');
+pintaMenus();
+pintaHoy();
+</script>
