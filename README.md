@@ -72,6 +72,8 @@ src/
     admin/                    Panel web — dirección visual Profesional
     api/extraer/              Llamada al modelo de visión, una por imagen
     globals.css               Tokens de diseño de §9, las dos superficies
+    compartir/                Destino de compartir de Android: galería → RutaLog
+    sin-conexion/             Lo que sirve el service worker cuando no hay red
   components/                 Armazón, gráfico, tablas, piezas comunes
   lib/
     fechas.ts                 Fechas de jornada, semanas lunes–domingo, Lima
@@ -83,6 +85,7 @@ src/
     db/                       Consultas y escrituras, todas bajo RLS
     supabase/                 Clientes de navegador, servidor y service role
   proxy.ts                    Protección de rutas y CSP con nonce (en Next 16 sustituye a middleware.ts)
+public/sw.js                  Service worker escrito a mano (Serwist no soporta Turbopack)
 supabase/schema.sql           Esquema, RLS y tarifa inicial
 ```
 
@@ -108,6 +111,8 @@ supabase/schema.sql           Esquema, RLS y tarifa inicial
 - **La CSP lleva nonce por petición** y se arma en `proxy.ts`, no en
   `next.config.ts`, porque cambia en cada request. Los estilos en línea sí se
   permiten: el gráfico calcula alturas con atributos `style`.
+- **Hay dos puertas de entrada a la carga**: el botón de Hoy y compartir desde
+  la galería de Android. Las dos usan el mismo flujo, en `src/lib/carga.ts`.
 - **Las capturas no se guardan.** Se comprimen en el celular —lo que de paso
   borra el EXIF y la ubicación—, se procesan en memoria y se descartan.
 
@@ -121,7 +126,7 @@ supabase/schema.sql           Esquema, RLS y tarifa inicial
 | 3 | Gestión de usuarios (admin) | Hecho |
 | 4 | Pagos semanales: cálculo, cierre, conciliación | Hecho |
 | 5 | Estadísticas y récords | Hecho. Falta exportar los gráficos a PDF |
-| 6 | PWA: manifest e iconos hechos. Faltan service worker, share target y offline | Parcial |
+| 6 | PWA: instalación, service worker, offline, share target y aviso de versión | Hecho |
 | 7 | Endurecimiento: rate limit y cabeceras hechos. Faltan E2E y retención de imágenes | Parcial |
 
 ## Pruebas

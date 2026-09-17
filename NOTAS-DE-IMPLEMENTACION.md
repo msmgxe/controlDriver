@@ -245,6 +245,13 @@ se paga por las horas que se registren, truncadas hacia abajo.
   falta una comprobación de límites en v3/v5/v6 *cuando se pasa un `buf`*.
   ExcelJS no pasa ninguno, así que no nos afecta; arreglarlo obligaría a bajar a
   exceljs@3, que es una ruptura. Se deja anotado en vez de forzar el downgrade.
+- **El service worker está escrito a mano, sin Serwist.** §3 nombraba Serwist,
+  pero no funciona con Turbopack, que es el bundler por defecto de Next 16
+  (issue abierto en su repo). La alternativa era forzar `next build --webpack` y
+  atar el proyecto a un bundler que Next ya dejó atrás. Lo que la app necesita
+  cachear cabe en `public/sw.js`: se sirve tal cual, sin paso de build, y no
+  añade dos dependencias ni un plugin de webpack. **Al tocarlo hay que subir
+  `VERSION`**, o los navegadores con el worker ya instalado no se enteran.
 - **La CSP está en `proxy.ts`, no en `next.config.ts`**, porque lleva un nonce
   distinto en cada petición. `style-src` permite `'unsafe-inline'` a propósito:
   el gráfico de Estadísticas calcula la altura de cada barra con un atributo

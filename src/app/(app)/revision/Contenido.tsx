@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { CLAVE_REVISION } from "@/components/CargarCapturas";
+import { CLAVE_REVISION } from "@/lib/carga";
 import { Alerta, Check } from "@/components/iconos";
 import { Aviso, ChipTramo, EstadoPedido } from "@/components/ui";
 import { confirmarJornada } from "./acciones";

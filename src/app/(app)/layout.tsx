@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { Armazon } from "@/components/Armazon";
+import { ServicioPWA } from "@/components/ServicioPWA";
 import { Alerta } from "@/components/iconos";
 import { hoyEnLima } from "@/lib/fechas";
 import { perfilActual, suscripcionVigente } from "@/lib/supabase/servidor";
@@ -49,6 +50,7 @@ export default async function LayoutApp({ children }: { children: React.ReactNod
         </div>
       )}
       {children}
+      <ServicioPWA />
     </Armazon>
   );
 }
