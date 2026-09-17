@@ -1,8 +1,11 @@
 import Link from "next/link";
 
+import { BotonesExportar } from "@/components/BotonesExportar";
 import { Aviso, ChipTramo, EstadoPedido, Vacio } from "@/components/ui";
-import { Hoja } from "@/components/iconos";
-import { jornadasPorRango } from "@/lib/db/jornadas";
+import { buscarPedidos, jornadasPorRango, reglaVigente } from "@/lib/db/jornadas";
+import { clienteServidor, perfilActual } from "@/lib/supabase/servidor";
+import { horasDePermanencia, montoPorPermanencia } from "@/lib/pagos/reglas";
+import type { DatosExportacion } from "@/lib/exportar/datos";
 import {
   diasEntre,
   formatearDuracion,
@@ -51,15 +54,73 @@ function limites(id: IdRango, hoy: FechaISO): [FechaISO, FechaISO] {
 export default async function PaginaHistorial({
   searchParams,
 }: {
-  searchParams: Promise<{ rango?: string; vista?: string }>;
+  searchParams: Promise<{ rango?: string; vista?: string; buscar?: string }>;
 }) {
   const params = await searchParams;
   const rango = (RANGOS.find((r) => r.id === params.rango)?.id ?? "semana") as IdRango;
   const vista = params.vista === "dia" ? "dia" : "pedidos";
+  const buscado = (params.buscar ?? "").trim();
 
   const hoy = hoyEnLima();
   const [desde, hasta] = limites(rango, hoy);
-  const jornadas = await jornadasPorRango(desde, hasta);
+  const [jornadas, perfil] = await Promise.all([
+    jornadasPorRango(desde, hasta),
+    perfilActual(),
+  ]);
+  const { regla } = await reglaVigente(hasta, perfil?.tienda_id ?? null);
+
+  let nombreTienda: string | null = null;
+  if (perfil?.tienda_id) {
+    const supabase = await clienteServidor();
+    const { data } = await supabase
+      .from("tiendas")
+      .select("nombre")
+      .eq("id", perfil.tienda_id)
+      .maybeSingle();
+    nombreTienda = (data?.nombre as string | undefined) ?? null;
+  }
+
+  /* Los datos del archivo se arman aquí y el celular genera el Excel o el PDF.
+     Se exporta exactamente lo que está filtrado en pantalla (§11). */
+  const datosExportacion: DatosExportacion = {
+    driver: perfil?.nombre ?? "",
+    tienda: nombreTienda,
+    desde,
+    hasta,
+    jornadas: jornadas.map((j) => {
+      const horarios = new Map(
+        j.rutas.map((r) => [r.numero, `${r.horaInicio ?? "--:--"}–${r.horaFin ?? "--:--"}`]),
+      );
+      const montoPedidos = j.ordenes.reduce((s, o) => s + (o.montoCentimos ?? 0), 0);
+      const permanencia = montoPorPermanencia(regla, j.horaEntrada, j.horaSalida) ?? 0;
+      return {
+        fecha: j.fecha,
+        rutas: j.rutas.map((r) => ({
+          numero: r.numero,
+          horaInicio: r.horaInicio,
+          horaFin: r.horaFin,
+          duracionMin: r.duracionMin,
+          pedidos: j.ordenes.filter((o) => o.ruta === r.numero).length,
+        })),
+        pedidos: j.ordenes.map((o) => ({
+          posicion: o.posicion,
+          codigo: o.codigo,
+          ruta: o.ruta,
+          horarioRuta: o.ruta !== null ? (horarios.get(o.ruta) ?? null) : null,
+          estado: o.estado,
+          tramo: o.tramo,
+          km: o.km,
+          montoCentimos: o.montoCentimos ?? 0,
+        })),
+        minutosEnRuta: j.rutas.reduce((s, r) => s + (r.duracionMin ?? 0), 0),
+        montoPedidosCentimos: montoPedidos,
+        montoPermanenciaCentimos: permanencia,
+        montoCentimos: Math.max(montoPedidos, permanencia),
+        horasPermanencia: horasDePermanencia(j.horaEntrada, j.horaSalida),
+        pagaPor: permanencia > montoPedidos ? ("permanencia" as const) : ("pedidos" as const),
+      };
+    }),
+  };
 
   const porFecha = new Map(jornadas.map((j) => [j.fecha, j]));
   const todosLosDias = rangoDeFechas(desde, hasta);
@@ -121,6 +182,31 @@ export default async function PaginaHistorial({
           </Link>
         ))}
       </div>
+
+      {/* §10, utilidades — la consulta de "la tienda me pregunta por este
+          pedido": dice en qué fecha fue, en qué ruta y con qué horario. */}
+      <form method="get" action="/historial" className="flex flex-wrap gap-2">
+        <input type="hidden" name="rango" value={rango} />
+        <input type="hidden" name="vista" value={vista} />
+        <input
+          type="search"
+          name="buscar"
+          defaultValue={buscado}
+          placeholder="Buscar un pedido por su código"
+          aria-label="Buscar un pedido por su código"
+          className="min-h-11 min-w-48 flex-1 rounded-btn border border-linea-fuerte bg-sup px-4 font-mono text-base"
+        />
+        <button type="submit" className="boton-sec">
+          Buscar
+        </button>
+        {buscado !== "" && (
+          <Link href={`/historial?rango=${rango}&vista=${vista}`} className="boton-sec">
+            Limpiar
+          </Link>
+        )}
+      </form>
+
+      {buscado !== "" && <ResultadosBusqueda texto={buscado} />}
 
       <div className="grid grid-cols-2 gap-3 rounded-card bg-sup-2 px-4 py-3 sm:grid-cols-4">
         <Resumen etiqueta="Pedidos" valor={String(totales.pedidos)} />
@@ -188,8 +274,10 @@ export default async function PaginaHistorial({
                   }),
                   <tr key={`sub-${j.id}`} className="subtotal">
                     <td colSpan={7}>
-                      Subtotal {nombreDelDia(j.fecha)} {formatearFecha(j.fecha)} ·{" "}
-                      {j.ordenes.length} pedidos · {j.rutas.length} rutas
+                      <Link href={`/jornada/${j.fecha}`} className="hover:text-acento">
+                        Subtotal {nombreDelDia(j.fecha)} {formatearFecha(j.fecha)} ·{" "}
+                        {j.ordenes.length} pedidos · {j.rutas.length} rutas
+                      </Link>
                     </td>
                     <td className="num">{formatearSoles(montoDia)}</td>
                   </tr>,
@@ -227,9 +315,10 @@ export default async function PaginaHistorial({
             const minutos = j.rutas.reduce((s, r) => s + (r.duracionMin ?? 0), 0);
             const monto = j.ordenes.reduce((s, o) => s + (o.montoCentimos ?? 0), 0);
             return (
-              <div
+              <Link
                 key={fecha}
-                className="flex items-center gap-3 rounded-card border border-linea bg-sup px-4 py-3"
+                href={`/jornada/${fecha}`}
+                className="flex items-center gap-3 rounded-card border border-linea bg-sup px-4 py-3 hover:bg-sup-2"
               >
                 <span className="flex w-[86px] shrink-0 flex-col">
                   <b className="text-sm font-bold capitalize">{nombreDelDia(fecha).slice(0, 3)}</b>
@@ -254,26 +343,13 @@ export default async function PaginaHistorial({
                   </span>
                 </span>
                 <span className="monto text-sm">{formatearSoles(monto)}</span>
-              </div>
+              </Link>
             );
           })}
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2">
-        <button type="button" className="boton-sec flex-1" disabled>
-          <Hoja className="size-4" />
-          Exportar Excel
-        </button>
-        <button type="button" className="boton-sec flex-1" disabled>
-          <Hoja className="size-4" />
-          Exportar PDF
-        </button>
-      </div>
-      <p className="text-xs text-tinta-3">
-        La exportación a Excel y PDF llega en la Fase 2. Los botones quedan a la vista para que la
-        pantalla sea la definitiva.
-      </p>
+      <BotonesExportar datos={datosExportacion} />
     </div>
   );
 }
@@ -284,5 +360,62 @@ function Resumen({ etiqueta, valor }: { etiqueta: string; valor: string }) {
       <span className="text-[10px] tracking-wide text-tinta-3 uppercase">{etiqueta}</span>
       <span className="font-mono text-sm font-medium tabular-nums">{valor}</span>
     </div>
+  );
+}
+
+async function ResultadosBusqueda({ texto }: { texto: string }) {
+  if (texto.length < 3) {
+    return <Vacio>Escribe al menos tres caracteres del código.</Vacio>;
+  }
+
+  const encontrados = await buscarPedidos(texto);
+  if (encontrados.length === 0) {
+    return <Vacio>Ningún pedido tuyo coincide con «{texto}».</Vacio>;
+  }
+
+  return (
+    <section className="flex flex-col gap-2">
+      <span className="rotulo">
+        {encontrados.length} pedido{encontrados.length === 1 ? "" : "s"} con «{texto}»
+      </span>
+      <div className="overflow-x-auto rounded-card bg-sup">
+        <table className="tabla min-w-[560px]">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Fecha</th>
+              <th className="num">Ruta</th>
+              <th>Horario de ruta</th>
+              <th>Estado</th>
+              <th className="num">Monto</th>
+            </tr>
+          </thead>
+          <tbody>
+            {encontrados.map((p) => (
+              <tr key={`${p.fecha}-${p.codigo}`}>
+                <td>
+                  <span className="codigo">{p.codigo}</span>
+                </td>
+                <td className="whitespace-nowrap">
+                  <Link href={`/jornada/${p.fecha}`} className="hover:text-acento">
+                    {nombreDelDia(p.fecha).slice(0, 3)} {formatearFecha(p.fecha)}
+                  </Link>
+                </td>
+                <td className="num">{p.ruta ?? "—"}</td>
+                <td>
+                  <span className="codigo whitespace-nowrap">
+                    {p.horaInicio && p.horaFin ? `${p.horaInicio}–${p.horaFin}` : "—"}
+                  </span>
+                </td>
+                <td>
+                  <EstadoPedido estado={p.estado} />
+                </td>
+                <td className="num">{formatearSoles(p.montoCentimos ?? 0)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }

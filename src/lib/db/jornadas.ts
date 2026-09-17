@@ -424,3 +424,63 @@ export async function registrarCarga(datos: {
     tokens_salida: datos.tokensSalida,
   });
 }
+
+/**
+ * Busca pedidos por código (§10, utilidades).
+ *
+ * Es la consulta de "la tienda me pregunta por este pedido": devuelve en qué
+ * fecha fue, en qué ruta y con qué horario. Busca por coincidencia parcial
+ * porque casi nunca se tiene el código entero a mano.
+ */
+export interface PedidoEncontrado {
+  codigo: string;
+  fecha: FechaISO;
+  ruta: number | null;
+  horaInicio: string | null;
+  horaFin: string | null;
+  estado: string;
+  tramo: number;
+  montoCentimos: number | null;
+}
+
+export async function buscarPedidos(texto: string): Promise<PedidoEncontrado[]> {
+  const limpio = texto.trim();
+  if (limpio.length < 3) return [];
+
+  const supabase = await clienteServidor();
+  const { data, error } = await supabase
+    .from("ordenes")
+    .select(
+      `codigo, estado, tramo, monto,
+       jornadas!inner ( fecha ),
+       rutas ( numero, hora_inicio, hora_fin )`,
+    )
+    // `%` y `_` son comodines de LIKE: se escapan para que un código con
+    // guion bajo no se convierta en una búsqueda abierta.
+    .ilike("codigo", `%${limpio.replace(/[%_\\]/g, "\\$&")}%`)
+    .limit(50);
+
+  if (error) throw new Error(`No se pudo buscar el pedido: ${error.message}`);
+
+  return ((data ?? []) as FilaCruda[])
+    .map((fila) => {
+      const jornada = fila.jornadas as FilaCruda | FilaCruda[] | null;
+      const j = Array.isArray(jornada) ? jornada[0] : jornada;
+      const ruta = fila.rutas as FilaCruda | FilaCruda[] | null;
+      const r = Array.isArray(ruta) ? ruta[0] : ruta;
+
+      return {
+        codigo: fila.codigo as string,
+        fecha: (j?.fecha as FechaISO) ?? "",
+        ruta: r ? aNumero(r.numero) : null,
+        horaInicio: recortarHora((r?.hora_inicio as string | null) ?? null),
+        horaFin: recortarHora((r?.hora_fin as string | null) ?? null),
+        estado: fila.estado as string,
+        tramo: aNumero(fila.tramo) || 1,
+        montoCentimos:
+          fila.monto === null || fila.monto === undefined ? null : aCentimos(Number(fila.monto)),
+      };
+    })
+    .filter((p) => p.fecha !== "")
+    .sort((a, b) => b.fecha.localeCompare(a.fecha));
+}

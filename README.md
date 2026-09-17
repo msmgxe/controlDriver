@@ -63,7 +63,8 @@ src/
     (app)/                    App del driver — dirección visual Moderna
       page.tsx                Hoy: la única acción diaria
       revision/               Revisión de la carga, tramo por pedido
-      historial/              Listado en tabla y vista por día
+      historial/              Listado en tabla, vista por día y búsqueda por código
+      jornada/[fecha]/        Detalle de un día: corregir tramos, horario o borrar
       pagos/                  Semana en curso, cierre y conciliación
       estadisticas/           Gráfico por día, tiempos, ingresos y récords
       ajustes/                Bloqueo con PIN y huella
@@ -76,11 +77,12 @@ src/
     fechas.ts                 Fechas de jornada, semanas lunes–domingo, Lima
     bloqueo.ts                PIN y huella locales del dispositivo
     limites.ts                Límite de gasto de API por usuario
+    exportar/                 Excel (ExcelJS) y PDF (jsPDF), generados en el celular
     extraccion/               Prompt, esquema Zod, fusión y validaciones
     pagos/                    Tarifas por tramo, permanencia y liquidación semanal
     db/                       Consultas y escrituras, todas bajo RLS
     supabase/                 Clientes de navegador, servidor y service role
-  proxy.ts                    Protección de rutas (en Next 16 sustituye a middleware.ts)
+  proxy.ts                    Protección de rutas y CSP con nonce (en Next 16 sustituye a middleware.ts)
 supabase/schema.sql           Esquema, RLS y tarifa inicial
 ```
 
@@ -103,6 +105,9 @@ supabase/schema.sql           Esquema, RLS y tarifa inicial
   vigente. Nunca se acepta el importe que manda el cliente.
 - **El admin no ve los datos de trabajo de nadie.** Solo cuentas y uso. Está en
   §12 como argumento de venta y lo hacen cumplir las políticas RLS.
+- **La CSP lleva nonce por petición** y se arma en `proxy.ts`, no en
+  `next.config.ts`, porque cambia en cada request. Los estilos en línea sí se
+  permiten: el gráfico calcula alturas con atributos `style`.
 - **Las capturas no se guardan.** Se comprimen en el celular —lo que de paso
   borra el EXIF y la ubicación—, se procesan en memoria y se descartan.
 
@@ -112,12 +117,12 @@ supabase/schema.sql           Esquema, RLS y tarifa inicial
 |---|---|---|
 | 0 | Prototipo navegable | Hecho |
 | 1 | Login, RLS, carga, extracción, fusión, validación, revisión, guardado | Hecho |
-| 2 | Historial, listado por rango | Hecho. Falta la exportación a Excel y PDF |
+| 2 | Historial, detalle de jornada, edición, listado por rango, exportación | Hecho |
 | 3 | Gestión de usuarios (admin) | Hecho |
 | 4 | Pagos semanales: cálculo, cierre, conciliación | Hecho |
-| 5 | Estadísticas y récords | Hecho. Falta la exportación a PDF |
+| 5 | Estadísticas y récords | Hecho. Falta exportar los gráficos a PDF |
 | 6 | PWA: manifest e iconos hechos. Faltan service worker, share target y offline | Parcial |
-| 7 | Endurecimiento: rate limit hecho. Faltan cabeceras CSP, E2E y retención de imágenes | Parcial |
+| 7 | Endurecimiento: rate limit y cabeceras hechos. Faltan E2E y retención de imágenes | Parcial |
 
 ## Pruebas
 

@@ -241,6 +241,15 @@ se paga por las horas que se registren, truncadas hacia abajo.
 - **El dinero va en céntimos enteros** en todo el cálculo
   (`src/lib/pagos/reglas.ts`). Los decimales aparecen solo al formatear para
   pantalla o al escribir en una columna `numeric`. Hay una prueba que lo fija.
+- **ExcelJS arrastra un aviso de `npm audit`** por su dependencia de `uuid`:
+  falta una comprobación de límites en v3/v5/v6 *cuando se pasa un `buf`*.
+  ExcelJS no pasa ninguno, así que no nos afecta; arreglarlo obligaría a bajar a
+  exceljs@3, que es una ruptura. Se deja anotado en vez de forzar el downgrade.
+- **La CSP está en `proxy.ts`, no en `next.config.ts`**, porque lleva un nonce
+  distinto en cada petición. `style-src` permite `'unsafe-inline'` a propósito:
+  el gráfico de Estadísticas calcula la altura de cada barra con un atributo
+  `style`, y un atributo de estilo no ejecuta código. `Permissions-Policy` deja
+  `publickey-credentials-get=(self)` porque es el desbloqueo por huella.
 - **El editor puede marcar errores de sintaxis en `supabase/schema.sql`.** Son
   falsos positivos de un analizador de T-SQL (SQL Server) leyendo PostgreSQL:
   `create extension`, `create table if not exists` y `create policy` son válidos
