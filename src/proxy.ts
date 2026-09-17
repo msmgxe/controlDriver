@@ -1,6 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { revisarConfiguracion } from "@/lib/configuracion";
+
 /**
  * Protección de rutas y cabeceras de seguridad (§7).
  *
@@ -18,7 +20,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * CDN y conviene que no dependa de una consulta a la base en cada petición.
  */
 
-const RUTAS_PUBLICAS = ["/acceso", "/auth"];
+const RUTAS_PUBLICAS = ["/acceso", "/auth", "/configuracion", "/sin-conexion"];
 
 export async function proxy(request: NextRequest) {
   /* --- 1. CSP con nonce (§7) ---
@@ -51,6 +53,19 @@ export async function proxy(request: NextRequest) {
   cabecerasPeticion.set("Content-Security-Policy", csp);
 
   let respuesta = NextResponse.next({ request: { headers: cabecerasPeticion } });
+
+  /* --- 1b. ¿Está configurado el entorno? ---
+     Sin las claves de Supabase el cliente lanza al construirse y todo acabaría
+     en un 500 sin explicación. Mejor una pantalla que diga qué falta: así se
+     puede desplegar y abrir la app en el celular antes de tener la base. */
+  const configuracion = revisarConfiguracion();
+  if (!configuracion.completa) {
+    if (request.nextUrl.pathname === "/configuracion") return conCabeceras(respuesta, csp);
+    const destino = request.nextUrl.clone();
+    destino.pathname = "/configuracion";
+    destino.search = "";
+    return conCabeceras(NextResponse.redirect(destino), csp);
+  }
 
   /* --- 2. Sesión de Supabase --- */
   const supabase = createServerClient(

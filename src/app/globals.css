@@ -164,6 +164,37 @@
   }
 }
 
+
+/* ---------------------------------------------------------------------------
+   Tema claro forzado.
+   §10 pide que las estadísticas se exporten siempre en tema claro, aunque la
+   app esté en oscuro: un PDF con fondo negro es ilegible impreso y gasta tinta.
+   Se aplica a un elemento cualquiera —no solo a :root— para poder forzarlo en
+   el bloque que se va a capturar sin tocar el resto de la pantalla.
+   --------------------------------------------------------------------------- */
+[data-tema="claro"] {
+  --papel: #eff3f2;
+  --sup: #ffffff;
+  --sup-2: #e7efed;
+  --tinta: #0c1a18;
+  --tinta-2: #465956;
+  --tinta-3: #7a8b88;
+  --linea: #dce6e4;
+  --linea-fuerte: #c2d2cf;
+  --acento: #0e9488;
+  --acento-tinta: #0a6f66;
+  --acento-suave: #d7edea;
+  --acento-texto: #ffffff;
+  --barra: #0e9488;
+  --barra-extra: #57b8ae;
+  --bien: #0e8a5f;
+  --bien-suave: #dcf2e8;
+  --aviso: #a3690a;
+  --aviso-suave: #fbf0da;
+  --mal: #c0392f;
+  --mal-suave: #fbe7e4;
+}
+
 @theme inline {
   --color-papel: var(--papel);
   --color-sup: var(--sup);

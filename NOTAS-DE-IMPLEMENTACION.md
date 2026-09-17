@@ -245,6 +245,9 @@ se paga por las horas que se registren, truncadas hacia abajo.
   falta una comprobación de límites en v3/v5/v6 *cuando se pasa un `buf`*.
   ExcelJS no pasa ninguno, así que no nos afecta; arreglarlo obligaría a bajar a
   exceljs@3, que es una ruptura. Se deja anotado en vez de forzar el downgrade.
+- **Sin las variables de entorno la app no revienta**, muestra `/configuracion`
+  diciendo cuáles faltan. Además de ser más útil que un 500, permite desplegar
+  y abrir la app en el celular para probar la PWA antes de tener la base montada.
 - **El service worker está escrito a mano, sin Serwist.** §3 nombraba Serwist,
   pero no funciona con Turbopack, que es el bundler por defecto de Next 16
   (issue abierto en su repo). La alternativa era forzar `next build --webpack` y

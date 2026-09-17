@@ -72,6 +72,7 @@ src/
     admin/                    Panel web — dirección visual Profesional
     api/extraer/              Llamada al modelo de visión, una por imagen
     globals.css               Tokens de diseño de §9, las dos superficies
+    configuracion/            Qué variables faltan, en vez de un 500 sin explicación
     compartir/                Destino de compartir de Android: galería → RutaLog
     sin-conexion/             Lo que sirve el service worker cuando no hay red
   components/                 Armazón, gráfico, tablas, piezas comunes
@@ -87,6 +88,7 @@ src/
   proxy.ts                    Protección de rutas y CSP con nonce (en Next 16 sustituye a middleware.ts)
 public/sw.js                  Service worker escrito a mano (Serwist no soporta Turbopack)
 supabase/schema.sql           Esquema, RLS y tarifa inicial
+supabase/verificar-rls.sql    Comprueba que un driver no ve nada de otro (§15)
 ```
 
 ## Decisiones que conviene conocer antes de tocar el código
@@ -125,9 +127,20 @@ supabase/schema.sql           Esquema, RLS y tarifa inicial
 | 2 | Historial, detalle de jornada, edición, listado por rango, exportación | Hecho |
 | 3 | Gestión de usuarios (admin) | Hecho |
 | 4 | Pagos semanales: cálculo, cierre, conciliación | Hecho |
-| 5 | Estadísticas y récords | Hecho. Falta exportar los gráficos a PDF |
+| 5 | Estadísticas, récords y exportación a PDF | Hecho |
 | 6 | PWA: instalación, service worker, offline, share target y aviso de versión | Hecho |
-| 7 | Endurecimiento: rate limit y cabeceras hechos. Faltan E2E y retención de imágenes | Parcial |
+| 7 | Endurecimiento: rate limit, cabeceras y verificación de RLS. Falta la retención opcional de imágenes | Casi |
+
+## Verificar la RLS
+
+Es la garantía más importante de la app y la que peor se detecta a ojo: una
+política mal escrita no da error, simplemente devuelve datos que no debería.
+
+Pega `supabase/verificar-rls.sql` entero en el SQL Editor de Supabase. Monta dos
+drivers de prueba, actúa como uno de ellos y comprueba diez cosas —que no ve las
+jornadas del otro, que no encuentra sus pedidos buscando por código, que no
+puede modificarlos ni suplantarlo—. Corta con error si alguna falla y hace
+rollback siempre: no deja nada.
 
 ## Pruebas
 

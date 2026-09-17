@@ -1,9 +1,11 @@
 import Link from "next/link";
 
+import { ExportarEstadisticas } from "@/components/ExportarEstadisticas";
 import { GraficoDias, type DiaGrafico } from "@/components/GraficoDias";
 import { Reloj, Subir, Trofeo } from "@/components/iconos";
 import { Aviso, Cifras, Vacio } from "@/components/ui";
 import { jornadasPorRango } from "@/lib/db/jornadas";
+import { perfilActual } from "@/lib/supabase/servidor";
 import {
   formatearDuracion,
   formatearFecha,
@@ -42,7 +44,10 @@ export default async function PaginaEstadisticas({
 
   const hoy = hoyEnLima();
   const [desde, hasta] = limites(rango, hoy);
-  const jornadas = await jornadasPorRango(desde, hasta);
+  const [jornadas, perfil] = await Promise.all([
+    jornadasPorRango(desde, hasta),
+    perfilActual(),
+  ]);
 
   if (jornadas.length === 0) {
     return (
@@ -123,7 +128,7 @@ export default async function PaginaEstadisticas({
         ))}
       </div>
 
-      <div className="tarjeta">
+      <div className="tarjeta" id="bloque-grafico">
         <GraficoDias dias={dias} />
       </div>
 
@@ -133,7 +138,8 @@ export default async function PaginaEstadisticas({
         </Aviso>
       )}
 
-      <Cifras
+      <div id="bloque-cifras">
+        <Cifras
         datos={[
           { etiqueta: "Pedidos", valor: String(totalPedidos) },
           { etiqueta: "Soles", valor: (totalCentimos / 100).toFixed(2) },
@@ -144,9 +150,10 @@ export default async function PaginaEstadisticas({
             pie: "ped.",
           },
         ]}
-      />
+        />
+      </div>
 
-      <div className="grid gap-4 md:grid-cols-2 md:items-start">
+      <div className="grid gap-4 md:grid-cols-2 md:items-start" id="bloque-detalle">
         <section className="tarjeta">
           <span className="rotulo">Tiempos</span>
           <dl className="mt-2 flex flex-col">
@@ -195,7 +202,7 @@ export default async function PaginaEstadisticas({
         </section>
       </div>
 
-      <section className="tarjeta">
+      <section className="tarjeta" id="bloque-records">
         <span className="rotulo">Récords</span>
         <div className="mt-3 flex flex-col gap-3">
           <Record
@@ -215,6 +222,50 @@ export default async function PaginaEstadisticas({
           />
         </div>
       </section>
+
+      <ExportarEstadisticas
+        driver={perfil?.nombre ?? ""}
+        desde={desde}
+        hasta={hasta}
+        cifras={[
+          { etiqueta: "Pedidos", valor: String(totalPedidos) },
+          { etiqueta: "Soles", valor: formatearSoles(totalCentimos) },
+          { etiqueta: "Días trabajados", valor: String(cargados.length) },
+          {
+            etiqueta: "Promedio por día",
+            valor: `${(totalPedidos / cargados.length).toFixed(1)} pedidos`,
+          },
+          { etiqueta: "Tiempo en ruta", valor: formatearDuracion(totalMinutos) },
+          {
+            etiqueta: "Por pedido",
+            valor: totalPedidos ? formatearSoles(Math.round(totalCentimos / totalPedidos)) : "—",
+          },
+        ]}
+        bloques={[
+          {
+            id: "bloque-grafico",
+            titulo: "Pedidos y soles por día",
+            lectura:
+              "La altura de cada barra son los pedidos del día y la etiqueta de abajo, los soles. El segmento superior en otro tono son los pedidos que pasaron de 3 km. Los huecos con marca tenue son días sin carga, no días sin trabajo.",
+          },
+          {
+            id: "bloque-cifras",
+            titulo: "Totales del rango",
+            lectura: "Lo que suma el periodo consultado.",
+          },
+          {
+            id: "bloque-detalle",
+            titulo: "Tiempos e ingresos",
+            lectura:
+              "Los minutos por pedido son una estimación: las capturas traen la hora de la ruta, no la de cada pedido.",
+          },
+          {
+            id: "bloque-records",
+            titulo: "Récords",
+            lectura: "Lo mejor del periodo consultado.",
+          },
+        ]}
+      />
     </div>
   );
 }
