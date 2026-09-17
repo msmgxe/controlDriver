@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
   }
 
   const jornada = fusionarCapturas(validas);
-  const { regla } = await reglaVigente(jornada.fecha ?? hoy);
+  const { regla } = await reglaVigente(jornada.fecha ?? hoy, perfil.tienda_id);
   const previos = await codigosYaRegistrados(jornada.ordenes.map((o) => o.codigo));
   const alertas = validarJornada(jornada, { hoy, codigosEnOtrasFechas: previos });
 
@@ -172,6 +172,13 @@ export async function POST(request: NextRequest) {
     },
     alertas,
     regla,
+    // Las horas de permanencia no salen de las capturas: se proponen desde el
+    // horario del perfil y el driver las corrige si ese día fue distinto.
+    permanencia: {
+      tiendaId: perfil.tienda_id,
+      horaEntrada: perfil.hora_entrada ? perfil.hora_entrada.slice(0, 5) : null,
+      horaSalida: perfil.hora_salida ? perfil.hora_salida.slice(0, 5) : null,
+    },
     imagenesLeidas: validas.length,
     imagenesDescartadas: descartadas.length + resultados.filter((r) => r === null).length,
     uso: { modelo: MODELO, tokensEntrada, tokensSalida },

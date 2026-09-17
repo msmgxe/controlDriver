@@ -14,6 +14,8 @@ import {
   REGLA_INICIAL,
   TRAMO_MAS_DE_12_KM,
   formatearSoles,
+  horasDePermanencia,
+  montoPorPermanencia,
   pagoDelTramo,
   type ReglaPago,
 } from "@/lib/pagos/reglas";
@@ -37,6 +39,12 @@ interface RespuestaExtraccion {
   };
   alertas: AlertaValidacion[];
   regla: ReglaPago;
+  /** Horario propuesto desde el perfil; el driver lo corrige si el día cambió. */
+  permanencia: {
+    tiendaId: string | null;
+    horaEntrada: string | null;
+    horaSalida: string | null;
+  } | null;
   imagenesLeidas: number;
   imagenesDescartadas: number;
   uso: { modelo: string; tokensEntrada: number; tokensSalida: number } | null;
@@ -81,6 +89,8 @@ export function Contenido() {
       montoManualCentimos: null,
     })),
   );
+  const [horaEntrada, setHoraEntrada] = useState(() => datos?.permanencia?.horaEntrada ?? "");
+  const [horaSalida, setHoraSalida] = useState(() => datos?.permanencia?.horaSalida ?? "");
   const [editando, setEditando] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,8 +105,17 @@ export function Contenido() {
     [regla],
   );
 
-  const total = pedidos.reduce((acc, p) => acc + montoDe(p), 0);
+  const totalPedidos = pedidos.reduce((acc, p) => acc + montoDe(p), 0);
   const fueraTramo1 = pedidos.filter((p) => p.tramo > 1).length;
+
+  /* Garantía por permanencia (§13 bis): la tienda paga por hora de presencia y
+     al cerrar el día paga el MAYOR de los dos. No se suman: compiten. */
+  const pagaPermanencia = Boolean(regla.garantiaPermanencia?.activa);
+  const horasEnTienda = horasDePermanencia(horaEntrada || null, horaSalida || null);
+  const montoPermanencia =
+    montoPorPermanencia(regla, horaEntrada || null, horaSalida || null) ?? 0;
+  const ganaPermanencia = montoPermanencia > totalPedidos;
+  const total = Math.max(totalPedidos, montoPermanencia);
   const sinTarifar = pedidos.filter(
     (p) => p.tramo === TRAMO_MAS_DE_12_KM && p.montoManualCentimos === null,
   );
@@ -141,6 +160,8 @@ export function Contenido() {
       ordenesDeclaradas: jornada.contadorOrdenes,
       validacionOk: bloqueos.length === 0,
       modo: "reemplazar",
+      horaEntrada: horaEntrada || null,
+      horaSalida: horaSalida || null,
       rutas: jornada.rutas.map((r) => ({
         numero: r.numero,
         estado: r.estado,
@@ -245,6 +266,93 @@ export function Contenido() {
         </div>
         <span className="rotulo">{fueraTramo1} fuera del tramo 1</span>
       </div>
+
+      {/* §13 bis — permanencia en tienda.
+          Las horas no vienen de las capturas: se proponen desde el horario del
+          perfil y se corrigen aquí el día que se entre tarde o se salga antes. */}
+      {pagaPermanencia && (
+        <section className="flex flex-col gap-3 rounded-card bg-sup-2 p-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <span className="rotulo">Permanencia en tienda</span>
+            <span className="text-xs text-tinta-3">
+              {formatearSoles(Math.round((regla.garantiaPermanencia?.solesPorHora ?? 0) * 100))} por
+              hora
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="hora-entrada" className="text-sm font-semibold">
+                Entrada
+              </label>
+              <input
+                id="hora-entrada"
+                type="time"
+                value={horaEntrada}
+                onChange={(e) => setHoraEntrada(e.target.value)}
+                className="min-h-11 rounded-btn border border-linea-fuerte bg-sup px-3 font-mono text-base"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="hora-salida" className="text-sm font-semibold">
+                Salida
+              </label>
+              <input
+                id="hora-salida"
+                type="time"
+                value={horaSalida}
+                onChange={(e) => setHoraSalida(e.target.value)}
+                className="min-h-11 rounded-btn border border-linea-fuerte bg-sup px-3 font-mono text-base"
+              />
+            </div>
+            <p className="pb-2 text-sm text-tinta-2">
+              {horasEnTienda > 0
+                ? `${horasEnTienda} h → ${formatearSoles(montoPermanencia)}`
+                : "Pon tu horario para que cuente la permanencia."}
+            </p>
+          </div>
+
+          {/* Se paga el mayor de los dos, no la suma. Decirlo así evita que
+              alguien lea el total como si fuera pedidos + permanencia. */}
+          <dl className="flex flex-col border-t border-linea pt-3">
+            <div className="flex items-baseline justify-between gap-3 py-1 text-sm">
+              <dt className={ganaPermanencia ? "text-tinta-3" : "font-semibold"}>Por pedidos</dt>
+              <dd
+                className={`font-mono tabular-nums ${ganaPermanencia ? "text-tinta-3 line-through" : "font-semibold"}`}
+              >
+                {formatearSoles(totalPedidos)}
+              </dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-3 py-1 text-sm">
+              <dt className={ganaPermanencia ? "font-semibold" : "text-tinta-3"}>
+                Por permanencia
+              </dt>
+              <dd
+                className={`font-mono tabular-nums ${ganaPermanencia ? "font-semibold" : "text-tinta-3 line-through"}`}
+              >
+                {formatearSoles(montoPermanencia)}
+              </dd>
+            </div>
+          </dl>
+
+          {ganaPermanencia ? (
+            <Aviso tono="bien" titulo="Hoy te cubre la permanencia">
+              <p>
+                Tus pedidos suman {formatearSoles(totalPedidos)}, por debajo del piso de{" "}
+                {formatearSoles(montoPermanencia)}. Cobras el piso: la diferencia son{" "}
+                {formatearSoles(montoPermanencia - totalPedidos)} a tu favor.
+              </p>
+            </Aviso>
+          ) : (
+            horasEnTienda > 0 && (
+              <p className="text-sm text-tinta-2">
+                Los pedidos superan el piso de {formatearSoles(montoPermanencia)}, así que cobras por
+                pedido. Se paga el mayor de los dos, nunca la suma.
+              </p>
+            )
+          )}
+        </section>
+      )}
 
       <p className="text-sm text-tinta-2">
         Todos los pedidos entran en el tramo 1 (0 a 3 km). Toca solo los que pasaron de 3 km.

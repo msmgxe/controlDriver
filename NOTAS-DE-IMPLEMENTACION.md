@@ -168,7 +168,57 @@ de los últimos 14 días, costo de API por driver y vigencia de la suscripción.
 
 ---
 
-## 7. Cosas de §17 que siguen abiertas
+---
+
+## 7. Garantía por permanencia en tienda — regla nueva, no está en §13
+
+**Qué dice §13:** el pago es por pedido según su tramo de distancia, y punto.
+
+**Qué falta en §13:** cada tienda tiene además sus propias reglas, y la de
+**Wong - Aldabas** paga por permanencia. Es un **piso**, no un extra.
+
+| | Pedidos | Permanencia (13 h × S/ 10) | Se cobra |
+|---|---|---|---|
+| Día bueno: 14 pedidos | S/ 141.50 | S/ 130.00 | **S/ 141.50** |
+| Día flojo: 11 pedidos | S/ 110.00 | S/ 130.00 | **S/ 130.00** |
+
+Lo importante, porque es fácil leerlo mal: **no se suman, compiten.** Un día de
+11 pedidos con 13 horas de permanencia paga S/ 130, no S/ 240.
+
+**Cómo quedó implementado**
+
+- **La comparación es día a día**, no sobre el total de la semana. Importa: si
+  se comparase por semana, un día muy bueno taparía el piso de uno flojo y se
+  perdería dinero. Hay una prueba que fija esa diferencia.
+- **Las horas se cuentan completas, hacia abajo.** De 9:00 a 21:30 son 12 h, no
+  12.5. `horasDePermanencia` trunca.
+- **Las horas no salen de las capturas.** Las capturas traen horarios de *ruta*,
+  no de permanencia. Vienen del horario del perfil, que el driver hereda en cada
+  jornada y corrige en Revisión el día que entre tarde o salga antes. Sin
+  horario configurado no hay garantía: el día se paga solo por pedido.
+- **La tienda se toma del perfil en servidor**, nunca de lo que mande el
+  cliente: define qué tarifa se aplica, así que es dinero.
+
+**Cambios de modelo que trajo**
+
+- Tabla `tiendas`, que registra el administrador.
+- `reglas_pago` pasa a colgar de una tienda: `unique (tienda_id, vigente_desde)`
+  en vez de `unique (vigente_desde)`. Las tarifas ya no son globales.
+- `perfiles` gana `tienda_id`, `hora_entrada` y `hora_salida`.
+- `jornadas` gana `tienda_id`, `hora_entrada` y `hora_salida`: se guarda la
+  tienda de ese día para que cambiar de tienda no reescriba el historial.
+- La liquidación expone `montoPorPedidosCentimos` y `diasConGarantia`, para poder
+  enseñar cuánto aportó el piso. Eso es lo que sustenta un reclamo.
+
+**Ojo con el desglose por ruta.** Cuando gana la permanencia, los montos por
+ruta ya no suman el total del día: el total lo fija el piso, no los pedidos. La
+pantalla de Pagos lo enseña día a día con las dos cifras y cuál ganó, en vez de
+esconderlo.
+
+**Pendiente:** confirmar qué pasa si un día no se completa el turno. Ahora mismo
+se paga por las horas que se registren, truncadas hacia abajo.
+
+## 8. Cosas de §17 que siguen abiertas
 
 1. **Pedidos de más de 12 km.** La tabla de tarifas no los cubre. Implementado
    como `tramo = 6` con monto manual obligatorio; `calcularLiquidacion` los deja
@@ -184,7 +234,7 @@ de los últimos 14 días, costo de API por driver y vigencia de la suscripción.
 
 ---
 
-## 8. Notas técnicas
+## 9. Notas técnicas
 
 - **Next.js 16 renombró `middleware.ts` a `proxy.ts`** y la función exportada a
   `proxy`. §7 habla de "middleware"; el archivo es `src/proxy.ts`.

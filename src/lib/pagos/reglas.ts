@@ -20,19 +20,51 @@ export const esquemaTramo = z.object({
   monto: z.number().min(0),
 });
 
+/**
+ * Garantía por permanencia en tienda.
+ *
+ * La tienda paga un monto por hora de presencia y, al final del día, paga **el
+ * mayor** de los dos: lo que sumaron los pedidos o lo que suma la permanencia.
+ * No se suman: compiten. Es un piso, no un extra.
+ *
+ * Ejemplo de "Wong - Aldabas": S/ 10 por hora, horario de 9:00 a 22:00 → 13 h →
+ * piso de S/ 130. Un día de 14 pedidos paga S/ 141.50 (ganan los pedidos); uno
+ * de 11 pedidos paga S/ 130 (gana el piso).
+ *
+ * Las horas se cuentan **completas, redondeando hacia abajo**: de 9:00 a 21:30
+ * son 12 h, no 12.5.
+ */
+export const esquemaGarantiaPermanencia = z.object({
+  activa: z.boolean(),
+  solesPorHora: z.number().min(0),
+  /** Por ahora solo "diaria": cada día se compara por separado. */
+  comparacion: z.literal("diaria"),
+  /** Por ahora solo "abajo": las horas se truncan. */
+  redondeoHoras: z.literal("abajo"),
+});
+
 export const esquemaReglaPago = z.object({
   moneda: z.literal("PEN"),
   base: z.literal("por_pedido"),
   tramos: z.array(esquemaTramo).min(1),
+  /** Ausente en tiendas que no pagan permanencia. */
+  garantiaPermanencia: esquemaGarantiaPermanencia.nullish(),
 });
 
 export type Tramo = z.infer<typeof esquemaTramo>;
+export type GarantiaPermanencia = z.infer<typeof esquemaGarantiaPermanencia>;
 export type ReglaPago = z.infer<typeof esquemaReglaPago>;
 
 /**
- * Tarifa vigente al escribir esto. Vive también en `reglas_pago` con
- * `vigente_desde`, versionada: para cambiarla se inserta una fila nueva, nunca
- * se edita la anterior, para no alterar semanas ya liquidadas.
+ * Tarifa de "Wong - Aldabas", la primera tienda.
+ *
+ * Cada tienda tiene sus propias reglas y las registra el administrador; esta
+ * vive en `reglas_pago` asociada a su tienda y versionada por `vigente_desde`.
+ * Para cambiarla se inserta una fila nueva, nunca se edita la anterior, para no
+ * alterar semanas ya liquidadas.
+ *
+ * Se usa además como respaldo en código si la fila de la base llega corrupta:
+ * antes que romper un cálculo de dinero con datos a medias, se usa esto.
  */
 export const REGLA_INICIAL: ReglaPago = {
   moneda: "PEN",
@@ -44,6 +76,12 @@ export const REGLA_INICIAL: ReglaPago = {
     { id: 4, desde: 10, hasta: 11, monto: 14.5 },
     { id: 5, desde: 11, hasta: 12, monto: 16.0 },
   ],
+  garantiaPermanencia: {
+    activa: true,
+    solesPorHora: 10.0,
+    comparacion: "diaria",
+    redondeoHoras: "abajo",
+  },
 };
 
 /**
@@ -97,4 +135,47 @@ export function tramoDeKm(regla: ReglaPago, km: number): number {
   const ordenados = [...regla.tramos].sort((a, b) => a.hasta - b.hasta);
   const t = ordenados.find((x) => km <= x.hasta);
   return t ? t.id : TRAMO_MAS_DE_12_KM;
+}
+
+/* ---------------------------------------------------------------------------
+ * Permanencia en tienda
+ * ------------------------------------------------------------------------- */
+
+const aMinutos = (hora: string): number =>
+  Number(hora.slice(0, 2)) * 60 + Number(hora.slice(3, 5));
+
+/**
+ * Horas de permanencia entre dos horas `HH:MM`, **completas hacia abajo**: de
+ * 9:00 a 21:30 son 12 horas, no 12.5.
+ *
+ * Si la salida es anterior a la entrada se entiende que el turno cruzó la
+ * medianoche. Devuelve 0 si falta alguna de las dos.
+ */
+export function horasDePermanencia(
+  entrada: string | null,
+  salida: string | null,
+): number {
+  if (!entrada || !salida) return 0;
+  const inicio = aMinutos(entrada);
+  const fin = aMinutos(salida);
+  const minutos = fin >= inicio ? fin - inicio : fin + 24 * 60 - inicio;
+  return Math.floor(minutos / 60);
+}
+
+/**
+ * Céntimos que garantiza la permanencia de un día, o `null` si la tienda no
+ * paga permanencia o no se sabe el horario de ese día.
+ */
+export function montoPorPermanencia(
+  regla: ReglaPago,
+  entrada: string | null,
+  salida: string | null,
+): number | null {
+  const garantia = regla.garantiaPermanencia;
+  if (!garantia?.activa) return null;
+
+  const horas = horasDePermanencia(entrada, salida);
+  if (horas <= 0) return null;
+
+  return horas * aCentimos(garantia.solesPorHora);
 }

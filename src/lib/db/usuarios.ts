@@ -23,6 +23,11 @@ export interface UsuarioAdmin {
   rol: Rol;
   activo: boolean;
   vigenteHasta: FechaISO | null;
+  tiendaId: string | null;
+  tiendaNombre: string | null;
+  /** Horario habitual de permanencia, `HH:MM`. Sin él no hay garantía. */
+  horaEntrada: string | null;
+  horaSalida: string | null;
   ultimaCarga: string | null;
   cargasDelMes: number;
   imagenesDelMes: number;
@@ -31,12 +36,43 @@ export interface UsuarioAdmin {
 /** Costo estimado por imagen leída, para la columna de gasto. */
 export const COSTO_POR_IMAGEN_SOLES = Number(process.env.COSTO_POR_IMAGEN_SOLES ?? 0.042);
 
+/** Postgres devuelve `time` como `HH:MM:SS`; la interfaz trabaja con `HH:MM`. */
+const recortarHora = (v: string | null): string | null => (v ? v.slice(0, 5) : null);
+
+/** Postgrest devuelve la relación como objeto o como array según el caso. */
+function nombreDeTienda(v: unknown): string | null {
+  if (!v) return null;
+  const fila = Array.isArray(v) ? v[0] : v;
+  return (fila as { nombre?: string } | undefined)?.nombre ?? null;
+}
+
+export interface TiendaAdmin {
+  id: string;
+  nombre: string;
+  activa: boolean;
+}
+
+export async function listarTiendas(): Promise<TiendaAdmin[]> {
+  const admin = clienteAdmin();
+  const { data, error } = await admin
+    .from("tiendas")
+    .select("id, nombre, activa")
+    .order("nombre", { ascending: true });
+
+  if (error) throw new Error(`No se pudieron leer las tiendas: ${error.message}`);
+  return (data ?? []).map((t) => ({
+    id: t.id as string,
+    nombre: t.nombre as string,
+    activa: Boolean(t.activa),
+  }));
+}
+
 export async function listarUsuarios(): Promise<UsuarioAdmin[]> {
   const admin = clienteAdmin();
 
   const { data: perfiles, error } = await admin
     .from("perfiles")
-    .select("id, email, nombre, rol, activo, vigente_hasta")
+    .select("id, email, nombre, rol, activo, vigente_hasta, tienda_id, hora_entrada, hora_salida, tiendas ( nombre )")
     .order("nombre", { ascending: true });
 
   if (error) throw new Error(`No se pudieron leer las cuentas: ${error.message}`);
@@ -68,6 +104,10 @@ export async function listarUsuarios(): Promise<UsuarioAdmin[]> {
       rol: p.rol as Rol,
       activo: Boolean(p.activo),
       vigenteHasta: (p.vigente_hasta as FechaISO | null) ?? null,
+      tiendaId: (p.tienda_id as string | null) ?? null,
+      tiendaNombre: nombreDeTienda(p.tiendas),
+      horaEntrada: recortarHora(p.hora_entrada as string | null),
+      horaSalida: recortarHora(p.hora_salida as string | null),
       ultimaCarga: uso?.ultima ?? null,
       cargasDelMes: uso?.cargas ?? 0,
       // Una llamada por imagen: el número de cargas es el de imágenes leídas.

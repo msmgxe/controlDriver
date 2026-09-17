@@ -187,3 +187,116 @@ export async function cambiarVigencia(
     };
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * Tiendas y horarios (§13 bis)
+ *
+ * Cada tienda tiene sus propias reglas de pago. La de "Wong - Aldabas" incluye
+ * garantía por permanencia: paga por hora de presencia y al cerrar el día paga
+ * el mayor de los dos, pedidos o permanencia.
+ * ------------------------------------------------------------------------- */
+
+const RE_HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+/** Registra una tienda. Sus reglas de pago se cargan después. */
+export async function crearTienda(nombre: string): Promise<Resultado> {
+  const permiso = await soloAdmin();
+  if (!permiso.ok) return { ok: false, error: permiso.error };
+
+  const limpio = nombre.trim();
+  if (limpio.length < 2 || limpio.length > 80) {
+    return { ok: false, error: "El nombre de la tienda no es válido." };
+  }
+
+  try {
+    const admin = clienteAdmin();
+    const { error } = await admin.from("tiendas").insert({ nombre: limpio });
+    if (error) {
+      return {
+        ok: false,
+        error: error.message.includes("duplicate")
+          ? "Ya existe una tienda con ese nombre."
+          : error.message,
+      };
+    }
+    revalidatePath("/admin");
+    return {
+      ok: true,
+      mensaje: `Tienda "${limpio}" registrada. Falta cargarle sus reglas de pago.`,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "No se pudo crear la tienda.",
+    };
+  }
+}
+
+/** Asigna un driver a una tienda: define qué tarifa se le aplica. */
+export async function cambiarTienda(userId: string, tiendaId: string | null): Promise<Resultado> {
+  const permiso = await soloAdmin();
+  if (!permiso.ok) return { ok: false, error: permiso.error };
+
+  try {
+    const admin = clienteAdmin();
+    const { error } = await admin.from("perfiles").update({ tienda_id: tiendaId }).eq("id", userId);
+    if (error) return { ok: false, error: error.message };
+
+    revalidatePath("/admin");
+    return { ok: true, mensaje: "Tienda actualizada." };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "No se pudo cambiar la tienda.",
+    };
+  }
+}
+
+/**
+ * Horario habitual de permanencia en tienda.
+ *
+ * Cada jornada lo hereda y el driver lo corrige el día que entre tarde o salga
+ * antes. Sin horario no hay garantía que calcular: el día se paga solo por
+ * pedido.
+ */
+export async function cambiarHorario(
+  userId: string,
+  horaEntrada: string | null,
+  horaSalida: string | null,
+): Promise<Resultado> {
+  const permiso = await soloAdmin();
+  if (!permiso.ok) return { ok: false, error: permiso.error };
+
+  const ambasVacias = !horaEntrada && !horaSalida;
+  if (!ambasVacias) {
+    if (!horaEntrada || !RE_HORA.test(horaEntrada)) {
+      return { ok: false, error: "La hora de entrada no es válida (formato HH:MM)." };
+    }
+    if (!horaSalida || !RE_HORA.test(horaSalida)) {
+      return { ok: false, error: "La hora de salida no es válida (formato HH:MM)." };
+    }
+  }
+
+  try {
+    const admin = clienteAdmin();
+    const { error } = await admin
+      .from("perfiles")
+      .update({
+        hora_entrada: ambasVacias ? null : horaEntrada,
+        hora_salida: ambasVacias ? null : horaSalida,
+      })
+      .eq("id", userId);
+    if (error) return { ok: false, error: error.message };
+
+    revalidatePath("/admin");
+    return {
+      ok: true,
+      mensaje: ambasVacias ? "Horario quitado." : `Horario ${horaEntrada} a ${horaSalida}.`,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "No se pudo cambiar el horario.",
+    };
+  }
+}

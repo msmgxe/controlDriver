@@ -7,6 +7,8 @@ import {
 } from "@/lib/fechas";
 import {
   TRAMO_MAS_DE_12_KM,
+  horasDePermanencia,
+  montoPorPermanencia,
   pagoDelTramo,
   type ReglaPago,
 } from "./reglas";
@@ -41,6 +43,13 @@ export interface JornadaLiquidable {
   fecha: FechaISO;
   rutas: RutaLiquidable[];
   pedidos: PedidoLiquidable[];
+  /**
+   * Horas de entrada y salida de la tienda, `HH:MM`. No salen de las capturas
+   * —esas traen horarios de ruta, no de permanencia—: vienen del horario del
+   * driver, editable por jornada.
+   */
+  horaEntrada?: string | null;
+  horaSalida?: string | null;
 }
 
 export interface DetalleDia {
@@ -48,6 +57,14 @@ export interface DetalleDia {
   rutas: number;
   pedidos: number;
   minutosEnRuta: number;
+  /** Lo que suman los pedidos del día. */
+  montoPedidosCentimos: number;
+  /** Lo que garantiza la permanencia, o 0 si la tienda no la paga. */
+  montoPermanenciaCentimos: number;
+  horasPermanencia: number;
+  /** Cuál de los dos ganó. */
+  pagaPor: "pedidos" | "permanencia";
+  /** El mayor de los dos: lo que realmente se cobra ese día. */
   montoCentimos: number;
 }
 
@@ -72,7 +89,12 @@ export interface Liquidacion {
   totalOrdenes: number;
   /** { "1": 78, "2": 6, … } — cuántos pedidos cayeron en cada tramo. */
   ordenesPorTramo: Record<string, number>;
+  /** Suma de lo que se cobra cada día: por día, el mayor de los dos. */
   montoCalculadoCentimos: number;
+  /** Lo que habrían sumado los pedidos solos, sin la garantía. */
+  montoPorPedidosCentimos: number;
+  /** Días en que la permanencia superó a los pedidos y pagó el piso. */
+  diasConGarantia: number;
   minutosEnRuta: number;
   detalle: {
     porDia: DetalleDia[];
@@ -126,6 +148,8 @@ export function calcularLiquidacion(
   let totalRutas = 0;
   let totalOrdenes = 0;
   let montoCalculadoCentimos = 0;
+  let montoPorPedidosCentimos = 0;
+  let diasConGarantia = 0;
   let minutosEnRuta = 0;
 
   for (const jornada of deLaSemana) {
@@ -174,7 +198,19 @@ export function calcularLiquidacion(
       });
     }
 
-    montoCalculadoCentimos += montoDia;
+    /* --- garantía por permanencia (§13 bis) ---
+       La tienda paga por hora de presencia y, al cerrar el día, paga el MAYOR
+       de los dos: lo que sumaron los pedidos o lo que suma la permanencia. No
+       se suman, compiten. Por eso un día flojo no baja del piso. */
+    const montoPermanencia =
+      montoPorPermanencia(regla, jornada.horaEntrada ?? null, jornada.horaSalida ?? null) ?? 0;
+    const pagaPor: "pedidos" | "permanencia" =
+      montoPermanencia > montoDia ? "permanencia" : "pedidos";
+    const montoFinal = Math.max(montoDia, montoPermanencia);
+
+    montoCalculadoCentimos += montoFinal;
+    montoPorPedidosCentimos += montoDia;
+    if (pagaPor === "permanencia") diasConGarantia += 1;
     minutosEnRuta += minutosDia;
 
     porDia.push({
@@ -182,7 +218,14 @@ export function calcularLiquidacion(
       rutas: jornada.rutas.length,
       pedidos: jornada.pedidos.length,
       minutosEnRuta: minutosDia,
-      montoCentimos: montoDia,
+      montoPedidosCentimos: montoDia,
+      montoPermanenciaCentimos: montoPermanencia,
+      horasPermanencia: horasDePermanencia(
+        jornada.horaEntrada ?? null,
+        jornada.horaSalida ?? null,
+      ),
+      pagaPor,
+      montoCentimos: montoFinal,
     });
   }
 
@@ -197,6 +240,8 @@ export function calcularLiquidacion(
     totalOrdenes,
     ordenesPorTramo,
     montoCalculadoCentimos,
+    montoPorPedidosCentimos,
+    diasConGarantia,
     minutosEnRuta,
     detalle: { porDia, porRuta },
     diasSinCarga,

@@ -41,6 +41,11 @@ export interface Perfil {
   rol: Rol;
   activo: boolean;
   vigente_hasta: string | null;
+  /** Tienda para la que trabaja: define qué reglas de pago se le aplican (§13). */
+  tienda_id: string | null;
+  /** Horario habitual de permanencia en tienda, `HH:MM:SS`. */
+  hora_entrada: string | null;
+  hora_salida: string | null;
 }
 
 /**
@@ -60,7 +65,7 @@ export async function perfilActual(): Promise<Perfil | null> {
 
   const { data } = await supabase
     .from("perfiles")
-    .select("id, email, nombre, rol, activo, vigente_hasta")
+    .select("id, email, nombre, rol, activo, vigente_hasta, tienda_id, hora_entrada, hora_salida")
     .eq("id", user.id)
     .single();
 

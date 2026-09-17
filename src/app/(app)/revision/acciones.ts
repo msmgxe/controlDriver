@@ -23,6 +23,10 @@ const esquemaEnvio = z.object({
   ordenesDeclaradas: z.number().int().min(0).nullable(),
   validacionOk: z.boolean(),
   modo: z.enum(["reemplazar", "combinar"]),
+  // Permanencia en tienda de ese día (§13 bis). Puede faltar: hay tiendas que
+  // no la pagan y perfiles a los que aún no se les configuró el horario.
+  horaEntrada: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).nullable(),
+  horaSalida: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).nullable(),
   rutas: z
     .array(
       z.object({
@@ -98,7 +102,7 @@ export async function confirmarJornada(envio: unknown): Promise<ResultadoConfirm
     }
   }
 
-  const { regla } = await reglaVigente(datos.fecha);
+  const { regla } = await reglaVigente(datos.fecha, perfil.tienda_id);
 
   const ordenes = [];
   for (const orden of datos.ordenes) {
@@ -135,6 +139,11 @@ export async function confirmarJornada(envio: unknown): Promise<ResultadoConfirm
         rutasDeclaradas: datos.rutasDeclaradas,
         ordenesDeclaradas: datos.ordenesDeclaradas,
         validacionOk: datos.validacionOk,
+        horaEntrada: datos.horaEntrada,
+        horaSalida: datos.horaSalida,
+        // La tienda se toma del perfil en servidor, nunca del cliente: define
+        // qué tarifa se aplica, así que es dinero.
+        tiendaId: perfil.tienda_id,
         rutas: datos.rutas,
         ordenes,
       },

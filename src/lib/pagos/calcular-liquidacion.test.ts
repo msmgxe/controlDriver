@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { calcularLiquidacion, diferenciaDePago, type JornadaLiquidable } from "./calcular-liquidacion";
-import { REGLA_INICIAL, TRAMO_MAS_DE_12_KM, aCentimos, formatearSoles, tramoDeKm } from "./reglas";
+import {
+  REGLA_INICIAL,
+  TRAMO_MAS_DE_12_KM,
+  aCentimos,
+  formatearSoles,
+  horasDePermanencia,
+  tramoDeKm,
+  type ReglaPago,
+} from "./reglas";
 
 /* ---------------------------------------------------------------------------
  * Caso de ejemplo de §16 — jornada del 16/09/2026
@@ -199,5 +207,154 @@ describe("diferenciaDePago", () => {
 
   it("devuelve null mientras no se registre lo recibido", () => {
     expect(diferenciaDePago(92350, null)).toBeNull();
+  });
+});
+
+/* ---------------------------------------------------------------------------
+ * Garantía por permanencia en tienda
+ *
+ * Regla de "Wong - Aldabas": la tienda paga S/ 10 por hora de permanencia y al
+ * cerrar el día paga el MAYOR de los dos —lo que sumaron los pedidos o lo que
+ * suma la permanencia—. No se suman: compiten.
+ *
+ * Horario del driver: 9:00 a 22:00 → 13 h → piso de S/ 130.
+ * ------------------------------------------------------------------------- */
+
+const HORARIO = { horaEntrada: "09:00", horaSalida: "22:00" };
+
+/** Una jornada de `cuantos` pedidos de tramo 1, todos en una ruta. */
+function jornadaDe(cuantos: number, horario: Partial<JornadaLiquidable> = {}): JornadaLiquidable {
+  return {
+    fecha: "2026-09-16",
+    rutas: [{ numero: 1, duracionMin: 120 }],
+    pedidos: Array.from({ length: cuantos }, (_, i) => ({
+      codigo: `v1000${String(i).padStart(4, "0")}wofp-01`,
+      tramo: 1,
+      estado: "Entregado",
+      ruta: 1,
+    })),
+    ...horario,
+  };
+}
+
+describe("horasDePermanencia — completas, hacia abajo", () => {
+  it("cuenta 13 horas entre las 9:00 y las 22:00", () => {
+    expect(horasDePermanencia("09:00", "22:00")).toBe(13);
+  });
+
+  it("trunca las fracciones en vez de redondearlas", () => {
+    expect(horasDePermanencia("09:00", "21:30")).toBe(12);
+    expect(horasDePermanencia("09:00", "21:59")).toBe(12);
+    expect(horasDePermanencia("09:30", "22:00")).toBe(12);
+  });
+
+  it("entiende un turno que cruza la medianoche", () => {
+    expect(horasDePermanencia("20:00", "02:00")).toBe(6);
+  });
+
+  it("devuelve 0 si falta alguna de las dos horas", () => {
+    expect(horasDePermanencia(null, "22:00")).toBe(0);
+    expect(horasDePermanencia("09:00", null)).toBe(0);
+  });
+});
+
+describe("calcularLiquidacion — la garantía es un piso, no un extra", () => {
+  it("paga los pedidos cuando superan la permanencia", () => {
+    // El caso de §16: 14 pedidos = S/ 141.50, por encima del piso de S/ 130.
+    const l = calcularLiquidacion(
+      [{ ...jornada16(), ...HORARIO }],
+      REGLA_INICIAL,
+      "2026-09-16",
+      { hasta: "2026-09-16" },
+    );
+    expect(l.montoCalculadoCentimos).toBe(14150);
+    expect(l.detalle.porDia[0].pagaPor).toBe("pedidos");
+    expect(l.diasConGarantia).toBe(0);
+  });
+
+  it("paga el piso cuando los pedidos se quedan cortos", () => {
+    // 11 pedidos de tramo 1 = S/ 110.00, por debajo del piso de S/ 130.
+    const l = calcularLiquidacion([jornadaDe(11, HORARIO)], REGLA_INICIAL, "2026-09-16");
+    expect(l.montoCalculadoCentimos).toBe(13000);
+    expect(formatearSoles(l.montoCalculadoCentimos)).toBe("S/ 130.00");
+
+    const dia = l.detalle.porDia[0];
+    expect(dia.pagaPor).toBe("permanencia");
+    expect(dia.montoPedidosCentimos).toBe(11000);
+    expect(dia.montoPermanenciaCentimos).toBe(13000);
+    expect(dia.horasPermanencia).toBe(13);
+    expect(l.diasConGarantia).toBe(1);
+  });
+
+  it("no suma las dos cosas: 11 pedidos y 13 h no son S/ 240", () => {
+    const l = calcularLiquidacion([jornadaDe(11, HORARIO)], REGLA_INICIAL, "2026-09-16");
+    expect(l.montoCalculadoCentimos).not.toBe(11000 + 13000);
+  });
+
+  it("empata a favor de los pedidos: 13 pedidos son exactamente el piso", () => {
+    const l = calcularLiquidacion([jornadaDe(13, HORARIO)], REGLA_INICIAL, "2026-09-16");
+    expect(l.montoCalculadoCentimos).toBe(13000);
+    expect(l.detalle.porDia[0].pagaPor).toBe("pedidos");
+  });
+
+  it("trunca las horas también al pagar: salir a las 21:30 son 12 h, S/ 120", () => {
+    const l = calcularLiquidacion(
+      [jornadaDe(5, { horaEntrada: "09:00", horaSalida: "21:30" })],
+      REGLA_INICIAL,
+      "2026-09-16",
+    );
+    expect(l.montoCalculadoCentimos).toBe(12000);
+    expect(l.detalle.porDia[0].horasPermanencia).toBe(12);
+  });
+
+  it("sin horario registrado no hay garantía, solo pedidos", () => {
+    const l = calcularLiquidacion([jornadaDe(11)], REGLA_INICIAL, "2026-09-16");
+    expect(l.montoCalculadoCentimos).toBe(11000);
+    expect(l.detalle.porDia[0].pagaPor).toBe("pedidos");
+    expect(l.detalle.porDia[0].montoPermanenciaCentimos).toBe(0);
+  });
+
+  it("una tienda sin permanencia paga solo por pedido", () => {
+    const sinGarantia: ReglaPago = { ...REGLA_INICIAL, garantiaPermanencia: null };
+    const l = calcularLiquidacion([jornadaDe(11, HORARIO)], sinGarantia, "2026-09-16");
+    expect(l.montoCalculadoCentimos).toBe(11000);
+    expect(l.diasConGarantia).toBe(0);
+  });
+});
+
+describe("calcularLiquidacion — la comparación es día a día, no semanal", () => {
+  it("un día bueno no tapa el piso de un día flojo", () => {
+    // Lunes flojo: 8 pedidos = S/ 80 → cobra el piso, S/ 130.
+    // Martes bueno: 20 pedidos = S/ 200 → cobra los pedidos.
+    const l = calcularLiquidacion(
+      [
+        { ...jornadaDe(8, HORARIO), fecha: "2026-09-14" },
+        { ...jornadaDe(20, HORARIO), fecha: "2026-09-15" },
+      ],
+      REGLA_INICIAL,
+      "2026-09-16",
+    );
+
+    expect(l.montoCalculadoCentimos).toBe(13000 + 20000);
+    expect(l.diasConGarantia).toBe(1);
+
+    // Si se comparase el total de la semana, los S/ 280 de pedidos superarían
+    // los S/ 260 de permanencia y el piso del lunes se perdería: S/ 50 menos.
+    expect(l.montoPorPedidosCentimos).toBe(28000);
+    expect(l.montoCalculadoCentimos).toBeGreaterThan(l.montoPorPedidosCentimos);
+  });
+
+  it("deja ver cuánto aportó la garantía en la semana", () => {
+    const l = calcularLiquidacion(
+      [
+        { ...jornadaDe(8, HORARIO), fecha: "2026-09-14" },
+        { ...jornadaDe(9, HORARIO), fecha: "2026-09-15" },
+      ],
+      REGLA_INICIAL,
+      "2026-09-16",
+    );
+    expect(l.montoPorPedidosCentimos).toBe(17000);
+    expect(l.montoCalculadoCentimos).toBe(26000);
+    expect(l.diasConGarantia).toBe(2);
   });
 });

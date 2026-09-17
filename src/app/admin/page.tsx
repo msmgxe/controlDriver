@@ -1,11 +1,11 @@
 import { TablaUsuarios } from "@/components/TablaUsuarios";
 import { Cifras } from "@/components/ui";
-import { COSTO_POR_IMAGEN_SOLES, listarUsuarios } from "@/lib/db/usuarios";
+import { COSTO_POR_IMAGEN_SOLES, listarTiendas, listarUsuarios } from "@/lib/db/usuarios";
 
 export const dynamic = "force-dynamic";
 
 export default async function PaginaAdmin() {
-  const usuarios = await listarUsuarios();
+  const [usuarios, tiendas] = await Promise.all([listarUsuarios(), listarTiendas()]);
 
   const activos = usuarios.filter((u) => u.activo).length;
   const cargasMes = usuarios.reduce((s, u) => s + u.cargasDelMes, 0);
@@ -32,7 +32,11 @@ export default async function PaginaAdmin() {
         ]}
       />
 
-      <TablaUsuarios usuarios={usuarios} costoPorImagen={COSTO_POR_IMAGEN_SOLES} />
+      <TablaUsuarios
+        usuarios={usuarios}
+        tiendas={tiendas}
+        costoPorImagen={COSTO_POR_IMAGEN_SOLES}
+      />
 
       <section className="tarjeta">
         <span className="rotulo">Sobre el cambio de claves</span>

@@ -44,9 +44,14 @@ y una clave de Anthropic. Los pasos están abajo.
    luego inserta su perfil con `rol = 'admin'`:
 
    ```sql
-   insert into perfiles (id, email, nombre, rol)
-   values ('<uuid del usuario>', 'tu@correo.com', 'Tu nombre', 'admin');
+   insert into perfiles (id, email, nombre, rol, tienda_id, hora_entrada, hora_salida)
+   select '<uuid del usuario>', 'tu@correo.com', 'Tu nombre', 'admin',
+          t.id, '09:00', '22:00'
+   from tiendas t where t.nombre = 'Wong - Aldabas';
    ```
+
+   El horario es el de permanencia en tienda: sin él no se calcula la garantía
+   y los días flojos se pagarían de menos.
 
    A partir de ahí, los demás drivers se dan de alta desde `/admin`.
 
@@ -72,7 +77,7 @@ src/
     bloqueo.ts                PIN y huella locales del dispositivo
     limites.ts                Límite de gasto de API por usuario
     extraccion/               Prompt, esquema Zod, fusión y validaciones
-    pagos/                    Tarifas por tramo y liquidación semanal
+    pagos/                    Tarifas por tramo, permanencia y liquidación semanal
     db/                       Consultas y escrituras, todas bajo RLS
     supabase/                 Clientes de navegador, servidor y service role
   proxy.ts                    Protección de rutas (en Next 16 sustituye a middleware.ts)
@@ -87,6 +92,10 @@ supabase/schema.sql           Esquema, RLS y tarifa inicial
 - **La sesión dura**: el código se pide una vez por dispositivo, no cada día. El
   día a día lo protege un PIN local de 4 dígitos, que no es un factor de sesión
   y el servidor no comprueba.
+- **Cada tienda tiene sus reglas.** La de «Wong - Aldabas» paga por permanencia:
+  S/ 10 por hora, y cada día se cobra **el mayor** de los dos —pedidos o
+  permanencia—, nunca la suma. Las horas se cuentan completas hacia abajo y
+  salen del horario del perfil, no de las capturas.
 - **El dinero va en céntimos enteros** en todo el cálculo. Los decimales solo
   aparecen al formatear o al escribir en una columna `numeric`. Hay una prueba
   que lo fija.
@@ -112,7 +121,7 @@ supabase/schema.sql           Esquema, RLS y tarifa inicial
 
 ## Pruebas
 
-48 pruebas unitarias sobre funciones puras:
+61 pruebas unitarias sobre funciones puras:
 
 - **Fusión y deduplicación** con el caso de §16: 5 capturas solapadas colapsan en
   7 rutas y 14 pedidos, incluidas tarjetas cortadas y capturas en desorden.
@@ -122,6 +131,8 @@ supabase/schema.sql           Esquema, RLS y tarifa inicial
   flotante.
 - **Límites de semana**: domingo frente a lunes, carga tardía del domingo hecha
   el lunes, y semanas que cruzan de mes y de año.
+- **Garantía por permanencia**: que es un piso y no un extra, que las horas se
+  truncan, y que comparar por semana en vez de día a día costaría dinero.
 
 ```bash
 npm test

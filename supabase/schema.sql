@@ -22,6 +22,18 @@
 create extension if not exists pgcrypto;
 
 -- ---------------------------------------------------------------------------
+-- Tiendas. Cada una tiene sus propias reglas de pago y las registra el
+-- administrador. Un driver trabaja para una tienda; la jornada guarda cuál era
+-- para que un cambio de tienda no reescriba el historial.
+-- ---------------------------------------------------------------------------
+create table if not exists tiendas (
+  id         uuid primary key default gen_random_uuid(),
+  nombre     text not null unique,
+  activa     boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------------------
 -- Perfiles: una fila por usuario de auth. El rol vive aquí y solo se lee en
 -- servidor; nunca se confía en un rol enviado por el cliente (§7).
 -- ---------------------------------------------------------------------------
@@ -32,8 +44,14 @@ create table if not exists perfiles (
   rol            text not null default 'driver' check (rol in ('admin', 'driver')),
   activo         boolean not null default true,
   vigente_hasta  date,                          -- control de suscripción (§12)
+  tienda_id      uuid references tiendas (id),
+  hora_entrada   time,                          -- horario habitual de permanencia
+  hora_salida    time,
   created_at     timestamptz not null default now()
 );
+
+comment on column perfiles.hora_entrada is
+  'Horario habitual de permanencia en tienda. Cada jornada lo hereda y se puede corregir el día que se entre tarde o se salga antes. No sale de las capturas: esas traen horarios de ruta, no de permanencia.';
 
 comment on column perfiles.email is
   'El acceso es por correo + código de 6 dígitos, no por usuario y contraseña. Tiene que ser un buzón real al que el driver llegue: el email sintético usuario@rutalog.app que planteaba §12 ya no sirve, porque nadie podría leer el código. Se guarda aquí, además de en auth.users, para que el admin pueda listar cuentas sin service role.';
@@ -54,6 +72,9 @@ create table if not exists jornadas (
   parcial             int not null default 0,
   no_entregado        int not null default 0,
   validacion_ok       boolean not null default false,
+  tienda_id           uuid references tiendas (id),
+  hora_entrada        time,                          -- permanencia de ese día (§13 bis)
+  hora_salida         time,
   notas               text,
   created_at          timestamptz not null default now(),
   updated_at          timestamptz not null default now(),
@@ -102,11 +123,15 @@ comment on column ordenes.estado is
 -- ---------------------------------------------------------------------------
 create table if not exists reglas_pago (
   id             uuid primary key default gen_random_uuid(),
+  tienda_id      uuid not null references tiendas (id) on delete cascade,
   vigente_desde  date not null,
   parametros     jsonb not null,
   created_at     timestamptz not null default now(),
-  unique (vigente_desde)
+  unique (tienda_id, vigente_desde)
 );
+
+comment on column reglas_pago.parametros is
+  'Tramos de distancia y, si la tienda la paga, la garantía por permanencia. La garantía es un PISO, no un extra: al cerrar el día se paga el mayor de los dos, lo que sumaron los pedidos o lo que suma la permanencia.';
 
 -- ---------------------------------------------------------------------------
 -- Liquidaciones: una por driver y semana (lunes a domingo, America/Lima).
@@ -154,6 +179,7 @@ create index if not exists idx_ordenes_jornada      on ordenes (jornada_id);
 create index if not exists idx_ordenes_codigo       on ordenes (codigo);
 create index if not exists idx_liquidaciones_user   on liquidaciones (user_id, semana_inicio desc);
 create index if not exists idx_cargas_user          on cargas (user_id, created_at desc);
+create index if not exists idx_reglas_tienda        on reglas_pago (tienda_id, vigente_desde desc);
 
 -- ---------------------------------------------------------------------------
 -- updated_at automático en jornadas
@@ -198,6 +224,7 @@ $$;
 revoke execute on function public.es_admin() from public;
 grant execute on function public.es_admin() to authenticated;
 
+alter table tiendas       enable row level security;
 alter table perfiles      enable row level security;
 alter table jornadas      enable row level security;
 alter table rutas         enable row level security;
@@ -247,8 +274,21 @@ create policy ordenes_de_jornadas_propias on ordenes
   using (exists (select 1 from jornadas j where j.id = ordenes.jornada_id and j.user_id = auth.uid()))
   with check (exists (select 1 from jornadas j where j.id = ordenes.jornada_id and j.user_id = auth.uid()));
 
+-- --- tiendas: las lee todo el mundo, las registra solo el admin (§12) ------
+drop policy if exists tiendas_lectura on tiendas;
+create policy tiendas_lectura on tiendas
+  for select to authenticated
+  using (true);
+
+drop policy if exists tiendas_escritura_admin on tiendas;
+create policy tiendas_escritura_admin on tiendas
+  for all to authenticated
+  using (public.es_admin())
+  with check (public.es_admin());
+
 -- --- reglas de pago: las lee todo el mundo, las escribe solo el admin ------
--- Las tarifas son las mismas para todos los drivers de la tienda (§13).
+-- Las tarifas son las mismas para todos los drivers de una misma tienda,
+-- pero cada tienda tiene las suyas (§13).
 drop policy if exists reglas_lectura on reglas_pago;
 create policy reglas_lectura on reglas_pago
   for select to authenticated
@@ -310,6 +350,8 @@ select
   pr.ultimo_regreso,
   coalesce(po.monto, 0)                as monto,
   coalesce(po.pedidos_fuera_tramo_1, 0) as pedidos_fuera_tramo_1,
+  j.hora_entrada,
+  j.hora_salida,
   j.entregado,
   j.parcial,
   j.no_entregado,
@@ -322,10 +364,14 @@ left join por_orden po on po.jornada_id = j.id;
 -- Tarifa inicial (§13). Versionada: para cambiarla se INSERTA una fila nueva
 -- con otro vigente_desde, nunca se edita esta.
 -- ===========================================================================
-insert into reglas_pago (vigente_desde, parametros)
-values (
-  '2026-01-01',
-  '{
+insert into tiendas (nombre) values ('Wong - Aldabas')
+on conflict (nombre) do nothing;
+
+-- La garantía por permanencia es un PISO, no un extra: al cerrar el día se paga
+-- el mayor de los dos. Con 10 soles por hora y un turno de 9:00 a 22:00 son
+-- 13 h → 130 soles de piso. Las horas se cuentan completas, hacia abajo.
+insert into reglas_pago (tienda_id, vigente_desde, parametros)
+select t.id, '2026-01-01', '{
     "moneda": "PEN",
     "base": "por_pedido",
     "tramos": [
@@ -334,7 +380,13 @@ values (
       { "id": 3, "desde": 8,  "hasta": 10, "monto": 13.00 },
       { "id": 4, "desde": 10, "hasta": 11, "monto": 14.50 },
       { "id": 5, "desde": 11, "hasta": 12, "monto": 16.00 }
-    ]
+    ],
+    "garantiaPermanencia": {
+      "activa": true,
+      "solesPorHora": 10.00,
+      "comparacion": "diaria",
+      "redondeoHoras": "abajo"
+    }
   }'::jsonb
-)
-on conflict (vigente_desde) do nothing;
+from tiendas t where t.nombre = 'Wong - Aldabas'
+on conflict (tienda_id, vigente_desde) do nothing;

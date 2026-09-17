@@ -28,7 +28,8 @@ async function conSesion(accion: () => Promise<void>): Promise<Resultado> {
 /** Cierra la semana y congela su monto, desglose y regla (§13). */
 export async function accionCerrarSemana(semanaInicio: string): Promise<Resultado> {
   if (!esFechaISO(semanaInicio)) return { ok: false, error: "Semana inválida." };
-  const { regla, id } = await reglaVigente(semanaDe(semanaInicio).fin);
+  const perfil = await perfilActual();
+  const { regla, id } = await reglaVigente(semanaDe(semanaInicio).fin, perfil?.tienda_id ?? null);
   return conSesion(() => cerrarSemana(semanaInicio, regla, id));
 }
 

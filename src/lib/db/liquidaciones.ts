@@ -7,6 +7,7 @@ import {
   type Liquidacion,
 } from "@/lib/pagos/calcular-liquidacion";
 import { jornadasPorRango, reglaVigente } from "@/lib/db/jornadas";
+import { perfilActual } from "@/lib/supabase/servidor";
 import { semanaDe, type FechaISO } from "@/lib/fechas";
 
 /**
@@ -33,9 +34,10 @@ export async function liquidacionDeSemana(
   hasta?: FechaISO,
 ): Promise<SemanaLiquidada> {
   const semana = semanaDe(referencia);
+  const perfil = await perfilActual();
   const [jornadas, { regla }, guardada] = await Promise.all([
     jornadasPorRango(semana.inicio, semana.fin),
-    reglaVigente(semana.fin),
+    reglaVigente(semana.fin, perfil?.tienda_id ?? null),
     leerGuardada(semana.inicio),
   ]);
 
@@ -57,6 +59,8 @@ export async function liquidacionDeSemana(
 function aLiquidable(j: Awaited<ReturnType<typeof jornadasPorRango>>[number]): JornadaLiquidable {
   return {
     fecha: j.fecha,
+    horaEntrada: j.horaEntrada,
+    horaSalida: j.horaSalida,
     rutas: j.rutas.map((r) => ({ numero: r.numero, duracionMin: r.duracionMin })),
     pedidos: j.ordenes.map((o) => ({
       codigo: o.codigo,
@@ -119,7 +123,11 @@ export async function cerrarSemana(
       total_ordenes: liquidacion.totalOrdenes,
       ordenes_por_tramo: liquidacion.ordenesPorTramo,
       monto_calculado: liquidacion.montoCalculadoCentimos / 100,
-      detalle: liquidacion.detalle,
+      detalle: {
+        ...liquidacion.detalle,
+        montoPorPedidosCentimos: liquidacion.montoPorPedidosCentimos,
+        diasConGarantia: liquidacion.diasConGarantia,
+      },
       estado: "cerrada",
     },
     { onConflict: "user_id,semana_inicio" },

@@ -28,6 +28,8 @@ export interface FilaResumenDiario {
   parcial: number;
   noEntregado: number;
   validacionOk: boolean;
+  horaEntrada: string | null;
+  horaSalida: string | null;
 }
 
 export interface RutaFila {
@@ -59,11 +61,18 @@ export interface JornadaCompleta {
   parcial: number;
   noEntregado: number;
   validacionOk: boolean;
+  /** Permanencia en tienda de ese día, `HH:MM` (§13 bis). */
+  horaEntrada: string | null;
+  horaSalida: string | null;
+  tiendaId: string | null;
   rutas: RutaFila[];
   ordenes: OrdenFila[];
 }
 
 const aNumero = (v: unknown): number => (v === null || v === undefined ? 0 : Number(v));
+
+/** Postgres devuelve `time` como `HH:MM:SS`; la interfaz trabaja con `HH:MM`. */
+const recortarHora = (v: string | null): string | null => (v ? v.slice(0, 5) : null);
 
 /* ---------------------------------------------------------------------------
  * Lectura
@@ -97,6 +106,8 @@ export async function resumenPorRango(
     parcial: aNumero(f.parcial),
     noEntregado: aNumero(f.no_entregado),
     validacionOk: Boolean(f.validacion_ok),
+    horaEntrada: recortarHora(f.hora_entrada as string | null),
+    horaSalida: recortarHora(f.hora_salida as string | null),
   }));
 }
 
@@ -110,6 +121,7 @@ export async function jornadasPorRango(
     .from("jornadas")
     .select(
       `id, fecha, rutas_declaradas, ordenes_declaradas, entregado, parcial, no_entregado, validacion_ok,
+       tienda_id, hora_entrada, hora_salida,
        rutas ( id, numero, estado, hora_inicio, hora_fin, duracion_min ),
        ordenes ( id, codigo, estado, posicion, tramo, km, monto, ruta_id )`,
     )
@@ -169,6 +181,9 @@ function mapearJornada(j: FilaCruda): JornadaCompleta {
     parcial: aNumero(j.parcial),
     noEntregado: aNumero(j.no_entregado),
     validacionOk: Boolean(j.validacion_ok),
+    horaEntrada: recortarHora(j.hora_entrada as string | null),
+    horaSalida: recortarHora(j.hora_salida as string | null),
+    tiendaId: (j.tienda_id as string | null) ?? null,
     rutas,
     ordenes,
   };
@@ -199,12 +214,25 @@ export async function codigosYaRegistrados(
   return salida;
 }
 
-/** Regla de pago vigente en esa fecha (§13). */
-export async function reglaVigente(fecha: FechaISO): Promise<{ id: string | null; regla: ReglaPago }> {
+/**
+ * Regla de pago vigente para una tienda en una fecha (§13).
+ *
+ * Cada tienda tiene las suyas, así que sin tienda no hay regla que aplicar: se
+ * cae a la del código, que es la de "Wong - Aldabas". Es un respaldo para que
+ * un perfil a medio configurar no rompa un cálculo de dinero, no un valor por
+ * defecto legítimo.
+ */
+export async function reglaVigente(
+  fecha: FechaISO,
+  tiendaId: string | null,
+): Promise<{ id: string | null; regla: ReglaPago }> {
+  if (!tiendaId) return { id: null, regla: REGLA_INICIAL };
+
   const supabase = await clienteServidor();
   const { data, error } = await supabase
     .from("reglas_pago")
     .select("id, parametros")
+    .eq("tienda_id", tiendaId)
     .lte("vigente_desde", fecha)
     .order("vigente_desde", { ascending: false })
     .limit(1)
@@ -244,6 +272,10 @@ export interface JornadaParaGuardar {
   rutasDeclaradas: number | null;
   ordenesDeclaradas: number | null;
   validacionOk: boolean;
+  /** Permanencia en tienda de ese día, `HH:MM`. Hereda del perfil y se corrige. */
+  horaEntrada: string | null;
+  horaSalida: string | null;
+  tiendaId: string | null;
   rutas: RutaParaGuardar[];
   ordenes: OrdenParaGuardar[];
 }
@@ -286,6 +318,9 @@ export async function guardarJornada(
         parcial,
         no_entregado: noEntregado,
         validacion_ok: datos.validacionOk,
+        tienda_id: datos.tiendaId,
+        hora_entrada: datos.horaEntrada,
+        hora_salida: datos.horaSalida,
       },
       { onConflict: "user_id,fecha" },
     )

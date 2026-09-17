@@ -2,6 +2,7 @@ import { AccionesSemana } from "@/components/AccionesSemana";
 import { Alerta, Check, Reloj } from "@/components/iconos";
 import { Aviso, MontoHero, TiraSemana } from "@/components/ui";
 import { reglaVigente } from "@/lib/db/jornadas";
+import { perfilActual } from "@/lib/supabase/servidor";
 import { liquidacionDeSemana, type SemanaLiquidada } from "@/lib/db/liquidaciones";
 import {
   formatearDuracion,
@@ -33,7 +34,8 @@ export default async function PaginaPagos() {
     liquidacionDeSemana(sumarDias(hoy, -21)),
   ]);
 
-  const { regla } = await reglaVigente(hoy);
+  const perfil = await perfilActual();
+  const { regla } = await reglaVigente(hoy, perfil?.tienda_id ?? null);
 
   const diasSemana = rangoDeFechas(enCurso.liquidacion.semana.inicio, enCurso.liquidacion.semana.fin).map(
     (fecha) => {
@@ -73,7 +75,58 @@ export default async function PaginaPagos() {
           <dl className="flex flex-col">
             <Dato etiqueta="Se paga el" valor={`viernes ${formatearFecha(enCurso.liquidacion.semana.pago)}`} />
             <Dato etiqueta="Tiempo en ruta" valor={formatearDuracion(enCurso.liquidacion.minutosEnRuta)} />
+            {enCurso.liquidacion.diasConGarantia > 0 && (
+              <>
+                <Dato
+                  etiqueta="Solo por pedidos habría sido"
+                  valor={formatearSoles(enCurso.liquidacion.montoPorPedidosCentimos)}
+                />
+                <Dato
+                  etiqueta="Días cubiertos por la permanencia"
+                  valor={String(enCurso.liquidacion.diasConGarantia)}
+                />
+              </>
+            )}
           </dl>
+
+          {/* §13 bis — la garantía es un piso, no un extra: cada día se paga el
+              mayor de los dos. Verlo día a día es lo que sustenta un reclamo. */}
+          {enCurso.liquidacion.diasConGarantia > 0 && (
+            <div className="overflow-x-auto rounded-card bg-sup">
+              <table className="tabla min-w-[420px]">
+                <thead>
+                  <tr>
+                    <th>Día</th>
+                    <th className="num">Pedidos</th>
+                    <th className="num">Permanencia</th>
+                    <th className="num">Cobras</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {enCurso.liquidacion.detalle.porDia.map((d) => (
+                    <tr key={d.fecha}>
+                      <td className="whitespace-nowrap capitalize">
+                        {nombreDelDia(d.fecha).slice(0, 3)} {formatearFecha(d.fecha)}
+                      </td>
+                      <td
+                        className={`num ${d.pagaPor === "permanencia" ? "text-tinta-3 line-through" : ""}`}
+                      >
+                        {formatearSoles(d.montoPedidosCentimos)}
+                      </td>
+                      <td
+                        className={`num ${d.pagaPor === "pedidos" ? "text-tinta-3 line-through" : ""}`}
+                      >
+                        {d.horasPermanencia > 0
+                          ? `${formatearSoles(d.montoPermanenciaCentimos)}`
+                          : "—"}
+                      </td>
+                      <td className="num font-bold">{formatearSoles(d.montoCentimos)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
           {faltan.length > 0 && (
             <Aviso
@@ -148,6 +201,21 @@ export default async function PaginaPagos() {
             Se paga cada pedido, entregado o no: el recorrido se hizo igual. El estado solo cuenta
             para las estadísticas.
           </p>
+
+          {regla.garantiaPermanencia?.activa && (
+            <div className="mt-3 border-t border-linea pt-3">
+              <span className="rotulo">Garantía por permanencia</span>
+              <p className="mt-1 text-xs text-tinta-2">
+                La tienda paga{" "}
+                <b>
+                  {formatearSoles(Math.round(regla.garantiaPermanencia.solesPorHora * 100))} por hora
+                </b>{" "}
+                de permanencia. Cada día se paga <b>el mayor</b> de los dos: lo que sumen tus
+                pedidos o lo que sume la permanencia. No se suman. Las horas se cuentan completas:
+                salir a las 21:30 cuenta como 12 h, no 12.5.
+              </p>
+            </div>
+          )}
         </section>
       </div>
     </div>
