@@ -25,6 +25,18 @@ export default function PaginaAcceso() {
   );
 }
 
+/**
+ * ¿La base de datos corre en esta misma máquina o en la red local?
+ *
+ * Se mira la URL de Supabase, no el modo de Next: al probar desde el celular
+ * con `npm run movil` la app va en modo desarrollo pero apunta a la IP del Mac,
+ * y el correo se sigue quedando en el buzón local.
+ */
+function esEntornoLocal(): boolean {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  return /^https?:\/\/(127\.0\.0\.1|localhost|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(url);
+}
+
 function FormularioAcceso() {
   const router = useRouter();
   const params = useSearchParams();
@@ -215,6 +227,24 @@ function FormularioAcceso() {
               <span className="text-xs text-tinta-3">
                 Lo enviamos a <b>{correo}</b>. Vence en 10 minutos.
               </span>
+
+              {/* En local, Supabase no manda correos de verdad: los atrapa en un
+                  buzón que corre en la misma máquina. Sin este aviso uno se
+                  queda mirando su bandeja de entrada esperando algo que nunca
+                  va a llegar. */}
+              {esEntornoLocal() && (
+                <span className="rounded-btn bg-aviso-suave px-3 py-2 text-xs text-aviso">
+                  <b>Estás en local:</b> el código no llega a tu correo. Ábrelo en{" "}
+                  <a
+                    href="http://127.0.0.1:54324"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-bold underline"
+                  >
+                    127.0.0.1:54324
+                  </a>
+                </span>
+              )}
             </div>
 
             {error && <Error texto={error} />}
