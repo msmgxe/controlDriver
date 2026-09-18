@@ -22,6 +22,23 @@ import { revisarConfiguracion } from "@/lib/configuracion";
 
 const RUTAS_PUBLICAS = ["/acceso", "/auth", "/configuracion", "/sin-conexion"];
 
+/**
+ * Orígenes a los que el navegador puede hablar para llegar a Supabase.
+ *
+ * Se incluye el de la API y su equivalente en websocket, que es por donde va
+ * realtime. Si la URL no es válida no se añade nada: mejor una CSP estricta que
+ * una permisiva por accidente.
+ */
+function origenesDeSupabase(): string[] {
+  try {
+    const url = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "");
+    const ws = url.protocol === "https:" ? "wss:" : "ws:";
+    return [url.origin, `${ws}//${url.host}`];
+  } catch {
+    return [];
+  }
+}
+
 export async function proxy(request: NextRequest) {
   /* --- 1. CSP con nonce (§7) ---
      Un nonce nuevo por petición: si fuera predecible no serviría de nada.
@@ -40,7 +57,12 @@ export async function proxy(request: NextRequest) {
     "img-src 'self' blob: data:",
     "font-src 'self' data:",
     // El navegador habla directamente con Supabase: auth, consultas y realtime.
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+    // El origen se deriva de la URL configurada en vez de dejarlo a fuego,
+    // porque no siempre es la nube: en local es 127.0.0.1:54321 y, al probar
+    // desde el celular, la IP del Mac en la red. Con un dominio fijo aquí, el
+    // navegador bloquearía la petición antes de que saliera y el login fallaría
+    // con un "no se pudo enviar el código" que no dice nada de la causa.
+    `connect-src 'self' ${origenesDeSupabase().join(" ")}`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
