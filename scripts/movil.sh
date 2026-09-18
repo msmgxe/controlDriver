@@ -28,6 +28,14 @@ if [ ! -f .env.local ]; then
   exit 1
 fi
 
+# Un `next dev` que ya esté escuchando en el puerto 3000 se quedaría atado a
+# localhost y el celular no lo alcanzaría, así que se cierra antes.
+if lsof -ti:3000 >/dev/null 2>&1; then
+  echo "▸ Cerrando el servidor que ya estaba en el puerto 3000…"
+  lsof -ti:3000 | xargs kill 2>/dev/null || true
+  sleep 2
+fi
+
 echo "▸ Apuntando la app a http://$IP:54321 para que el celular la alcance…"
 # Se reescribe solo esa línea; el resto del archivo queda igual.
 python3 - "$IP" <<'PY'
