@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "local": "./scripts/local.sh",
-    "local:stop": "supabase stop"
+    "local:stop": "supabase stop",
+    "movil": "./scripts/movil.sh"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.126.0",

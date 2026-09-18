@@ -35,11 +35,31 @@ cuenta como administrador, asignada a «Wong - Aldabas» con horario de 9:00 a
 envíos: ábrelos en `http://127.0.0.1:54324`. El panel local de la base, que es
 el equivalente al dashboard, está en `http://127.0.0.1:54323`.
 
+El seed carga además **22 jornadas de prueba** (cuatro semanas), para que todas
+las pantallas tengan qué enseñar sin gastar clave de Anthropic. Incluye a
+propósito el caso de §16 el 16/09 —S/ 141.50—, cuatro días donde gana la
+garantía por permanencia, una media jornada, huecos en domingo y algún pedido
+que no se entregó.
+
 Para parar todo: `npm run local:stop`.
+
+### Probar desde el celular
+
+```bash
+npm run movil
+```
+
+Reapunta la app a la IP de tu Mac —el navegador del celular habla directamente
+con Supabase, así que `127.0.0.1` no le sirve— y te da la dirección que abrir.
+
+**No podrás instalar la app ni probar el modo sin conexión así**: ambos exigen
+HTTPS con certificado de verdad y esto va por HTTP plano. Para eso hace falta la
+nube.
 
 | Comando | Qué hace |
 |---|---|
 | `npm run local` | Supabase local + esquema + semilla + `.env.local` |
+| `npm run movil` | Igual que `dev`, pero accesible desde el celular en la misma wifi |
 | `npm run dev` | Servidor de desarrollo |
 | `npm run build` | Build de producción |
 | `npm test` | Pruebas unitarias (vitest) |
