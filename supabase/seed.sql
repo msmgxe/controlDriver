@@ -11,7 +11,7 @@
 -- Cómo entrar una vez arrancado:
 --   1. Abre la app y escribe tu correo en la pantalla de acceso.
 --   2. El código NO llega a tu correo de verdad: el Supabase local captura los
---      envíos. Ábrelos en  http://127.0.0.1:54324  (Inbucket) y ahí verás el
+--      envíos. Ábrelos en  http://127.0.0.1:54324  (Mailpit) y ahí verás el
 --      código de 6 dígitos.
 -- ===========================================================================
 
@@ -30,10 +30,19 @@ begin
   if admin_id is null then
     admin_id := gen_random_uuid();
 
+    /* Las columnas de texto van en cadena vacía, NO en null.
+       GoTrue —el servicio de autenticación— las lee como texto y si encuentra
+       un null revienta con "Database error finding user", un error 500 que no
+       dice nada sobre la causa real. Es el fallo clásico de crear usuarios a
+       mano en auth.users. */
     insert into auth.users (
       id, instance_id, aud, role, email,
       email_confirmed_at, created_at, updated_at,
-      raw_app_meta_data, raw_user_meta_data
+      raw_app_meta_data, raw_user_meta_data,
+      confirmation_token, recovery_token, email_change,
+      email_change_token_new, email_change_token_current,
+      phone_change, phone_change_token, reauthentication_token,
+      encrypted_password
     ) values (
       admin_id,
       '00000000-0000-0000-0000-000000000000',
@@ -41,7 +50,8 @@ begin
       -- Confirmado de entrada: sin esto el acceso por código lo rechaza.
       now(), now(), now(),
       '{"provider":"email","providers":["email"]}'::jsonb,
-      '{}'::jsonb
+      '{}'::jsonb,
+      '', '', '', '', '', '', '', '', ''
     );
 
     -- GoTrue necesita una identidad asociada para el proveedor de correo.

@@ -203,8 +203,14 @@ web3 = 30
 
 [auth.email]
 # Allow/disallow new user signups via email to your project.
-# §7: cerrado. signInWithOtp se llama con shouldCreateUser:false y esto lo respalda.
-enable_signup = false
+# OJO CON EL NOMBRE: esta opción no controla los registros, controla si el
+# proveedor de correo está activo. En false, GoTrue rechaza TODO login por
+# correo con "email_provider_disabled", incluido el de un usuario que ya existe.
+# Tiene que quedarse en true.
+#
+# Quien cierra el registro público (§7) es la de arriba, [auth].enable_signup,
+# más el shouldCreateUser:false con el que la app llama a signInWithOtp.
+enable_signup = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
