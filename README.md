@@ -13,35 +13,65 @@ consulta.
 
 ## Puesta en marcha
 
+Hay dos caminos. **Empieza por el local**: no depende de la nube de Supabase,
+no gasta cuota y arranca en un comando.
+
+### Local (recomendado para desarrollar)
+
+Necesitas [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+instalado y abierto. Después:
+
 ```bash
 npm install
-cp .env.example .env.local   # y rellenar los valores
+npm run local     # levanta Supabase, aplica el esquema y escribe .env.local
 npm run dev
 ```
 
-**Sin las variables de entorno la app no arranca**: necesita un proyecto Supabase
-y una clave de Anthropic. Los pasos están abajo.
+Entra en `http://localhost:3000` con `msmgxe@gmail.com` — el seed ya crea esa
+cuenta como administrador, asignada a «Wong - Aldabas» con horario de 9:00 a
+22:00.
+
+**El código de 6 dígitos no llega a tu correo.** El Supabase local captura los
+envíos: ábrelos en `http://127.0.0.1:54324`. El panel local de la base, que es
+el equivalente al dashboard, está en `http://127.0.0.1:54323`.
+
+Para parar todo: `npm run local:stop`.
 
 | Comando | Qué hace |
 |---|---|
+| `npm run local` | Supabase local + esquema + semilla + `.env.local` |
 | `npm run dev` | Servidor de desarrollo |
 | `npm run build` | Build de producción |
 | `npm test` | Pruebas unitarias (vitest) |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint |
 
-### Supabase
+### Nube (para producción)
 
 1. Crear un proyecto en [supabase.com](https://supabase.com).
-2. Aplicar `supabase/schema.sql` desde el SQL Editor. Crea tablas, índices,
-   políticas RLS, la vista de resumen diario y la tarifa inicial.
-3. Configurar Authentication como indica la cabecera de ese archivo. **El paso
-   que se olvida siempre:** la plantilla de Magic Link tiene que usar
-   `{{ .Token }}`, o Supabase manda un enlace en vez del código de 6 dígitos.
-4. Copiar URL y claves a `.env.local`.
-5. Crear tu propia cuenta de admin. Como el registro público está cerrado, la
-   primera cuenta se hace a mano: crea el usuario desde Authentication → Users y
-   luego inserta su perfil con `rol = 'admin'`:
+2. Enlazar y subir el esquema, sin tocar el dashboard:
+
+   ```bash
+   supabase link --project-ref <ref-del-proyecto>
+   supabase db push
+   ```
+
+3. En Authentication, configurar lo que indica la cabecera de
+   `supabase/migrations/20260918000000_esquema_inicial.sql`. **El paso que se
+   olvida siempre:** la plantilla de Magic Link tiene que usar `{{ .Token }}`, o
+   Supabase manda un enlace en vez del código de 6 dígitos.
+4. Poner las variables en Vercel y desplegar:
+
+   ```bash
+   vercel env add NEXT_PUBLIC_SUPABASE_URL production
+   vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY production
+   vercel env add SUPABASE_SERVICE_ROLE_KEY production
+   vercel env add ANTHROPIC_API_KEY production
+   vercel --prod
+   ```
+
+5. Crear tu cuenta de admin. Como el registro público está cerrado, la primera
+   se hace a mano desde el SQL Editor:
 
    ```sql
    insert into perfiles (id, email, nombre, rol, tienda_id, hora_entrada, hora_salida)
@@ -52,8 +82,6 @@ y una clave de Anthropic. Los pasos están abajo.
 
    El horario es el de permanencia en tienda: sin él no se calcula la garantía
    y los días flojos se pagarían de menos.
-
-   A partir de ahí, los demás drivers se dan de alta desde `/admin`.
 
 ## Cómo está organizado
 
@@ -87,8 +115,10 @@ src/
     supabase/                 Clientes de navegador, servidor y service role
   proxy.ts                    Protección de rutas y CSP con nonce (en Next 16 sustituye a middleware.ts)
 public/sw.js                  Service worker escrito a mano (Serwist no soporta Turbopack)
-supabase/schema.sql           Esquema, RLS y tarifa inicial
-supabase/verificar-rls.sql    Comprueba que un driver no ve nada de otro (§15)
+supabase/
+  migrations/                 Esquema, RLS y tarifa inicial
+  seed.sql                    Cuenta de admin para el entorno local
+  verificar-rls.sql           Comprueba que un driver no ve nada de otro (§15)
 ```
 
 ## Decisiones que conviene conocer antes de tocar el código
@@ -136,7 +166,8 @@ supabase/verificar-rls.sql    Comprueba que un driver no ve nada de otro (§15)
 Es la garantía más importante de la app y la que peor se detecta a ojo: una
 política mal escrita no da error, simplemente devuelve datos que no debería.
 
-Pega `supabase/verificar-rls.sql` entero en el SQL Editor de Supabase. Monta dos
+Pega `supabase/verificar-rls.sql` entero en el SQL Editor —el de la nube, o el
+local en `http://127.0.0.1:54323`. Monta dos
 drivers de prueba, actúa como uno de ellos y comprueba diez cosas —que no ve las
 jornadas del otro, que no encuentra sus pedidos buscando por código, que no
 puede modificarlos ni suplantarlo—. Corta con error si alguna falla y hace
