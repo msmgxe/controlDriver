@@ -1,21 +1,20 @@
-"use server";
+"use client";
 
-import { revalidatePath } from "next/cache";
 
-import { reglaVigente } from "@/lib/db/jornadas";
-import { cerrarSemana, reabrirSemana, registrarPago } from "@/lib/db/liquidaciones";
+import { reglaVigente } from "@/lib/db/sqlite/jornadas";
+import { cerrarSemana, reabrirSemana, registrarPago } from "@/lib/db/sqlite/liquidaciones";
 import { esFechaISO, semanaDe } from "@/lib/fechas";
-import { perfilActual } from "@/lib/supabase/servidor";
+import { perfilActual } from "@/lib/db/sqlite/perfil";
 
 type Resultado = { ok: true } | { ok: false; error: string };
 
+/* Antes esto comprobaba la sesión. Dentro del APK no hay sesión que
+   comprobar: la base es del dueño del teléfono. Lo que decide si se puede
+   escribir es la licencia, y eso se mira en la pantalla, antes de llegar
+   aquí. Lo único que queda es no dejar escapar un error. */
 async function conSesion(accion: () => Promise<void>): Promise<Resultado> {
-  const perfil = await perfilActual();
-  if (!perfil || !perfil.activo) return { ok: false, error: "No hay sesión activa." };
   try {
     await accion();
-    revalidatePath("/pagos");
-    revalidatePath("/");
     return { ok: true };
   } catch (error) {
     return {
@@ -29,7 +28,7 @@ async function conSesion(accion: () => Promise<void>): Promise<Resultado> {
 export async function accionCerrarSemana(semanaInicio: string): Promise<Resultado> {
   if (!esFechaISO(semanaInicio)) return { ok: false, error: "Semana inválida." };
   const perfil = await perfilActual();
-  const { regla, id } = await reglaVigente(semanaDe(semanaInicio).fin, perfil?.tienda_id ?? null);
+  const { regla, id } = await reglaVigente(semanaDe(semanaInicio).fin, perfil?.tiendaId ?? null, perfil?.vehiculo);
   return conSesion(() => cerrarSemana(semanaInicio, regla, id));
 }
 

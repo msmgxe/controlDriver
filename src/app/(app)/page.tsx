@@ -1,9 +1,13 @@
+"use client";
+
 import Link from "next/link";
 
 import { CargarCapturas } from "@/components/CargarCapturas";
+import { usePuedeEscribir } from "@/components/Licencia";
 import { Alerta, Flecha, Reloj } from "@/components/iconos";
 import { Aviso, MontoHero, TiraSemana } from "@/components/ui";
-import { resumenPorRango } from "@/lib/db/jornadas";
+import { useDatos } from "@/hooks/useDatos";
+import { resumenPorRango } from "@/lib/db/sqlite/jornadas";
 import {
   formatearDuracion,
   formatearFecha,
@@ -15,10 +19,6 @@ import {
   sumarDias,
 } from "@/lib/fechas";
 import { formatearSoles } from "@/lib/pagos/reglas";
-import { perfilActual, puedeCargarJornadas } from "@/lib/supabase/servidor";
-
-export const metadata = { title: "Hoy" };
-export const dynamic = "force-dynamic";
 
 /**
  * Hoy (§9).
@@ -26,15 +26,20 @@ export const dynamic = "force-dynamic";
  * El principio rector de §1 es "una sola acción diaria". Por eso esta pantalla
  * tiene un único botón grande y todo lo demás es consulta.
  */
-export default async function PaginaHoy() {
+export default function PaginaHoy() {
   const hoy = hoyEnLima();
   const semana = semanaDe(hoy);
-  const perfil = await perfilActual();
+  const puedeCargar = usePuedeEscribir();
 
   // Se pide un mes largo de una vez: sirve para la semana en curso y para
   // encontrar la última jornada cargada sin una segunda consulta.
-  const desde = sumarDias(hoy, -45);
-  const filas = await resumenPorRango(desde, semana.fin);
+  const { datos: filas, cargando } = useDatos(
+    () => resumenPorRango(sumarDias(hoy, -45), semana.fin),
+    [hoy, semana.fin],
+  );
+
+  if (cargando || !filas) return <Esqueleto />;
+
   const porFecha = new Map(filas.map((f) => [f.fecha, f]));
 
   const deLaSemana = rangoDeFechas(semana.inicio, semana.fin).map((fecha) => {
@@ -58,7 +63,6 @@ export default async function PaginaHoy() {
   const jornadaDeHoy = porFecha.get(hoy);
   const ultima = filas.filter((f) => f.fecha <= hoy).at(-1);
   const faltantes = deLaSemana.filter((d) => !d.cargado && d.fecha < hoy);
-  const puedeCargar = perfil ? puedeCargarJornadas(perfil, hoy) : false;
 
   return (
     <div className="mx-auto flex max-w-[880px] flex-col gap-4">
@@ -135,6 +139,32 @@ export default async function PaginaHoy() {
           </p>
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * Lo que se ve mientras la base responde.
+ *
+ * Son milisegundos —SQLite está en el propio teléfono— pero dejar la pantalla
+ * en blanco, aunque sea un instante, se lee como que la app se colgó. Las
+ * formas grises ocupan el sitio de lo que va a llegar.
+ */
+function Esqueleto() {
+  return (
+    <div className="mx-auto flex max-w-[880px] animate-pulse flex-col gap-4" aria-hidden>
+      <div className="flex flex-col gap-2">
+        <div className="h-3 w-16 rounded bg-sup-2" />
+        <div className="h-8 w-64 rounded bg-sup-2" />
+      </div>
+      <div className="h-[92px] rounded-card bg-sup-2" />
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="h-[196px] rounded-card bg-sup-2" />
+        <div className="flex flex-col gap-3">
+          <div className="h-[68px] rounded-card bg-sup-2" />
+          <div className="h-[68px] rounded-card bg-sup-2" />
+        </div>
+      </div>
     </div>
   );
 }

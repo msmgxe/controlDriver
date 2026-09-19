@@ -1,4 +1,4 @@
-import { TablaUsuarios } from "@/components/TablaUsuarios";
+import { TablaUsuarios } from "@/app/admin/_componentes/TablaUsuarios";
 import { Cifras } from "@/components/ui";
 import { COSTO_POR_IMAGEN_SOLES, listarTiendas, listarUsuarios } from "@/lib/db/usuarios";
 

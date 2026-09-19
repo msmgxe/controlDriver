@@ -15,9 +15,9 @@ import {
   Menu,
   Salir,
 } from "@/components/iconos";
-import { cerrarSesion } from "@/lib/supabase/navegador";
 import { cerrarDeNuevo } from "@/lib/bloqueo";
-import type { Rol } from "@/lib/supabase/servidor";
+/** Dentro del APK solo existe el repartidor; el administrador vive en la web. */
+type Rol = "admin" | "driver";
 
 /**
  * Armazón de la app del driver.
@@ -53,7 +53,7 @@ export function Armazon({
 }: {
   children: React.ReactNode;
   nombre: string;
-  email: string;
+  email: string | null;
   rol: Rol;
 }) {
   const ruta = usePathname();
@@ -73,11 +73,12 @@ export function Armazon({
       d.href === "/" ? ruta === "/" : ruta.startsWith(d.href),
     ) ?? DESTINOS[0];
 
-  async function salir() {
+  /* En el APK no hay sesión que cerrar: los datos son del dueño del teléfono
+     y no viajan a ningún lado. Lo equivalente es echar el cerrojo, que es lo
+     que de verdad protege la pantalla si alguien coge el aparato. */
+  function salir() {
     cerrarDeNuevo();
-    await cerrarSesion();
-    router.replace("/acceso");
-    router.refresh();
+    router.replace("/");
   }
 
   return (
@@ -152,7 +153,7 @@ export function Armazon({
               </span>
               <span className="flex min-w-0 flex-col">
                 <b className="text-sm font-semibold">{nombre}</b>
-                <span className="truncate text-xs text-tinta-3">{email}</span>
+                {email && <span className="truncate text-xs text-tinta-3">{email}</span>}
               </span>
             </div>
 

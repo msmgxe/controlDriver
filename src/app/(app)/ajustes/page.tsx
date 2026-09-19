@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
+import { useRouter } from "next/navigation";
 
 import { Candado, Check, Huella } from "@/components/iconos";
 import {
@@ -168,11 +169,12 @@ export default function PaginaAjustes() {
         {error && <p className="text-sm font-semibold text-mal">{error}</p>}
 
         <p className="border-t border-linea pt-4 text-xs text-tinta-3">
-          El PIN se guarda solo en este dispositivo, cifrado, y nunca viaja al servidor. No es una
-          contraseña de la cuenta: si lo olvidas, cierra sesión, vuelve a entrar con tu correo y
-          pon uno nuevo.
+          El PIN se guarda solo en este teléfono, cifrado, y no viaja a ningún lado. Es lo único
+          que protege tus datos si alguien coge el aparato.
         </p>
       </section>
+
+      <SeccionEjemplo />
 
       <section className="tarjeta flex flex-col gap-2">
         <h3 className="text-lg">Tus capturas</h3>
@@ -182,5 +184,82 @@ export default function PaginaAjustes() {
         </p>
       </section>
     </div>
+  );
+}
+
+/**
+ * Datos de ejemplo.
+ *
+ * Existe para poder enseñar la aplicación: vacía no se ve el historial, ni el
+ * gráfico, ni la regla de permanencia haciendo su trabajo. Va al final de
+ * Ajustes y no en la pantalla principal a propósito —es una herramienta de
+ * demostración, no parte del uso diario— y borrar avisa antes, porque quien lo
+ * toque por error perdería su trabajo de verdad.
+ */
+function SeccionEjemplo() {
+  const router = useRouter();
+  const [ocupado, setOcupado] = useState<"cargando" | "borrando" | null>(null);
+  const [mensaje, setMensaje] = useState<string | null>(null);
+
+  async function cargar() {
+    setOcupado("cargando");
+    setMensaje(null);
+    try {
+      const { cargarDatosDeEjemplo } = await import("@/lib/db/sqlite/ejemplo");
+      const cuantas = await cargarDatosDeEjemplo();
+      setMensaje(`Listo: ${cuantas} jornadas de ejemplo. Míralas en Historial.`);
+      router.refresh();
+    } catch {
+      setMensaje("No se pudieron cargar los datos de ejemplo.");
+    } finally {
+      setOcupado(null);
+    }
+  }
+
+  async function borrar() {
+    if (!confirm("Se borrarán TODAS tus jornadas, también las de verdad. ¿Seguro?")) return;
+    setOcupado("borrando");
+    setMensaje(null);
+    try {
+      const { borrarTodasLasJornadas } = await import("@/lib/db/sqlite/ejemplo");
+      await borrarTodasLasJornadas();
+      setMensaje("Base vacía, como recién instalada.");
+      router.refresh();
+    } catch {
+      setMensaje("No se pudo borrar.");
+    } finally {
+      setOcupado(null);
+    }
+  }
+
+  return (
+    <section className="tarjeta flex flex-col gap-3">
+      <h3 className="text-lg">Datos de ejemplo</h3>
+      <p className="text-sm text-tinta-2">
+        Llena tres semanas con jornadas inventadas para poder enseñar la aplicación. Incluye un
+        día flojo donde se ve pagar la permanencia en vez de los pedidos.
+      </p>
+
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => void cargar()}
+          disabled={ocupado !== null}
+          className="boton-secundario min-h-11 px-4"
+        >
+          {ocupado === "cargando" ? "Cargando…" : "Cargar ejemplo"}
+        </button>
+        <button
+          type="button"
+          onClick={() => void borrar()}
+          disabled={ocupado !== null}
+          className="min-h-11 rounded-btn px-4 text-sm font-semibold text-mal"
+        >
+          {ocupado === "borrando" ? "Borrando…" : "Borrar todo"}
+        </button>
+      </div>
+
+      {mensaje && <p className="text-sm text-tinta-2">{mensaje}</p>}
+    </section>
   );
 }

@@ -32,6 +32,18 @@ export interface Certificado {
   nombre: string;
   /** Último día pagado, inclusive. `YYYY-MM-DD`. */
   vigenteHasta: string;
+  /**
+   * A qué teléfono pertenece.
+   *
+   * Sin esto el modelo de negocio no se sostiene: veinte compañeros de la
+   * misma tienda se ven a diario, y bastaría con que uno pagara y pasara su
+   * certificado a los demás. Atado al aparato, un certificado copiado no
+   * sirve en otro teléfono.
+   *
+   * Vacío significa "sirve en cualquiera". Solo se usa para certificados de
+   * prueba y para el periodo de demostración.
+   */
+  dispositivo: string;
   /** Cuándo se emitió. Sirve para detectar relojes manipulados. */
   emitidoEn: string;
   /** Días que la app sigue funcionando tras vencer, por si estuvo sin señal. */
@@ -111,6 +123,7 @@ export async function verificarCertificado(
     return {
       usuario: contenido.usuario,
       nombre: typeof contenido.nombre === "string" ? contenido.nombre : "",
+      dispositivo: typeof contenido.dispositivo === "string" ? contenido.dispositivo : "",
       vigenteHasta: contenido.vigenteHasta,
       emitidoEn: typeof contenido.emitidoEn === "string" ? contenido.emitidoEn : "",
       diasDeGracia:

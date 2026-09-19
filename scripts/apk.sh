@@ -32,14 +32,38 @@ echo "sdk.dir=$ANDROID_HOME" > android/local.properties
 
 # --- 1. La web que va dentro del APK --------------------------------------
 # Capacitor no ejecuta Next: mete dentro del APK una carpeta de archivos
-# estáticos y la abre en un navegador sin barra. Por eso hace falta
-# `output: "export"`, que es lo que produce `out/`.
-if grep -q '"export"' next.config.ts 2>/dev/null; then
-  echo "▸ Generando la web estática…"
-  npx next build
-else
-  echo "▸ (aún sin exportación estática: se usa el out/ que ya existe)"
-fi
+# estáticos y la abre en un navegador sin barra.
+#
+# Lo que es solo del panel web —el administrador, la API de extracción, el
+# acceso por correo y el proxy— se aparta durante la compilación. No es que
+# sobre: es que exige un servidor, y dentro del APK no hay ninguno. Se
+# devuelve a su sitio al terminar, pase lo que pase.
+SOLO_WEB=("src/app/admin" "src/app/api" "src/app/acceso" "src/app/configuracion" "src/proxy.ts")
+APARTADO=".solo-web"
+
+restaurar() {
+  if [ -d "$APARTADO" ]; then
+    for ruta in "${SOLO_WEB[@]}"; do
+      guardado="$APARTADO/$(echo "$ruta" | tr / _)"
+      [ -e "$guardado" ] && { mkdir -p "$(dirname "$ruta")"; rm -rf "$ruta"; mv "$guardado" "$ruta"; }
+    done
+    rmdir "$APARTADO" 2>/dev/null || true
+  fi
+}
+# Si algo falla a mitad, el código no se queda mutilado.
+trap restaurar EXIT
+
+echo "▸ Apartando lo que solo existe en la web…"
+mkdir -p "$APARTADO"
+for ruta in "${SOLO_WEB[@]}"; do
+  [ -e "$ruta" ] && mv "$ruta" "$APARTADO/$(echo "$ruta" | tr / _)"
+done
+
+echo "▸ Generando la web estática…"
+DESTINO=movil npx next build
+
+restaurar
+trap - EXIT
 
 # --- 2. Copiar la web al proyecto Android ---------------------------------
 echo "▸ Sincronizando con Android…"

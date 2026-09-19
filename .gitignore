@@ -50,3 +50,4 @@ next-env.d.ts
 /android/build/
 /android/app/build/
 /android/capacitor-cordova-android-plugins/
+.solo-web/

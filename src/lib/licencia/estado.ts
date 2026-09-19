@@ -19,7 +19,13 @@
  */
 import type { Certificado } from "./token";
 
-export type EstadoLicencia = "activa" | "gracia" | "vencida" | "sin_licencia";
+export type EstadoLicencia =
+  | "activa"
+  | "gracia"
+  | "vencida"
+  | "sin_licencia"
+  /** El certificado es válido, pero de otro teléfono. */
+  | "otro_dispositivo";
 
 export interface SituacionLicencia {
   estado: EstadoLicencia;
@@ -61,7 +67,25 @@ export function diasEntre(desde: string, hasta: string): number {
 export function evaluarLicencia(
   certificado: Certificado | null,
   hoy: string,
+  dispositivo?: string,
 ): SituacionLicencia {
+  /* Un certificado copiado de otro teléfono lleva firma buena —es auténtico—
+     pero no es de aquí. Se distingue de "sin licencia" para poder decirle a la
+     persona qué pasa: si no, quien lo recibió de buena fe de un compañero no
+     entendería nada. */
+  if (certificado && certificado.dispositivo && dispositivo &&
+      certificado.dispositivo !== dispositivo) {
+    return {
+      estado: "otro_dispositivo",
+      puedeEscribir: false,
+      diasRestantes: 0,
+      vigenteHasta: certificado.vigenteHasta,
+      nombre: certificado.nombre,
+      diasDeGracia: 0,
+      debeAvisar: true,
+    };
+  }
+
   if (!certificado) {
     return {
       estado: "sin_licencia",
@@ -129,6 +153,10 @@ export function mensajeDeLicencia(situacion: SituacionLicencia): string {
   const { estado, diasRestantes } = situacion;
 
   if (estado === "sin_licencia") return "Esta app todavía no está activada.";
+
+  if (estado === "otro_dispositivo") {
+    return "Esta licencia pertenece a otro teléfono. Pide la tuya al administrador.";
+  }
 
   if (estado === "vencida") {
     return "Tu mes venció. Puedes ver y exportar tus datos, pero no cargar jornadas nuevas.";

@@ -1,11 +1,17 @@
+"use client";
+
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+
 import Link from "next/link";
 
 import { ExportarEstadisticas } from "@/components/ExportarEstadisticas";
 import { GraficoDias, type DiaGrafico } from "@/components/GraficoDias";
 import { Reloj, Subir, Trofeo } from "@/components/iconos";
 import { Aviso, Cifras, Vacio } from "@/components/ui";
-import { jornadasPorRango } from "@/lib/db/jornadas";
-import { perfilActual } from "@/lib/supabase/servidor";
+import { useDatos } from "@/hooks/useDatos";
+import { jornadasPorRango } from "@/lib/db/sqlite/jornadas";
+import { perfilActual } from "@/lib/db/sqlite/perfil";
 import {
   formatearDuracion,
   formatearFecha,
@@ -17,8 +23,6 @@ import {
 } from "@/lib/fechas";
 import { formatearSoles } from "@/lib/pagos/reglas";
 
-export const metadata = { title: "Estadísticas" };
-export const dynamic = "force-dynamic";
 
 const RANGOS = [
   { id: "7", etiqueta: "7 días" },
@@ -34,20 +38,31 @@ function limites(id: IdRango, hoy: FechaISO): [FechaISO, FechaISO] {
   return [sumarDias(hoy, -29), hoy];
 }
 
-export default async function PaginaEstadisticas({
-  searchParams,
-}: {
-  searchParams: Promise<{ rango?: string }>;
-}) {
-  const params = await searchParams;
-  const rango = (RANGOS.find((r) => r.id === params.rango)?.id ?? "30") as IdRango;
+export default function PaginaEstadisticas() {
+  return (
+    <Suspense fallback={<Esqueleto />}>
+      <Contenido />
+    </Suspense>
+  );
+}
+
+function Contenido() {
+  const params = useSearchParams();
+  const rango = (RANGOS.find((r) => r.id === params.get("rango"))?.id ?? "30") as IdRango;
 
   const hoy = hoyEnLima();
   const [desde, hasta] = limites(rango, hoy);
-  const [jornadas, perfil] = await Promise.all([
-    jornadasPorRango(desde, hasta),
-    perfilActual(),
-  ]);
+
+  const { datos } = useDatos(async () => {
+    const [jornadas, perfil] = await Promise.all([
+      jornadasPorRango(desde, hasta),
+      perfilActual(),
+    ]);
+    return { jornadas, perfil };
+  }, [desde, hasta]);
+
+  if (!datos) return <Esqueleto />;
+  const { jornadas, perfil } = datos;
 
   if (jornadas.length === 0) {
     return (
@@ -297,6 +312,16 @@ function Record({
         <b className="text-sm font-bold">{titulo}</b>
         <span className="text-xs text-tinta-3">{detalle}</span>
       </span>
+    </div>
+  );
+}
+
+function Esqueleto() {
+  return (
+    <div className="mx-auto flex max-w-[1180px] animate-pulse flex-col gap-4" aria-hidden>
+      <div className="h-8 w-52 rounded bg-sup-2" />
+      <div className="h-[104px] rounded-card bg-sup-2" />
+      <div className="h-[300px] rounded-card bg-sup-2" />
     </div>
   );
 }

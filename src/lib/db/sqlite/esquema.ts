@@ -27,7 +27,7 @@
  */
 
 /** Versión del esquema. Subirla dispara las migraciones de `migrar()`. */
-export const VERSION_ESQUEMA = 2;
+export const VERSION_ESQUEMA = 3;
 
 export const NOMBRE_BASE = "rutas-a";
 
@@ -38,6 +38,16 @@ export const NOMBRE_BASE = "rutas-a";
  */
 export const ESQUEMA: string[] = [
   `pragma foreign_keys = on;`,
+
+  /* Pares clave/valor de la propia aplicación: el identificador de este
+     teléfono, el certificado de licencia, la fecha más alta vista. Van en la
+     base y no en el almacenamiento del navegador porque ahí sobreviven a
+     "borrar datos de navegación", que en el certificado sería una llamada de
+     soporte y en el identificador dejaría al usuario fuera de su licencia. */
+  `create table if not exists ajustes (
+     clave text primary key,
+     valor text not null
+   );`,
 
   `create table if not exists tiendas (
      id             text primary key,

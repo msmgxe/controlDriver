@@ -1,9 +1,13 @@
+"use client";
+
 import { AccionesSemana } from "@/components/AccionesSemana";
 import { Alerta, Check, Reloj } from "@/components/iconos";
 import { Aviso, MontoHero, TiraSemana } from "@/components/ui";
-import { reglaVigente } from "@/lib/db/jornadas";
-import { perfilActual } from "@/lib/supabase/servidor";
-import { liquidacionDeSemana, type SemanaLiquidada } from "@/lib/db/liquidaciones";
+import { useDatos } from "@/hooks/useDatos";
+import { reglaVigente } from "@/lib/db/sqlite/jornadas";
+import { perfilActual } from "@/lib/db/sqlite/perfil";
+import { liquidacionDeSemana } from "@/lib/db/sqlite/liquidaciones";
+import type { SemanaLiquidada } from "@/lib/db/tipos";
 import {
   formatearDuracion,
   formatearFecha,
@@ -14,8 +18,6 @@ import {
 } from "@/lib/fechas";
 import { formatearSoles } from "@/lib/pagos/reglas";
 
-export const metadata = { title: "Pagos" };
-export const dynamic = "force-dynamic";
 
 /**
  * Pagos (§13).
@@ -24,18 +26,25 @@ export const dynamic = "force-dynamic";
  * siguiente al corte. La semana en curso se recalcula al vuelo; las anteriores
  * muestran lo congelado al cerrarlas.
  */
-export default async function PaginaPagos() {
+export default function PaginaPagos() {
   const hoy = hoyEnLima();
 
-  const [enCurso, ...anteriores] = await Promise.all([
-    liquidacionDeSemana(hoy, hoy),
-    liquidacionDeSemana(sumarDias(hoy, -7)),
-    liquidacionDeSemana(sumarDias(hoy, -14)),
-    liquidacionDeSemana(sumarDias(hoy, -21)),
-  ]);
+  const { datos } = useDatos(async () => {
+    const [enCurso, ...anteriores] = await Promise.all([
+      liquidacionDeSemana(hoy, hoy),
+      liquidacionDeSemana(sumarDias(hoy, -7)),
+      liquidacionDeSemana(sumarDias(hoy, -14)),
+      liquidacionDeSemana(sumarDias(hoy, -21)),
+    ]);
 
-  const perfil = await perfilActual();
-  const { regla } = await reglaVigente(hoy, perfil?.tienda_id ?? null);
+    const perfil = await perfilActual();
+    const { regla } = await reglaVigente(hoy, perfil?.tiendaId ?? null, perfil?.vehiculo);
+
+    return { enCurso, anteriores, regla };
+  }, [hoy]);
+
+  if (!datos) return <Esqueleto />;
+  const { enCurso, anteriores, regla } = datos;
 
   const diasSemana = rangoDeFechas(enCurso.liquidacion.semana.inicio, enCurso.liquidacion.semana.fin).map(
     (fecha) => {
@@ -267,6 +276,18 @@ function FilaSemana({ semana }: { semana: SemanaLiquidada }) {
           </span>
         )}
       </span>
+    </div>
+  );
+}
+
+/** Mientras la base responde. Son milisegundos, pero el blanco asusta. */
+function Esqueleto() {
+  return (
+    <div className="mx-auto flex max-w-[880px] animate-pulse flex-col gap-4" aria-hidden>
+      <div className="h-8 w-40 rounded bg-sup-2" />
+      <div className="h-[280px] rounded-card bg-sup-2" />
+      <div className="h-[88px] rounded-card bg-sup-2" />
+      <div className="h-[88px] rounded-card bg-sup-2" />
     </div>
   );
 }

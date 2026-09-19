@@ -300,6 +300,30 @@
     box-shadow: var(--sombra-card);
   }
 
+  /* Acción secundaria: la misma altura cómoda para el dedo que la principal,
+     pero sin el peso visual. Los 44px son el mínimo para un dedo con guante
+     bajo el sol, que es como se usa esta aplicación. */
+  .boton-secundario {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 10px 16px;
+    border: 1px solid var(--linea-fuerte);
+    border-radius: var(--r-btn);
+    background: var(--sup);
+    color: var(--tinta);
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .boton-secundario:hover:not(:disabled) {
+    background: var(--sup-2);
+  }
+  .boton-secundario:disabled {
+    opacity: 0.55;
+  }
+
   .boton-principal {
     display: flex;
     align-items: center;

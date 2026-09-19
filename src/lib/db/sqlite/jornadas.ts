@@ -413,6 +413,20 @@ export async function actualizarTramo(
   );
 }
 
+/** Corrige la permanencia de un día ya guardado (§13 bis). */
+export async function actualizarHorario(
+  fecha: FechaISO,
+  horaEntrada: string | null,
+  horaSalida: string | null,
+): Promise<void> {
+  await ejecutar(
+    `update jornadas
+        set hora_entrada = ?, hora_salida = ?, actualizado_en = ?, sincronizado = 0
+      where fecha = ?`,
+    [horaEntrada, horaSalida, ahora(), fecha],
+  );
+}
+
 /** Deja constancia de la carga, para saber cuánto se gasta en el modelo (§12). */
 export async function registrarCarga(datos: {
   jornadaId: string | null;

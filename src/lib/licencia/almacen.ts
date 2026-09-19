@@ -1,0 +1,74 @@
+/**
+ * Dónde vive la licencia en el teléfono.
+ *
+ * Tres cosas se guardan aquí, y las tres en la base de datos y no en el
+ * almacenamiento del navegador:
+ *
+ *   · **el identificador de este teléfono** — si se perdiera, la licencia
+ *     dejaría de reconocer el aparato y el usuario se quedaría fuera;
+ *   · **el certificado** — perderlo sería una llamada de soporte;
+ *   · **la fecha más alta vista** — perderla regalaría el truco del reloj.
+ *
+ * "Borrar datos de navegación" se lleva localStorage por delante; la base de
+ * la aplicación no la toca.
+ */
+import { consultar, ejecutar, nuevoId } from "@/lib/db/sqlite/conexion";
+
+const CLAVE_DISPOSITIVO = "licencia.dispositivo";
+const CLAVE_CERTIFICADO = "licencia.certificado";
+const CLAVE_FECHA_MAXIMA = "licencia.fecha_maxima";
+
+async function leer(clave: string): Promise<string | null> {
+  const filas = await consultar<{ valor: string }>(
+    `select valor from ajustes where clave = ?`,
+    [clave],
+  );
+  return filas[0]?.valor ?? null;
+}
+
+async function escribir(clave: string, valor: string): Promise<void> {
+  await ejecutar(
+    `insert into ajustes (clave, valor) values (?, ?)
+     on conflict (clave) do update set valor = excluded.valor`,
+    [clave, valor],
+  );
+}
+
+/**
+ * El identificador de este teléfono. Se crea la primera vez y no cambia jamás.
+ *
+ * No se usa nada del aparato —ni IMEI ni número de serie— a propósito: son
+ * datos personales, Android los restringe cada vez más, y un número aleatorio
+ * cumple exactamente la misma función. Lo único que hace falta es que sea
+ * distinto en cada teléfono y estable en el tiempo.
+ */
+export async function identificadorDelDispositivo(): Promise<string> {
+  const guardado = await leer(CLAVE_DISPOSITIVO);
+  if (guardado) return guardado;
+
+  const nuevo = nuevoId();
+  await escribir(CLAVE_DISPOSITIVO, nuevo);
+  return nuevo;
+}
+
+export async function certificadoGuardado(): Promise<string | null> {
+  return leer(CLAVE_CERTIFICADO);
+}
+
+export async function guardarCertificado(texto: string): Promise<void> {
+  await escribir(CLAVE_CERTIFICADO, texto);
+}
+
+/**
+ * La fecha más alta que ha visto la aplicación.
+ *
+ * Solo sube, nunca baja: es lo que hace inútil atrasar el reloj del celular.
+ */
+export async function fechaMasAltaVista(): Promise<string | null> {
+  return leer(CLAVE_FECHA_MAXIMA);
+}
+
+export async function anotarFecha(fecha: string): Promise<void> {
+  const previa = await fechaMasAltaVista();
+  if (!previa || fecha > previa) await escribir(CLAVE_FECHA_MAXIMA, fecha);
+}

@@ -7,7 +7,7 @@ import {
   cambiarHorarioDeJornada,
   cambiarTramoDePedido,
   eliminarJornada,
-} from "@/app/(app)/jornada/[fecha]/acciones";
+} from "@/app/(app)/jornada/acciones";
 import { Alerta, Check } from "@/components/iconos";
 import { Aviso, ChipTramo, EstadoPedido } from "@/components/ui";
 import { formatearDuracion } from "@/lib/fechas";

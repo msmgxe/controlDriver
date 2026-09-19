@@ -34,6 +34,7 @@ const BASE: Certificado = {
   usuario: "u-123",
   nombre: "Juan Pérez",
   vigenteHasta: "2026-10-31",
+  dispositivo: "telefono-de-juan",
   emitidoEn: "2026-10-01T12:00:00.000Z",
   diasDeGracia: 7,
 };
@@ -227,5 +228,37 @@ describe("contar días", () => {
   it("no se descuadra con el cambio de hora", () => {
     // Si se contara en horas locales, un cambio de horario daría 0.96 días.
     expect(diasEntre("2026-04-01", "2026-04-08")).toBe(7);
+  });
+});
+
+describe("licencia prestada", () => {
+  const cert = (dispositivo: string): Certificado => ({ ...BASE, dispositivo });
+
+  it("un certificado de otro teléfono no activa la app", async () => {
+    // El caso real: veinte compañeros de la misma tienda, uno paga y reparte.
+    const texto = await emitirCertificado(cert("telefono-de-juan"), privada);
+    const leido = await verificarCertificado(texto, publica);
+
+    const s = evaluarLicencia(leido, "2026-10-15", "telefono-de-pedro");
+    expect(s.estado).toBe("otro_dispositivo");
+    expect(s.puedeEscribir).toBe(false);
+  });
+
+  it("en su propio teléfono funciona con normalidad", async () => {
+    const texto = await emitirCertificado(cert("telefono-de-juan"), privada);
+    const leido = await verificarCertificado(texto, publica);
+
+    expect(evaluarLicencia(leido, "2026-10-15", "telefono-de-juan").estado).toBe("activa");
+  });
+
+  it("explica qué pasa, en vez de decir solo que no", async () => {
+    const texto = await emitirCertificado(cert("telefono-de-juan"), privada);
+    const leido = await verificarCertificado(texto, publica);
+    const texto2 = mensajeDeLicencia(evaluarLicencia(leido, "2026-10-15", "otro"));
+    expect(texto2).toContain("otro teléfono");
+  });
+
+  it("un certificado sin aparato sirve en cualquiera: es el de demostración", () => {
+    expect(evaluarLicencia(cert(""), "2026-10-15", "cualquiera").estado).toBe("activa");
   });
 });

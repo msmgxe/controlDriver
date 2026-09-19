@@ -1,9 +1,15 @@
+"use client";
+
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+
 import Link from "next/link";
 
 import { BotonesExportar } from "@/components/BotonesExportar";
 import { Aviso, ChipTramo, EstadoPedido, Vacio } from "@/components/ui";
-import { buscarPedidos, jornadasPorRango, reglaVigente } from "@/lib/db/jornadas";
-import { clienteServidor, perfilActual } from "@/lib/supabase/servidor";
+import { useDatos } from "@/hooks/useDatos";
+import { buscarPedidos, jornadasPorRango, reglaVigente } from "@/lib/db/sqlite/jornadas";
+import { listarTiendas, perfilActual } from "@/lib/db/sqlite/perfil";
 import { horasDePermanencia, montoPorPermanencia } from "@/lib/pagos/reglas";
 import type { DatosExportacion } from "@/lib/exportar/datos";
 import {
@@ -19,8 +25,6 @@ import {
 } from "@/lib/fechas";
 import { formatearSoles } from "@/lib/pagos/reglas";
 
-export const metadata = { title: "Historial" };
-export const dynamic = "force-dynamic";
 
 /**
  * Historial (§11).
@@ -51,34 +55,38 @@ function limites(id: IdRango, hoy: FechaISO): [FechaISO, FechaISO] {
   return [lunes, sumarDias(lunes, 6)];
 }
 
-export default async function PaginaHistorial({
-  searchParams,
-}: {
-  searchParams: Promise<{ rango?: string; vista?: string; buscar?: string }>;
-}) {
-  const params = await searchParams;
-  const rango = (RANGOS.find((r) => r.id === params.rango)?.id ?? "semana") as IdRango;
-  const vista = params.vista === "dia" ? "dia" : "pedidos";
-  const buscado = (params.buscar ?? "").trim();
+/* `useSearchParams` obliga a envolver en Suspense: el filtro viene de la URL y
+   Next necesita saber qué pintar mientras la resuelve. */
+export default function PaginaHistorial() {
+  return (
+    <Suspense fallback={<Esqueleto />}>
+      <Contenido />
+    </Suspense>
+  );
+}
+
+function Contenido() {
+  const params = useSearchParams();
+  const rango = (RANGOS.find((r) => r.id === params.get("rango"))?.id ?? "semana") as IdRango;
+  const vista = params.get("vista") === "dia" ? "dia" : "pedidos";
+  const buscado = (params.get("buscar") ?? "").trim();
 
   const hoy = hoyEnLima();
   const [desde, hasta] = limites(rango, hoy);
-  const [jornadas, perfil] = await Promise.all([
-    jornadasPorRango(desde, hasta),
-    perfilActual(),
-  ]);
-  const { regla } = await reglaVigente(hasta, perfil?.tienda_id ?? null);
 
-  let nombreTienda: string | null = null;
-  if (perfil?.tienda_id) {
-    const supabase = await clienteServidor();
-    const { data } = await supabase
-      .from("tiendas")
-      .select("nombre")
-      .eq("id", perfil.tienda_id)
-      .maybeSingle();
-    nombreTienda = (data?.nombre as string | undefined) ?? null;
-  }
+  const { datos } = useDatos(async () => {
+    const [jornadas, perfil, tiendas] = await Promise.all([
+      jornadasPorRango(desde, hasta),
+      perfilActual(),
+      listarTiendas(),
+    ]);
+    const { regla } = await reglaVigente(hasta, perfil?.tiendaId ?? null, perfil?.vehiculo);
+    const nombreTienda = tiendas.find((x) => x.id === perfil?.tiendaId)?.nombre ?? null;
+    return { jornadas, perfil, regla, nombreTienda };
+  }, [desde, hasta]);
+
+  if (!datos) return <Esqueleto />;
+  const { jornadas, perfil, regla, nombreTienda } = datos;
 
   /* Los datos del archivo se arman aquí y el celular genera el Excel o el PDF.
      Se exporta exactamente lo que está filtrado en pantalla (§11). */
@@ -274,7 +282,7 @@ export default async function PaginaHistorial({
                   }),
                   <tr key={`sub-${j.id}`} className="subtotal">
                     <td colSpan={7}>
-                      <Link href={`/jornada/${j.fecha}`} className="hover:text-acento">
+                      <Link href={`/jornada?fecha=${j.fecha}`} className="hover:text-acento">
                         Subtotal {nombreDelDia(j.fecha)} {formatearFecha(j.fecha)} ·{" "}
                         {j.ordenes.length} pedidos · {j.rutas.length} rutas
                       </Link>
@@ -317,7 +325,7 @@ export default async function PaginaHistorial({
             return (
               <Link
                 key={fecha}
-                href={`/jornada/${fecha}`}
+                href={`/jornada?fecha=${fecha}`}
                 className="flex items-center gap-3 rounded-card border border-linea bg-sup px-4 py-3 hover:bg-sup-2"
               >
                 <span className="flex w-[86px] shrink-0 flex-col">
@@ -363,12 +371,16 @@ function Resumen({ etiqueta, valor }: { etiqueta: string; valor: string }) {
   );
 }
 
-async function ResultadosBusqueda({ texto }: { texto: string }) {
+function ResultadosBusqueda({ texto }: { texto: string }) {
+  const { datos: encontrados } = useDatos(
+    () => (texto.length < 3 ? Promise.resolve([]) : buscarPedidos(texto)),
+    [texto],
+  );
+
   if (texto.length < 3) {
     return <Vacio>Escribe al menos tres caracteres del código.</Vacio>;
   }
-
-  const encontrados = await buscarPedidos(texto);
+  if (!encontrados) return null;
   if (encontrados.length === 0) {
     return <Vacio>Ningún pedido tuyo coincide con «{texto}».</Vacio>;
   }
@@ -397,7 +409,7 @@ async function ResultadosBusqueda({ texto }: { texto: string }) {
                   <span className="codigo">{p.codigo}</span>
                 </td>
                 <td className="whitespace-nowrap">
-                  <Link href={`/jornada/${p.fecha}`} className="hover:text-acento">
+                  <Link href={`/jornada?fecha=${p.fecha}`} className="hover:text-acento">
                     {nombreDelDia(p.fecha).slice(0, 3)} {formatearFecha(p.fecha)}
                   </Link>
                 </td>
@@ -417,5 +429,15 @@ async function ResultadosBusqueda({ texto }: { texto: string }) {
         </table>
       </div>
     </section>
+  );
+}
+
+function Esqueleto() {
+  return (
+    <div className="mx-auto flex max-w-[880px] animate-pulse flex-col gap-4" aria-hidden>
+      <div className="h-8 w-44 rounded bg-sup-2" />
+      <div className="h-11 rounded-btn bg-sup-2" />
+      <div className="h-[420px] rounded-card bg-sup-2" />
+    </div>
   );
 }

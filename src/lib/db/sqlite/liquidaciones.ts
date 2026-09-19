@@ -199,3 +199,15 @@ export async function reabrirSemana(semanaInicio: FechaISO): Promise<void> {
     [ahora(), semanaInicio],
   );
 }
+
+/**
+ * En qué estado está la semana de una fecha.
+ *
+ * Lo usan las pantallas de edición: una jornada de una semana cerrada no se
+ * toca sin reabrirla, porque el monto liquidado está congelado y editarla por
+ * debajo dejaría el historial diciendo una cosa y la liquidación otra.
+ */
+export async function estadoDeSemana(fecha: FechaISO): Promise<EstadoSemana> {
+  const guardada = await leerGuardada(semanaDe(fecha).inicio);
+  return guardada?.estado ?? "abierta";
+}

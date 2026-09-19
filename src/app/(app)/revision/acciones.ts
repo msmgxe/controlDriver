@@ -1,11 +1,10 @@
-"use server";
+"use client";
 
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { esFechaISO, hoyEnLima, type FechaISO } from "@/lib/fechas";
-import { guardarJornada, registrarCarga, reglaVigente } from "@/lib/db/jornadas";
-import { perfilActual, puedeCargarJornadas } from "@/lib/supabase/servidor";
+import { guardarJornada, registrarCarga, reglaVigente } from "@/lib/db/sqlite/jornadas";
+import { perfilActual } from "@/lib/db/sqlite/perfil";
 import { TRAMO_MAS_DE_12_KM, pagoDelTramo } from "@/lib/pagos/reglas";
 
 /**
@@ -68,17 +67,13 @@ export type ResultadoConfirmacion =
 
 export async function confirmarJornada(envio: unknown): Promise<ResultadoConfirmacion> {
   const perfil = await perfilActual();
-  if (!perfil) return { ok: false, error: "No hay sesión." };
+  if (!perfil) return { ok: false, error: "La aplicación aún no está configurada." };
+
+  /* Si la licencia permite escribir se comprueba en la pantalla, que es donde
+     se puede explicar al usuario y ofrecerle renovar. Repetirlo aquí solo
+     serviría para dar el mismo "no" sin contexto. */
 
   const hoy = hoyEnLima();
-  if (!puedeCargarJornadas(perfil, hoy)) {
-    return {
-      ok: false,
-      error: perfil.activo
-        ? "Tu suscripción venció: puedes consultar tu historial, pero no guardar días nuevos."
-        : "Tu cuenta está desactivada.",
-    };
-  }
 
   const parseado = esquemaEnvio.safeParse(envio);
   if (!parseado.success) {
@@ -102,7 +97,7 @@ export async function confirmarJornada(envio: unknown): Promise<ResultadoConfirm
     }
   }
 
-  const { regla } = await reglaVigente(datos.fecha, perfil.tienda_id);
+  const { regla } = await reglaVigente(datos.fecha, perfil.tiendaId);
 
   const ordenes = [];
   for (const orden of datos.ordenes) {
@@ -143,7 +138,9 @@ export async function confirmarJornada(envio: unknown): Promise<ResultadoConfirm
         horaSalida: datos.horaSalida,
         // La tienda se toma del perfil en servidor, nunca del cliente: define
         // qué tarifa se aplica, así que es dinero.
-        tiendaId: perfil.tienda_id,
+        tiendaId: perfil.tiendaId,
+        // El vehículo del día decide qué tarifa se aplica (§13).
+        vehiculo: perfil.vehiculo,
         rutas: datos.rutas,
         ordenes,
       },
@@ -156,8 +153,6 @@ export async function confirmarJornada(envio: unknown): Promise<ResultadoConfirm
         modelo: datos.uso.modelo,
         tokensEntrada: datos.uso.tokensEntrada,
         tokensSalida: datos.uso.tokensSalida,
-        // No se guardan los códigos: la auditoría solo necesita el tamaño (§7).
-        respuestaCruda: { rutas: datos.rutas.length, ordenes: datos.ordenes.length },
       });
     }
   } catch (error) {
@@ -166,11 +161,6 @@ export async function confirmarJornada(envio: unknown): Promise<ResultadoConfirm
       error: error instanceof Error ? error.message : "No se pudo guardar la jornada.",
     };
   }
-
-  revalidatePath("/");
-  revalidatePath("/historial");
-  revalidatePath("/pagos");
-  revalidatePath("/estadisticas");
 
   return { ok: true, fecha: datos.fecha };
 }
