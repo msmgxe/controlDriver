@@ -26,7 +26,7 @@ import { pagoDelTramo } from "@/lib/pagos/reglas";
 import { guardarPrueba } from "@/lib/db/sqlite/pruebas";
 
 import { agruparPorFecha, fusionarCapturas } from "./fusionar";
-import { interpretarCaptura } from "./ocr";
+import { interpretarConContexto, type ContextoEntreCapturas } from "./ocr";
 import { validarJornada } from "./validar";
 import type { ImagenExtraida } from "./esquema";
 
@@ -102,11 +102,20 @@ export async function leerCapturas(imagenes: readonly Blob[]): Promise<Resultado
   const crudo: string[] = [];
   let descartadas = 0;
 
+  /* Lo que cada captura le deja a la siguiente: si la lista de pedidos
+     seguía bajo una ruta al cortarse, la captura de después empieza en esa
+     misma ruta aunque no la muestre. */
+  let contexto: ContextoEntreCapturas | undefined;
+  let numeroDeCaptura = 0;
+
   for (const imagen of imagenes) {
     try {
       const lineas = await leerTexto(imagen);
-      crudo.push(`── captura ${crudo.length + 1} ──`, ...lineas);
-      const extraida = interpretarCaptura(lineas);
+      numeroDeCaptura++;
+      crudo.push(`── captura ${numeroDeCaptura} ──`, ...lineas);
+      const leida = interpretarConContexto(lineas, contexto);
+      contexto = leida.contexto;
+      const extraida = leida.imagen;
 
       // Una captura de la que no se sacó nada útil no aporta y sí puede
       // confundir: se cuenta como descartada y se dice cuántas fueron.

@@ -77,9 +77,25 @@ export async function procesarCapturas(
     };
   }
 
+  /* En el orden en que se **tomaron**, no en el que llegan.
+
+     El selector de fotos de Android no respeta el orden de captura: según el
+     teléfono las devuelve por selección, por nombre o de la más nueva a la más
+     vieja. Y el orden importa dos veces: una captura sin cabecera pertenece al
+     último día visto antes que ella, y una captura que empieza a mitad de una
+     ruta hereda la ruta de la anterior. Ordenar mal repartía los pedidos en el
+     día equivocado.
+
+     La hora de la captura va en el propio archivo. Se ordena aquí, antes de
+     comprimir, porque la imagen comprimida es un archivo nuevo y ya no la
+     lleva. */
+  const enOrden = [...archivos].sort(
+    (a, b) => ((a as File).lastModified ?? 0) - ((b as File).lastModified ?? 0),
+  );
+
   try {
     const comprimidas: Blob[] = [];
-    for (const archivo of archivos) {
+    for (const archivo of enOrden) {
       comprimidas.push(await comprimir(archivo));
       alComprimir?.(comprimidas.length);
     }

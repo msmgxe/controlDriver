@@ -82,8 +82,18 @@ const RE_HORARIO = /de:?\s*(\d{1,2}:\d{2})\s*(?:a|-|–)\s*(\d{1,2}:\d{2})/;
  */
 const RE_CODIGO = /v\s*([0-9oOlLiI|sSbBgG]{8})\s*w\s*o\s*f\s*p\s*[-–—]?\s*([0-9oOlLiI|sSbBgG]{2})/i;
 
-/** `Ruta 4` — en singular: la ruta a la que pertenece un pedido. */
-const RE_RUTA_DEL_PEDIDO = /^ruta\s*:?\s*(\d{1,3})$/;
+/**
+ * `Ruta 4` — en singular: la ruta a la que pertenecen los pedidos.
+ *
+ * Admite cosas detrás —una flecha, el horario, el estado— porque en la lista
+ * de pedidos agrupada por ruta es la cabecera de un bloque, y ahí suele ir
+ * acompañada. No confunde el contador `Rutas 7`: tras "ruta" exige espacio o
+ * dos puntos antes del número, y la "s" del plural no es ninguna de las dos.
+ */
+const RE_RUTA_DEL_PEDIDO = /^ruta\s*:?\s*(\d{1,3})\b/;
+
+/** Estados propios de un pedido. "Finalizado" es de las rutas y no cuenta aquí. */
+const ESTADOS_DE_PEDIDO = new Set(["Entregado", "Entrega parcial", "No entregado"]);
 
 /** Un número suelto: en la pantalla de Rutas es el círculo azul. */
 const RE_NUMERO_SUELTO = /^(\d{1,3})$/;
@@ -216,13 +226,57 @@ function lineasDelResumen(lineas: readonly string[]): {
  * ------------------------------------------------------------------------- */
 
 /**
+ * Lo que una captura le deja a la siguiente.
+ *
+ * Hace falta porque la lista de pedidos se fotografía haciendo scroll, y una
+ * captura puede empezar a mitad de una ruta: sus primeros pedidos pertenecen
+ * a la `Ruta N` que se vio al final de la captura anterior, y en esta no
+ * aparece. Sin arrastrar ese dato, esos pedidos quedarían sin ruta.
+ */
+export interface ContextoEntreCapturas {
+  /** Ruta bajo la que seguían los pedidos al terminar la captura anterior. */
+  rutaAbierta: number | null;
+  /** La captura anterior era una lista de pedidos agrupada por ruta. */
+  agrupada: boolean;
+}
+
+const SIN_CONTEXTO: ContextoEntreCapturas = { rutaAbierta: null, agrupada: false };
+
+/** Una captura suelta. Ver `interpretarConContexto` para una serie. */
+export function interpretarCaptura(lineasCrudas: readonly string[]): ImagenExtraida {
+  return interpretarConContexto(lineasCrudas).imagen;
+}
+
+/**
  * Convierte las líneas leídas de una captura en datos estructurados.
  *
- * Recorre en orden de lectura manteniendo contexto, que es como está montada
- * la pantalla: primero el número de la ruta, luego su estado, luego su
- * horario; primero el código del pedido, luego su ruta y su estado.
+ * Hay dos formas de pantalla de pedidos, y leer bien depende de distinguirlas:
+ *
+ *     Una tarjeta por pedido          Pedidos agrupados por ruta
+ *     ─────────────────────           ──────────────────────────
+ *     v12239582wofp-01                Ruta 4          ← una vez
+ *     Ruta 4                          v12239582wofp-01
+ *     Entregado                       Entregado
+ *     v12239681wofp-01                v12239681wofp-01
+ *     Ruta 4                          Entregado
+ *     Entregado                       Ruta 5          ← cambia
+ *                                     v12240224wofp-01
+ *
+ * En la agrupada, `Ruta 4` sale **una sola vez** y vale para todos los pedidos
+ * que vienen debajo hasta la siguiente. Buscarla junto a cada pedido —que es lo
+ * que se hacía— solo se la daba al primero de cada ruta: cada ruta salía con
+ * un pedido y el resto quedaba sin asignar.
+ *
+ * Se distinguen por lo que viene **justo después** de cada `Ruta N`. En la
+ * agrupada es una cabecera, así que la sigue un código. En la de tarjetas la
+ * sigue el estado del pedido. Contar líneas no bastaba: una pantalla de
+ * tarjetas con la última cortada también tiene menos `Ruta N` que códigos, y
+ * se tomaba por agrupada.
  */
-export function interpretarCaptura(lineasCrudas: readonly string[]): ImagenExtraida {
+export function interpretarConContexto(
+  lineasCrudas: readonly string[],
+  previo: ContextoEntreCapturas = SIN_CONTEXTO,
+): { imagen: ImagenExtraida; contexto: ContextoEntreCapturas } {
   // Una línea del lector puede traer varias líneas visuales dentro.
   const lineas = lineasCrudas
     .flatMap((l) => l.split(/\r?\n/))
@@ -231,6 +285,45 @@ export function interpretarCaptura(lineasCrudas: readonly string[]): ImagenExtra
 
   const { consumidas, resumen } = lineasDelResumen(lineas);
 
+  /* --- qué forma tiene la pantalla --- */
+  let codigos = 0;
+  let cabeceras = 0;
+  let rutasDeTarjeta = 0;
+  for (let i = 0; i < lineas.length; i++) {
+    if (consumidas.has(i)) continue;
+    if (RE_CODIGO.test(lineas[i])) codigos++;
+    else if (RE_RUTA_DEL_PEDIDO.test(normalizar(lineas[i]))) {
+      if (esCabeceraDeRuta(lineas, i, consumidas)) cabeceras++;
+      else rutasDeTarjeta++;
+    }
+  }
+
+  const agrupada =
+    cabeceras + rutasDeTarjeta > 0
+      ? cabeceras > 0 && cabeceras >= rutasDeTarjeta
+      : // Ninguna `Ruta N` a la vista, pero la anterior era agrupada: es la
+        // continuación por scroll de la misma ruta.
+        previo.agrupada && codigos > 0;
+
+  const orientacionRuta = orientacionDeLasTarjetas(lineas, consumidas);
+  const orientacionEstado = orientacionDeLosEstados(lineas, consumidas);
+
+  /* ¿El número del círculo va antes o después del horario de su tarjeta?
+
+     Se decide una vez por captura, por lo que pasa con la primera. Hacerlo
+     tarjeta a tarjeta —usar el de antes y, si falta, buscar el de después— era
+     un error: cuando a una tarjeta no se le leía el número, se quedaba con el
+     de la tarjeta siguiente y salían dos rutas con el mismo. */
+  let primerNumero = -1;
+  let primerHorario = -1;
+  for (let i = 0; i < lineas.length; i++) {
+    if (consumidas.has(i)) continue;
+    const l = normalizar(lineas[i]);
+    if (primerNumero === -1 && RE_NUMERO_SUELTO.test(l)) primerNumero = i;
+    if (primerHorario === -1 && RE_HORARIO.test(l)) primerHorario = i;
+  }
+  const numeroAntesDelHorario = primerNumero !== -1 && primerNumero < primerHorario;
+
   let fecha: string | null = null;
   let contadorRutas: number | null = null;
   let contadorOrdenes: number | null = null;
@@ -238,11 +331,13 @@ export function interpretarCaptura(lineasCrudas: readonly string[]): ImagenExtra
   const rutas: RutaExtraida[] = [];
   const ordenes: OrdenExtraida[] = [];
 
-  // Contexto de la tarjeta que se está leyendo.
-  let numeroPendiente: number | null = null;
+  /* Dos números pendientes distintos, porque vienen de sitios distintos y no
+     pueden mezclarse: el de una cabecera `Ruta 4` es seguro; el de un círculo
+     suelto depende de la orientación de la captura. */
+  let numeroDeCabecera: number | null = null;
+  let numeroSuelto: number | null = null;
   let estadoPendiente: string | null = null;
-
-  const orientacion = orientacionDeLasTarjetas(lineas, consumidas);
+  let rutaVigente: number | null = agrupada ? previo.rutaAbierta : null;
 
   for (let i = 0; i < lineas.length; i++) {
     if (consumidas.has(i)) continue;
@@ -274,27 +369,42 @@ export function interpretarCaptura(lineasCrudas: readonly string[]): ImagenExtra
     const mCodigo = cruda.match(RE_CODIGO);
     if (mCodigo) {
       const codigo = `v${soloDigitos(mCodigo[1])}wofp-${soloDigitos(mCodigo[2])}`;
-      const { ruta, estado, completo } = contextoDelPedido(lineas, i, orientacion, consumidas);
+      const estado = buscarEstado(lineas, i, orientacionEstado, consumidas);
+      const ruta = agrupada ? rutaVigente : buscarRuta(lineas, i, orientacionRuta, consumidas);
+
       ordenes.push({
         codigo,
         ruta,
         estado: estado ?? "Entregado",
-        // Sin estado visible la tarjeta venía cortada: se marca para que
-        // Revisión lo señale en vez de darlo por bueno.
-        legible_completo: completo,
+        legible_completo: ruta !== null && estado !== null,
       });
-      numeroPendiente = null;
+      numeroDeCabecera = null;
+      numeroSuelto = null;
       estadoPendiente = null;
       continue;
+    }
+
+    /* --- cabecera de ruta --- */
+    const mRuta = linea.match(RE_RUTA_DEL_PEDIDO);
+    if (mRuta) {
+      const n = Number(mRuta[1]);
+      if (agrupada) rutaVigente = n;
+      // Si la cabecera trae el horario detrás, esa ruta tiene número leído.
+      numeroDeCabecera = n;
+      const enLaMisma = linea.match(RE_HORARIO);
+      if (!enLaMisma) continue;
     }
 
     /* --- rutas --- */
     const mHorario = linea.match(RE_HORARIO);
     if (mHorario) {
-      /* Si el número no vino antes del horario, se busca justo después: el
-         lector agrupa las regiones a su manera y el círculo con el número
-         puede caer detrás. Solo si tampoco está ahí se numera por orden. */
-      const numero = numeroPendiente ?? numeroSiguiente(lineas, i);
+      /* El número se toma de donde dice la orientación de esta captura, y de
+         ningún otro sitio. Si no está, se numera por orden y se marca como
+         deducido: ese número solo vale dentro de esta captura, y la fusión lo
+         reconstruye con los de las rutas vecinas. */
+      const numero =
+        numeroDeCabecera ??
+        (numeroAntesDelHorario ? numeroSuelto : numeroSiguiente(lineas, i, consumidas));
       const estado = estadoPendiente ?? estadoSiguiente(lineas, i);
 
       rutas.push({
@@ -302,17 +412,14 @@ export function interpretarCaptura(lineasCrudas: readonly string[]): ImagenExtra
         estado: estado ?? "Finalizado",
         hora_inicio: normalizarHora(mHorario[1]),
         hora_fin: normalizarHora(mHorario[2]),
-        // El horario es lo que de verdad hace falta para calcular; sin número
-        // visible se numera por orden y se sigue considerando utilizable.
-        legible_completo: mHorario[1] !== undefined && mHorario[2] !== undefined,
+        legible_completo: true,
+        numero_deducido: numero === null,
       });
-      numeroPendiente = null;
+      numeroDeCabecera = null;
+      numeroSuelto = null;
       estadoPendiente = null;
       continue;
     }
-
-    const mRutaPedido = linea.match(RE_RUTA_DEL_PEDIDO);
-    if (mRutaPedido) continue; // Ya lo recoge `contextoDelPedido`.
 
     const estado = estadoDe(linea);
     if (estado) {
@@ -322,7 +429,7 @@ export function interpretarCaptura(lineasCrudas: readonly string[]): ImagenExtra
 
     const mNumero = linea.match(RE_NUMERO_SUELTO);
     if (mNumero) {
-      numeroPendiente = Number(mNumero[1]);
+      numeroSuelto = Number(mNumero[1]);
       continue;
     }
   }
@@ -332,7 +439,7 @@ export function interpretarCaptura(lineasCrudas: readonly string[]): ImagenExtra
 
   /* Se valida contra el mismo esquema que usaba la salida del modelo: si algo
      no cuadra, falla aquí y no tres pantallas más adelante. */
-  return esquemaImagenExtraida.parse({
+  const imagen = esquemaImagenExtraida.parse({
     tipo_pantalla: tipo,
     fecha,
     contador_rutas: contadorRutas,
@@ -343,24 +450,55 @@ export function interpretarCaptura(lineasCrudas: readonly string[]): ImagenExtra
     rutas,
     ordenes,
   });
+
+  return {
+    imagen,
+    /* Una captura de rutas no pertenece a la lista de pedidos: la cadena pasa
+       a través de ella intacta. Si se reiniciara, el pedido que abre la
+       siguiente captura de pedidos perdería la ruta bajo la que venía. */
+    contexto:
+      tipo === "rutas"
+        ? previo
+        : { rutaAbierta: agrupada ? rutaVigente : null, agrupada },
+  };
 }
 
 /**
- * ¿En qué orden devuelve el lector los datos de cada tarjeta de pedido?
+ * ¿Esta línea `Ruta N` es la cabecera de un bloque de pedidos?
  *
- * Hay dos posibilidades, y cuál toca depende de cómo el lector agrupe las
- * regiones de la imagen —no es algo que se pueda dar por supuesto:
+ * Lo es si lo siguiente con sustancia es un código. Se saltan el horario y el
+ * estado de la ruta ("Finalizado"), que pueden ir en la cabecera; cualquier
+ * otra cosa —en particular el estado de un pedido— dice que no es cabecera
+ * sino la ruta de una tarjeta.
+ */
+function esCabeceraDeRuta(
+  lineas: readonly string[],
+  desde: number,
+  consumidas: ReadonlySet<number>,
+): boolean {
+  for (let i = desde + 1; i < Math.min(lineas.length, desde + 5); i++) {
+    if (consumidas.has(i)) continue;
+    if (RE_CODIGO.test(lineas[i])) return true;
+    const linea = normalizar(lineas[i]);
+    if (RE_HORARIO.test(linea)) continue;
+    const estado = estadoDe(linea);
+    if (estado && !ESTADOS_DE_PEDIDO.has(estado)) continue;
+    return false;
+  }
+  return false;
+}
+
+/**
+ * En una pantalla de una tarjeta por pedido, ¿la línea `Ruta N` va antes o
+ * después del código?
  *
- *     código → Ruta N → Estado      (se busca hacia **adelante**)
- *     Ruta N → Estado → código      (se busca hacia **atrás**)
+ *     código → Ruta N      (se busca hacia **adelante**)
+ *     Ruta N → código      (se busca hacia **atrás**)
  *
  * Buscar en las dos direcciones a la vez parece más robusto y es justo lo
- * contrario: cada pedido acabaría robando los datos de su vecino, y el error
- * sería invisible porque el resultado parece plausible.
- *
- * Se decide **una vez por captura**, comparando dónde aparece el primer código
- * y dónde la primera línea `Ruta N`. Dentro de una misma imagen el orden es
- * siempre el mismo, así que con mirar la primera tarjeta basta.
+ * contrario: cada pedido acabaría robando la ruta de su vecino, y el error
+ * sería invisible porque el resultado parece plausible. Se decide una vez por
+ * captura, por lo que pasa con la primera tarjeta.
  */
 function orientacionDeLasTarjetas(
   lineas: readonly string[],
@@ -376,50 +514,109 @@ function orientacionDeLasTarjetas(
     if (primerCodigo !== -1 && primeraRuta !== -1) break;
   }
 
-  // Sin datos para decidir, el orden natural de lectura.
   if (primerCodigo === -1 || primeraRuta === -1) return "adelante";
   return primeraRuta < primerCodigo ? "atras" : "adelante";
 }
 
 /**
- * Busca la ruta y el estado que acompañan a un código de pedido.
+ * ¿El estado de cada pedido va antes o después de su código?
  *
- * Recorre en la dirección que dijo `orientacionDeLasTarjetas` y se detiene al
- * topar con otro código, que es donde empieza la tarjeta vecina. Ese tope es
- * lo que evita el error peligroso: sin él, un pedido con la tarjeta cortada
- * heredaría la ruta del de al lado y nadie se daría cuenta.
+ * Se decide **aparte** de la ruta, y no es un detalle: en la lista agrupada la
+ * cabecera `Ruta 4` va antes de los códigos pero los estados van después, así
+ * que usar la misma orientación para las dos cosas desplazaba todos los
+ * estados un puesto.
+ *
+ * Por el medio de la lista no se puede saber —«código, estado, código,
+ * estado» se ve igual desde cualquier pedido del centro—, así que se mira en
+ * los bordes: si sobran estados antes del primer código o después del último.
+ * Ante la duda, hacia adelante, que es el orden de lectura.
  */
-function contextoDelPedido(
+function orientacionDeLosEstados(
+  lineas: readonly string[],
+  consumidas: ReadonlySet<number>,
+): "adelante" | "atras" {
+  let primerCodigo = -1;
+  let ultimoCodigo = -1;
+  for (let i = 0; i < lineas.length; i++) {
+    if (consumidas.has(i) || !RE_CODIGO.test(lineas[i])) continue;
+    if (primerCodigo === -1) primerCodigo = i;
+    ultimoCodigo = i;
+  }
+  if (primerCodigo === -1) return "adelante";
+
+  const esEstadoDePedido = (i: number) =>
+    !consumidas.has(i) && ESTADOS_DE_PEDIDO.has(estadoDe(normalizar(lineas[i])) ?? "");
+
+  let antes = 0;
+  for (let i = primerCodigo - 1; i >= Math.max(0, primerCodigo - 3); i--) {
+    if (esEstadoDePedido(i)) antes++;
+  }
+  let despues = 0;
+  for (let i = ultimoCodigo + 1; i <= Math.min(lineas.length - 1, ultimoCodigo + 3); i++) {
+    if (esEstadoDePedido(i)) despues++;
+  }
+
+  return antes > despues ? "atras" : "adelante";
+}
+
+/**
+ * Recorre desde un código en una dirección hasta el código vecino, que es
+ * donde empieza la tarjeta de al lado. Ese tope es lo que impide que un pedido
+ * con la tarjeta cortada se quede con los datos del de al lado.
+ */
+function recorrerTarjeta(
   lineas: readonly string[],
   desde: number,
   orientacion: "adelante" | "atras",
   consumidas: ReadonlySet<number>,
-): { ruta: number | null; estado: string | null; completo: boolean } {
-  let ruta: number | null = null;
-  let estado: string | null = null;
-
+  buscar: (linea: string) => boolean,
+): void {
   const paso = orientacion === "adelante" ? 1 : -1;
-
   for (let i = desde + paso; i >= 0 && i < lineas.length; i += paso) {
     if (consumidas.has(i)) continue;
-    const linea = normalizar(lineas[i]);
-    if (RE_CODIGO.test(lineas[i])) break;
-
-    const mRuta = linea.match(RE_RUTA_DEL_PEDIDO);
-    if (mRuta && ruta === null) ruta = Number(mRuta[1]);
-
-    const posible = estadoDe(linea);
-    if (posible && estado === null) estado = posible;
-
-    if (ruta !== null && estado !== null) break;
+    if (RE_CODIGO.test(lineas[i])) return;
+    if (buscar(normalizar(lineas[i]))) return;
   }
-
-  return { ruta, estado, completo: ruta !== null && estado !== null };
 }
 
-/** El primer número suelto que aparece justo después, antes de otro horario. */
-function numeroSiguiente(lineas: readonly string[], desde: number): number | null {
+function buscarEstado(
+  lineas: readonly string[],
+  desde: number,
+  orientacion: "adelante" | "atras",
+  consumidas: ReadonlySet<number>,
+): string | null {
+  let encontrado: string | null = null;
+  recorrerTarjeta(lineas, desde, orientacion, consumidas, (linea) => {
+    const estado = estadoDe(linea);
+    if (estado && ESTADOS_DE_PEDIDO.has(estado)) encontrado = estado;
+    return encontrado !== null;
+  });
+  return encontrado;
+}
+
+function buscarRuta(
+  lineas: readonly string[],
+  desde: number,
+  orientacion: "adelante" | "atras",
+  consumidas: ReadonlySet<number>,
+): number | null {
+  let encontrada: number | null = null;
+  recorrerTarjeta(lineas, desde, orientacion, consumidas, (linea) => {
+    const m = linea.match(RE_RUTA_DEL_PEDIDO);
+    if (m) encontrada = Number(m[1]);
+    return encontrada !== null;
+  });
+  return encontrada;
+}
+
+/** El número suelto que va justo detrás del horario, sin pasar al de otra tarjeta. */
+function numeroSiguiente(
+  lineas: readonly string[],
+  desde: number,
+  consumidas: ReadonlySet<number>,
+): number | null {
   for (let i = desde + 1; i < Math.min(lineas.length, desde + 4); i++) {
+    if (consumidas.has(i)) continue;
     const linea = normalizar(lineas[i]);
     if (RE_HORARIO.test(linea)) return null;
     const m = linea.match(RE_NUMERO_SUELTO);
@@ -428,7 +625,7 @@ function numeroSiguiente(lineas: readonly string[], desde: number): number | nul
   return null;
 }
 
-/** Lo mismo para el estado. */
+/** Lo mismo para el estado de la ruta. */
 function estadoSiguiente(lineas: readonly string[], desde: number): string | null {
   for (let i = desde + 1; i < Math.min(lineas.length, desde + 4); i++) {
     const linea = normalizar(lineas[i]);

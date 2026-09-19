@@ -28,6 +28,15 @@ export const esquemaRutaExtraida = z.object({
   hora_fin: esquemaHora.nullable().default(null),
   /** false cuando la tarjeta llegó cortada y algún campo no era visible. */
   legible_completo: z.boolean().default(true),
+  /**
+   * El número no se leyó: se puso por el orden dentro de la captura.
+   *
+   * Hay que saberlo al fusionar. Un número deducido solo vale dentro de su
+   * captura —la primera ruta de la captura de arriba y la primera de la de
+   * abajo serían las dos "1"—, así que esas rutas no pueden emparejarse por
+   * número sino por horario.
+   */
+  numero_deducido: z.boolean().default(false),
 });
 
 export const esquemaOrdenExtraida = z.object({

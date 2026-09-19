@@ -36,6 +36,24 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v8 — 19/09/2026
+Tercera tanda del uso real. La lectura se reescribió a partir de cómo son de
+verdad las capturas: rutas por un lado, **pedidos agrupados por ruta** por
+otro, y las dos se repiten por el scroll.
+- **Arreglado:** solo el primer pedido de cada ruta encontraba su ruta. En la
+  pantalla de pedidos, `Ruta 4` sale una vez arriba y vale para todos los de
+  debajo; se buscaba junto a cada pedido.
+- **Arreglado:** una captura que empieza a mitad de una ruta hereda esa ruta de
+  la captura anterior.
+- **Arreglado:** las rutas repetidas por el scroll se pisaban y salían con el
+  horario de otra. Ahora se emparejan por horario, no por número.
+- **Arreglado:** los pedidos seguían en rojo. Si la tarjeta de resumen dice
+  cero no entregados, ningún pedido puede estarlo.
+- **Arreglado:** no dejaba guardar si un pedido apuntaba a una ruta que no
+  estaba. Ahora se guarda sin ruta y se avisa.
+- **Arreglado:** las capturas se ordenan por la hora en que se tomaron, no por
+  cómo las devuelve la galería.
+
 ### v7 — 19/09/2026
 - El APK lleva el número de versión en el nombre, y la app lo enseña en Ajustes.
 - Registro de versiones (este archivo).

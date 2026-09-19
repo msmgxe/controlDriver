@@ -90,12 +90,18 @@ export async function confirmarJornada(envio: unknown): Promise<ResultadoConfirm
     return { ok: false, error: "No puedes guardar una jornada con fecha futura." };
   }
 
+  /* Un pedido que apunta a una ruta que no está en las capturas **se guarda
+     sin ruta**, no se rechaza el día entero.
+
+     Antes esto devolvía un error y el botón de guardar no servía para nada:
+     bastaba con que el lector confundiera un número, o con que faltara la
+     captura de una ruta, para perder la jornada completa. La ruta solo sirve
+     para repartir el tiempo entre pedidos; el pedido y su pago existen igual.
+     Pantalla de Revisión ya lo avisa, y se puede asignar después. */
   const numerosDeRuta = new Set(datos.rutas.map((r) => r.numero));
-  for (const orden of datos.ordenes) {
-    if (orden.ruta !== null && !numerosDeRuta.has(orden.ruta)) {
-      return { ok: false, error: `El pedido ${orden.codigo} apunta a una ruta que no existe.` };
-    }
-  }
+  datos.ordenes = datos.ordenes.map((o) =>
+    o.ruta !== null && !numerosDeRuta.has(o.ruta) ? { ...o, ruta: null } : o,
+  );
 
   const { regla } = await reglaVigente(datos.fecha, perfil.tiendaId);
 

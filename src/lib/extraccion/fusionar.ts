@@ -51,15 +51,34 @@ export function fusionarCapturas(imagenes: readonly ImagenExtraida[]): JornadaFu
   const fechasEnConflicto = fechas.length > 1 ? fechas.sort() : [];
   const fecha = fechas.length === 1 ? fechas[0] : null;
 
-  /* --- rutas: se deduplican por número, conservando el orden de aparición --- */
-  const rutasPorNumero = new Map<number, RutaFusionada>();
+  /* --- rutas: se deduplican **por horario**, no por número ---
+
+     La misma ruta sale en varias capturas porque se solapan al hacer scroll,
+     y hay que quedarse con una. Emparejarlas por número era lo evidente y
+     fallaba: cuando el lector no ve el círculo, el número se pone por el orden
+     dentro de la captura, así que la primera ruta de la captura de arriba y la
+     primera de la de abajo eran las dos "Ruta 1" y se pisaban. Se perdían
+     rutas enteras y las que quedaban salían con el horario de otra.
+
+     El horario, en cambio, identifica una ruta sin ambigüedad: dos rutas del
+     mismo día no empiezan y acaban a la misma hora. El número se reconstruye
+     después, con `numerarRutas`. */
+  const rutasPorClave = new Map<string, RutaFusionada>();
+  let sinClave = 0;
   for (const img of imagenes) {
     for (const ruta of img.rutas) {
-      const previa = rutasPorNumero.get(ruta.numero);
+      const clave =
+        ruta.hora_inicio && ruta.hora_fin
+          ? `h:${ruta.hora_inicio}-${ruta.hora_fin}`
+          : !ruta.numero_deducido
+            ? `n:${ruta.numero}`
+            : `?:${sinClave++}`;
+
+      const previa = rutasPorClave.get(clave);
       if (!previa) {
-        rutasPorNumero.set(ruta.numero, { ...ruta, apariciones: 1 });
+        rutasPorClave.set(clave, { ...ruta, apariciones: 1 });
       } else {
-        rutasPorNumero.set(ruta.numero, {
+        rutasPorClave.set(clave, {
           ...combinarRuta(previa, ruta),
           apariciones: previa.apariciones + 1,
         });
@@ -88,16 +107,99 @@ export function fusionarCapturas(imagenes: readonly ImagenExtraida[]): JornadaFu
     }
   }
 
+  const resumenOrdenes = primerResumen(imagenes);
+
   return {
     fecha,
     fechasEnConflicto,
     contadorRutas: consensoNumerico(imagenes.map((i) => i.contador_rutas)),
     contadorOrdenes: consensoNumerico(imagenes.map((i) => i.contador_ordenes)),
-    resumenOrdenes: primerResumen(imagenes),
-    rutas: [...rutasPorNumero.values()].sort((a, b) => a.numero - b.numero),
-    ordenes: [...ordenesPorCodigo.values()].sort((a, b) => a.posicion - b.posicion),
+    resumenOrdenes,
+    rutas: numerarRutas([...rutasPorClave.values()]),
+    ordenes: cuadrarConElResumen(
+      [...ordenesPorCodigo.values()].sort((a, b) => a.posicion - b.posicion),
+      resumenOrdenes,
+    ),
     conteoImagenes,
   };
+}
+
+/**
+ * Pone a cada ruta su número definitivo.
+ *
+ * Las rutas del día se numeran en el orden en que ocurren: la 1 es la primera
+ * salida, la 2 la siguiente. Eso permite reconstruir el número de una ruta a
+ * la que no se le vio el círculo, a partir de las que sí se leyeron:
+ *
+ *     10:03  «1» leído
+ *     11:04  ?            → 2, porque va justo después de la 1
+ *     12:09  «3» leído
+ *
+ * Un número **leído** se respeta siempre: es lo que dice la app de reparto y
+ * lo que citan los pedidos con su `Ruta N`. Solo se rellenan los huecos. Si no
+ * se leyó ninguno, se numeran por orden de salida desde la 1.
+ */
+export function numerarRutas(rutas: readonly RutaFusionada[]): RutaFusionada[] {
+  const ordenadas = [...rutas].sort((a, b) =>
+    (a.hora_inicio ?? "99:99").localeCompare(b.hora_inicio ?? "99:99"),
+  );
+
+  const numeros = ordenadas.map((r) => (r.numero_deducido ? null : r.numero));
+
+  for (let i = 0; i < numeros.length; i++) {
+    if (numeros[i] !== null) continue;
+
+    // La ruta leída más cercana por delante marca desde dónde contar.
+    let j = i - 1;
+    while (j >= 0 && numeros[j] === null) j--;
+    if (j >= 0) {
+      numeros[i] = (numeros[j] as number) + (i - j);
+      continue;
+    }
+
+    // Si no hay ninguna antes, se cuenta hacia atrás desde la siguiente leída.
+    let k = i + 1;
+    while (k < numeros.length && numeros[k] === null) k++;
+    numeros[i] = k < numeros.length ? Math.max(1, (numeros[k] as number) - (k - i)) : i + 1;
+  }
+
+  return ordenadas
+    .map((r, i) => ({ ...r, numero: numeros[i] as number, numero_deducido: r.numero_deducido }))
+    .sort((a, b) => a.numero - b.numero);
+}
+
+/**
+ * Corrige los estados que contradicen a la tarjeta de resumen.
+ *
+ * La tarjeta de arriba de la pantalla de pedidos dice cuántos se entregaron,
+ * cuántos a medias y cuántos no, y es **el dato más fiable de toda la
+ * captura**: son tres números grandes en una posición fija. El estado de cada
+ * pedido, en cambio, es un rótulo pequeño que el lector puede atribuir al
+ * pedido equivocado.
+ *
+ * Así que cuando el resumen dice que hubo **cero** no entregados, ningún pedido
+ * puede estarlo, lea lo que lea el lector. Es exactamente lo que pasó en el
+ * primer uso real: dieciocho pedidos pintados de rojo en un día en que se
+ * entregó todo.
+ *
+ * Solo se corrige lo que el resumen permite afirmar con certeza. Si dice que
+ * hubo un no entregado y se leyeron tres, no hay forma de saber cuál es el
+ * bueno, y se deja como está para que lo decida la persona.
+ */
+export function cuadrarConElResumen(
+  ordenes: OrdenFusionada[],
+  resumen: ResumenOrdenes | null,
+): OrdenFusionada[] {
+  if (!resumen) return ordenes;
+  return ordenes.map((o) => {
+    if (o.estado === "No entregado" && resumen.no_entregado === 0) {
+      return { ...o, estado: "Entregado" };
+    }
+    if (o.estado === "Entrega parcial" && resumen.parcial === 0) {
+      return { ...o, estado: "Entregado" };
+    }
+    return o;
+  });
 }
 
 /**
@@ -106,8 +208,11 @@ export function fusionarCapturas(imagenes: readonly ImagenExtraida[]): JornadaFu
  * ya leído sería inventar.
  */
 function combinarRuta(a: RutaExtraida, b: RutaExtraida): RutaExtraida {
+  // Un número leído gana a uno deducido: el deducido solo valía en su captura.
+  const numeroLeido = !a.numero_deducido ? a : !b.numero_deducido ? b : null;
   return {
-    numero: a.numero,
+    numero: numeroLeido ? numeroLeido.numero : a.numero,
+    numero_deducido: numeroLeido === null,
     estado: a.legible_completo ? a.estado : b.estado || a.estado,
     hora_inicio: a.hora_inicio ?? b.hora_inicio,
     hora_fin: a.hora_fin ?? b.hora_fin,
