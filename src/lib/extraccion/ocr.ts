@@ -21,6 +21,8 @@
  */
 import {
   esquemaImagenExtraida,
+  esquemaOrdenExtraida,
+  esquemaRutaExtraida,
   type ImagenExtraida,
   type OrdenExtraida,
   type RutaExtraida,
@@ -536,18 +538,33 @@ export function interpretarConContexto(
   const tipo: ImagenExtraida["tipo_pantalla"] =
     ordenes.length > 0 || resumen !== null ? "ordenes" : rutas.length > 0 ? "rutas" : "desconocido";
 
-  /* Se valida contra el mismo esquema que usaba la salida del modelo: si algo
-     no cuadra, falla aquí y no tres pantallas más adelante. */
-  const imagen = esquemaImagenExtraida.parse({
+  /* Se valida contra el mismo esquema de siempre, pero **sin lanzar**.
+
+     Antes era `.parse`, que lanza si un solo dato no cuadra: una hora leída
+     como 25:10, un círculo leído como "0". Y con esa excepción se perdía la
+     captura entera —o, más arriba, la carga entera—. Ahora cada dato se
+     sanea: una hora imposible se queda en blanco, un número de ruta imposible
+     pasa a deducido. Se pierde el dato malo, no la captura. */
+  const imagen = sanearYValidar({
     tipo_pantalla: tipo,
-    fecha,
+    fecha: fechaValida(fecha),
     contador_rutas: contadorRutas,
     contador_ordenes: contadorOrdenes,
     resumen_ordenes: resumen
       ? { entregado: resumen.entregado, parcial: resumen.parcial, no_entregado: resumen.noEntregado }
       : null,
-    rutas,
-    ordenes,
+    rutas: rutas.map((r, i) => ({
+      ...r,
+      hora_inicio: horaValida(r.hora_inicio),
+      hora_fin: horaValida(r.hora_fin),
+      ...(Number.isInteger(r.numero) && r.numero > 0
+        ? {}
+        : { numero: i + 1, numero_deducido: true }),
+    })),
+    ordenes: ordenes.map((o) => ({
+      ...o,
+      ruta: o.ruta !== null && Number.isInteger(o.ruta) && o.ruta > 0 ? o.ruta : null,
+    })),
   });
 
   return {
@@ -733,6 +750,60 @@ function estadoSiguiente(lineas: readonly string[], desde: number): string | nul
     if (estado) return estado;
   }
   return null;
+}
+
+/** Una hora de reloj de verdad, o null. `25:10` y `09:61` no lo son. */
+function horaValida(hora: string | null | undefined): string | null {
+  return hora && /^([01]\d|2[0-3]):[0-5]\d$/.test(hora) ? hora : null;
+}
+
+/** Una fecha de calendario que existe, o null. El 31/02 no existe. */
+function fechaValida(fecha: string | null): string | null {
+  if (!fecha) return null;
+  const [a, m, d] = fecha.split("-").map(Number);
+  const real = new Date(Date.UTC(a, m - 1, d));
+  return real.getUTCFullYear() === a && real.getUTCMonth() === m - 1 && real.getUTCDate() === d
+    ? fecha
+    : null;
+}
+
+/**
+ * Valida sin lanzar nunca.
+ *
+ * Si el conjunto no pasa, se prueba dato a dato y se quedan los que pasan. Si
+ * ni así, la captura se da por desconocida —se cuenta como no leída— en lugar
+ * de reventar la carga.
+ */
+function sanearYValidar(crudo: unknown): ImagenExtraida {
+  const entero = esquemaImagenExtraida.safeParse(crudo);
+  if (entero.success) return entero.data;
+
+  const c = crudo as Record<string, unknown>;
+  const rutas = Array.isArray(c.rutas)
+    ? c.rutas.flatMap((r) => {
+        const v = esquemaRutaExtraida.safeParse(r);
+        return v.success ? [v.data] : [];
+      })
+    : [];
+  const ordenes = Array.isArray(c.ordenes)
+    ? c.ordenes.flatMap((o) => {
+        const v = esquemaOrdenExtraida.safeParse(o);
+        return v.success ? [v.data] : [];
+      })
+    : [];
+
+  const parcial = esquemaImagenExtraida.safeParse({ ...c, rutas, ordenes });
+  if (parcial.success) return parcial.data;
+
+  return esquemaImagenExtraida.parse({
+    tipo_pantalla: "desconocido",
+    fecha: null,
+    contador_rutas: null,
+    contador_ordenes: null,
+    resumen_ordenes: null,
+    rutas: [],
+    ordenes: [],
+  });
 }
 
 /** `9:03` → `09:03`. El esquema exige dos dígitos en la hora. */

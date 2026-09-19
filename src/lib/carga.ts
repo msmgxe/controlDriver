@@ -66,7 +66,20 @@ export async function procesarCapturas(
     return { ok: false, error: `Elige como máximo ${MAX_IMAGENES} capturas por carga.` };
   }
 
-  const { lecturaDisponible, leerCapturas } = await import("@/lib/extraccion/enDispositivo");
+  // Dentro de su propio try: si esto fallaba, el error se escapaba sin que
+  // nadie lo recogiera y la pantalla se quedaba en "Leyendo capturas…".
+  let lector: typeof import("@/lib/extraccion/enDispositivo");
+  try {
+    lector = await import("@/lib/extraccion/enDispositivo");
+  } catch (fallo) {
+    return {
+      ok: false,
+      error: `No se pudo cargar el lector de capturas. Detalle: ${
+        fallo instanceof Error ? fallo.message : String(fallo)
+      }`,
+    };
+  }
+  const { lecturaDisponible, leerCapturas } = lector;
 
   /* El lector de texto es de Android: en el navegador no existe. Se dice claro
      en vez de fallar con un error técnico que no orienta a nadie. */
@@ -122,7 +135,9 @@ export async function procesarCapturas(
   } catch (fallo) {
     return {
       ok: false,
-      error: fallo instanceof Error ? fallo.message : "No se pudieron leer las capturas.",
+      error: `No se pudieron leer las capturas. Detalle: ${
+        fallo instanceof Error ? fallo.message : String(fallo)
+      }`,
     };
   }
 }

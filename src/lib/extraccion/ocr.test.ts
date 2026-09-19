@@ -295,3 +295,36 @@ describe("la tarjeta de resumen no debe contaminar los pedidos", () => {
     expect(leido.rutas).toHaveLength(0);
   });
 });
+
+describe("un dato imposible no tumba la captura", () => {
+  /* Antes el intérprete lanzaba ante el primer dato que no cuadraba, y con él
+     se perdía la captura —o la carga entera—. Ahora se pierde el dato malo. */
+  it("una hora imposible se queda en blanco, la ruta se conserva", () => {
+    const leido = interpretarCaptura(["1", "Finalizado", "De: 25:10 a 26:40 horas"]);
+    expect(leido.rutas).toHaveLength(1);
+    expect(leido.rutas[0].hora_inicio).toBeNull();
+  });
+
+  it("un círculo leído como 0 pasa a número deducido", () => {
+    const leido = interpretarCaptura(["0 Ruta • Finalizado", "De: 10:03 a 10:27 horas"]);
+    expect(leido.rutas).toHaveLength(1);
+    expect(leido.rutas[0].numero).toBeGreaterThan(0);
+    expect(leido.rutas[0].numero_deducido).toBe(true);
+  });
+
+  it("una fecha que no existe se descarta, el resto se lee", () => {
+    const leido = interpretarCaptura(["Resumen del 31/02/2026", "v12238726wofp-01", "Ruta 1", "Entregado"]);
+    expect(leido.fecha).toBeNull();
+    expect(leido.ordenes).toHaveLength(1);
+  });
+
+  it("un pedido con «Ruta 0» se queda sin ruta, no se pierde", () => {
+    const leido = interpretarCaptura(["v12238726wofp-01", "Ruta 0", "Entregado"]);
+    expect(leido.ordenes).toHaveLength(1);
+    expect(leido.ordenes[0].ruta).toBeNull();
+  });
+
+  it("texto basura no lanza: devuelve una captura desconocida", () => {
+    expect(() => interpretarCaptura(["###", "", "  ", "99999999999", "Ruta", "De: a horas"])).not.toThrow();
+  });
+});

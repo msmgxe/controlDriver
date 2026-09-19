@@ -20,7 +20,7 @@ import { Capacitor } from "@capacitor/core";
 import { consultar, ejecutar } from "@/lib/db/sqlite/conexion";
 import { codigosYaRegistrados, reglaVigente } from "@/lib/db/sqlite/jornadas";
 import { perfilActual } from "@/lib/db/sqlite/perfil";
-import { hoyEnLima } from "@/lib/fechas";
+import { hoyEnLima, type FechaISO } from "@/lib/fechas";
 import { pagoDelTramo } from "@/lib/pagos/reglas";
 
 import { guardarPrueba } from "@/lib/db/sqlite/pruebas";
@@ -147,9 +147,21 @@ export async function leerCapturas(imagenes: readonly Blob[]): Promise<Resultado
     /* Fuera lo que la app arrastra de la noche anterior: las primeras rutas si
        son de noche, y cualquier pedido que ya esté guardado en otro día —un
        pedido no se cobra dos veces—. Se consulta la base con **todos** los
-       códigos, antes de quitar nada, precisamente para poder reconocerlos. */
-    const enOtrosDias = await codigosYaRegistrados(fusionada.ordenes.map((o) => o.codigo));
-    const jornada = quitarArrastre(fusionada, enOtrosDias);
+       códigos, antes de quitar nada, precisamente para poder reconocerlos.
+
+       Con red: si algo de esto falla, el día sigue adelante tal como se leyó,
+       sin descartes, y Revisión lo dice. Perder el descarte automático es
+       molesto; perder la carga entera, como pasaba, no es aceptable. */
+    let enOtrosDias: Record<string, FechaISO> = {};
+    let jornada: ReturnType<typeof quitarArrastre>;
+    let fallo: string | null = null;
+    try {
+      enOtrosDias = await codigosYaRegistrados(fusionada.ordenes.map((o) => o.codigo));
+      jornada = quitarArrastre(fusionada, enOtrosDias);
+    } catch (e) {
+      fallo = e instanceof Error ? e.message : String(e);
+      jornada = { ...fusionada, descartes: { rutas: [], ordenes: [] } };
+    }
 
     /* Las capturas se guardan como prueba del día. Si la tienda discute un
        pago, el pantallazo original es lo que lo zanja. Se guardan aquí y no al
@@ -182,7 +194,20 @@ export async function leerCapturas(imagenes: readonly Blob[]): Promise<Resultado
       perfil?.tiendaId ?? null,
       perfil?.vehiculo,
     );
-    const alertas = validarJornada(jornada, { hoy, codigosEnOtrasFechas: enOtrosDias });
+    let alertas: ReturnType<typeof validarJornada>;
+    try {
+      alertas = validarJornada(jornada, { hoy, codigosEnOtrasFechas: enOtrosDias });
+    } catch (e) {
+      alertas = [];
+      fallo ??= e instanceof Error ? e.message : String(e);
+    }
+    if (fallo) {
+      alertas.unshift({
+        nivel: "aviso",
+        codigo: "tarjeta-incompleta",
+        mensaje: `Este día no se pudo revisar del todo; se muestra tal como se leyó. Detalle: ${fallo}`,
+      });
+    }
     const montoTramo1 = pagoDelTramo(regla, 1) ?? 1000;
 
     dias.push({

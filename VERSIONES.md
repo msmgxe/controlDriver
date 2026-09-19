@@ -36,6 +36,25 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v11 — 19/09/2026
+- **Arreglado:** la carga podía quedarse trabada en «Leyendo capturas…» para
+  siempre. Una parte del proceso estaba fuera de toda red: si fallaba, nadie
+  recogía el error.
+- **Nuevo:** si una pantalla falla, en vez de quedarse en blanco sale un aviso
+  con botón para reintentar o ir al inicio, y el detalle del error **en texto**
+  para copiarlo y mandarlo.
+- **Arreglado:** un dato imposible en una captura —una hora 25:10, una
+  «Ruta 0»— tiraba la captura entera. Ahora se pierde solo ese dato.
+- **Arreglado:** abrir la base de datos ya no depende de que todas las
+  instrucciones del esquema salgan bien.
+- **Cambiado:** la lista de pedidos es plana, un pedido por fila: el código, y
+  al lado su ruta con la hora y el estado. El monto, tenue.
+- **Cambiado:** «No entregado» ya no sale en rojo: se paga igual.
+- **Arreglado:** en el detalle de un día guardado, un pedido sin ruta no se
+  veía en ningún sitio.
+- **Cambiado:** tipografías y formas de la infografía: Bricolage para títulos,
+  Figtree para texto, rutas en píldoras turquesa.
+
 ### v10 — 19/09/2026
 - **Arreglado:** el mismo día salía S/ 20 en Inicio y S/ 130 en el detalle.
   Cada pantalla calculaba el monto a su manera; ahora todas usan la misma

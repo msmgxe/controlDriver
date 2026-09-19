@@ -53,14 +53,14 @@
   --mal-suave: #fbe7e4;
 
   /* — tipografía — */
-  --f-display: var(--fuente-jakarta), system-ui, sans-serif;
-  --f-texto: var(--fuente-jakarta), system-ui, sans-serif;
-  --f-mono: var(--fuente-dm-mono), ui-monospace, Menlo, monospace;
+  --f-display: var(--fuente-bricolage), var(--fuente-figtree), system-ui, sans-serif;
+  --f-texto: var(--fuente-figtree), system-ui, sans-serif;
+  --f-mono: var(--fuente-jetbrains), ui-monospace, Menlo, monospace;
 
   /* — forma y densidad — */
   --r-chip: 999px;
   --r-btn: 14px;
-  --r-card: 20px;
+  --r-card: 18px;
   --r-hoja: 28px;
   --borde-ancho: 0px;
   --pad-card: 20px;

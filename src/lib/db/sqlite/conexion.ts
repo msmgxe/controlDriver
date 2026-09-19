@@ -109,7 +109,17 @@ async function motorDeCapacitor(): Promise<Motor> {
     : await sqlite.createConnection(NOMBRE_BASE, false, "no-encryption", VERSION_ESQUEMA, false);
 
   if (!(await db.isDBOpen()).result) await db.open();
-  await db.execute(ESQUEMA.join("\n"));
+  /* Sentencia a sentencia, y cada una con su red. Antes iban todas juntas: si
+     una sola fallaba —un índice que no se podía crear sobre datos viejos, por
+     ejemplo—, la base entera no abría y el repartidor se quedaba fuera de sus
+     datos. Una sentencia que falla es, como mucho, una función que no anda. */
+  for (const sentencia of ESQUEMA) {
+    try {
+      await db.execute(sentencia);
+    } catch {
+      /* Se sigue con la siguiente. */
+    }
+  }
   /* La migración no puede impedir abrir la base: si falla, se sigue. */
   await migrar({
     consultar: async <T,>(sql: string) => ((await db.query(sql)).values ?? []) as T[],

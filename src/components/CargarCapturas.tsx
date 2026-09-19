@@ -29,18 +29,31 @@ export function CargarCapturas({ deshabilitado }: { deshabilitado?: boolean }) {
     setError(null);
     setFase("comprimiendo");
 
-    const resultado = await procesarCapturas(archivos, (n) => {
-      setListas(n);
-      if (n === archivos.length) setFase("leyendo");
-    });
+    /* Pase lo que pase dentro, esta pantalla **sale** del estado "leyendo".
+       Antes, un error que se escapaba dejaba el botón girando para siempre: la
+       app no se había cerrado, pero estaba trabada, que para quien la usa es lo
+       mismo. Ahora cualquier fallo termina en un mensaje con el detalle. */
+    try {
+      const resultado = await procesarCapturas(archivos, (n) => {
+        setListas(n);
+        if (n === archivos.length) setFase("leyendo");
+      });
 
-    if (entrada.current) entrada.current.value = "";
-
-    if (resultado.ok) {
-      router.push("/revision");
-    } else {
+      if (resultado.ok) {
+        router.push("/revision");
+      } else {
+        setFase("error");
+        setError(resultado.error);
+      }
+    } catch (fallo) {
       setFase("error");
-      setError(resultado.error);
+      setError(
+        `No se pudieron leer las capturas. Detalle: ${
+          fallo instanceof Error ? fallo.message : String(fallo)
+        }`,
+      );
+    } finally {
+      if (entrada.current) entrada.current.value = "";
     }
   }
 

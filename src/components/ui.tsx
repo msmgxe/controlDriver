@@ -48,9 +48,11 @@ export function Aviso({
 
 export function EstadoPedido({ estado }: { estado: string }) {
   const mapa: Record<string, { clase: string; Icono: typeof Check }> = {
+    /* Sin rojo: entregado o no, el pedido se paga igual. El rojo lo hacía
+       parecer un error que había que arreglar, y no lo es. */
     Entregado: { clase: "text-bien", Icono: Check },
-    "Entrega parcial": { clase: "text-aviso", Icono: Medio },
-    "No entregado": { clase: "text-mal", Icono: Equis },
+    "Entrega parcial": { clase: "text-tinta-2", Icono: Medio },
+    "No entregado": { clase: "text-tinta-2", Icono: Equis },
   };
   const { clase, Icono } = mapa[estado] ?? { clase: "text-tinta-2", Icono: Medio };
 

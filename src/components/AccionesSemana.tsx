@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 
 import { accionCerrarSemana, accionReabrirSemana, accionRegistrarPago } from "@/app/(app)/pagos/acciones";
 import { formatearSoles } from "@/lib/pagos/reglas";
-import type { EstadoSemana } from "@/lib/db/liquidaciones";
+import type { EstadoSemana } from "@/lib/db/tipos";
 
 /**
  * Cierre y conciliación de una semana (§13).

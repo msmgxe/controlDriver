@@ -7,8 +7,9 @@ import { useRouter } from "next/navigation";
 
 import { CLAVE_REVISION } from "@/lib/carga";
 import { Alerta, Check } from "@/components/iconos";
-import { Aviso, ChipTramo, EstadoPedido } from "@/components/ui";
+import { Aviso } from "@/components/ui";
 import { confirmarJornada } from "./acciones";
+import { FilaPedidoSimple } from "@/components/FilaPedidoSimple";
 import { RE_CODIGO_PEDIDO } from "@/lib/extraccion/esquema";
 import type { Alerta as AlertaValidacion } from "@/lib/extraccion/validar";
 import type { JornadaFusionada } from "@/lib/extraccion/fusionar";
@@ -181,6 +182,13 @@ export function Contenido() {
   const rutasDelDia = recuperados && descartes
     ? [...(datos?.jornada.rutas ?? []), ...descartes.rutas].sort((a, b) => a.numero - b.numero)
     : (datos?.jornada.rutas ?? []);
+
+  const horaDeRuta = new Map(rutasDelDia.map((r) => [r.numero, r.hora_inicio]));
+  const pedidosEnOrden = [...pedidos].sort((a, b) => {
+    const ha = a.ruta === null ? "99:99" : (horaDeRuta.get(a.ruta) ?? "99:99");
+    const hb = b.ruta === null ? "99:99" : (horaDeRuta.get(b.ruta) ?? "99:99");
+    return ha.localeCompare(hb) || a.posicion - b.posicion;
+  });
 
   function recuperarDescartados() {
     if (!descartes) return;
@@ -451,70 +459,31 @@ export function Contenido() {
         Todos los pedidos entran en el tramo 1 (0 a 3 km). Toca solo los que pasaron de 3 km.
       </p>
 
-      <div className="flex flex-col gap-3">
-        {rutasDelDia.map((ruta) => {
-          const suyos = pedidosPorRuta.get(ruta.numero) ?? [];
-          const duracion =
-            ruta.hora_inicio && ruta.hora_fin ? minutosEntre(ruta.hora_inicio, ruta.hora_fin) : null;
-          return (
-            <div key={ruta.numero} className="overflow-hidden rounded-card bg-sup">
-              <div className="flex items-center gap-3 border-b border-linea bg-sup-2 px-4 py-3">
-                <span className="grid size-8 shrink-0 place-items-center rounded-full bg-acento font-display text-lg font-bold text-acento-texto">
-                  {ruta.numero}
-                </span>
-                <span className="flex min-w-0 flex-col">
-                  <b className="text-sm font-semibold">
-                    Ruta {ruta.numero}
-                    <span className="ml-2 font-mono font-medium text-tinta-2">
-                      {ruta.hora_inicio ?? "--:--"} → {ruta.hora_fin ?? "--:--"}
-                    </span>
-                  </b>
-                  <span className="text-xs text-tinta-3">
-                    {suyos.length} pedido{suyos.length === 1 ? "" : "s"}
-                  </span>
-                </span>
-                {duracion !== null && (
-                  <span className="ml-auto font-mono text-sm whitespace-nowrap text-tinta-2">
-                    {duracion} min
-                  </span>
-                )}
-              </div>
-
-              {suyos.map((p) => (
-                <FilaPedido
-                  key={p.codigo}
-                  pedido={p}
-                  monto={montoDe(p)}
-                  onAbrir={() => setEditando(pedidos.indexOf(p))}
-                />
-              ))}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Pedidos a los que no se les leyó la ruta. Antes salían como una lista
-          de códigos en un aviso, sin forma de tocarlos: se veía el problema y
-          no se podía arreglar. Ahora son filas como las demás, y al tocarlas
-          se les asigna la ruta. */}
-      {(pedidosPorRuta.get(null) ?? []).length > 0 && (
-        <div className="overflow-hidden rounded-card border border-aviso bg-sup">
-          <div className="border-b border-linea bg-aviso-suave px-4 py-3">
-            <b className="text-sm font-semibold text-aviso">Sin ruta</b>
-            <p className="text-xs text-aviso">
-              Toca cada uno para decir de qué ruta es. Si no lo sabes, se puede guardar igual.
-            </p>
-          </div>
-          {(pedidosPorRuta.get(null) ?? []).map((p) => (
-            <FilaPedido
+      {/* Un pedido por fila: el código, y al lado su ruta con la hora y el
+          estado. En el orden en que se hicieron —por la hora de su ruta— y los
+          que no tienen ruta al final, donde se ven y se tocan para asignarla. */}
+      <div className="overflow-hidden rounded-card border border-linea bg-sup">
+        {pedidosEnOrden.length === 0 ? (
+          <p className="px-4 py-6 text-sm text-tinta-3">No se leyó ningún pedido.</p>
+        ) : (
+          pedidosEnOrden.map((p) => (
+            <FilaPedidoSimple
               key={p.codigo}
-              pedido={p}
-              monto={montoDe(p)}
-              onAbrir={() => setEditando(pedidos.indexOf(p))}
+              codigo={p.codigo}
+              ruta={p.ruta}
+              hora={p.ruta !== null ? (horaDeRuta.get(p.ruta) ?? null) : null}
+              estado={p.estado}
+              tramo={p.tramo}
+              monto={
+                p.tramo === TRAMO_MAS_DE_12_KM && p.montoManualCentimos === null
+                  ? "falta monto"
+                  : formatearSoles(montoDe(p))
+              }
+              onClick={() => setEditando(pedidos.indexOf(p))}
             />
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
 
       {error && <Aviso tono="mal" titulo="No se pudo guardar">{error}</Aviso>}
 
@@ -564,56 +533,10 @@ export function Contenido() {
   );
 }
 
-function minutosEntre(inicio: string, fin: string): number {
-  const aMin = (h: string) => Number(h.slice(0, 2)) * 60 + Number(h.slice(3, 5));
-  return aMin(fin) - aMin(inicio);
-}
 
 /* --------------------------------------------------------------------------
  * Hoja inferior con los cinco tramos (§13)
  * ------------------------------------------------------------------------ */
-
-/**
- * Una fila de pedido. Toda la fila se puede tocar para corregirla.
- *
- * El número que acompaña al código es su **posición en la lista** de la app de
- * reparto, no una ruta: la ruta va en la cabecera de la tarjeta. Se dice así,
- * con la palabra, porque dos números en círculo parecidos —uno de ruta y otro
- * de pedido— eran justo lo que confundía.
- */
-function FilaPedido({
-  pedido: p,
-  monto,
-  onAbrir,
-}: {
-  pedido: PedidoEditable;
-  monto: number;
-  onAbrir: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onAbrir}
-      className="flex w-full items-center gap-3 border-b border-linea px-4 py-3 text-left last:border-b-0 hover:bg-sup-2"
-    >
-      <span className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className={`codigo ${p.tramo > 1 ? "text-acento-tinta" : ""}`}>{p.codigo}</span>
-        <span className="flex flex-wrap items-center gap-2">
-          <EstadoPedido estado={p.estado} />
-          <ChipTramo tramo={p.tramo} />
-        </span>
-      </span>
-      <span className="flex flex-col items-end gap-1">
-        <span className="monto text-sm whitespace-nowrap">
-          {p.tramo === TRAMO_MAS_DE_12_KM && p.montoManualCentimos === null
-            ? "falta monto"
-            : formatearSoles(monto)}
-        </span>
-        <span className="text-xs font-semibold text-acento">Corregir</span>
-      </span>
-    </button>
-  );
-}
 
 const ESTADOS_EDITABLES = ["Entregado", "Entrega parcial", "No entregado"] as const;
 

@@ -2,6 +2,7 @@
 
 import { Armazon } from "@/components/Armazon";
 import { BotonAtras } from "@/components/BotonAtras";
+import { RedDeSeguridad } from "@/components/RedDeSeguridad";
 import { ProveedorLicencia, useLicencia } from "@/components/Licencia";
 import { Alerta } from "@/components/iconos";
 import { useDatos } from "@/hooks/useDatos";
@@ -67,6 +68,7 @@ function Contenido({ children }: { children: React.ReactNode }) {
         </div>
       )}
       <BotonAtras />
+      <RedDeSeguridad />
       {children}
     </Armazon>
   );

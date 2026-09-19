@@ -5,10 +5,39 @@ import {
   IBM_Plex_Sans,
   Lora,
   Plus_Jakarta_Sans,
+  Bricolage_Grotesque,
+  Figtree,
+  JetBrains_Mono,
 } from "next/font/google";
 import "./globals.css";
 
 /* App del driver — dirección Moderna (§9) */
+/* Las de la infografía, que gustaron más: Bricolage para los títulos y las
+   cifras grandes —tiene carácter sin ser difícil de leer—, Figtree para el
+   texto, y JetBrains Mono para los códigos de pedido, que tienen que leerse
+   carácter a carácter. `next/font` las descarga al compilar y las mete dentro
+   del APK: funcionan sin internet. */
+const bricolage = Bricolage_Grotesque({
+  subsets: ["latin"],
+  weight: ["600", "700", "800"],
+  variable: "--fuente-bricolage",
+  display: "swap",
+});
+
+const figtree = Figtree({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--fuente-figtree",
+  display: "swap",
+});
+
+const jetbrains = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--fuente-jetbrains",
+  display: "swap",
+});
+
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
@@ -71,7 +100,7 @@ export default function RootLayout({
   return (
     <html lang="es-PE">
       <body
-        className={`${jakarta.variable} ${dmMono.variable} ${lora.variable} ${plex.variable} ${plexMono.variable} antialiased`}
+        className={`${bricolage.variable} ${figtree.variable} ${jetbrains.variable} ${jakarta.variable} ${dmMono.variable} ${lora.variable} ${plex.variable} ${plexMono.variable} antialiased`}
       >
         {children}
       </body>

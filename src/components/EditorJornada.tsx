@@ -1,5 +1,7 @@
 "use client";
 
+import { FilaPedidoSimple } from "@/components/FilaPedidoSimple";
+
 import { useState, useTransition } from "react";
 import { useCapa } from "@/hooks/useCapa";
 import { useRouter } from "next/navigation";
@@ -11,9 +13,9 @@ import {
   eliminarPedido,
 } from "@/app/(app)/jornada/acciones";
 import { Alerta, Check } from "@/components/iconos";
-import { Aviso, ChipTramo, EstadoPedido } from "@/components/ui";
+import { Aviso } from "@/components/ui";
 import { formatearDuracion } from "@/lib/fechas";
-import type { OrdenFila, RutaFila } from "@/lib/db/jornadas";
+import type { OrdenFila, RutaFila } from "@/lib/db/tipos";
 import {
   TRAMO_MAS_DE_12_KM,
   formatearSoles,
@@ -82,6 +84,7 @@ export function EditorJornada({
   }
 
   const totalPedidos = jornada.ordenes.reduce((s, o) => s + (o.montoCentimos ?? 0), 0);
+  const horaDeRuta = new Map(jornada.rutas.map((r) => [r.numero, r.horaInicio]));
   const minutos = jornada.rutas.reduce((s, r) => s + (r.duracionMin ?? 0), 0);
   const pagaPermanencia = Boolean(regla.garantiaPermanencia?.activa);
   const horas = horasDePermanencia(entrada || null, salida || null);
@@ -184,56 +187,27 @@ export function EditorJornada({
         </section>
       )}
 
-      <div className="flex flex-col gap-3">
-        {jornada.rutas.map((r) => {
-          const suyos = pedidosPorRuta.get(r.numero) ?? [];
-          return (
-            <div key={r.id} className="overflow-hidden rounded-card bg-sup">
-              <div className="flex items-center gap-3 border-b border-linea bg-sup-2 px-4 py-3">
-                <span className="grid size-8 shrink-0 place-items-center rounded-full bg-acento font-display text-lg font-bold text-acento-texto">
-                  {r.numero}
-                </span>
-                <span className="flex min-w-0 flex-col">
-                  <b className="font-mono text-sm font-medium">
-                    {r.horaInicio ?? "--:--"} → {r.horaFin ?? "--:--"}
-                  </b>
-                  <span className="text-xs text-tinta-3">{suyos.length} pedidos</span>
-                </span>
-                {r.duracionMin !== null && (
-                  <span className="ml-auto font-mono text-sm whitespace-nowrap text-tinta-2">
-                    {r.duracionMin} min
-                  </span>
-                )}
-              </div>
-
-              {suyos.map((o) => (
-                <button
-                  key={o.id}
-                  type="button"
-                  disabled={!editable || pendiente}
-                  onClick={() => setEditando(o)}
-                  className="flex w-full items-center gap-3 border-b border-linea px-4 py-3 text-left last:border-b-0 enabled:hover:bg-sup-2 disabled:cursor-default"
-                >
-                  <span className="flex min-w-0 flex-1 flex-col gap-1">
-                    <span className={`codigo ${o.tramo > 1 ? "text-acento-tinta" : ""}`}>
-                      {o.codigo}
-                    </span>
-                    <span className="flex flex-wrap items-center gap-2">
-                      <EstadoPedido estado={o.estado} />
-                      <ChipTramo tramo={o.tramo} />
-                      {o.km !== null && (
-                        <span className="font-mono text-xs text-tinta-3">{o.km} km</span>
-                      )}
-                    </span>
-                  </span>
-                  <span className="monto text-sm whitespace-nowrap">
-                    {formatearSoles(o.montoCentimos ?? 0)}
-                  </span>
-                </button>
-              ))}
-            </div>
-          );
-        })}
+      {/* Una lista plana, un pedido por fila, en el orden en que se hicieron.
+          Antes eran tarjetas por ruta, y un pedido sin ruta no salía en
+          ninguna: existía, se pagaba, y no se veía en ningún sitio. */}
+      <div className="overflow-hidden rounded-card border border-linea bg-sup">
+        {jornada.ordenes.length === 0 ? (
+          <p className="px-4 py-6 text-sm text-tinta-3">Este día no tiene pedidos.</p>
+        ) : (
+          jornada.ordenes.map((o) => (
+            <FilaPedidoSimple
+              key={o.id}
+              codigo={o.codigo}
+              ruta={o.ruta}
+              hora={o.ruta !== null ? (horaDeRuta.get(o.ruta) ?? null) : null}
+              estado={o.estado}
+              tramo={o.tramo}
+              monto={formatearSoles(o.montoCentimos ?? 0)}
+              manual={o.manual}
+              onClick={editable && !pendiente ? () => setEditando(o) : undefined}
+            />
+          ))
+        )}
       </div>
 
       {editable && (
