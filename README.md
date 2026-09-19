@@ -1,4 +1,4 @@
-# RutaLog
+# Rutas-A
 
 PWA de registro de rutas y pedidos para drivers de reparto. Al final del día el
 driver sube las capturas de la app de reparto, la aplicación extrae los datos con
@@ -121,7 +121,7 @@ src/
     api/extraer/              Llamada al modelo de visión, una por imagen
     globals.css               Tokens de diseño de §9, las dos superficies
     configuracion/            Qué variables faltan, en vez de un 500 sin explicación
-    compartir/                Destino de compartir de Android: galería → RutaLog
+    compartir/                Destino de compartir de Android: galería → Rutas-A
     sin-conexion/             Lo que sirve el service worker cuando no hay red
   components/                 Armazón, gráfico, tablas, piezas comunes
   lib/

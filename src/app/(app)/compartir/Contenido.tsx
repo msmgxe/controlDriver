@@ -67,7 +67,7 @@ export function Contenido() {
         <>
           <Aviso tono="atento" titulo="No llegó ninguna captura">
             <p>
-              Abre la galería, selecciona las capturas del día, toca Compartir y elige RutaLog. Si
+              Abre la galería, selecciona las capturas del día, toca Compartir y elige Rutas-A. Si
               acabas de instalar la app, puede que Android tarde un momento en ofrecerla.
             </p>
           </Aviso>

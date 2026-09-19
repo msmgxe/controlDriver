@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Levanta RutaLog contra un Supabase local.
+# Levanta Rutas-A contra un Supabase local.
 #
 # Es el mismo stack que en su nube —Postgres, Auth, RLS, Storage—, corriendo en
 # tu Mac con Docker. Sirve para trabajar mientras la nube de Supabase está caída

@@ -2,11 +2,11 @@
  * Flujo de carga de capturas (§4).
  *
  * Vive aparte porque hay dos puertas de entrada: el botón «Cargar capturas» de
- * Hoy y el destino de compartir de Android (galería → Compartir → RutaLog).
+ * Hoy y el destino de compartir de Android (galería → Compartir → Rutas-A).
  * Las dos hacen exactamente lo mismo a partir de aquí.
  */
 
-export const CLAVE_REVISION = "rutalog.revision";
+export const CLAVE_REVISION = "rutas-a.revision";
 
 const LADO_MAYOR = 1600;
 const CALIDAD = 0.8;
@@ -105,7 +105,7 @@ export async function procesarCapturas(
 export async function recogerCompartidas(): Promise<Blob[]> {
   if (!("caches" in window)) return [];
   try {
-    const cache = await caches.open("rutalog-compartido");
+    const cache = await caches.open("rutas-a-compartido");
     const claves = await cache.keys();
     const blobs: Blob[] = [];
     for (const clave of claves) {

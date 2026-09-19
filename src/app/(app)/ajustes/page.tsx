@@ -57,7 +57,7 @@ export default function PaginaAjustes() {
     marcarAbierto();
     setPin("");
     setRepetir("");
-    setMensaje("Listo. La próxima vez que abras RutaLog te pedirá el PIN.");
+    setMensaje("Listo. La próxima vez que abras Rutas-A te pedirá el PIN.");
   }
 
   return (
@@ -150,7 +150,7 @@ export default function PaginaAjustes() {
                 type="button"
                 className="boton-sec"
                 onClick={async () => {
-                  const ok = await activarHuella("RutaLog");
+                  const ok = await activarHuella("Rutas-A");
                   setMensaje(
                     ok
                       ? "Huella activada. El PIN sigue funcionando como respaldo."

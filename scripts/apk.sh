@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Genera el APK de RutaLog y lo deja en la raíz del proyecto.
+# Genera el APK de Rutas-A y lo deja en la raíz del proyecto.
 #
 #   ./scripts/apk.sh            genera el APK
 #   ./scripts/apk.sh --instalar genera y lo instala en el celular por USB
@@ -49,10 +49,10 @@ npx cap sync android >/dev/null
 echo "▸ Compilando el APK…"
 ( cd android && ./gradlew --quiet assembleDebug )
 
-cp android/app/build/outputs/apk/debug/app-debug.apk RutaLog.apk
+cp android/app/build/outputs/apk/debug/app-debug.apk Rutas-A.apk
 echo
 echo "────────────────────────────────────────────────────────────"
-echo " APK listo:  $(pwd)/RutaLog.apk  ($(du -h RutaLog.apk | cut -f1))"
+echo " APK listo:  $(pwd)/Rutas-A.apk  ($(du -h Rutas-A.apk | cut -f1))"
 echo "────────────────────────────────────────────────────────────"
 
 # --- 4. Instalar por cable, si se pidió -----------------------------------
@@ -64,6 +64,6 @@ if [ "${1:-}" = "--instalar" ]; then
     exit 1
   fi
   echo "▸ Instalando en el celular…"
-  "$ANDROID_HOME/platform-tools/adb" install -r RutaLog.apk
-  echo "Listo: busca RutaLog en el menú de aplicaciones."
+  "$ANDROID_HOME/platform-tools/adb" install -r Rutas-A.apk
+  echo "Listo: busca Rutas-A en el menú de aplicaciones."
 fi

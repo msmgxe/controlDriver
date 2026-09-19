@@ -166,7 +166,7 @@ function FormularioAcceso() {
       <div className="flex w-full max-w-sm flex-col gap-6">
         <div className="flex flex-col gap-1">
           <strong className="font-display text-[44px] leading-none font-extrabold tracking-tight">
-            RutaLog
+            Rutas-A
           </strong>
           <span className="text-sm text-tinta-2">Tu registro de rutas, pedidos y pagos.</span>
         </div>

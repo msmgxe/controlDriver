@@ -81,7 +81,7 @@ export function CargarCapturas({ deshabilitado }: { deshabilitado?: boolean }) {
       )}
 
       <p className="text-xs text-tinta-3">
-        También puedes compartir las capturas a RutaLog desde la galería. Máximo {MAX_IMAGENES} por
+        También puedes compartir las capturas a Rutas-A desde la galería. Máximo {MAX_IMAGENES} por
         carga.
       </p>
     </div>

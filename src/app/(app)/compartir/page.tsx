@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 /**
  * Destino de compartir de Android (§8).
  *
- * Galería → seleccionar capturas → Compartir → RutaLog → Revisión. Es el camino
+ * Galería → seleccionar capturas → Compartir → Rutas-A → Revisión. Es el camino
  * más rápido y el principal a optimizar, porque evita entrar a la app y buscar
  * el botón.
  *

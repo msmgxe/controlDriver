@@ -91,7 +91,7 @@ export function Armazon({
           }`}
         >
           <div className="flex items-baseline gap-2 px-3 pt-2 pb-4">
-            <strong className="font-display text-3xl font-bold tracking-tight">RutaLog</strong>
+            <strong className="font-display text-3xl font-bold tracking-tight">Rutas-A</strong>
           </div>
 
           <nav className="flex flex-col gap-0.5">

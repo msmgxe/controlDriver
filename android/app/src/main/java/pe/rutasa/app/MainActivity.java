@@ -1,4 +1,4 @@
-package pe.rutalog.app;
+package pe.rutasa.app;
 
 import com.getcapacitor.BridgeActivity;
 

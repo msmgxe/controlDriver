@@ -89,7 +89,7 @@ export async function crearDriver(datos: unknown): Promise<Resultado> {
     revalidatePath("/admin");
     return {
       ok: true,
-      mensaje: `${nombre} ya puede entrar. Dile que abra RutaLog y escriba ${correo}; le llegará su código.`,
+      mensaje: `${nombre} ya puede entrar. Dile que abra Rutas-A y escriba ${correo}; le llegará su código.`,
     };
   } catch (error) {
     return {

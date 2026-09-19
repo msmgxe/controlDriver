@@ -43,12 +43,12 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: "RutaLog", template: "%s · RutaLog" },
+  title: { default: "Rutas-A", template: "%s · Rutas-A" },
   description:
     "Registro diario de rutas y pedidos: sube las capturas, revisa y confirma. El resto es consulta.",
-  applicationName: "RutaLog",
+  applicationName: "Rutas-A",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, title: "RutaLog", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "Rutas-A", statusBarStyle: "default" },
   formatDetection: { telephone: false },
   // La app es privada: nada de esto debe indexarse.
   robots: { index: false, follow: false },

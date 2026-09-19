@@ -14,9 +14,9 @@
  * Todo vive en el navegador de ese dispositivo. Nada de esto viaja al servidor.
  */
 
-const CLAVE_PIN = "rutalog.bloqueo.pin";
-const CLAVE_HUELLA = "rutalog.bloqueo.huella";
-const CLAVE_ABIERTO = "rutalog.bloqueo.abierto";
+const CLAVE_PIN = "rutas-a.bloqueo.pin";
+const CLAVE_HUELLA = "rutas-a.bloqueo.huella";
+const CLAVE_ABIERTO = "rutas-a.bloqueo.abierto";
 
 interface PinGuardado {
   sal: string;
@@ -170,7 +170,7 @@ export async function activarHuella(nombreUsuario: string): Promise<boolean> {
     const credencial = (await navigator.credentials.create({
       publicKey: {
         challenge: crypto.getRandomValues(new Uint8Array(32)),
-        rp: { name: "RutaLog" },
+        rp: { name: "Rutas-A" },
         user: {
           id: crypto.getRandomValues(new Uint8Array(16)),
           name: nombreUsuario,

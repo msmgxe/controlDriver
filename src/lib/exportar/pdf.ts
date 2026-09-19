@@ -25,7 +25,7 @@ export async function generarPdf(datos: DatosExportacion): Promise<Blob> {
   /* ----------------------------- encabezado ----------------------------- */
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text("RutaLog", 14, 18);
+  doc.text("Rutas-A", 14, 18);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
@@ -131,7 +131,7 @@ export async function generarPdf(datos: DatosExportacion): Promise<Blob> {
     doc.setFontSize(8);
     doc.setTextColor(120);
     doc.text(`Página ${i} de ${paginas}`, ancho - 14, alto - 8, { align: "right" });
-    doc.text("RutaLog", 14, alto - 8);
+    doc.text("Rutas-A", 14, alto - 8);
   }
 
   return doc.output("blob");

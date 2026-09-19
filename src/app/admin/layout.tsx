@@ -9,7 +9,7 @@ export const metadata = { title: "Administración" };
 /**
  * Panel de administración.
  *
- * Vive fuera de la PWA a propósito: es la única parte de RutaLog que se usa en
+ * Vive fuera de la PWA a propósito: es la única parte de Rutas-A que se usa en
  * un monitor y no en un celular, así que usa la dirección visual **Profesional**
  * —reglas finas, esquinas rectas, densidad alta— que activa
  * `data-superficie="admin"` sobre los tokens de `globals.css`.
@@ -27,7 +27,7 @@ export default async function LayoutAdmin({ children }: { children: React.ReactN
           </span>
           <h1 className="text-2xl">Esta sección es solo para el administrador</h1>
           <Link href="/" className="boton-sec">
-            Volver a RutaLog
+            Volver a Rutas-A
           </Link>
         </div>
       </div>
@@ -40,7 +40,7 @@ export default async function LayoutAdmin({ children }: { children: React.ReactN
         <div className="mx-auto flex max-w-[1280px] flex-wrap items-center gap-3 px-6 py-4">
           <Link href="/" className="flex items-center gap-2 text-sm text-tinta-2 hover:text-tinta">
             <Flecha className="size-4 rotate-180" />
-            RutaLog
+            Rutas-A
           </Link>
           <span className="h-4 w-px bg-linea-fuerte" />
           <h1 className="font-display text-xl">Administración</h1>

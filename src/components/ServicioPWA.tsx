@@ -127,7 +127,7 @@ export function ServicioPWA() {
       {hayVersionNueva && (
         <div className="pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-btn bg-acento-suave px-4 py-3 text-sm text-acento-tinta shadow-alta">
           <Check className="size-[18px] shrink-0" />
-          <p className="flex-1">Hay una versión nueva de RutaLog.</p>
+          <p className="flex-1">Hay una versión nueva de Rutas-A.</p>
           <button
             type="button"
             onClick={() => void actualizar()}
@@ -141,7 +141,7 @@ export function ServicioPWA() {
       {instalador && !instalarCerrado && (
         <div className="pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-btn bg-sup px-4 py-3 text-sm shadow-alta">
           <Subir className="size-[18px] shrink-0 text-acento" />
-          <p className="flex-1">Instala RutaLog para abrirla como una app.</p>
+          <p className="flex-1">Instala Rutas-A para abrirla como una app.</p>
           <button
             type="button"
             onClick={() => void instalar()}

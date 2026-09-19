@@ -13,6 +13,31 @@ import { z } from "zod";
  * una columna `numeric` de Postgres. Nada de sumar coma flotante.
  */
 
+/**
+ * Con qué se reparte.
+ *
+ * No es un dato decorativo: una misma tienda paga tarifas distintas según el
+ * vehículo, porque el costo de cubrir un tramo no es el mismo en moto que en
+ * auto. Por eso una regla de pago se identifica por **tienda + vehículo +
+ * fecha de vigencia**, y no solo por tienda.
+ *
+ * Va también en cada jornada, no solo en el perfil: si algún día se sale en
+ * moto en vez de en auto, ese día se paga con la tarifa de moto. Guardarlo
+ * únicamente en el perfil haría que cambiar de vehículo reescribiera el
+ * pasado.
+ */
+export const esquemaVehiculo = z.enum(["auto", "moto", "bicicleta"]);
+export type TipoVehiculo = z.infer<typeof esquemaVehiculo>;
+
+export const VEHICULOS: ReadonlyArray<{ id: TipoVehiculo; nombre: string }> = [
+  { id: "auto", nombre: "Auto" },
+  { id: "moto", nombre: "Moto" },
+  { id: "bicicleta", nombre: "Bicicleta" },
+];
+
+/** El de siempre, mientras no se diga otra cosa. */
+export const VEHICULO_POR_DEFECTO: TipoVehiculo = "auto";
+
 export const esquemaTramo = z.object({
   id: z.number().int().min(1).max(6),
   desde: z.number().min(0),

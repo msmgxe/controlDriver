@@ -1,4 +1,4 @@
-# RutaLog en tu celular
+# Rutas-A en tu celular
 
 ## Qué es este primer APK
 
@@ -7,7 +7,7 @@ Todavía no lleva la aplicación dentro, solo una pantalla que lo confirma. Se
 hace así a propósito: si instalar da problemas, es mucho mejor descubrirlo hoy
 que después de reescribir la aplicación entera.
 
-Si al abrirla ves **RutaLog** sobre fondo oscuro, la cadena completa funciona y
+Si al abrirla ves **Rutas-A** sobre fondo oscuro, la cadena completa funciona y
 ya solo queda meter la aplicación de verdad dentro.
 
 ---
@@ -18,7 +18,7 @@ ya solo queda meter la aplicación de verdad dentro.
 npm run apk
 ```
 
-Deja el archivo en `RutaLog.apk`, en la carpeta del proyecto.
+Deja el archivo en `Rutas-A.apk`, en la carpeta del proyecto.
 
 ---
 
@@ -46,7 +46,7 @@ npm run apk:instalar
 
 En el celular saldrá *¿Permitir la depuración USB?* → **Permitir**.
 
-Al terminar, busca **RutaLog** en el menú de aplicaciones.
+Al terminar, busca **Rutas-A** en el menú de aplicaciones.
 
 > Si el cable solo carga y no transmite datos, no funcionará. Usa el que vino
 > con el celular, o prueba otro.
@@ -55,7 +55,7 @@ Al terminar, busca **RutaLog** en el menú de aplicaciones.
 
 ## Instalarlo — opción B: sin cable
 
-Si prefieres no usar el cable: sube `RutaLog.apk` a tu Google Drive desde el
+Si prefieres no usar el cable: sube `Rutas-A.apk` a tu Google Drive desde el
 Mac, ábrelo en el celular desde la app de Drive y tócalo.
 
 Android te dirá que la aplicación no viene de la tienda y bloqueará la

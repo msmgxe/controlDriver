@@ -23,7 +23,7 @@ export async function generarExcel(datos: DatosExportacion): Promise<Blob> {
   const ExcelJS = (await import("exceljs")).default;
   const libro = new ExcelJS.Workbook();
 
-  libro.creator = "RutaLog";
+  libro.creator = "Rutas-A";
   libro.created = new Date();
 
   const MONEDA = '"S/ "#,##0.00';

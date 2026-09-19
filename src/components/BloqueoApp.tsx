@@ -83,7 +83,7 @@ function Candadazo() {
         </span>
 
         <div className="text-center">
-          <h1 className="text-2xl">RutaLog está bloqueado</h1>
+          <h1 className="text-2xl">Rutas-A está bloqueado</h1>
           <p className="mt-1 text-sm text-tinta-2">Escribe tu PIN para continuar.</p>
         </div>
 

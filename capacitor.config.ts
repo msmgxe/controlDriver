@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'pe.rutalog.app',
-  appName: 'RutaLog',
+  appId: 'pe.rutasa.app',
+  appName: 'Rutas-A',
   webDir: 'out'
 };
 

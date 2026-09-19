@@ -1,5 +1,5 @@
 /**
- * Fechas de RutaLog.
+ * Fechas de Rutas-A.
  *
  * Dos conceptos que no hay que mezclar (§13):
  *

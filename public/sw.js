@@ -1,5 +1,5 @@
 /*
- * Service worker de RutaLog (§8).
+ * Service worker de Rutas-A (§8).
  *
  * Escrito a mano y servido tal cual, sin paso de build: Serwist todavía no
  * funciona con Turbopack, que es el bundler por defecto de Next 16, y forzar el
@@ -20,10 +20,10 @@
  * el worker instalado no se enterarán.
  */
 
-const VERSION = "rutalog-v1";
+const VERSION = "rutas-a-v1";
 const CACHE_APP = `${VERSION}-app`;
 const CACHE_ESTATICOS = `${VERSION}-estaticos`;
-const CACHE_COMPARTIDO = "rutalog-compartido";
+const CACHE_COMPARTIDO = "rutas-a-compartido";
 const SIN_CONEXION = "/sin-conexion";
 
 /* El mínimo para que la app abra sin red. El resto se va cacheando conforme se
@@ -66,7 +66,7 @@ self.addEventListener("fetch", (evento) => {
   const url = new URL(peticion.url);
 
   /* --- Web Share Target (§8) ---
-     Galería → Compartir → RutaLog. Android manda un POST con los archivos, y un
+     Galería → Compartir → Rutas-A. Android manda un POST con los archivos, y un
      POST no puede llevarlos a una página por la URL: se guardan aquí y la
      página los recoge. */
   if (peticion.method === "POST" && url.pathname === "/compartir") {
