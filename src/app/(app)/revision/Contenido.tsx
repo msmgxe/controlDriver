@@ -39,6 +39,11 @@ interface RespuestaExtraccion {
   // todos nacen en tramo 1 y el driver solo toca las excepciones (§13).
   jornada: Omit<JornadaFusionada, "ordenes"> & {
     ordenes: (JornadaFusionada["ordenes"][number] & { tramo: number })[];
+    /** Lo que se quitó por ser de la noche anterior o estar ya guardado. */
+    descartes?: {
+      rutas: JornadaFusionada["rutas"];
+      ordenes: Array<JornadaFusionada["ordenes"][number] & { motivo: string }>;
+    };
   };
   alertas: AlertaValidacion[];
   regla: ReglaPago;
@@ -119,6 +124,11 @@ export function Contenido() {
   const [horaSalida, setHoraSalida] = useState(() => datos?.permanencia?.horaSalida ?? "");
   // Por posición en la lista y no por código: el código también se puede corregir.
   const [editando, setEditando] = useState<number | null>(null);
+
+  /* Lo descartado como arrastre se puede recuperar con un toque. La regla
+     acierta casi siempre, pero si un día se equivoca, la persona tiene que
+     poder deshacerlo sin volver a subir nada: es su dinero. */
+  const [recuperados, setRecuperados] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -167,6 +177,27 @@ export function Contenido() {
   const bloqueos = alertas.filter((a) => a.nivel === "bloqueo");
   const avisos = alertas.filter((a) => a.nivel === "aviso");
   const informativas = alertas.filter((a) => a.nivel === "info");
+  const descartes = datos?.jornada.descartes;
+  const rutasDelDia = recuperados && descartes
+    ? [...(datos?.jornada.rutas ?? []), ...descartes.rutas].sort((a, b) => a.numero - b.numero)
+    : (datos?.jornada.rutas ?? []);
+
+  function recuperarDescartados() {
+    if (!descartes) return;
+    setPedidos((lista) => [
+      ...descartes.ordenes.map((o) => ({
+        codigo: o.codigo,
+        estado: o.estado,
+        posicion: o.posicion,
+        ruta: o.ruta,
+        tramo: 1,
+        km: null,
+        montoManualCentimos: null,
+      })),
+      ...lista,
+    ]);
+    setRecuperados(true);
+  }
   const faltaFecha = fecha === "";
   const fechaFutura = fecha !== "" && fecha > hoy;
   const puedeGuardar =
@@ -190,7 +221,7 @@ export function Contenido() {
       modo: "reemplazar",
       horaEntrada: horaEntrada || null,
       horaSalida: horaSalida || null,
-      rutas: jornada.rutas.map((r) => ({
+      rutas: rutasDelDia.map((r) => ({
         numero: r.numero,
         estado: r.estado,
         horaInicio: r.hora_inicio,
@@ -282,9 +313,20 @@ export function Contenido() {
       ))}
 
       {informativas.map((a) => (
-        <Aviso key={a.codigo} tono="bien" titulo={a.mensaje}>
+        <Aviso key={a.codigo} tono="bien" titulo={recuperados && a.codigo === "arrastre-descartado"
+          ? "Recuperados: estos pedidos se cuentan en este día."
+          : a.mensaje}>
           {a.referencias && a.referencias.length > 0 && (
             <p className="font-mono text-xs">{a.referencias.join(", ")}</p>
+          )}
+          {a.codigo === "arrastre-descartado" && !recuperados && (
+            <button
+              type="button"
+              onClick={recuperarDescartados}
+              className="mt-2 min-h-11 rounded-btn border border-current px-3 text-sm font-semibold"
+            >
+              Contarlos igual en este día
+            </button>
           )}
         </Aviso>
       ))}
@@ -300,7 +342,7 @@ export function Contenido() {
       {bloqueos.length === 0 && avisos.length === 0 && (
         <Aviso tono="bien" titulo="Los totales cuadran">
           <p>
-            {jornada.rutas.length} rutas y {pedidos.length} pedidos, igual que los contadores de la
+            {rutasDelDia.length} rutas y {pedidos.length} pedidos, igual que los contadores de la
             captura.
           </p>
         </Aviso>
@@ -312,7 +354,7 @@ export function Contenido() {
             {formatearSoles(total)}
           </span>
           <span className="text-sm text-tinta-2">
-            {pedidos.length} pedidos · {jornada.rutas.length} rutas
+            {pedidos.length} pedidos · {rutasDelDia.length} rutas
           </span>
         </div>
         <span className="rotulo">{fueraTramo1} fuera del tramo 1</span>
@@ -410,7 +452,7 @@ export function Contenido() {
       </p>
 
       <div className="flex flex-col gap-3">
-        {jornada.rutas.map((ruta) => {
+        {rutasDelDia.map((ruta) => {
           const suyos = pedidosPorRuta.get(ruta.numero) ?? [];
           const duracion =
             ruta.hora_inicio && ruta.hora_fin ? minutosEntre(ruta.hora_inicio, ruta.hora_fin) : null;
@@ -505,7 +547,7 @@ export function Contenido() {
         <HojaPedido
           pedido={pedidos[editando]}
           regla={regla}
-          rutas={jornada.rutas.map((r) => ({ numero: r.numero, inicio: r.hora_inicio }))}
+          rutas={rutasDelDia.map((r) => ({ numero: r.numero, inicio: r.hora_inicio }))}
           otrosCodigos={pedidos.filter((_, i) => i !== editando).map((p) => p.codigo)}
           onCerrar={() => setEditando(null)}
           onGuardar={(cambios, cerrar = true) => {

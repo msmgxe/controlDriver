@@ -108,7 +108,7 @@ describe("el resumen diario no infla los totales", () => {
 
     expect(dia.rutas).toBe(6);
     expect(dia.pedidos).toBe(12);
-    expect(dia.montoCentimos).toBe(12_000); // 12 × S/ 10, no 72 × S/ 10
+    expect(dia.montoPedidosCentimos).toBe(12_000); // 12 × S/ 10, no 72 × S/ 10
   });
 
   it("suma los minutos en ruta una sola vez", async () => {
@@ -296,7 +296,7 @@ describe("pedidos añadidos a mano", () => {
     await agregarPedidoManual("2026-09-16" as FechaISO, { ...nuevo, montoCentimos: 1150 });
 
     const [dia] = await resumenPorRango("2026-09-16" as FechaISO, "2026-09-16" as FechaISO);
-    expect(dia.montoCentimos).toBe(2 * 1000 + 1150);
+    expect(dia.montoPedidosCentimos).toBe(2 * 1000 + 1150);
   });
 });
 
@@ -325,5 +325,27 @@ describe("orden de los pedidos", () => {
       "v11111111wofp-01",
       "v33333333wofp-01",
     ]);
+  });
+});
+
+describe("el monto de un día es el mismo en todas las pantallas", () => {
+  /* El error del día 17: Inicio enseñaba S/ 20 —la suma de dos pedidos— y el
+     detalle S/ 130 —el piso de permanencia—. El resumen diario, que es lo que
+     lee Inicio, tiene que dar lo que se cobra de verdad. */
+  it("un día flojo cobra el piso de permanencia, no la suma de pedidos", async () => {
+    // 2 pedidos × S/ 10 = S/ 20, pero de 9:00 a 22:00 son 13 h × S/ 10 = S/ 130.
+    await guardarJornada(jornadaDe("2026-09-17", 1, 2, 1000), "reemplazar");
+    const [dia] = await resumenPorRango("2026-09-17" as FechaISO, "2026-09-17" as FechaISO);
+
+    expect(dia.montoPedidosCentimos).toBe(2_000);
+    expect(dia.montoCentimos).toBe(13_000);
+    expect(dia.pagaPor).toBe("permanencia");
+  });
+
+  it("un día bueno cobra los pedidos", async () => {
+    await guardarJornada(jornadaDe("2026-09-17", 7, 15, 1000), "reemplazar");
+    const [dia] = await resumenPorRango("2026-09-17" as FechaISO, "2026-09-17" as FechaISO);
+    expect(dia.montoCentimos).toBe(15_000);
+    expect(dia.pagaPor).toBe("pedidos");
   });
 });

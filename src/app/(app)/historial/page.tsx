@@ -10,7 +10,8 @@ import { Aviso, ChipTramo, EstadoPedido, Vacio } from "@/components/ui";
 import { useDatos } from "@/hooks/useDatos";
 import { buscarPedidos, jornadasPorRango, reglaVigente } from "@/lib/db/sqlite/jornadas";
 import { listarTiendas, perfilActual } from "@/lib/db/sqlite/perfil";
-import { horasDePermanencia, montoPorPermanencia } from "@/lib/pagos/reglas";
+import { horasDePermanencia } from "@/lib/pagos/reglas";
+import { montoDelDia } from "@/lib/pagos/calcular-liquidacion";
 import type { DatosExportacion } from "@/lib/exportar/datos";
 import {
   diasEntre,
@@ -88,6 +89,17 @@ function Contenido() {
   if (!datos) return <Esqueleto />;
   const { jornadas, perfil, regla, nombreTienda } = datos;
 
+  /* Lo que se cobra por un día: el mayor entre los pedidos y el piso de
+     permanencia. La misma función que usa la liquidación, para que el
+     historial no diga una cifra y Pagos otra. */
+  const cobroDe = (j: (typeof jornadas)[number]) =>
+    montoDelDia(
+      j.ordenes.reduce((s, o) => s + (o.montoCentimos ?? 0), 0),
+      regla,
+      j.horaEntrada,
+      j.horaSalida,
+    );
+
   /* Los datos del archivo se arman aquí y el celular genera el Excel o el PDF.
      Se exporta exactamente lo que está filtrado en pantalla (§11). */
   const datosExportacion: DatosExportacion = {
@@ -99,8 +111,9 @@ function Contenido() {
       const horarios = new Map(
         j.rutas.map((r) => [r.numero, `${r.horaInicio ?? "--:--"}–${r.horaFin ?? "--:--"}`]),
       );
-      const montoPedidos = j.ordenes.reduce((s, o) => s + (o.montoCentimos ?? 0), 0);
-      const permanencia = montoPorPermanencia(regla, j.horaEntrada, j.horaSalida) ?? 0;
+      const cobro = cobroDe(j);
+      const montoPedidos = cobro.pedidosCentimos;
+      const permanencia = cobro.permanenciaCentimos;
       return {
         fecha: j.fecha,
         rutas: j.rutas.map((r) => ({
@@ -123,7 +136,7 @@ function Contenido() {
         minutosEnRuta: j.rutas.reduce((s, r) => s + (r.duracionMin ?? 0), 0),
         montoPedidosCentimos: montoPedidos,
         montoPermanenciaCentimos: permanencia,
-        montoCentimos: Math.max(montoPedidos, permanencia),
+        montoCentimos: cobro.pagadoCentimos,
         horasPermanencia: horasDePermanencia(j.horaEntrada, j.horaSalida),
         pagaPor: permanencia > montoPedidos ? ("permanencia" as const) : ("pedidos" as const),
       };
@@ -138,7 +151,7 @@ function Contenido() {
     (acc, j) => ({
       pedidos: acc.pedidos + j.ordenes.length,
       rutas: acc.rutas + j.rutas.length,
-      centimos: acc.centimos + j.ordenes.reduce((s, o) => s + (o.montoCentimos ?? 0), 0),
+      centimos: acc.centimos + cobroDe(j).pagadoCentimos,
     }),
     { pedidos: 0, rutas: 0, centimos: 0 },
   );
@@ -254,7 +267,8 @@ function Contenido() {
                 const horarios = new Map(
                   j.rutas.map((r) => [r.numero, `${r.horaInicio ?? "--:--"}–${r.horaFin ?? "--:--"}`]),
                 );
-                const montoDia = j.ordenes.reduce((s, o) => s + (o.montoCentimos ?? 0), 0);
+                const cobroDia = cobroDe(j);
+                const montoDia = cobroDia.pagadoCentimos;
                 return [
                   ...j.ordenes.map((o) => {
                     return (
@@ -287,7 +301,14 @@ function Contenido() {
                         {j.ordenes.length} pedidos · {j.rutas.length} rutas
                       </Link>
                     </td>
-                    <td className="num">{formatearSoles(montoDia)}</td>
+                    <td className="num">
+                      {formatearSoles(montoDia)}
+                      {cobroDia.pagaPor === "permanencia" && (
+                        <span className="block text-[10px] font-normal text-tinta-3">
+                          piso por permanencia
+                        </span>
+                      )}
+                    </td>
                   </tr>,
                 ];
               })}
@@ -321,7 +342,7 @@ function Contenido() {
               );
             }
             const minutos = j.rutas.reduce((s, r) => s + (r.duracionMin ?? 0), 0);
-            const monto = j.ordenes.reduce((s, o) => s + (o.montoCentimos ?? 0), 0);
+            const monto = cobroDe(j).pagadoCentimos;
             return (
               <Link
                 key={fecha}

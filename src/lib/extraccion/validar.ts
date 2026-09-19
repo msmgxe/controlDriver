@@ -34,7 +34,8 @@ export type CodigoAlerta =
   | "tarjeta-incompleta"
   | "codigo-formato"
   | "codigo-en-otra-fecha"
-  | "arrastre-descartado";
+  | "arrastre-descartado"
+  | "arrastre-dudoso";
 
 export interface Alerta {
   nivel: NivelAlerta;
@@ -74,7 +75,7 @@ export interface OpcionesValidacion {
  * aviso que no se puede ignorar no es un aviso, es un muro.
  */
 export function validarJornada(
-  jornada: JornadaFusionada & { descartes?: Descartes },
+  jornada: JornadaFusionada & { descartes?: Descartes; descarteDudoso?: number },
   opciones: OpcionesValidacion,
 ): Alerta[] {
   const alertas: Alerta[] = [];
@@ -89,6 +90,17 @@ export function validarJornada(
 
   if (descartes.ordenes.length > 0 || descartes.rutas.length > 0) {
     alertas.push(explicarDescartes(descartes));
+  }
+
+  if (jornada.descarteDudoso) {
+    alertas.push({
+      nivel: "aviso",
+      codigo: "arrastre-dudoso",
+      mensaje:
+        `${jornada.descarteDudoso} pedidos parecían de la noche anterior, pero son demasiados ` +
+        "para ser arrastre y no se quitó ninguno. Revisa las primeras rutas: si alguna es de " +
+        "la noche de ayer, bórrala a mano.",
+    });
   }
   const { hoy, fechaElegida = null, codigosEnOtrasFechas = {} } = opciones;
 

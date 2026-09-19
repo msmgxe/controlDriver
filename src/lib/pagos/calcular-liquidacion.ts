@@ -126,6 +126,42 @@ export interface OpcionesLiquidacion {
  * Las jornadas que caigan fuera de esa semana se ignoran, así que se le puede
  * pasar el historial entero sin filtrarlo antes.
  */
+/**
+ * Lo que se cobra por un día: **el mayor** de lo que sumaron los pedidos y lo
+ * que garantiza la permanencia en tienda (§13 bis).
+ *
+ * Es la única fuente de verdad del monto de un día, y todas las pantallas la
+ * usan. Existe porque antes cada pantalla lo calculaba a su manera: Inicio
+ * sumaba solo los pedidos y el detalle aplicaba el piso, así que el mismo día
+ * salía S/ 20 en una y S/ 130 en otra. Un número de dinero que cambia según
+ * dónde se mire destruye la confianza en todos los demás.
+ */
+export interface MontoDelDia {
+  /** Lo que suman los pedidos, sin el piso. */
+  pedidosCentimos: number;
+  /** Lo que garantiza la permanencia, o 0 si la tienda no la paga. */
+  permanenciaCentimos: number;
+  /** Lo que de verdad se cobra: el mayor de los dos. */
+  pagadoCentimos: number;
+  pagaPor: "pedidos" | "permanencia";
+}
+
+export function montoDelDia(
+  pedidosCentimos: number,
+  regla: ReglaPago,
+  horaEntrada: string | null,
+  horaSalida: string | null,
+): MontoDelDia {
+  const permanenciaCentimos = montoPorPermanencia(regla, horaEntrada, horaSalida) ?? 0;
+  const pagaPor = permanenciaCentimos > pedidosCentimos ? "permanencia" : "pedidos";
+  return {
+    pedidosCentimos,
+    permanenciaCentimos,
+    pagadoCentimos: Math.max(pedidosCentimos, permanenciaCentimos),
+    pagaPor,
+  };
+}
+
 export function calcularLiquidacion(
   jornadas: readonly JornadaLiquidable[],
   regla: ReglaPago,
@@ -202,11 +238,10 @@ export function calcularLiquidacion(
        La tienda paga por hora de presencia y, al cerrar el día, paga el MAYOR
        de los dos: lo que sumaron los pedidos o lo que suma la permanencia. No
        se suman, compiten. Por eso un día flojo no baja del piso. */
-    const montoPermanencia =
-      montoPorPermanencia(regla, jornada.horaEntrada ?? null, jornada.horaSalida ?? null) ?? 0;
-    const pagaPor: "pedidos" | "permanencia" =
-      montoPermanencia > montoDia ? "permanencia" : "pedidos";
-    const montoFinal = Math.max(montoDia, montoPermanencia);
+    const dia = montoDelDia(montoDia, regla, jornada.horaEntrada ?? null, jornada.horaSalida ?? null);
+    const montoPermanencia = dia.permanenciaCentimos;
+    const pagaPor = dia.pagaPor;
+    const montoFinal = dia.pagadoCentimos;
 
     montoCalculadoCentimos += montoFinal;
     montoPorPedidosCentimos += montoDia;

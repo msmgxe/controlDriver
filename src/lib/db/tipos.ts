@@ -28,7 +28,11 @@ export interface FilaResumenDiario {
   minutosEnRuta: number;
   primeraSalida: string | null;
   ultimoRegreso: string | null;
+  /** Lo que se cobra ese día: el mayor entre pedidos y permanencia. */
   montoCentimos: number;
+  /** Lo que suman solo los pedidos, sin el piso. */
+  montoPedidosCentimos: number;
+  pagaPor: "pedidos" | "permanencia";
   pedidosFueraTramo1: number;
   entregado: number;
   parcial: number;

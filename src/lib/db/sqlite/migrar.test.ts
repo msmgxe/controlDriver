@@ -52,3 +52,31 @@ describe("migrar una base de una versión anterior", () => {
     expect(fila).toEqual({ codigo: "v11111111wofp-01", manual: 0 });
   });
 });
+
+describe("la migración nunca deja fuera", () => {
+  it("si leer las columnas falla, intenta añadirlas igual", async () => {
+    const db = new DatabaseSync(":memory:");
+    db.exec(`create table ordenes (id text primary key)`);
+    const base = {
+      consultar: async () => {
+        throw new Error("este motor no deja pasar pragma");
+      },
+      ejecutar: async (sql: string) => db.exec(sql),
+    };
+    await migrar(base);
+    const columnas = db.prepare(`pragma table_info(ordenes)`).all() as Array<{ name: string }>;
+    expect(columnas.map((c) => c.name)).toContain("manual");
+  });
+
+  it("si todo falla, no lanza: la aplicación abre igual", async () => {
+    const base = {
+      consultar: async () => {
+        throw new Error("roto");
+      },
+      ejecutar: async () => {
+        throw new Error("roto");
+      },
+    };
+    await expect(migrar(base)).resolves.toEqual([]);
+  });
+});

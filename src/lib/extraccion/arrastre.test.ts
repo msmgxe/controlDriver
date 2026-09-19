@@ -128,9 +128,12 @@ describe("quitar el arrastre del día", () => {
 
   it("un pedido sin ruta leída por encima de uno de arrastre también es arrastre", () => {
     // La lista va ordenada por ruta: lo que va antes de la Ruta 2 es de la 1 o la 2.
-    const pedidos = [pedido(null), pedido(1), pedido(2), pedido(3), pedido(3)];
+    const pedidos = [
+      pedido(null), pedido(1), pedido(2),
+      pedido(3), pedido(3), pedido(4), pedido(4), pedido(5), pedido(5),
+    ];
     const limpio = quitarArrastre(jornada(CON_ARRASTRE, pedidos));
-    expect(limpio.ordenes).toHaveLength(2);
+    expect(limpio.ordenes).toHaveLength(6);
   });
 
   it("un pedido sin ruta después del arrastre se queda", () => {
@@ -183,5 +186,47 @@ describe("un pedido no puede repetirse", () => {
       "v11111111wofp-01": "2026-09-16" as FechaISO,
     });
     expect(limpio.ordenes).toHaveLength(1);
+  });
+});
+
+describe("lo que descartaba de más la v9", () => {
+  it("un pedido de abajo leído como «Ruta 1» no arrastra a los sin ruta de encima", () => {
+    /* El fallo del día de 14 pedidos que se quedó en 2: los sin ruta que
+       estaban por encima de un pedido tardío mal leído como «Ruta 1» se
+       descartaban todos. */
+    const pedidos = [
+      pedido(1), pedido(1), pedido(2), pedido(2),       // arrastre de verdad
+      pedido(3), pedido(null), pedido(null), pedido(4), // del día, dos sin ruta
+      pedido(null), pedido(5), pedido(5), pedido(null),
+      pedido(6), pedido(6), pedido(1),                  // ← mal leído: es de la 7
+    ];
+    const limpio = quitarArrastre(jornada(CON_ARRASTRE, pedidos));
+    // Se van los 4 de arrastre y el mal leído; los 4 sin ruta del día se quedan.
+    expect(limpio.ordenes.filter((o) => o.ruta === null)).toHaveLength(4);
+  });
+
+  it("con el número de ruta deducido, la regla de la hora no se aplica", () => {
+    const deducidas = CON_ARRASTRE.map((r) => ({ ...r, numero_deducido: true }));
+    expect(rutasDeArrastre(deducidas)).toBe(0);
+  });
+
+  it("un código guardado en un día POSTERIOR no se descarta aquí", () => {
+    // El arrastre viene de la noche de antes. Si está en un día posterior, el
+    // que está mal es ese otro día.
+    const rutas = [ruta(1, "10:03", "10:27")];
+    const pedidos = [pedido(1, "v11111111wofp-01"), pedido(1)];
+    const limpio = quitarArrastre(jornada(rutas, pedidos), {
+      "v11111111wofp-01": "2026-09-17" as FechaISO,
+    });
+    expect(limpio.ordenes).toHaveLength(2);
+  });
+
+  it("si el descarte quitaría más de medio día, no se descarta nada", () => {
+    // Lo más probable es que la lectura saliera mal, no que el día sea casi
+    // todo del anterior.
+    const pedidos = [pedido(1), pedido(1), pedido(2), pedido(2), pedido(3), pedido(3)];
+    const limpio = quitarArrastre(jornada(CON_ARRASTRE, pedidos));
+    expect(limpio.ordenes).toHaveLength(6);
+    expect(limpio.descarteDudoso).toBe(4);
   });
 });

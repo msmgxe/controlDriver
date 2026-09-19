@@ -10,7 +10,8 @@ import { GraficoDias, type DiaGrafico } from "@/components/GraficoDias";
 import { Reloj, Subir, Trofeo } from "@/components/iconos";
 import { Aviso, Cifras, Vacio } from "@/components/ui";
 import { useDatos } from "@/hooks/useDatos";
-import { jornadasPorRango } from "@/lib/db/sqlite/jornadas";
+import { jornadasPorRango, reglaVigente } from "@/lib/db/sqlite/jornadas";
+import { montoDelDia } from "@/lib/pagos/calcular-liquidacion";
 import { perfilActual } from "@/lib/db/sqlite/perfil";
 import {
   formatearDuracion,
@@ -58,11 +59,12 @@ function Contenido() {
       jornadasPorRango(desde, hasta),
       perfilActual(),
     ]);
-    return { jornadas, perfil };
+    const { regla } = await reglaVigente(hasta, perfil?.tiendaId ?? null, perfil?.vehiculo);
+    return { jornadas, perfil, regla };
   }, [desde, hasta]);
 
   if (!datos) return <Esqueleto />;
-  const { jornadas, perfil } = datos;
+  const { jornadas, perfil, regla } = datos;
 
   if (jornadas.length === 0) {
     return (
@@ -85,7 +87,13 @@ function Contenido() {
       pedidos: j.ordenes.length,
       rutas: j.rutas.length,
       minutos: j.rutas.reduce((s, r) => s + (r.duracionMin ?? 0), 0),
-      centimos: j.ordenes.reduce((s, o) => s + (o.montoCentimos ?? 0), 0),
+      // Lo que se cobró ese día, piso de permanencia incluido.
+      centimos: montoDelDia(
+        j.ordenes.reduce((s, o) => s + (o.montoCentimos ?? 0), 0),
+        regla,
+        j.horaEntrada,
+        j.horaSalida,
+      ).pagadoCentimos,
       fueraTramo1: j.ordenes.filter((o) => o.tramo > 1).length,
     };
   });

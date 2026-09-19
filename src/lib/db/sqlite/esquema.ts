@@ -269,15 +269,42 @@ export interface BaseMigrable {
   ejecutar(sql: string): Promise<unknown>;
 }
 
-/** Añade las columnas que falten. Idempotente: se ejecuta en cada arranque. */
+/**
+ * Añade las columnas que falten. Idempotente: se ejecuta en cada arranque.
+ *
+ * **Nunca lanza.** Esto corre al abrir la base, y en la v9 un fallo aquí dejaba
+ * la aplicación entera en la pantalla de «no se pudo abrir la base de datos»:
+ * por una columna, el repartidor se quedaba sin acceso a meses de datos. Si un
+ * paso falla, se salta y se sigue; lo peor que puede pasar es que una función
+ * nueva no ande, nunca que no se pueda entrar.
+ *
+ * Si `pragma table_info` no se puede leer —hay motores que no lo dejan pasar
+ * por la vía de consultas—, se intenta añadir la columna igualmente: SQLite
+ * rechaza añadir una que ya existe, y ese rechazo se ignora.
+ */
 export async function migrar(base: BaseMigrable): Promise<string[]> {
   const anadidas: string[] = [];
+
   for (const [tabla, columna, definicion] of COLUMNAS_ANADIDAS) {
-    const existentes = await base.consultar<{ name: string }>(`pragma table_info(${tabla})`);
-    if (existentes.length === 0) continue; // la tabla no existe: la crea el esquema
-    if (existentes.some((c) => c.name === columna)) continue;
-    await base.ejecutar(`alter table ${tabla} add column ${columna} ${definicion}`);
-    anadidas.push(`${tabla}.${columna}`);
+    try {
+      let columnas: Array<{ name: string }> | null = null;
+      try {
+        columnas = await base.consultar<{ name: string }>(`pragma table_info(${tabla})`);
+      } catch {
+        columnas = null;
+      }
+
+      if (columnas !== null) {
+        if (columnas.length === 0) continue; // la tabla no existe: la crea el esquema
+        if (columnas.some((c) => c.name === columna)) continue;
+      }
+
+      await base.ejecutar(`alter table ${tabla} add column ${columna} ${definicion}`);
+      anadidas.push(`${tabla}.${columna}`);
+    } catch {
+      /* "duplicate column name" si ya estaba, o cualquier otro fallo: en los
+         dos casos se sigue con la siguiente. */
+    }
   }
   return anadidas;
 }

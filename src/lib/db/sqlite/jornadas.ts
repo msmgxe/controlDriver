@@ -23,6 +23,8 @@ import {
   type TipoVehiculo,
 } from "@/lib/pagos/reglas";
 import type { FechaISO } from "@/lib/fechas";
+import { montoDelDia } from "@/lib/pagos/calcular-liquidacion";
+import { perfilActual } from "./perfil";
 import type {
   FilaResumenDiario,
   JornadaCompleta,
@@ -70,14 +72,31 @@ export async function resumenPorRango(
     [desde, hasta],
   );
 
-  return filas.map((f) => ({
+  /* Lo que se cobra cada día, piso de permanencia incluido, con la misma
+     función que la liquidación. Antes aquí iba solo la suma de pedidos, e
+     Inicio enseñaba S/ 20 de un día que en el detalle salía S/ 130. */
+  const perfil = await perfilActual();
+  const cobros = await Promise.all(
+    filas.map(async (f) => {
+      const { regla } = await reglaVigente(
+        f.fecha as FechaISO,
+        perfil?.tiendaId ?? null,
+        (f.vehiculo ?? VEHICULO_POR_DEFECTO) as TipoVehiculo,
+      );
+      return montoDelDia(f.monto_centimos ?? 0, regla, f.hora_entrada, f.hora_salida);
+    }),
+  );
+
+  return filas.map((f, i) => ({
     fecha: f.fecha as FechaISO,
     rutas: f.rutas ?? 0,
     pedidos: f.pedidos ?? 0,
     minutosEnRuta: f.minutos_en_ruta ?? 0,
     primeraSalida: f.primera_salida,
     ultimoRegreso: f.ultimo_regreso,
-    montoCentimos: f.monto_centimos ?? 0,
+    montoCentimos: cobros[i].pagadoCentimos,
+    montoPedidosCentimos: cobros[i].pedidosCentimos,
+    pagaPor: cobros[i].pagaPor,
     pedidosFueraTramo1: f.pedidos_fuera_tramo_1 ?? 0,
     entregado: f.entregado ?? 0,
     parcial: f.parcial ?? 0,

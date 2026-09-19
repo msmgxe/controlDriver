@@ -36,6 +36,23 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v10 — 19/09/2026
+- **Arreglado:** el mismo día salía S/ 20 en Inicio y S/ 130 en el detalle.
+  Cada pantalla calculaba el monto a su manera; ahora todas usan la misma
+  función, que cobra el mayor entre los pedidos y el piso de permanencia. En
+  el Historial, el día pagado por piso lo dice.
+- **Arreglado:** un día de 14 pedidos se quedaba en 2. La regla del arrastre de
+  la v9 era demasiado agresiva: un solo pedido mal leído como «Ruta 1»
+  arrastraba al descarte a todos los sin ruta de encima. Ahora solo se
+  descarta un pedido sin ruta si está encajado en el bloque de arriba.
+- **Arreglado:** la regla de la hora ya no se aplica con números de ruta
+  deducidos, y «ya guardado» solo cuenta si el otro día es anterior.
+- **Nuevo:** tope de seguridad. Si el descarte fuera a quitar más de medio día,
+  no se quita nada y se avisa.
+- **Nuevo:** lo descartado como arrastre se puede recuperar con un toque en
+  Revisión: «Contarlos igual en este día».
+- **Arreglado:** un fallo en la migración de la base ya no impide abrir la app.
+
 ### v9 — 19/09/2026
 Hecha a partir de las capturas reales de la app de reparto, que por fin
 llegaron.

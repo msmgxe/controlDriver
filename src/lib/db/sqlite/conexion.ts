@@ -110,10 +110,11 @@ async function motorDeCapacitor(): Promise<Motor> {
 
   if (!(await db.isDBOpen()).result) await db.open();
   await db.execute(ESQUEMA.join("\n"));
+  /* La migración no puede impedir abrir la base: si falla, se sigue. */
   await migrar({
     consultar: async <T,>(sql: string) => ((await db.query(sql)).values ?? []) as T[],
     ejecutar: (sql: string) => db.execute(sql),
-  });
+  }).catch(() => []);
 
   /* En el navegador no hay disco: lo escrito vive en memoria hasta que se
      vuelca a IndexedDB a mano. En el celular esto no hace nada. */
