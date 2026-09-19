@@ -26,15 +26,30 @@ export default function PaginaAcceso() {
 }
 
 /**
- * ¿La base de datos corre en esta misma máquina o en la red local?
+ * ¿Dónde hay que ir a buscar el código, si no llega al correo?
  *
- * Se mira la URL de Supabase, no el modo de Next: al probar desde el celular
- * con `npm run movil` la app va en modo desarrollo pero apunta a la IP del Mac,
- * y el correo se sigue quedando en el buzón local.
+ * Devuelve la dirección del buzón local, o null si esto es producción y el
+ * correo sale de verdad.
+ *
+ * Hay dos formas de estar en local y las dos tienen que funcionar:
+ *
+ *   · `npm run local` y `npm run movil` apuntan a una dirección de red
+ *     privada, así que se reconocen por la URL de Supabase.
+ *   · `npm run tunel` apunta a un dominio público de verdad (el túnel HTTPS),
+ *     que por fuera no se distingue de producción. Ahí el script escribe
+ *     NEXT_PUBLIC_BUZON_URL, y esa variable manda.
+ *
+ * Sin esto uno se queda mirando su bandeja de entrada esperando un correo que
+ * nunca va a llegar.
  */
-function esEntornoLocal(): boolean {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-  return /^https?:\/\/(127\.0\.0\.1|localhost|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(url);
+function urlDelBuzon(): string | null {
+  const declarada = process.env.NEXT_PUBLIC_BUZON_URL;
+  if (declarada) return declarada;
+
+  const supabase = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  const esRedPrivada =
+    /^https?:\/\/(127\.0\.0\.1|localhost|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(supabase);
+  return esRedPrivada ? "http://127.0.0.1:54324" : null;
 }
 
 function FormularioAcceso() {
@@ -57,6 +72,7 @@ function FormularioAcceso() {
   }, [segundos]);
 
   const codigo = digitos.join("");
+  const buzon = urlDelBuzon();
 
   async function enviarCodigo(e?: React.FormEvent) {
     e?.preventDefault();
@@ -229,19 +245,13 @@ function FormularioAcceso() {
               </span>
 
               {/* En local, Supabase no manda correos de verdad: los atrapa en un
-                  buzón que corre en la misma máquina. Sin este aviso uno se
-                  queda mirando su bandeja de entrada esperando algo que nunca
-                  va a llegar. */}
-              {esEntornoLocal() && (
+                  buzón. El enlace se abre en otra pestaña porque desde el
+                  celular es la única forma de leer el código. */}
+              {buzon && (
                 <span className="rounded-btn bg-aviso-suave px-3 py-2 text-xs text-aviso">
                   <b>Estás en local:</b> el código no llega a tu correo. Ábrelo en{" "}
-                  <a
-                    href="http://127.0.0.1:54324"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="font-bold underline"
-                  >
-                    127.0.0.1:54324
+                  <a href={buzon} target="_blank" rel="noreferrer" className="font-bold underline">
+                    el buzón de prueba
                   </a>
                 </span>
               )}

@@ -48,6 +48,13 @@ const cabecerasDeSeguridad = [
 ];
 
 const nextConfig: NextConfig = {
+  /* Orígenes desde los que se puede abrir la app en desarrollo.
+
+     Al probar en el celular la app no se abre en localhost sino en un túnel
+     HTTPS con nombre aleatorio, y `next dev` rechaza sus recursos internos si
+     el origen no está en esta lista. En producción esta opción se ignora. */
+  allowedDevOrigins: ["*.trycloudflare.com"],
+
   async headers() {
     return [
       {
