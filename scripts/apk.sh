@@ -5,6 +5,10 @@
 #   ./scripts/apk.sh            genera el APK
 #   ./scripts/apk.sh --instalar genera y lo instala en el celular por USB
 #
+# Cada compilación sube el número de versión y deja el archivo como
+# Rutas-A-v<N>.apk, borrando el anterior: así se sabe siempre cuál se está
+# copiando, y no hay forma de instalar por error el de hace tres cambios.
+#
 # Por qué hace falta un JDK aparte: el Mac trae el 26, y el plugin de Gradle
 # para Android no lo soporta —falla con "Unsupported class file major version
 # 70", que es como se ve un JDK 26 desde dentro. El 21 se instaló con Homebrew
@@ -21,6 +25,15 @@ if [ -z "${JAVA_HOME:-}" ]; then
   echo "Falta el JDK 21. Instálalo con:  brew install openjdk@21"
   exit 1
 fi
+
+# --- Número de versión ----------------------------------------------------
+# Sube uno en cada compilación. Así el archivo que copias al celular dice qué
+# versión es, y Android reconoce que una instalación es más nueva que la
+# anterior —sin subirlo se niega a actualizar.
+VERSION_FILE="android/version.properties"
+ANTERIOR="$(grep -E '^build=' "$VERSION_FILE" | cut -d= -f2)"
+VERSION=$(( ANTERIOR + 1 ))
+sed -i '' "s/^build=.*/build=$VERSION/" "$VERSION_FILE"
 
 # --- SDK de Android -------------------------------------------------------
 export ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
@@ -73,10 +86,19 @@ npx cap sync android >/dev/null
 echo "▸ Compilando el APK…"
 ( cd android && ./gradlew --quiet assembleDebug )
 
-cp android/app/build/outputs/apk/debug/app-debug.apk Rutas-A.apk
+# El anterior se borra: tener seis APK viejos en la carpeta solo sirve para
+# instalar el equivocado.
+rm -f Rutas-A-v*.apk
+APK="Rutas-A-v$VERSION.apk"
+cp android/app/build/outputs/apk/debug/app-debug.apk "$APK"
+
 echo
 echo "────────────────────────────────────────────────────────────"
-echo " APK listo:  $(pwd)/Rutas-A.apk  ($(du -h Rutas-A.apk | cut -f1))"
+echo " Versión $VERSION lista"
+echo
+echo "     $(pwd)/$APK   ($(du -h "$APK" | cut -f1))"
+echo
+echo " Anota qué cambió en VERSIONES.md"
 echo "────────────────────────────────────────────────────────────"
 
 # --- 4. Instalar por cable, si se pidió -----------------------------------
@@ -87,7 +109,7 @@ if [ "${1:-}" = "--instalar" ]; then
     echo "Conéctalo por USB y activa la depuración USB (ver README-ANDROID.md)."
     exit 1
   fi
-  echo "▸ Instalando en el celular…"
-  "$ANDROID_HOME/platform-tools/adb" install -r Rutas-A.apk
+  echo "▸ Instalando la versión $VERSION en el celular…"
+  "$ANDROID_HOME/platform-tools/adb" install -r "$APK"
   echo "Listo: busca Rutas-A en el menú de aplicaciones."
 fi

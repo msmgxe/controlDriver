@@ -3,6 +3,8 @@
 import { useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 
+import { useDatos } from "@/hooks/useDatos";
+
 import { Candado, Check, Huella } from "@/components/iconos";
 import {
   activarHuella,
@@ -174,6 +176,8 @@ export default function PaginaAjustes() {
         </p>
       </section>
 
+      <SeccionVersion />
+
       <SeccionEjemplo />
 
       <SeccionDiagnostico />
@@ -320,6 +324,38 @@ function SeccionDiagnostico() {
           </button>
         </>
       )}
+    </section>
+  );
+}
+
+/**
+ * Qué versión está instalada.
+ *
+ * Parece un detalle y no lo es: cuando se prueba una app instalándola a mano,
+ * la pregunta constante es «¿estoy viendo el arreglo o la versión de antes?».
+ * Sin este dato, un fallo ya corregido se reporta dos veces y se pierde media
+ * tarde buscándolo.
+ */
+function SeccionVersion() {
+  const { datos } = useDatos(async () => {
+    const { Capacitor } = await import("@capacitor/core");
+    if (!Capacitor.isNativePlatform()) return { version: "navegador", build: "—" };
+    const { App } = await import("@capacitor/app");
+    const info = await App.getInfo();
+    return { version: info.version, build: String(info.build) };
+  }, []);
+
+  return (
+    <section className="tarjeta flex items-center justify-between gap-3">
+      <div className="flex flex-col">
+        <h3 className="text-lg">Rutas-A</h3>
+        <span className="text-sm text-tinta-2">
+          {datos ? `Versión ${datos.version}` : "…"}
+        </span>
+      </div>
+      <span className="rounded-chip bg-acento-suave px-3 py-1 font-mono text-sm font-bold text-acento-tinta">
+        v{datos?.build ?? "?"}
+      </span>
     </section>
   );
 }

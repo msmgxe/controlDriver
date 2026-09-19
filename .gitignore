@@ -44,7 +44,7 @@ next-env.d.ts
 !.env.example
 
 # --- Android / Capacitor ---
-/Rutas-A.apk
+/Rutas-A-v*.apk
 /android/local.properties
 /android/.gradle/
 /android/build/

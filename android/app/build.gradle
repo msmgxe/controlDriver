@@ -1,5 +1,15 @@
 apply plugin: 'com.android.application'
 
+/* El número de versión vive en un archivo aparte y lo sube `scripts/apk.sh` en
+   cada compilación. Aquí solo se lee: tenerlo a fuego en este archivo
+   obligaría a acordarse de cambiarlo a mano, y nadie se acuerda. */
+def versionProps = new Properties()
+def versionFile = rootProject.file('version.properties')
+if (versionFile.exists()) {
+    versionFile.withInputStream { versionProps.load(it) }
+}
+def numeroDeVersion = (versionProps['build'] ?: '1') as Integer
+
 android {
     namespace = "pe.rutasa.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -17,8 +27,8 @@ android {
         applicationId "pe.rutasa.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode numeroDeVersion
+        versionName "${numeroDeVersion}"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
