@@ -133,7 +133,7 @@ export function Progreso({
         </ul>
       )}
       <p className="text-xs text-tinta-3">
-        Las fotos se procesan y se descartan. No se guardan en ningún servidor.
+        Las fotos se leen aquí mismo, en tu celular, y se descartan. No salen del teléfono ni hace falta internet.
       </p>
     </div>
   );

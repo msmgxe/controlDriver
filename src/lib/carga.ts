@@ -45,11 +45,15 @@ export async function comprimir(archivo: Blob): Promise<Blob> {
 export type ResultadoCarga = { ok: true } | { ok: false; error: string };
 
 /**
- * Comprime, sube y deja el resultado listo para Revisión.
+ * Comprime, lee y deja el resultado listo para Revisión.
+ *
+ * Todo ocurre dentro del teléfono: las imágenes no salen de aquí, no hace
+ * falta señal y no cuesta nada. Antes esto subía las fotos a un servidor que
+ * se las pasaba a un modelo de visión.
  *
  * El resultado viaja por `sessionStorage` y no por la URL: son catorce pedidos
  * con sus códigos, y no queremos códigos de pedido en el historial del
- * navegador ni en los registros del servidor (§7).
+ * navegador (§7).
  */
 export async function procesarCapturas(
   archivos: Blob[],
@@ -62,21 +66,32 @@ export async function procesarCapturas(
     return { ok: false, error: `Elige como máximo ${MAX_IMAGENES} capturas por carga.` };
   }
 
+  const { lecturaDisponible, leerCapturas } = await import("@/lib/extraccion/enDispositivo");
+
+  /* El lector de texto es de Android: en el navegador no existe. Se dice claro
+     en vez de fallar con un error técnico que no orienta a nadie. */
+  if (!lecturaDisponible()) {
+    return {
+      ok: false,
+      error: "Leer capturas solo funciona en la app instalada, no en el navegador.",
+    };
+  }
+
   try {
-    const cuerpo = new FormData();
-    let listas = 0;
+    const comprimidas: Blob[] = [];
     for (const archivo of archivos) {
-      const comprimida = await comprimir(archivo);
-      cuerpo.append("imagenes", comprimida, `captura-${listas + 1}.jpg`);
-      listas += 1;
-      alComprimir?.(listas);
+      comprimidas.push(await comprimir(archivo));
+      alComprimir?.(comprimidas.length);
     }
 
-    const respuesta = await fetch("/api/extraer", { method: "POST", body: cuerpo });
-    const datos = await respuesta.json();
+    const datos = await leerCapturas(comprimidas);
 
-    if (!respuesta.ok) {
-      return { ok: false, error: datos.error ?? "No se pudo procesar la carga." };
+    if (datos.imagenesLeidas === 0) {
+      return {
+        ok: false,
+        error:
+          "No se reconoció ninguna captura. Asegúrate de que son pantallazos de las pestañas Rutas u Órdenes, sin recortar.",
+      };
     }
 
     try {
@@ -88,10 +103,10 @@ export async function procesarCapturas(
       };
     }
     return { ok: true };
-  } catch {
+  } catch (fallo) {
     return {
       ok: false,
-      error: "Necesitas conexión para procesar las fotos. Tus capturas siguen en la galería.",
+      error: fallo instanceof Error ? fallo.message : "No se pudieron leer las capturas.",
     };
   }
 }
