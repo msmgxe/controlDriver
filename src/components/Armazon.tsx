@@ -189,7 +189,26 @@ export function Armazon({
             >
               <Menu className="size-6" />
             </button>
-            <h1 className="text-[22px]">{actual.nombre}</h1>
+            <h1 className="min-w-0 flex-1 truncate text-[22px]">{actual.nombre}</h1>
+
+            {/* Inicio, siempre a mano. El menú lleva a todas partes, pero son
+                dos toques; y desde una pantalla que se torció —una revisión a
+                medias, un aviso de error— lo que se busca es volver al
+                principio de un toque. */}
+            <Link
+              href="/"
+              aria-label="Ir al inicio"
+              aria-current={ruta === "/" ? "page" : undefined}
+              onClick={() => setAbierto(false)}
+              className={`inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-chip px-3 text-sm font-semibold ${
+                ruta === "/"
+                  ? "bg-acento-suave text-acento-tinta"
+                  : "bg-acento text-acento-texto"
+              }`}
+            >
+              <Casa className="size-[18px]" />
+              Inicio
+            </Link>
           </header>
 
           <main className="flex-1 px-4 pt-4 pb-16">{children}</main>

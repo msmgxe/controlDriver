@@ -95,11 +95,13 @@ export interface ResultadoLectura {
  * que quedarse con uno solo (§4.4); y pueden ser de días distintos, que es lo
  * normal cuando uno sube el carrete del fin de semana entero.
  */
-export async function leerCapturas(imagenes: readonly Blob[]): Promise<ResultadoLectura> {
+export async function leerCapturas(
+  imagenes: ReadonlyArray<{ lectura: Blob; prueba: Blob }>,
+): Promise<ResultadoLectura> {
   /* Cada imagen viaja junto a lo que se leyó de ella. Hace falta para poder
      guardarla como prueba **del día correcto**: una captura sin cabecera no
      dice de qué día es, y solo se sabe tras agrupar. */
-  const leidas: Array<{ imagen: Blob; extraida: ImagenExtraida }> = [];
+  const leidas: Array<{ prueba: Blob; extraida: ImagenExtraida }> = [];
   const crudo: string[] = [];
   let descartadas = 0;
 
@@ -109,9 +111,9 @@ export async function leerCapturas(imagenes: readonly Blob[]): Promise<Resultado
   let contexto: ContextoEntreCapturas | undefined;
   let numeroDeCaptura = 0;
 
-  for (const imagen of imagenes) {
+  for (const { lectura, prueba } of imagenes) {
     try {
-      const lineas = await leerTexto(imagen);
+      const lineas = await leerTexto(lectura);
       numeroDeCaptura++;
       crudo.push(`── captura ${numeroDeCaptura} ──`, ...lineas);
       const leida = interpretarConContexto(lineas, contexto);
@@ -124,7 +126,7 @@ export async function leerCapturas(imagenes: readonly Blob[]): Promise<Resultado
         descartadas += 1;
         continue;
       }
-      leidas.push({ imagen, extraida });
+      leidas.push({ prueba, extraida });
     } catch {
       descartadas += 1;
     }
@@ -167,7 +169,7 @@ export async function leerCapturas(imagenes: readonly Blob[]): Promise<Resultado
        pago, el pantallazo original es lo que lo zanja. Se guardan aquí y no al
        confirmar porque es aquí donde se sabe a qué día pertenece cada una, y
        en Revisión ya solo viajan los datos, no las imágenes. */
-    for (const { imagen, extraida } of delDia) {
+    for (const { prueba, extraida } of delDia) {
       /* Bajo la fecha que dice **la propia captura** —la cabecera va fija en
          todas—, y solo si no se sabe, la del grupo. Así una captura de otro
          día que se colara no queda archivada como prueba de este. */
@@ -183,7 +185,7 @@ export async function leerCapturas(imagenes: readonly Blob[]): Promise<Resultado
           .map((r) => `r:${r.hora_inicio}-${r.hora_fin}`),
       ];
       try {
-        await guardarPrueba(suFecha as never, imagen, undefined, contenido);
+        await guardarPrueba(suFecha as never, prueba, undefined, contenido);
       } catch {
         /* Guardar la prueba es un extra: que falle no puede tumbar la carga. */
       }

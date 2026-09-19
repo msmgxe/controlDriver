@@ -36,6 +36,16 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v12 — 19/09/2026
+- **Arreglado:** las capturas se reducían a 1600 px antes de leerlas, un tope
+  que venía de cuando se mandaban a un modelo en la nube. Una captura de
+  2712 px se leía al 59 %, y las etiquetas pequeñas de «Ruta 1» se perdían.
+  Ahora se leen a su tamaño real (hasta 3200 px). Las pruebas se siguen
+  guardando reducidas, para no llenar el teléfono.
+- **Cambiado:** hasta 24 capturas por carga (antes 12).
+- **Nuevo:** botón **Inicio** arriba a la derecha, en todas las pantallas.
+- **Nuevo:** el error de una carga se puede copiar con un botón.
+
 ### v11 — 19/09/2026
 - **Arreglado:** la carga podía quedarse trabada en «Leyendo capturas…» para
   siempre. Una parte del proceso estaba fuera de toda red: si fallaba, nadie

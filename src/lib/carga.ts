@@ -8,9 +8,32 @@
 
 export const CLAVE_REVISION = "rutas-a.revision";
 
-const LADO_MAYOR = 1600;
+/**
+ * Hasta qué tamaño se **lee** una captura.
+ *
+ * Antes era 1600 px, y era un error: ese límite venía de cuando las capturas
+ * se mandaban a un modelo en la nube, donde cada píxel costaba dinero. Leyendo
+ * en el propio teléfono no cuesta nada, y reducir hace daño: una captura de
+ * 2712 px de alto se leía al 59 %, y las etiquetas grises pequeñas —«Ruta 1»—
+ * se volvían ilegibles. Con 3200 px, una captura de pantalla se lee entera, a
+ * su tamaño real. Solo se reduce una foto de cámara enorme, para no agotar la
+ * memoria del teléfono.
+ */
+const LADO_LECTURA = 3200;
+
+/** Hasta qué tamaño se **guarda** una captura como prueba: para verla basta. */
+const LADO_PRUEBA = 1600;
 const CALIDAD = 0.8;
-export const MAX_IMAGENES = 12;
+
+/**
+ * Cuántas capturas por carga.
+ *
+ * Eran 12, un tope pensado para acotar lo que costaba el modelo en la nube.
+ * Con el lector del teléfono no cuesta nada, y una semana entera de capturas
+ * pasa de 12 con facilidad. Queda un tope solo para que la lectura no se haga
+ * eterna.
+ */
+export const MAX_IMAGENES = 24;
 
 /**
  * Reduce la imagen y la vuelve a dibujar en un canvas.
@@ -19,9 +42,9 @@ export const MAX_IMAGENES = 12;
  * partir de los píxeles, sin ninguno de los metadatos del original —incluida la
  * ubicación GPS, que no tiene por qué salir del celular.
  */
-export async function comprimir(archivo: Blob): Promise<Blob> {
+export async function comprimir(archivo: Blob, ladoMayor = LADO_PRUEBA): Promise<Blob> {
   const bitmap = await createImageBitmap(archivo);
-  const escala = Math.min(1, LADO_MAYOR / Math.max(bitmap.width, bitmap.height));
+  const escala = Math.min(1, ladoMayor / Math.max(bitmap.width, bitmap.height));
   const ancho = Math.round(bitmap.width * escala);
   const alto = Math.round(bitmap.height * escala);
 
@@ -40,6 +63,24 @@ export async function comprimir(archivo: Blob): Promise<Blob> {
     lienzo.toBlob(resolver, "image/jpeg", CALIDAD),
   );
   return blob ?? archivo;
+}
+
+/**
+ * La imagen tal cual para leerla, salvo que sea enorme.
+ *
+ * Una captura de pantalla pasa sin tocar: ni se reduce ni se vuelve a
+ * comprimir, que es lo que mejor lee el lector —cada recompresión JPEG
+ * emborrona un poco las letras pequeñas—.
+ */
+async function paraLeer(archivo: Blob): Promise<Blob> {
+  try {
+    const bitmap = await createImageBitmap(archivo);
+    const lado = Math.max(bitmap.width, bitmap.height);
+    bitmap.close();
+    return lado <= LADO_LECTURA ? archivo : await comprimir(archivo, LADO_LECTURA);
+  } catch {
+    return archivo;
+  }
 }
 
 export type ResultadoCarga = { ok: true } | { ok: false; error: string };
@@ -107,13 +148,18 @@ export async function procesarCapturas(
   );
 
   try {
-    const comprimidas: Blob[] = [];
+    /* Cada captura en dos tamaños: la de **leer**, a resolución completa, y
+       la de **guardar** como prueba, reducida. La de leer nunca se guarda. */
+    const capturas: Array<{ lectura: Blob; prueba: Blob }> = [];
     for (const archivo of enOrden) {
-      comprimidas.push(await comprimir(archivo));
-      alComprimir?.(comprimidas.length);
+      capturas.push({
+        lectura: await paraLeer(archivo),
+        prueba: await comprimir(archivo, LADO_PRUEBA),
+      });
+      alComprimir?.(capturas.length);
     }
 
-    const datos = await leerCapturas(comprimidas);
+    const datos = await leerCapturas(capturas);
 
     if (datos.dias.length === 0) {
       return {

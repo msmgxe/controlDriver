@@ -19,6 +19,7 @@ export function CargarCapturas({ deshabilitado }: { deshabilitado?: boolean }) {
   const [listas, setListas] = useState(0);
   const [total, setTotal] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [copiado, setCopiado] = useState(false);
 
   async function alElegir(e: React.ChangeEvent<HTMLInputElement>) {
     const archivos = Array.from(e.target.files ?? []);
@@ -27,6 +28,7 @@ export function CargarCapturas({ deshabilitado }: { deshabilitado?: boolean }) {
     setTotal(archivos.length);
     setListas(0);
     setError(null);
+    setCopiado(false);
     setFase("comprimiendo");
 
     /* Pase lo que pase dentro, esta pantalla **sale** del estado "leyendo".
@@ -83,12 +85,28 @@ export function CargarCapturas({ deshabilitado }: { deshabilitado?: boolean }) {
 
       {trabajando && <Progreso fase={fase} listas={listas} total={total} />}
 
+      {/* El mensaje entero, en pantalla y copiable. Una captura de este aviso
+          no siempre llega a quien da soporte; el texto copiado, sí. */}
       {fase === "error" && error && (
-        <div className="flex gap-3 rounded-btn bg-mal-suave px-4 py-3 text-sm text-mal">
+        <div role="alert" className="flex gap-3 rounded-btn bg-mal-suave px-4 py-3 text-sm text-mal">
           <Alerta className="mt-0.5 size-[18px] shrink-0" />
-          <div>
+          <div className="flex min-w-0 flex-1 flex-col gap-2">
             <strong className="block font-bold">No se pudo cargar</strong>
-            <p>{error}</p>
+            <p className="break-words select-text">{error}</p>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(error);
+                  setCopiado(true);
+                } catch {
+                  setCopiado(false);
+                }
+              }}
+              className="self-start rounded-chip border border-current px-3 py-1.5 text-xs font-semibold"
+            >
+              {copiado ? "Copiado ✓" : "Copiar el mensaje"}
+            </button>
           </div>
         </div>
       )}
