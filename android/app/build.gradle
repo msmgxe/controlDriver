@@ -10,6 +10,18 @@ if (versionFile.exists()) {
 }
 def numeroDeVersion = (versionProps['build'] ?: '1') as Integer
 
+/* La firma de publicación vive fuera del proyecto, en ~/.rutas-a, y nunca se
+   sube a ningún repositorio. Android solo deja actualizar una app si la versión
+   nueva lleva la misma firma que la instalada: si esta clave se perdiera,
+   ningún teléfono podría actualizar sin desinstalar, y desinstalar borra sus
+   datos. Por eso no está aquí dentro, y por eso hay que guardar una copia. */
+def firmaProps = new Properties()
+def firmaFile = new File(System.getProperty("user.home"), ".rutas-a/firma.properties")
+def hayFirma = firmaFile.exists()
+if (hayFirma) {
+    firmaFile.withInputStream { firmaProps.load(it) }
+}
+
 android {
     namespace = "pe.rutasa.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -36,8 +48,22 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        if (hayFirma) {
+            publicacion {
+                storeFile file(firmaProps['storeFile'])
+                storePassword firmaProps['storePassword']
+                keyAlias firmaProps['keyAlias']
+                keyPassword firmaProps['keyPassword']
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (hayFirma) {
+                signingConfig signingConfigs.publicacion
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

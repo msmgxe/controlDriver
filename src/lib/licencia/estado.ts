@@ -25,7 +25,19 @@ export type EstadoLicencia =
   | "vencida"
   | "sin_licencia"
   /** El certificado es válido, pero de otro teléfono. */
-  | "otro_dispositivo";
+  | "otro_dispositivo"
+  /** Recién instalada, sin certificado: el mes de prueba gratis. */
+  | "prueba";
+
+/**
+ * Días de prueba desde la primera vez que se abre la app.
+ *
+ * Es el "primer mes gratis" hecho automático: quien la instala la usa entera
+ * desde el primer minuto, sin esperar a que nadie le active nada. Pasado el
+ * mes, pide su licencia. Reinstalar reinicia la prueba, pero también borra
+ * todo lo que tenía cargado, así que no sale a cuenta.
+ */
+export const DIAS_DE_PRUEBA = 30;
 
 export interface SituacionLicencia {
   estado: EstadoLicencia;
@@ -68,6 +80,7 @@ export function evaluarLicencia(
   certificado: Certificado | null,
   hoy: string,
   dispositivo?: string,
+  pruebaDesde?: string | null,
 ): SituacionLicencia {
   /* Un certificado copiado de otro teléfono lleva firma buena —es auténtico—
      pero no es de aquí. Se distingue de "sin licencia" para poder decirle a la
@@ -84,6 +97,22 @@ export function evaluarLicencia(
       diasDeGracia: 0,
       debeAvisar: true,
     };
+  }
+
+  if (!certificado && pruebaDesde) {
+    // El día que se instala cuenta como el primero: 30 días son hoy y 29 más.
+    const quedan = DIAS_DE_PRUEBA - 1 - diasEntre(pruebaDesde, hoy);
+    if (quedan >= 0) {
+      return {
+        estado: "prueba",
+        puedeEscribir: true,
+        diasRestantes: quedan,
+        vigenteHasta: null,
+        nombre: "",
+        diasDeGracia: 0,
+        debeAvisar: quedan <= DIAS_DE_AVISO,
+      };
+    }
   }
 
   if (!certificado) {
@@ -152,7 +181,14 @@ export function fechaDeConfianza(
 export function mensajeDeLicencia(situacion: SituacionLicencia): string {
   const { estado, diasRestantes } = situacion;
 
-  if (estado === "sin_licencia") return "Esta app todavía no está activada.";
+  if (estado === "prueba") {
+    if (diasRestantes === 0) return "Hoy es el último día de tu mes de prueba.";
+    return `Te quedan ${diasRestantes} días de prueba gratis.`;
+  }
+
+  if (estado === "sin_licencia") {
+    return "Tu mes de prueba terminó. Puedes ver y exportar tus datos; para cargar días nuevos, activa tu licencia en Ajustes.";
+  }
 
   if (estado === "otro_dispositivo") {
     return "Esta licencia pertenece a otro teléfono. Pide la tuya al administrador.";

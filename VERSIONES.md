@@ -36,6 +36,19 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v13 — 19/09/2026
+- **Nuevo: firma propia.** La app se firma con una clave tuya, guardada en
+  `~/.rutas-a`, en vez de la de pruebas. Sin esto, perder la clave de pruebas
+  habría obligado a todos a desinstalar —y perder sus datos— para actualizar.
+  **Esta versión no se instala encima de las anteriores**: hay que
+  desinstalar una vez.
+- **Nuevo: licencias de verdad.** 30 días de prueba automáticos al instalar;
+  después, licencia por teléfono. Se emiten con `npm run licencia` (ver
+  LICENCIAS.md).
+- **Nuevo:** Ajustes → Tu licencia: el código del teléfono para copiar, y dónde
+  pegar la licencia.
+- **Nuevo:** aviso suave cuando quedan 5 días o menos.
+
 ### v12 — 19/09/2026
 - **Arreglado:** las capturas se reducían a 1600 px antes de leerlas, un tope
   que venía de cuando se mandaban a un modelo en la nube. Una captura de

@@ -3,6 +3,7 @@
 import { useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 
+import { SeccionLicencia } from "@/components/SeccionLicencia";
 import { useDatos } from "@/hooks/useDatos";
 
 import { Candado, Check, Huella } from "@/components/iconos";
@@ -177,6 +178,8 @@ export default function PaginaAjustes() {
       </section>
 
       <SeccionVersion />
+
+      <SeccionLicencia />
 
       <SeccionEjemplo />
 

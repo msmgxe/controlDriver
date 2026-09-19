@@ -14,7 +14,8 @@
     "local:stop": "supabase stop",
     "movil": "./scripts/movil.sh",
     "apk": "./scripts/apk.sh",
-    "apk:instalar": "./scripts/apk.sh --instalar"
+    "apk:instalar": "./scripts/apk.sh --instalar",
+    "licencia": "jiti scripts/licencia.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.126.0",

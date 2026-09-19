@@ -262,3 +262,38 @@ describe("licencia prestada", () => {
     expect(evaluarLicencia(cert(""), "2026-10-15", "cualquiera").estado).toBe("activa");
   });
 });
+
+describe("el mes de prueba", () => {
+  it("recién instalada, sin certificado: 30 días de prueba con todo", () => {
+    const s = evaluarLicencia(null, "2026-09-19", "tel", "2026-09-19");
+    expect(s.estado).toBe("prueba");
+    expect(s.puedeEscribir).toBe(true);
+    expect(s.diasRestantes).toBe(29);
+  });
+
+  it("el día 30 todavía es de prueba", () => {
+    expect(evaluarLicencia(null, "2026-10-18", "tel", "2026-09-19").estado).toBe("prueba");
+  });
+
+  it("el día 31 ya no: pide licencia, en solo lectura", () => {
+    const s = evaluarLicencia(null, "2026-10-19", "tel", "2026-09-19");
+    expect(s.estado).toBe("sin_licencia");
+    expect(s.puedeEscribir).toBe(false);
+  });
+
+  it("con certificado manda el certificado, no la prueba", () => {
+    const cert: Certificado = { ...BASE, dispositivo: "tel", vigenteHasta: "2026-12-31" };
+    expect(evaluarLicencia(cert, "2026-09-20", "tel", "2026-09-19").estado).toBe("activa");
+  });
+
+  it("atrasar el reloj no alarga la prueba", () => {
+    const hoy = fechaDeConfianza("2026-09-25", "2026-10-25");
+    expect(evaluarLicencia(null, hoy, "tel", "2026-09-19").estado).toBe("sin_licencia");
+  });
+
+  it("avisa en los últimos cinco días", () => {
+    expect(evaluarLicencia(null, "2026-10-13", "tel", "2026-09-19").debeAvisar).toBe(true);
+    expect(mensajeDeLicencia(evaluarLicencia(null, "2026-10-13", "tel", "2026-09-19")))
+      .toBe("Te quedan 5 días de prueba gratis.");
+  });
+});

@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { Armazon } from "@/components/Armazon";
 import { BotonAtras } from "@/components/BotonAtras";
 import { RedDeSeguridad } from "@/components/RedDeSeguridad";
@@ -62,10 +64,26 @@ function Contenido({ children }: { children: React.ReactNode }) {
         <div className="mx-auto mb-4 flex max-w-[880px] gap-3 rounded-btn bg-aviso-suave px-4 py-3 text-sm text-aviso">
           <Alerta className="mt-0.5 size-[18px] shrink-0" />
           <div>
-            <strong className="block font-bold">Tu mes venció</strong>
+            <strong className="block font-bold">
+              {licencia.estado === "sin_licencia" ? "Tu prueba terminó" : "Tu mes venció"}
+            </strong>
             <p>{mensajeDeLicencia(licencia)}</p>
+            <Link href="/ajustes" className="mt-1 inline-block font-semibold underline">
+              Activar mi licencia
+            </Link>
           </div>
         </div>
+      )}
+      {/* Recordatorio suave cuando quedan pocos días: no bloquea nada, solo
+          avisa a tiempo para renovar sin quedarse un día sin poder cargar. */}
+      {licencia && licencia.puedeEscribir && licencia.debeAvisar && (
+        <Link
+          href="/ajustes"
+          className="mx-auto mb-4 flex max-w-[880px] items-center justify-between gap-3 rounded-btn bg-acento-suave px-4 py-2.5 text-sm text-acento-tinta"
+        >
+          <span>{mensajeDeLicencia(licencia)}</span>
+          <b className="shrink-0">Renovar</b>
+        </Link>
       )}
       <BotonAtras />
       <RedDeSeguridad />

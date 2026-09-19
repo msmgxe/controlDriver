@@ -8,8 +8,10 @@ import {
   certificadoGuardado,
   fechaMasAltaVista,
   identificadorDelDispositivo,
+  inicioDePrueba,
 } from "@/lib/licencia/almacen";
 import { evaluarLicencia, fechaDeConfianza, type SituacionLicencia } from "@/lib/licencia/estado";
+import { CLAVE_PUBLICA } from "@/lib/licencia/clave-publica";
 import { importarClavePublica, verificarCertificado } from "@/lib/licencia/token";
 
 /**
@@ -55,11 +57,9 @@ export function ProveedorLicencia({ children }: { children: React.ReactNode }) {
 }
 
 async function resolverLicencia(): Promise<SituacionLicencia> {
-  const claveJwk = process.env.NEXT_PUBLIC_LICENCIA_CLAVE_PUBLICA;
-
-  // Sin clave pública configurada no hay nada que verificar: es el estado de
-  // esta fase, antes de que exista el servidor de licencias.
-  if (!claveJwk) return DEMOSTRACION;
+  // Sin clave pública no hay nada que verificar: solo pasa en una compilación
+  // hecha antes de crear las claves.
+  if (!CLAVE_PUBLICA) return DEMOSTRACION;
 
   const [texto, dispositivo, masAlta] = await Promise.all([
     certificadoGuardado(),
@@ -69,12 +69,13 @@ async function resolverLicencia(): Promise<SituacionLicencia> {
 
   const hoy = fechaDeConfianza(hoyEnLima(), masAlta);
   await anotarFecha(hoy);
+  const pruebaDesde = await inicioDePrueba(hoy);
 
-  if (!texto) return evaluarLicencia(null, hoy, dispositivo);
+  if (!texto) return evaluarLicencia(null, hoy, dispositivo, pruebaDesde);
 
-  const clave = await importarClavePublica(JSON.parse(claveJwk));
+  const clave = await importarClavePublica(CLAVE_PUBLICA);
   const certificado = await verificarCertificado(texto, clave);
-  return evaluarLicencia(certificado, hoy, dispositivo);
+  return evaluarLicencia(certificado, hoy, dispositivo, pruebaDesde);
 }
 
 /**

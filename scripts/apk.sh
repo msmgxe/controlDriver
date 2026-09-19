@@ -83,14 +83,24 @@ echo "▸ Sincronizando con Android…"
 npx cap sync android >/dev/null
 
 # --- 3. Compilar ----------------------------------------------------------
-echo "▸ Compilando el APK…"
-( cd android && ./gradlew --quiet assembleDebug )
+# Con la firma propia se compila la versión de publicación; sin ella, la de
+# pruebas, y se avisa: una app firmada con la clave de pruebas no se puede
+# repartir, porque esa clave vive solo en esta Mac.
+if [ -f "$HOME/.rutas-a/firma.properties" ]; then
+  echo "▸ Compilando el APK (firma de publicación)…"
+  ( cd android && ./gradlew --quiet assembleRelease )
+  SALIDA="android/app/build/outputs/apk/release/app-release.apk"
+else
+  echo "▸ Compilando el APK (firma de PRUEBAS: no la repartas)…"
+  ( cd android && ./gradlew --quiet assembleDebug )
+  SALIDA="android/app/build/outputs/apk/debug/app-debug.apk"
+fi
 
 # El anterior se borra: tener seis APK viejos en la carpeta solo sirve para
 # instalar el equivocado.
 rm -f Rutas-A-v*.apk
 APK="Rutas-A-v$VERSION.apk"
-cp android/app/build/outputs/apk/debug/app-debug.apk "$APK"
+cp "$SALIDA" "$APK"
 
 echo
 echo "────────────────────────────────────────────────────────────"
@@ -110,6 +120,16 @@ if [ "${1:-}" = "--instalar" ]; then
     exit 1
   fi
   echo "▸ Instalando la versión $VERSION en el celular…"
-  "$ANDROID_HOME/platform-tools/adb" install -r "$APK"
+  if ! SALIDA_ADB=$("$ANDROID_HOME/platform-tools/adb" install -r "$APK" 2>&1); then
+    echo "$SALIDA_ADB"
+    if echo "$SALIDA_ADB" | grep -q "UPDATE_INCOMPATIBLE"; then
+      echo
+      echo "La app instalada está firmada con otra clave (la de pruebas)."
+      echo "Hay que desinstalarla una vez —esto borra sus datos de ese teléfono—:"
+      echo "     adb uninstall pe.rutasa.app"
+      echo "y volver a ejecutar:  npm run apk:instalar"
+    fi
+    exit 1
+  fi
   echo "Listo: busca Rutas-A en el menú de aplicaciones."
 fi

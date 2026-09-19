@@ -17,6 +17,7 @@ import { consultar, ejecutar, nuevoId } from "@/lib/db/sqlite/conexion";
 const CLAVE_DISPOSITIVO = "licencia.dispositivo";
 const CLAVE_CERTIFICADO = "licencia.certificado";
 const CLAVE_FECHA_MAXIMA = "licencia.fecha_maxima";
+const CLAVE_PRUEBA = "licencia.prueba_desde";
 
 async function leer(clave: string): Promise<string | null> {
   const filas = await consultar<{ valor: string }>(
@@ -71,4 +72,49 @@ export async function fechaMasAltaVista(): Promise<string | null> {
 export async function anotarFecha(fecha: string): Promise<void> {
   const previa = await fechaMasAltaVista();
   if (!previa || fecha > previa) await escribir(CLAVE_FECHA_MAXIMA, fecha);
+}
+
+/**
+ * Desde cuándo corre el mes de prueba. Se fija la primera vez que se pide y
+ * ya no cambia: ni al actualizar la app ni al atrasar el reloj.
+ */
+export async function inicioDePrueba(hoy: string): Promise<string> {
+  const guardado = await leer(CLAVE_PRUEBA);
+  if (guardado) return guardado;
+  await escribir(CLAVE_PRUEBA, hoy);
+  return hoy;
+}
+
+/**
+ * Activa un certificado pegado por el usuario, **si es bueno y es suyo**.
+ *
+ * Se comprueba todo antes de guardar nada: la firma, que sea de este teléfono
+ * y que no esté vencido del todo. Guardar uno malo —pegado a medias, o el de
+ * un compañero— dejaría la app peor que antes de intentarlo.
+ */
+export async function activarCertificado(
+  texto: string,
+): Promise<{ ok: true; hasta: string; nombre: string } | { ok: false; error: string }> {
+  const { CLAVE_PUBLICA } = await import("./clave-publica");
+  const { importarClavePublica, verificarCertificado } = await import("./token");
+  if (!CLAVE_PUBLICA) return { ok: false, error: "Esta versión de la app no admite licencias." };
+
+  // WhatsApp a veces parte el texto en líneas o le añade espacios.
+  const limpio = texto.replace(/\s+/g, "").trim();
+  const certificado = await verificarCertificado(limpio, await importarClavePublica(CLAVE_PUBLICA));
+  if (!certificado) {
+    return {
+      ok: false,
+      error: "Ese texto no es una licencia válida. Cópiala entera del mensaje, sin cortar nada.",
+    };
+  }
+  const aqui = await identificadorDelDispositivo();
+  if (certificado.dispositivo && certificado.dispositivo !== aqui) {
+    return {
+      ok: false,
+      error: "Esa licencia es de otro teléfono. Pide la tuya mandando el código de este.",
+    };
+  }
+  await guardarCertificado(limpio);
+  return { ok: true, hasta: certificado.vigenteHasta, nombre: certificado.nombre };
 }
