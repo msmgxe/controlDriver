@@ -179,18 +179,39 @@ function primerResumen(imagenes: readonly ImagenExtraida[]): ResumenOrdenes | nu
 export function fusionarPorFecha(
   imagenes: readonly ImagenExtraida[],
 ): JornadaFusionada[] {
-  if (imagenes.length === 0) return [];
+  return agruparPorFecha(imagenes, (i) => i.fecha).map(([, delDia]) =>
+    fusionarCapturas(delDia),
+  );
+}
 
-  const grupos = new Map<string, ImagenExtraida[]>();
+/**
+ * Reparte cosas por día según la fecha que trae cada una.
+ *
+ * Está separado de `fusionarPorFecha` porque hace falta dos veces con datos
+ * distintos: para las capturas leídas y para las **imágenes originales**, que
+ * se guardan como prueba del día al que pertenecen. Duplicar esta regla en dos
+ * sitios sería garantizar que un día se separen de forma distinta.
+ *
+ * Devuelve los grupos ordenados por fecha, de más antigua a más reciente. La
+ * clave del grupo es `""` cuando no se pudo determinar el día.
+ */
+export function agruparPorFecha<T>(
+  cosas: readonly T[],
+  fechaDe: (cosa: T) => string | null,
+): Array<[string, T[]]> {
+  if (cosas.length === 0) return [];
+
+  const grupos = new Map<string, T[]>();
   const SIN_FECHA = "";
   let ultimaVista: string | null = null;
 
-  for (const img of imagenes) {
-    if (img.fecha) ultimaVista = img.fecha;
-    const clave = img.fecha ?? ultimaVista ?? SIN_FECHA;
+  for (const cosa of cosas) {
+    const suya = fechaDe(cosa);
+    if (suya) ultimaVista = suya;
+    const clave = suya ?? ultimaVista ?? SIN_FECHA;
     const grupo = grupos.get(clave);
-    if (grupo) grupo.push(img);
-    else grupos.set(clave, [img]);
+    if (grupo) grupo.push(cosa);
+    else grupos.set(clave, [cosa]);
   }
 
   /* Las que llegaron antes de ver ninguna fecha: si al final resultó haber un
@@ -203,7 +224,5 @@ export function fusionarPorFecha(
     grupos.delete(SIN_FECHA);
   }
 
-  return [...grupos.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([, delDia]) => fusionarCapturas(delDia));
+  return [...grupos.entries()].sort(([a], [b]) => a.localeCompare(b));
 }

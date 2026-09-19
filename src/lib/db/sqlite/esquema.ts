@@ -27,7 +27,7 @@
  */
 
 /** Versión del esquema. Subirla dispara las migraciones de `migrar()`. */
-export const VERSION_ESQUEMA = 3;
+export const VERSION_ESQUEMA = 5;
 
 export const NOMBRE_BASE = "rutas-a";
 
@@ -113,6 +113,9 @@ export const ESQUEMA: string[] = [
      tramo          integer not null default 1 check (tramo between 1 and 6),
      km             real,
      monto_centimos integer,
+     /* Añadido a mano, no leído de una captura. Se marca para que se vea de
+        dónde salió cada cifra cuando haya que justificar un pago. */
+     manual         integer not null default 0,
      /* La misma razón que en rutas, y además lo que permite el modo
         "combinar": un pedido ya registrado se actualiza, no se repite. */
      unique (jornada_id, codigo)
@@ -148,6 +151,27 @@ export const ESQUEMA: string[] = [
 
   /* Las imágenes NO se guardan (§7): se leen, se extraen los datos y se
      descartan. Aquí solo queda el rastro de cuánto se gastó en el modelo. */
+  /* Las capturas que respaldan cada día.
+  
+     La especificación decía descartarlas (§7) y era buena idea mientras
+     viajaban a un servidor ajeno. Aquí no salen del teléfono, y sirven para
+     algo que ninguna otra cosa cubre: si la tienda discute un pago, la captura
+     original es la prueba. Se guardan en el almacenamiento privado de la
+     aplicación —ninguna otra app las ve, ni salen en la galería— y se pueden
+     borrar una a una o por día. */
+  `create table if not exists pruebas (
+     id         text primary key,
+     fecha      text not null,
+     /* Opcional: una prueba puede respaldar el día entero —las capturas de la
+        carga— o un pedido concreto, cuando se añade a mano con su foto. */
+     orden_id   text references ordenes (id) on delete cascade,
+     archivo    text not null,
+     bytes      integer not null default 0,
+     creado_en  text not null
+   );`,
+
+  `create index if not exists idx_pruebas_fecha on pruebas (fecha desc);`,
+
   `create table if not exists cargas (
      id             text primary key,
      jornada_id     text references jornadas (id) on delete cascade,

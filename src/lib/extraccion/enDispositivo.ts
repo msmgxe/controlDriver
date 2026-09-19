@@ -23,7 +23,9 @@ import { perfilActual } from "@/lib/db/sqlite/perfil";
 import { hoyEnLima } from "@/lib/fechas";
 import { pagoDelTramo } from "@/lib/pagos/reglas";
 
-import { fusionarCapturas, fusionarPorFecha } from "./fusionar";
+import { guardarPrueba } from "@/lib/db/sqlite/pruebas";
+
+import { agruparPorFecha, fusionarCapturas } from "./fusionar";
 import { interpretarCaptura } from "./ocr";
 import { validarJornada } from "./validar";
 import type { ImagenExtraida } from "./esquema";
@@ -93,7 +95,10 @@ export interface ResultadoLectura {
  * normal cuando uno sube el carrete del fin de semana entero.
  */
 export async function leerCapturas(imagenes: readonly Blob[]): Promise<ResultadoLectura> {
-  const leidas: ImagenExtraida[] = [];
+  /* Cada imagen viaja junto a lo que se leyó de ella. Hace falta para poder
+     guardarla como prueba **del día correcto**: una captura sin cabecera no
+     dice de qué día es, y solo se sabe tras agrupar. */
+  const leidas: Array<{ imagen: Blob; extraida: ImagenExtraida }> = [];
   const crudo: string[] = [];
   let descartadas = 0;
 
@@ -109,7 +114,7 @@ export async function leerCapturas(imagenes: readonly Blob[]): Promise<Resultado
         descartadas += 1;
         continue;
       }
-      leidas.push(extraida);
+      leidas.push({ imagen, extraida });
     } catch {
       descartadas += 1;
     }
@@ -126,7 +131,23 @@ export async function leerCapturas(imagenes: readonly Blob[]): Promise<Resultado
   };
 
   const dias: DiaLeido[] = [];
-  for (const jornada of fusionarPorFecha(leidas)) {
+  for (const [fechaDelGrupo, delDia] of agruparPorFecha(leidas, (l) => l.extraida.fecha)) {
+    const jornada = fusionarCapturas(delDia.map((l) => l.extraida));
+
+    /* Las capturas se guardan como prueba del día. Si la tienda discute un
+       pago, el pantallazo original es lo que lo zanja. Se guardan aquí y no al
+       confirmar porque es aquí donde se sabe a qué día pertenece cada una, y
+       en Revisión ya solo viajan los datos, no las imágenes. */
+    if (fechaDelGrupo) {
+      for (const { imagen } of delDia) {
+        try {
+          await guardarPrueba(fechaDelGrupo as never, imagen);
+        } catch {
+          /* Guardar la prueba es un extra: que falle no puede tumbar la carga. */
+        }
+      }
+    }
+
     const { regla } = await reglaVigente(
       jornada.fecha ?? hoy,
       perfil?.tiendaId ?? null,

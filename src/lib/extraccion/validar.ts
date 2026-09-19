@@ -45,6 +45,25 @@ export interface OpcionesValidacion {
   codigosEnOtrasFechas?: Readonly<Record<string, FechaISO>>;
 }
 
+/**
+ * Qué impide guardar y qué solo advierte.
+ *
+ * Al principio casi todo bloqueaba, y en el primer uso real eso dejó la
+ * pantalla con el botón muerto y cuatro avisos en rojo sobre cosas normales.
+ * El criterio correcto es más estrecho:
+ *
+ *   **Bloquea** lo que haría guardar un dato *incorrecto*: sin fecha no se
+ *   sabe en qué semana entra el pago, y una fecha futura es imposible.
+ *
+ *   **Advierte** lo que hace el dato *incompleto*. Que falte una captura, que
+ *   una tarjeta salga cortada o que los contadores no cuadren es lo normal
+ *   cuando se fotografía una lista haciendo scroll —las capturas se solapan y
+ *   se cortan, y así está previsto—. Guardar catorce pedidos de quince es
+ *   mucho mejor que no guardar ninguno, y el que falta se añade a mano.
+ *
+ * La regla de fondo: el usuario ve lo mismo que la aplicación y decide él. Un
+ * aviso que no se puede ignorar no es un aviso, es un muro.
+ */
 export function validarJornada(
   jornada: JornadaFusionada,
   opciones: OpcionesValidacion,
@@ -92,7 +111,7 @@ export function validarJornada(
   if (jornada.contadorOrdenes !== null && jornada.ordenes.length !== jornada.contadorOrdenes) {
     const faltan = jornada.contadorOrdenes - jornada.ordenes.length;
     alertas.push({
-      nivel: "bloqueo",
+      nivel: "aviso",
       codigo: "faltan-capturas-ordenes",
       mensaje:
         faltan > 0
@@ -104,7 +123,7 @@ export function validarJornada(
   if (jornada.contadorRutas !== null && jornada.rutas.length !== jornada.contadorRutas) {
     const faltan = jornada.contadorRutas - jornada.rutas.length;
     alertas.push({
-      nivel: "bloqueo",
+      nivel: "aviso",
       codigo: "faltan-capturas-rutas",
       mensaje:
         faltan > 0
@@ -118,7 +137,7 @@ export function validarJornada(
     const suma = resumen.entregado + resumen.parcial + resumen.no_entregado;
     if (suma !== jornada.ordenes.length) {
       alertas.push({
-        nivel: "bloqueo",
+        nivel: "aviso",
         codigo: "resumen-no-cuadra",
         mensaje: `Los contadores de estado suman ${suma} pero hay ${jornada.ordenes.length} pedidos.`,
       });
@@ -131,7 +150,7 @@ export function validarJornada(
   );
   if (horarioInvalido.length > 0) {
     alertas.push({
-      nivel: "bloqueo",
+      nivel: "aviso",
       codigo: "horario-invalido",
       mensaje: `La hora de fin no puede ser anterior o igual a la de inicio en ${
         horarioInvalido.length === 1 ? "la ruta" : "las rutas"
@@ -143,7 +162,7 @@ export function validarJornada(
   const solapadas = rutasSolapadas(jornada);
   if (solapadas.length > 0) {
     alertas.push({
-      nivel: "bloqueo",
+      nivel: "aviso",
       codigo: "rutas-solapadas",
       mensaje: `Estas rutas se pisan en el horario: ${solapadas.join(", ")}. Corrige las horas.`,
       referencias: solapadas,
@@ -155,7 +174,7 @@ export function validarJornada(
   const huerfanos = jornada.ordenes.filter((o) => o.ruta !== null && !numerosDeRuta.has(o.ruta));
   if (huerfanos.length > 0) {
     alertas.push({
-      nivel: "bloqueo",
+      nivel: "aviso",
       codigo: "ruta-inexistente",
       mensaje: `${huerfanos.length === 1 ? "Un pedido apunta" : `${huerfanos.length} pedidos apuntan`} a una ruta que no aparece en las capturas.`,
       referencias: huerfanos.map((o) => o.codigo),
@@ -169,9 +188,9 @@ export function validarJornada(
   ];
   if (incompletas.length > 0) {
     alertas.push({
-      nivel: "bloqueo",
+      nivel: "aviso",
       codigo: "tarjeta-incompleta",
-      mensaje: `${incompletas.length === 1 ? "Una tarjeta quedó cortada" : `${incompletas.length} tarjetas quedaron cortadas`} en todas las capturas. Súbela completa o complétala a mano.`,
+      mensaje: `${incompletas.length === 1 ? "A un pedido no se le vio la ruta" : `A ${incompletas.length} pedidos no se les vio la ruta`} en ninguna captura. Puedes guardarlos igual y asignarla después, o subir la captura que falta.`,
       referencias: incompletas,
     });
   }

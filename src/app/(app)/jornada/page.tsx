@@ -4,7 +4,10 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
+import { Acordeon } from "@/components/Acordeon";
 import { EditorJornada } from "@/components/EditorJornada";
+import { PedidoManual } from "@/components/PedidoManual";
+import { PruebasDelDia } from "@/components/PruebasDelDia";
 import { Flecha } from "@/components/iconos";
 import { Aviso, Vacio } from "@/components/ui";
 import { useDatos } from "@/hooks/useDatos";
@@ -36,7 +39,7 @@ function Contenido() {
   const params = useSearchParams();
   const fecha = params.get("fecha") ?? "";
 
-  const { datos, cargando } = useDatos(async () => {
+  const { datos, cargando, recargar } = useDatos(async () => {
     if (!esFechaISO(fecha)) return null;
 
     const jornada = await jornadaPorFecha(fecha);
@@ -95,6 +98,24 @@ function Contenido() {
         editable={editable}
         esHoy={fecha === hoyEnLima()}
       />
+
+      {editable && (
+        <Acordeon
+          titulo="Añadir un pedido"
+          resumen="Cuando no salió en ninguna captura"
+        >
+          <PedidoManual
+            fecha={fecha}
+            regla={regla}
+            rutas={jornada.rutas.map((r) => r.numero)}
+            alAgregar={recargar}
+          />
+        </Acordeon>
+      )}
+
+      <Acordeon titulo="Capturas de este día" resumen="Tu respaldo si hay que reclamar">
+        <PruebasDelDia fecha={fecha} />
+      </Acordeon>
     </div>
   );
 }

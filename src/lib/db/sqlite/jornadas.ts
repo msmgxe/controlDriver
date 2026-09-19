@@ -155,8 +155,9 @@ export async function jornadasPorRango(
     tramo: number;
     km: number | null;
     monto_centimos: number | null;
+    manual: number;
   }>(
-    `select id, jornada_id, ruta_id, codigo, estado, posicion, tramo, km, monto_centimos
+    `select id, jornada_id, ruta_id, codigo, estado, posicion, tramo, km, monto_centimos, manual
        from ordenes where jornada_id in (${huecos})`,
     ids,
   );
@@ -191,6 +192,7 @@ export async function jornadasPorRango(
         tramo: o.tramo || 1,
         km: o.km,
         montoCentimos: o.monto_centimos,
+        manual: aBool(o.manual),
       }))
       .sort((a, b) => a.posicion - b.posicion);
 
@@ -410,6 +412,130 @@ export async function actualizarTramo(
     `update jornadas set actualizado_en = ?, sincronizado = 0
       where id = (select jornada_id from ordenes where id = ?)`,
     [ahora(), ordenId],
+  );
+}
+
+/**
+ * Añade un pedido a mano.
+ *
+ * Hace falta más de lo que parece: una captura puede salir cortada, un pedido
+ * puede no aparecer en ninguna, o la app de reparto puede haber fallado ese
+ * día. Sin esta salida, el repartidor tendría que elegir entre guardar mal o
+ * no guardar, y perdería el pago de un pedido que sí hizo.
+ *
+ * Si ese día no existía, se crea la jornada: se está registrando trabajo real,
+ * y exigir subir una captura primero sería un obstáculo sin motivo.
+ *
+ * Queda marcado como manual para que, si algún día hay que justificar un pago,
+ * se vea de dónde salió cada cifra.
+ */
+export async function agregarPedidoManual(
+  fecha: FechaISO,
+  datos: {
+    codigo: string;
+    ruta: number | null;
+    estado: string;
+    tramo: number;
+    km: number | null;
+    montoCentimos: number;
+    tiendaId?: string | null;
+    vehiculo?: TipoVehiculo;
+    horaEntrada?: string | null;
+    horaSalida?: string | null;
+  },
+): Promise<{ ordenId: string }> {
+  const momento = ahora();
+
+  return enTransaccion(async () => {
+    const existentes = await consultar<{ id: string }>(
+      `select id from jornadas where fecha = ?`,
+      [fecha],
+    );
+    let jornadaId = existentes[0]?.id;
+
+    if (!jornadaId) {
+      jornadaId = nuevoId();
+      await ejecutar(
+        `insert into jornadas
+           (id, fecha, validacion_ok, tienda_id, vehiculo, hora_entrada, hora_salida,
+            creado_en, actualizado_en, sincronizado)
+         values (?, ?, 0, ?, ?, ?, ?, ?, ?, 0)`,
+        [
+          jornadaId, fecha, datos.tiendaId ?? null,
+          datos.vehiculo ?? VEHICULO_POR_DEFECTO,
+          datos.horaEntrada ?? null, datos.horaSalida ?? null,
+          momento, momento,
+        ],
+      );
+    }
+
+    // La posición va al final: es un pedido que se añade, no uno que se intercala.
+    const ultimas = await consultar<{ ultima: number | null }>(
+      `select max(posicion) as ultima from ordenes where jornada_id = ?`,
+      [jornadaId],
+    );
+    const posicion = (ultimas[0]?.ultima ?? 0) + 1;
+
+    let rutaId: string | null = null;
+    if (datos.ruta !== null) {
+      const rutas = await consultar<{ id: string }>(
+        `select id from rutas where jornada_id = ? and numero = ?`,
+        [jornadaId, datos.ruta],
+      );
+      rutaId = rutas[0]?.id ?? null;
+    }
+
+    const ordenId = nuevoId();
+    await ejecutar(
+      `insert into ordenes
+         (id, jornada_id, ruta_id, codigo, estado, posicion, tramo, km, monto_centimos, manual)
+       values (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+       on conflict (jornada_id, codigo) do update set
+         ruta_id        = excluded.ruta_id,
+         estado         = excluded.estado,
+         tramo          = excluded.tramo,
+         km             = excluded.km,
+         monto_centimos = excluded.monto_centimos,
+         manual         = 1`,
+      [
+        ordenId, jornadaId, rutaId, datos.codigo, datos.estado,
+        posicion, datos.tramo, datos.km, datos.montoCentimos,
+      ],
+    );
+
+    await recontarEstados(jornadaId, momento);
+    return { ordenId };
+  });
+}
+
+/** Borra un pedido. Para cuando se añadió por error o llegó duplicado. */
+export async function borrarPedido(ordenId: string): Promise<void> {
+  const filas = await consultar<{ jornada_id: string }>(
+    `select jornada_id from ordenes where id = ?`,
+    [ordenId],
+  );
+  await ejecutar(`delete from ordenes where id = ?`, [ordenId]);
+  if (filas[0]) await recontarEstados(filas[0].jornada_id, ahora());
+}
+
+/**
+ * Recalcula los contadores de estado de la jornada.
+ *
+ * Se hace desde la base y no en memoria porque tiene que cuadrar con lo que
+ * hay guardado, no con lo que la pantalla creía tener.
+ */
+async function recontarEstados(jornadaId: string, momento: string): Promise<void> {
+  await ejecutar(
+    `update jornadas set
+       entregado = (select count(*) from ordenes o
+                     where o.jornada_id = jornadas.id and o.estado = 'Entregado'),
+       parcial = (select count(*) from ordenes o
+                   where o.jornada_id = jornadas.id and o.estado = 'Entrega parcial'),
+       no_entregado = (select count(*) from ordenes o
+                        where o.jornada_id = jornadas.id and o.estado = 'No entregado'),
+       actualizado_en = ?, sincronizado = 0
+     where id = ?`,
+    [momento, jornadaId],
   );
 }
 

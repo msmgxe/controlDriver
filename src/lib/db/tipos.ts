@@ -58,6 +58,8 @@ export interface OrdenFila {
   tramo: number;
   km: number | null;
   montoCentimos: number | null;
+  /** Añadido a mano, no leído de una captura. */
+  manual: boolean;
 }
 
 export interface JornadaCompleta {

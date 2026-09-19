@@ -11,6 +11,8 @@ import { usarMotor } from "./conexion";
 import { motorEnMemoria } from "./motor-en-memoria";
 import {
   actualizarTramo,
+  agregarPedidoManual,
+  borrarPedido,
   borrarJornada,
   buscarPedidos,
   codigosYaRegistrados,
@@ -195,5 +197,103 @@ describe("avisos y correcciones", () => {
 
     expect(await jornadaPorFecha("2026-09-16" as FechaISO)).toBeNull();
     expect(await buscarPedidos("100001")).toEqual([]);
+  });
+});
+
+describe("pedidos añadidos a mano", () => {
+  const nuevo = {
+    codigo: "v99999999wofp-01",
+    ruta: 2,
+    estado: "Entregado",
+    tramo: 1,
+    km: null,
+    montoCentimos: 1000,
+  };
+
+  it("se añade a una jornada que ya existe", async () => {
+    await guardarJornada(jornadaDe("2026-09-16", 3, 6), "reemplazar");
+    await agregarPedidoManual("2026-09-16" as FechaISO, nuevo);
+
+    const j = await jornadaPorFecha("2026-09-16" as FechaISO);
+    expect(j!.ordenes).toHaveLength(7);
+    expect(j!.ordenes.at(-1)!.codigo).toBe("v99999999wofp-01");
+  });
+
+  it("queda marcado como manual, para saber de dónde salió la cifra", async () => {
+    await guardarJornada(jornadaDe("2026-09-16", 3, 6), "reemplazar");
+    await agregarPedidoManual("2026-09-16" as FechaISO, nuevo);
+
+    const j = await jornadaPorFecha("2026-09-16" as FechaISO);
+    expect(j!.ordenes.find((o) => o.codigo === nuevo.codigo)!.manual).toBe(true);
+    expect(j!.ordenes.find((o) => o.codigo !== nuevo.codigo)!.manual).toBe(false);
+  });
+
+  it("se enlaza con la ruta que se le indica", async () => {
+    await guardarJornada(jornadaDe("2026-09-16", 3, 6), "reemplazar");
+    await agregarPedidoManual("2026-09-16" as FechaISO, nuevo);
+
+    const j = await jornadaPorFecha("2026-09-16" as FechaISO);
+    expect(j!.ordenes.find((o) => o.codigo === nuevo.codigo)!.ruta).toBe(2);
+  });
+
+  it("crea la jornada si ese día no existía", async () => {
+    // Registrar trabajo real no puede exigir subir una captura primero.
+    await agregarPedidoManual("2026-09-20" as FechaISO, { ...nuevo, ruta: null });
+
+    const j = await jornadaPorFecha("2026-09-20" as FechaISO);
+    expect(j).not.toBeNull();
+    expect(j!.ordenes).toHaveLength(1);
+  });
+
+  it("actualiza los contadores de estado del día", async () => {
+    await guardarJornada(jornadaDe("2026-09-16", 2, 2), "reemplazar");
+    await agregarPedidoManual("2026-09-16" as FechaISO, {
+      ...nuevo,
+      estado: "No entregado",
+    });
+
+    const j = await jornadaPorFecha("2026-09-16" as FechaISO);
+    expect(j!.entregado).toBe(2);
+    expect(j!.noEntregado).toBe(1);
+  });
+
+  it("añadir dos veces el mismo código actualiza, no duplica", async () => {
+    await agregarPedidoManual("2026-09-20" as FechaISO, { ...nuevo, ruta: null });
+    await agregarPedidoManual("2026-09-20" as FechaISO, {
+      ...nuevo,
+      ruta: null,
+      tramo: 2,
+      montoCentimos: 1150,
+    });
+
+    const j = await jornadaPorFecha("2026-09-20" as FechaISO);
+    expect(j!.ordenes).toHaveLength(1);
+    expect(j!.ordenes[0].tramo).toBe(2);
+    expect(j!.ordenes[0].montoCentimos).toBe(1150);
+  });
+
+  it("se puede borrar, y los contadores vuelven a cuadrar", async () => {
+    await guardarJornada(jornadaDe("2026-09-16", 2, 2), "reemplazar");
+    await agregarPedidoManual("2026-09-16" as FechaISO, {
+      ...nuevo,
+      estado: "No entregado",
+    });
+
+    const antes = await jornadaPorFecha("2026-09-16" as FechaISO);
+    const aBorrar = antes!.ordenes.find((o) => o.codigo === nuevo.codigo)!;
+    await borrarPedido(aBorrar.id);
+
+    const despues = await jornadaPorFecha("2026-09-16" as FechaISO);
+    expect(despues!.ordenes).toHaveLength(2);
+    expect(despues!.noEntregado).toBe(0);
+    expect(despues!.entregado).toBe(2);
+  });
+
+  it("el monto del pedido manual entra en el total del día", async () => {
+    await guardarJornada(jornadaDe("2026-09-16", 2, 2, 1000), "reemplazar");
+    await agregarPedidoManual("2026-09-16" as FechaISO, { ...nuevo, montoCentimos: 1150 });
+
+    const [dia] = await resumenPorRango("2026-09-16" as FechaISO, "2026-09-16" as FechaISO);
+    expect(dia.montoCentimos).toBe(2 * 1000 + 1150);
   });
 });

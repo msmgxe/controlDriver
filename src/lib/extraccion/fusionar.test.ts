@@ -186,13 +186,16 @@ describe("validarJornada", () => {
     expect(hayBloqueos(alertas)).toBe(false);
   });
 
-  it("pide la captura que falta cuando no se llega al contador de Órdenes", () => {
+  it("avisa de la captura que falta, pero deja guardar lo que hay", () => {
     const j = fusionarCrudas([capturas()[0], capturas()[1], capturaOrdenes(1, 6)]);
     const alertas = validarJornada(j, { hoy: HOY });
     const falta = alertas.find((a) => a.codigo === "faltan-capturas-ordenes");
-    expect(falta?.nivel).toBe("bloqueo");
+    expect(falta?.nivel).toBe("aviso");
     expect(falta?.mensaje).toContain("Falta una captura de Órdenes");
-    expect(hayBloqueos(alertas)).toBe(true);
+    /* Lo importante del cambio: se avisa pero **se puede guardar**. Guardar
+       catorce pedidos de quince es mucho mejor que no guardar ninguno, y el
+       que falta se añade a mano. */
+    expect(hayBloqueos(alertas)).toBe(false);
   });
 
   it("bloquea cuando la fecha no se leyó y el usuario no eligió ninguna", () => {
@@ -266,7 +269,7 @@ describe("validarJornada", () => {
     expect(aviso?.referencias).toEqual(["v12238726wofp-01"]);
   });
 
-  it("bloquea si un pedido apunta a una ruta que no está en las capturas", () => {
+  it("avisa si un pedido apunta a una ruta que no está en las capturas", () => {
     const j = fusionarCrudas([capturas()[0], capturas()[1], capturaOrdenes(1, 6), capturaOrdenes(7, 12), {
       ...capturaOrdenes(10, 14),
       ordenes: capturaOrdenes(10, 14).ordenes.map((o) =>
@@ -274,11 +277,11 @@ describe("validarJornada", () => {
       ),
     }]);
     const alerta = validarJornada(j, { hoy: HOY }).find((a) => a.codigo === "ruta-inexistente");
-    expect(alerta?.nivel).toBe("bloqueo");
+    expect(alerta?.nivel).toBe("aviso");
     expect(alerta?.referencias).toEqual(["v12240765wofp-01"]);
   });
 
-  it("bloquea si una tarjeta quedó cortada en todas las capturas", () => {
+  it("avisa si a un pedido no se le vio la ruta, sin impedir guardar", () => {
     const j = fusionarCrudas([
       capturas()[0],
       capturas()[1],
@@ -287,7 +290,7 @@ describe("validarJornada", () => {
       capturaOrdenes(10, 14, ["v12240588wofp-01"]),
     ]);
     const alerta = validarJornada(j, { hoy: HOY }).find((a) => a.codigo === "tarjeta-incompleta");
-    expect(alerta?.nivel).toBe("bloqueo");
+    expect(alerta?.nivel).toBe("aviso");
     expect(alerta?.referencias).toEqual(["v12240588wofp-01"]);
   });
 });

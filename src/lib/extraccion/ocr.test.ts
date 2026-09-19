@@ -251,3 +251,47 @@ describe("estados que no son «Entregado»", () => {
     expect(leido.resumen_ordenes).toEqual({ entregado: 12, parcial: 1, no_entregado: 1 });
   });
 });
+
+describe("la tarjeta de resumen no debe contaminar los pedidos", () => {
+  /* El error que pintó de rojo dieciocho pedidos de un día en que se entregó
+     todo: el lector devuelve la etiqueta y su número en líneas separadas, así
+     que el intérprete veía un «No entregado» suelto y lo tomaba por el estado
+     del pedido siguiente. Un dato inventado con apariencia de correcto. */
+  const CON_RESUMEN_PARTIDO = [
+    "Resumen del 16/09/2026",
+    "Rutas 7",
+    "Órdenes 14",
+    "14",
+    "Entregado",
+    "0",
+    "Entrega parcial",
+    "0",
+    "No entregado",
+    "v12238726wofp-01",
+    "Ruta 1",
+    "Entregado",
+    "v12238812wofp-01",
+    "Ruta 1",
+    "Entregado",
+  ];
+
+  const leido = interpretarCaptura(CON_RESUMEN_PARTIDO);
+
+  it("los pedidos conservan su estado real", () => {
+    expect(leido.ordenes.map((o) => o.estado)).toEqual(["Entregado", "Entregado"]);
+  });
+
+  it("los pedidos conservan su ruta", () => {
+    expect(leido.ordenes.map((o) => o.ruta)).toEqual([1, 1]);
+    expect(leido.ordenes.every((o) => o.legible_completo)).toBe(true);
+  });
+
+  it("y el resumen se lee igual de bien partido en dos líneas", () => {
+    expect(leido.resumen_ordenes).toEqual({ entregado: 14, parcial: 0, no_entregado: 0 });
+  });
+
+  it("el número del resumen no se confunde con el número de una ruta", () => {
+    // El «14» suelto de la tarjeta podría tomarse por el círculo de una ruta.
+    expect(leido.rutas).toHaveLength(0);
+  });
+});

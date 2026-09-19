@@ -112,8 +112,104 @@ function estadoDe(linea: string): string | null {
   return null;
 }
 
-/** `Entregado 14` en la tarjeta de resumen, frente a `Entregado` suelto. */
+/** `Entregado 14` cuando etiqueta y número vienen en la misma línea. */
 const RE_RESUMEN = /^(entregado|entrega\s+parcial|no\s+entregado)\s*:?\s*(\d{1,3})$/;
+
+/**
+ * Localiza la tarjeta de resumen y devuelve sus líneas, para apartarlas.
+ *
+ * Esta función nació de un error real y caro. La tarjeta de arriba de la
+ * pantalla de Órdenes dice `Entregado 14 · Entrega parcial 0 · No entregado 0`,
+ * pero el lector **no siempre devuelve la etiqueta y su número juntos**: al
+ * estar en líneas visuales distintas, suelen salir separados.
+ *
+ * El resultado era que el intérprete veía un `No entregado` suelto, lo tomaba
+ * por el estado de un pedido, y marcaba en rojo los dieciocho pedidos de un
+ * día en que se entregó todo. Un dato inventado con toda la apariencia de ser
+ * correcto, que es la peor clase de error.
+ *
+ * Se distingue por dos señales que la tarjeta de resumen siempre cumple y una
+ * tarjeta de pedido nunca: aparece **antes del primer código de pedido**, y su
+ * etiqueta va **pegada a un número suelto**.
+ */
+function lineasDelResumen(lineas: readonly string[]): {
+  consumidas: Set<number>;
+  resumen: { entregado: number; parcial: number; noEntregado: number } | null;
+} {
+  const consumidas = new Set<number>();
+  const resumen = { entregado: 0, parcial: 0, noEntregado: 0 };
+  let hay = false;
+
+  // Hasta dónde puede estar el resumen: nunca después del primer pedido.
+  let limite = lineas.length;
+  for (let i = 0; i < lineas.length; i++) {
+    if (RE_CODIGO.test(lineas[i])) {
+      limite = i;
+      break;
+    }
+  }
+
+  /* Se reúnen primero los candidatos y **luego** se decide. Consumir sobre la
+     marcha se comía también el estado de un pedido cuyo código viniera detrás,
+     que es un orden que el lector sí produce. */
+  const candidatos: Array<{ linea: number; numero: number | null; etiqueta: string; conNumero: number | null }> = [];
+
+  for (let i = 0; i < limite; i++) {
+    const linea = normalizar(lineas[i]);
+
+    const juntos = linea.match(RE_RESUMEN);
+    if (juntos) {
+      candidatos.push({ linea: i, etiqueta: juntos[1], numero: Number(juntos[2]), conNumero: null });
+      continue;
+    }
+
+    if (/^(entregado|entrega\s+parcial|no\s+entregado)$/.test(linea)) {
+      candidatos.push({ linea: i, etiqueta: linea, numero: null, conNumero: null });
+    }
+  }
+
+  /* De qué lado está el número de cada etiqueta.
+     
+     En la tarjeta, la cifra va grande arriba y el rótulo debajo, así que el
+     lector suele devolver `14 · Entregado`. Pero no siempre: hay teléfonos que
+     la dan al revés. Y decidirlo etiqueta por etiqueta no vale, porque en una
+     lista `14 · Entregado · 0 · Entrega parcial` cada rótulo tiene un número a
+     cada lado —mirar solo hacia abajo le asignaba a "Entregado" el cero del
+     siguiente—. Se decide una vez, por dónde empieza la serie. */
+  const primera = candidatos[0]?.linea ?? -1;
+  const numeroAntes =
+    primera > 0 && RE_NUMERO_SUELTO.test(normalizar(lineas[primera - 1]));
+
+  for (const c of candidatos) {
+    const vecino = numeroAntes ? c.linea - 1 : c.linea + 1;
+    if (vecino < 0 || vecino >= limite) continue;
+    const m = normalizar(lineas[vecino]).match(RE_NUMERO_SUELTO);
+    if (m) {
+      c.numero = Number(m[1]);
+      c.conNumero = vecino;
+    }
+  }
+
+  /* La tarjeta de resumen enseña siempre los tres estados, cada uno con su
+     número. Una etiqueta suelta y sin número no es el resumen: es el estado de
+     un pedido cuyo código el lector devolvió después. Exigir dos señales evita
+     confundir los dos casos. */
+  const conNumero = candidatos.filter((c) => c.numero !== null);
+  const esResumen = conNumero.length >= 2 || (conNumero.length === 1 && candidatos.length >= 2);
+  if (!esResumen) return { consumidas, resumen: null };
+
+  for (const c of candidatos) {
+    hay = true;
+    consumidas.add(c.linea);
+    if (c.conNumero !== null) consumidas.add(c.conNumero);
+    if (c.numero === null) continue;
+    if (c.etiqueta.startsWith("entrega ")) resumen.parcial = c.numero;
+    else if (c.etiqueta.startsWith("no ")) resumen.noEntregado = c.numero;
+    else resumen.entregado = c.numero;
+  }
+
+  return { consumidas, resumen: hay ? resumen : null };
+}
 
 /* ---------------------------------------------------------------------------
  * El intérprete
@@ -133,11 +229,11 @@ export function interpretarCaptura(lineasCrudas: readonly string[]): ImagenExtra
     .map((l) => l.trim())
     .filter((l) => l.length > 0);
 
+  const { consumidas, resumen } = lineasDelResumen(lineas);
+
   let fecha: string | null = null;
   let contadorRutas: number | null = null;
   let contadorOrdenes: number | null = null;
-  const resumen = { entregado: 0, parcial: 0, noEntregado: 0 };
-  let hayResumen = false;
 
   const rutas: RutaExtraida[] = [];
   const ordenes: OrdenExtraida[] = [];
@@ -146,9 +242,11 @@ export function interpretarCaptura(lineasCrudas: readonly string[]): ImagenExtra
   let numeroPendiente: number | null = null;
   let estadoPendiente: string | null = null;
 
-  const orientacion = orientacionDeLasTarjetas(lineas);
+  const orientacion = orientacionDeLasTarjetas(lineas, consumidas);
 
   for (let i = 0; i < lineas.length; i++) {
+    if (consumidas.has(i)) continue;
+
     const cruda = lineas[i];
     const linea = normalizar(cruda);
 
@@ -172,21 +270,11 @@ export function interpretarCaptura(lineasCrudas: readonly string[]): ImagenExtra
       continue;
     }
 
-    const mResumen = linea.match(RE_RESUMEN);
-    if (mResumen) {
-      hayResumen = true;
-      const cuantos = Number(mResumen[2]);
-      if (mResumen[1].startsWith("entrega ")) resumen.parcial = cuantos;
-      else if (mResumen[1].startsWith("no ")) resumen.noEntregado = cuantos;
-      else resumen.entregado = cuantos;
-      continue;
-    }
-
     /* --- pedidos --- */
     const mCodigo = cruda.match(RE_CODIGO);
     if (mCodigo) {
       const codigo = `v${soloDigitos(mCodigo[1])}wofp-${soloDigitos(mCodigo[2])}`;
-      const { ruta, estado, completo } = contextoDelPedido(lineas, i, orientacion);
+      const { ruta, estado, completo } = contextoDelPedido(lineas, i, orientacion, consumidas);
       ordenes.push({
         codigo,
         ruta,
@@ -240,7 +328,7 @@ export function interpretarCaptura(lineasCrudas: readonly string[]): ImagenExtra
   }
 
   const tipo: ImagenExtraida["tipo_pantalla"] =
-    ordenes.length > 0 || hayResumen ? "ordenes" : rutas.length > 0 ? "rutas" : "desconocido";
+    ordenes.length > 0 || resumen !== null ? "ordenes" : rutas.length > 0 ? "rutas" : "desconocido";
 
   /* Se valida contra el mismo esquema que usaba la salida del modelo: si algo
      no cuadra, falla aquí y no tres pantallas más adelante. */
@@ -249,7 +337,7 @@ export function interpretarCaptura(lineasCrudas: readonly string[]): ImagenExtra
     fecha,
     contador_rutas: contadorRutas,
     contador_ordenes: contadorOrdenes,
-    resumen_ordenes: hayResumen
+    resumen_ordenes: resumen
       ? { entregado: resumen.entregado, parcial: resumen.parcial, no_entregado: resumen.noEntregado }
       : null,
     rutas,
@@ -274,11 +362,15 @@ export function interpretarCaptura(lineasCrudas: readonly string[]): ImagenExtra
  * y dónde la primera línea `Ruta N`. Dentro de una misma imagen el orden es
  * siempre el mismo, así que con mirar la primera tarjeta basta.
  */
-function orientacionDeLasTarjetas(lineas: readonly string[]): "adelante" | "atras" {
+function orientacionDeLasTarjetas(
+  lineas: readonly string[],
+  consumidas: ReadonlySet<number>,
+): "adelante" | "atras" {
   let primerCodigo = -1;
   let primeraRuta = -1;
 
   for (let i = 0; i < lineas.length; i++) {
+    if (consumidas.has(i)) continue;
     if (primerCodigo === -1 && RE_CODIGO.test(lineas[i])) primerCodigo = i;
     if (primeraRuta === -1 && RE_RUTA_DEL_PEDIDO.test(normalizar(lineas[i]))) primeraRuta = i;
     if (primerCodigo !== -1 && primeraRuta !== -1) break;
@@ -301,6 +393,7 @@ function contextoDelPedido(
   lineas: readonly string[],
   desde: number,
   orientacion: "adelante" | "atras",
+  consumidas: ReadonlySet<number>,
 ): { ruta: number | null; estado: string | null; completo: boolean } {
   let ruta: number | null = null;
   let estado: string | null = null;
@@ -308,6 +401,7 @@ function contextoDelPedido(
   const paso = orientacion === "adelante" ? 1 : -1;
 
   for (let i = desde + paso; i >= 0 && i < lineas.length; i += paso) {
+    if (consumidas.has(i)) continue;
     const linea = normalizar(lineas[i]);
     if (RE_CODIGO.test(lineas[i])) break;
 
