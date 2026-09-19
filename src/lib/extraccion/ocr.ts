@@ -146,6 +146,8 @@ export function interpretarCaptura(lineasCrudas: readonly string[]): ImagenExtra
   let numeroPendiente: number | null = null;
   let estadoPendiente: string | null = null;
 
+  const orientacion = orientacionDeLasTarjetas(lineas);
+
   for (let i = 0; i < lineas.length; i++) {
     const cruda = lineas[i];
     const linea = normalizar(cruda);
@@ -184,7 +186,7 @@ export function interpretarCaptura(lineasCrudas: readonly string[]): ImagenExtra
     const mCodigo = cruda.match(RE_CODIGO);
     if (mCodigo) {
       const codigo = `v${soloDigitos(mCodigo[1])}wofp-${soloDigitos(mCodigo[2])}`;
-      const { ruta, estado, completo } = contextoDelPedido(lineas, i);
+      const { ruta, estado, completo } = contextoDelPedido(lineas, i, orientacion);
       ordenes.push({
         codigo,
         ruta,
@@ -201,12 +203,20 @@ export function interpretarCaptura(lineasCrudas: readonly string[]): ImagenExtra
     /* --- rutas --- */
     const mHorario = linea.match(RE_HORARIO);
     if (mHorario) {
+      /* Si el número no vino antes del horario, se busca justo después: el
+         lector agrupa las regiones a su manera y el círculo con el número
+         puede caer detrás. Solo si tampoco está ahí se numera por orden. */
+      const numero = numeroPendiente ?? numeroSiguiente(lineas, i);
+      const estado = estadoPendiente ?? estadoSiguiente(lineas, i);
+
       rutas.push({
-        numero: numeroPendiente ?? rutas.length + 1,
-        estado: estadoPendiente ?? "Finalizado",
+        numero: numero ?? rutas.length + 1,
+        estado: estado ?? "Finalizado",
         hora_inicio: normalizarHora(mHorario[1]),
         hora_fin: normalizarHora(mHorario[2]),
-        legible_completo: numeroPendiente !== null && estadoPendiente !== null,
+        // El horario es lo que de verdad hace falta para calcular; sin número
+        // visible se numera por orden y se sigue considerando utilizable.
+        legible_completo: mHorario[1] !== undefined && mHorario[2] !== undefined,
       });
       numeroPendiente = null;
       estadoPendiente = null;
@@ -248,20 +258,56 @@ export function interpretarCaptura(lineasCrudas: readonly string[]): ImagenExtra
 }
 
 /**
+ * ¿En qué orden devuelve el lector los datos de cada tarjeta de pedido?
+ *
+ * Hay dos posibilidades, y cuál toca depende de cómo el lector agrupe las
+ * regiones de la imagen —no es algo que se pueda dar por supuesto:
+ *
+ *     código → Ruta N → Estado      (se busca hacia **adelante**)
+ *     Ruta N → Estado → código      (se busca hacia **atrás**)
+ *
+ * Buscar en las dos direcciones a la vez parece más robusto y es justo lo
+ * contrario: cada pedido acabaría robando los datos de su vecino, y el error
+ * sería invisible porque el resultado parece plausible.
+ *
+ * Se decide **una vez por captura**, comparando dónde aparece el primer código
+ * y dónde la primera línea `Ruta N`. Dentro de una misma imagen el orden es
+ * siempre el mismo, así que con mirar la primera tarjeta basta.
+ */
+function orientacionDeLasTarjetas(lineas: readonly string[]): "adelante" | "atras" {
+  let primerCodigo = -1;
+  let primeraRuta = -1;
+
+  for (let i = 0; i < lineas.length; i++) {
+    if (primerCodigo === -1 && RE_CODIGO.test(lineas[i])) primerCodigo = i;
+    if (primeraRuta === -1 && RE_RUTA_DEL_PEDIDO.test(normalizar(lineas[i]))) primeraRuta = i;
+    if (primerCodigo !== -1 && primeraRuta !== -1) break;
+  }
+
+  // Sin datos para decidir, el orden natural de lectura.
+  if (primerCodigo === -1 || primeraRuta === -1) return "adelante";
+  return primeraRuta < primerCodigo ? "atras" : "adelante";
+}
+
+/**
  * Busca la ruta y el estado que acompañan a un código de pedido.
  *
- * Mira hacia adelante hasta el siguiente código, que es donde empieza la
- * tarjeta siguiente. El límite importa: sin él, un pedido con la tarjeta
- * cortada se quedaría con la ruta del pedido de más abajo.
+ * Recorre en la dirección que dijo `orientacionDeLasTarjetas` y se detiene al
+ * topar con otro código, que es donde empieza la tarjeta vecina. Ese tope es
+ * lo que evita el error peligroso: sin él, un pedido con la tarjeta cortada
+ * heredaría la ruta del de al lado y nadie se daría cuenta.
  */
 function contextoDelPedido(
   lineas: readonly string[],
   desde: number,
+  orientacion: "adelante" | "atras",
 ): { ruta: number | null; estado: string | null; completo: boolean } {
   let ruta: number | null = null;
   let estado: string | null = null;
 
-  for (let i = desde + 1; i < lineas.length; i++) {
+  const paso = orientacion === "adelante" ? 1 : -1;
+
+  for (let i = desde + paso; i >= 0 && i < lineas.length; i += paso) {
     const linea = normalizar(lineas[i]);
     if (RE_CODIGO.test(lineas[i])) break;
 
@@ -275,6 +321,28 @@ function contextoDelPedido(
   }
 
   return { ruta, estado, completo: ruta !== null && estado !== null };
+}
+
+/** El primer número suelto que aparece justo después, antes de otro horario. */
+function numeroSiguiente(lineas: readonly string[], desde: number): number | null {
+  for (let i = desde + 1; i < Math.min(lineas.length, desde + 4); i++) {
+    const linea = normalizar(lineas[i]);
+    if (RE_HORARIO.test(linea)) return null;
+    const m = linea.match(RE_NUMERO_SUELTO);
+    if (m) return Number(m[1]);
+  }
+  return null;
+}
+
+/** Lo mismo para el estado. */
+function estadoSiguiente(lineas: readonly string[], desde: number): string | null {
+  for (let i = desde + 1; i < Math.min(lineas.length, desde + 4); i++) {
+    const linea = normalizar(lineas[i]);
+    if (RE_HORARIO.test(linea)) return null;
+    const estado = estadoDe(linea);
+    if (estado) return estado;
+  }
+  return null;
 }
 
 /** `9:03` → `09:03`. El esquema exige dos dígitos en la hora. */

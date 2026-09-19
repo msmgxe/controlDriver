@@ -176,6 +176,8 @@ export default function PaginaAjustes() {
 
       <SeccionEjemplo />
 
+      <SeccionDiagnostico />
+
       <section className="tarjeta flex flex-col gap-2">
         <h3 className="text-lg">Tus capturas</h3>
         <p className="text-sm text-tinta-2">
@@ -260,6 +262,64 @@ function SeccionEjemplo() {
       </div>
 
       {mensaje && <p className="text-sm text-tinta-2">{mensaje}</p>}
+    </section>
+  );
+}
+
+/**
+ * Qué leyó el lector en la última carga.
+ *
+ * Existe para poder arreglar una lectura que salió mal. El intérprete depende
+ * del orden en que el lector devuelve las regiones de la imagen, y ese orden
+ * cambia según el teléfono y la versión de Android: sin ver el texto crudo,
+ * diagnosticar a distancia es adivinar.
+ *
+ * Va plegado y al final de Ajustes porque no es para el uso diario.
+ */
+function SeccionDiagnostico() {
+  const [texto, setTexto] = useState<string | null>(null);
+  const [abierto, setAbierto] = useState(false);
+  const [copiado, setCopiado] = useState(false);
+
+  async function ver() {
+    const { ultimaLectura } = await import("@/lib/extraccion/enDispositivo");
+    setTexto((await ultimaLectura()) ?? "Todavía no has cargado ninguna captura.");
+    setAbierto(true);
+  }
+
+  async function copiar() {
+    if (!texto) return;
+    try {
+      await navigator.clipboard.writeText(texto);
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 2000);
+    } catch {
+      setCopiado(false);
+    }
+  }
+
+  return (
+    <section className="tarjeta flex flex-col gap-3">
+      <h3 className="text-lg">Si una captura no se leyó bien</h3>
+      <p className="text-sm text-tinta-2">
+        Aquí está el texto que sacó el lector de la última carga. Cópialo y mándalo para que se
+        pueda corregir.
+      </p>
+
+      {!abierto ? (
+        <button type="button" onClick={() => void ver()} className="boton-secundario self-start">
+          Ver la última lectura
+        </button>
+      ) : (
+        <>
+          <pre className="max-h-64 overflow-auto rounded-btn bg-sup-2 p-3 font-mono text-xs whitespace-pre-wrap">
+            {texto}
+          </pre>
+          <button type="button" onClick={() => void copiar()} className="boton-secundario self-start">
+            {copiado ? "Copiado ✓" : "Copiar"}
+          </button>
+        </>
+      )}
     </section>
   );
 }

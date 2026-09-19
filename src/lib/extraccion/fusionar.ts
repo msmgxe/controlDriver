@@ -154,3 +154,56 @@ function primerResumen(imagenes: readonly ImagenExtraida[]): ResumenOrdenes | nu
   }
   return null;
 }
+
+/**
+ * Separa las capturas por día y fusiona cada día por su cuenta.
+ *
+ * Antes, subir capturas de dos días era un error que había que deshacer a
+ * mano. Es una exigencia absurda: al final de la semana uno tiene el carrete
+ * lleno y no va a ir seleccionando de tres en tres. El sistema puede
+ * ordenarlas solo.
+ *
+ * **El reparto de las capturas sin fecha es lo que tiene miga.** Solo la
+ * primera captura de cada pantalla trae la cabecera `Resumen del DD/MM/YYYY`;
+ * en cuanto se hace scroll para fotografiar el resto, la fecha desaparece. Así
+ * que la mayoría de las capturas de un día no dicen de qué día son.
+ *
+ * Se resuelve con el orden en que se subieron, que refleja cómo se tomaron:
+ * se abre el día 17, se fotografía arriba —con fecha—, se baja y se fotografía
+ * el resto —sin fecha—, y luego se pasa al día 18. Por eso **una captura sin
+ * fecha pertenece al último día visto antes de ella**. Las que llegan antes de
+ * cualquier fecha se asignan a la primera, que es el único candidato posible.
+ *
+ * Devuelve los días ordenados de más antiguo a más reciente.
+ */
+export function fusionarPorFecha(
+  imagenes: readonly ImagenExtraida[],
+): JornadaFusionada[] {
+  if (imagenes.length === 0) return [];
+
+  const grupos = new Map<string, ImagenExtraida[]>();
+  const SIN_FECHA = "";
+  let ultimaVista: string | null = null;
+
+  for (const img of imagenes) {
+    if (img.fecha) ultimaVista = img.fecha;
+    const clave = img.fecha ?? ultimaVista ?? SIN_FECHA;
+    const grupo = grupos.get(clave);
+    if (grupo) grupo.push(img);
+    else grupos.set(clave, [img]);
+  }
+
+  /* Las que llegaron antes de ver ninguna fecha: si al final resultó haber un
+     solo día, son de ese día sin ninguna duda. Si hubo varios, no hay forma
+     honesta de adivinarlo y se dejan aparte para que la persona lo diga. */
+  const huerfanas = grupos.get(SIN_FECHA);
+  const conFecha = [...grupos.keys()].filter((k) => k !== SIN_FECHA);
+  if (huerfanas && conFecha.length === 1) {
+    grupos.get(conFecha[0])!.unshift(...huerfanas);
+    grupos.delete(SIN_FECHA);
+  }
+
+  return [...grupos.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, delDia]) => fusionarCapturas(delDia));
+}

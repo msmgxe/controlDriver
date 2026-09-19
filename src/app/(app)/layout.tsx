@@ -1,6 +1,7 @@
 "use client";
 
 import { Armazon } from "@/components/Armazon";
+import { BotonAtras } from "@/components/BotonAtras";
 import { ProveedorLicencia, useLicencia } from "@/components/Licencia";
 import { Alerta } from "@/components/iconos";
 import { useDatos } from "@/hooks/useDatos";
@@ -65,6 +66,7 @@ function Contenido({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       )}
+      <BotonAtras />
       {children}
     </Armazon>
   );

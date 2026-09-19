@@ -179,9 +179,41 @@ describe("capturas cortadas por el scroll", () => {
     expect(leido.ordenes[0].ruta).toBeNull();
   });
 
-  it("marca la ruta a la que no se le ve el número", () => {
+  it("una ruta sin número visible sigue valiendo: lo que importa es el horario", () => {
+    /* Marcarla como cortada era demasiado severo. El horario es lo único que
+       hace falta para calcular el tiempo en ruta; el número se deduce del
+       orden. Antes, seis rutas perfectamente legibles salían como "cortadas"
+       y el aviso asustaba sin motivo. */
     const leido = interpretarCaptura(["De: 10:03 a 10:27 horas"]);
-    expect(leido.rutas[0].legible_completo).toBe(false);
+    expect(leido.rutas[0].legible_completo).toBe(true);
+    expect(leido.rutas[0].numero).toBe(1);
+    expect(leido.rutas[0].hora_inicio).toBe("10:03");
+  });
+
+  it("encuentra el número aunque venga después del horario", () => {
+    // El lector agrupa las regiones a su manera: el círculo con el número
+    // puede caer detrás del texto de la tarjeta.
+    const leido = interpretarCaptura(["De: 11:04 a 11:22 horas", "2", "Finalizado"]);
+    expect(leido.rutas[0].numero).toBe(2);
+    expect(leido.rutas[0].estado).toBe("Finalizado");
+  });
+
+  it("encuentra la ruta de un pedido aunque venga antes del código", () => {
+    const leido = interpretarCaptura(["Ruta 5", "Entregado", "v12238726wofp-01"]);
+    expect(leido.ordenes[0].ruta).toBe(5);
+    expect(leido.ordenes[0].legible_completo).toBe(true);
+  });
+
+  it("pero no cruza al pedido vecino al mirar hacia atrás", () => {
+    // Sin el tope, el segundo pedido se llevaría la Ruta 1 del primero.
+    const leido = interpretarCaptura([
+      "v11111111wofp-01",
+      "Ruta 1",
+      "Entregado",
+      "v22222222wofp-01",
+    ]);
+    expect(leido.ordenes[0].ruta).toBe(1);
+    expect(leido.ordenes[1].ruta).toBeNull();
   });
 
   it("una captura de la que no se saca nada se declara desconocida", () => {

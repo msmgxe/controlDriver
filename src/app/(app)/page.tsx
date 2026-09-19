@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 
+import { Acordeon } from "@/components/Acordeon";
 import { CargarCapturas } from "@/components/CargarCapturas";
 import { usePuedeEscribir } from "@/components/Licencia";
-import { Alerta, Flecha, Reloj } from "@/components/iconos";
-import { Aviso, MontoHero, TiraSemana } from "@/components/ui";
+import { Flecha, Reloj } from "@/components/iconos";
+import { MontoHero, TiraSemana } from "@/components/ui";
 import { useDatos } from "@/hooks/useDatos";
 import { resumenPorRango } from "@/lib/db/sqlite/jornadas";
 import {
@@ -17,38 +19,52 @@ import {
   rangoDeFechas,
   semanaDe,
   sumarDias,
+  type FechaISO,
 } from "@/lib/fechas";
 import { formatearSoles } from "@/lib/pagos/reglas";
 
 /**
- * Hoy (§9).
+ * Inicio (§9).
  *
- * El principio rector de §1 es "una sola acción diaria". Por eso esta pantalla
- * tiene un único botón grande y todo lo demás es consulta.
+ * El principio de §1 sigue siendo "una sola acción diaria": el botón de cargar
+ * manda y está siempre a la vista. Lo demás se reordenó porque la pantalla
+ * enseñaba el día, la semana, los avisos y los enlaces a la vez, y quien la
+ * abría no sabía dónde mirar.
+ *
+ * Dos decisiones detrás de esta disposición:
+ *
+ *   · **La fecha se elige arriba y no manda sobre la carga.** Se consulta un
+ *     día cualquiera sin que eso cambie lo que se va a subir: las capturas
+ *     traen su propia fecha dentro. Atarlas al día elegido sería una trampa
+ *     silenciosa —subir el lunes las del domingo lo guardaría mal.
+ *
+ *   · **Plegado, pero con lo esencial fuera.** Cada sección enseña su cifra
+ *     aunque esté cerrada, para no obligar a abrir solo para mirar.
  */
-export default function PaginaHoy() {
+export default function PaginaInicio() {
   const hoy = hoyEnLima();
-  const semana = semanaDe(hoy);
+  const [dia, setDia] = useState<FechaISO>(hoy);
   const puedeCargar = usePuedeEscribir();
 
-  // Se pide un mes largo de una vez: sirve para la semana en curso y para
-  // encontrar la última jornada cargada sin una segunda consulta.
+  const semana = semanaDe(dia);
+
   const { datos: filas, cargando } = useDatos(
-    () => resumenPorRango(sumarDias(hoy, -45), semana.fin),
+    () => resumenPorRango(sumarDias(hoy, -60), semana.fin),
     [hoy, semana.fin],
   );
 
   if (cargando || !filas) return <Esqueleto />;
 
   const porFecha = new Map(filas.map((f) => [f.fecha, f]));
+  const delDia = porFecha.get(dia);
 
   const deLaSemana = rangoDeFechas(semana.inicio, semana.fin).map((fecha) => {
     const f = porFecha.get(fecha);
     return { fecha, cargado: Boolean(f), pedidos: f?.pedidos ?? 0 };
   });
 
-  const cargadasSemana = deLaSemana.filter((d) => d.cargado);
-  const totalSemana = cargadasSemana.reduce(
+  const cargadas = deLaSemana.filter((d) => d.cargado);
+  const totalSemana = cargadas.reduce(
     (acc, d) => {
       const f = porFecha.get(d.fecha)!;
       return {
@@ -60,111 +76,172 @@ export default function PaginaHoy() {
     { pedidos: 0, rutas: 0, centimos: 0 },
   );
 
-  const jornadaDeHoy = porFecha.get(hoy);
-  const ultima = filas.filter((f) => f.fecha <= hoy).at(-1);
   const faltantes = deLaSemana.filter((d) => !d.cargado && d.fecha < hoy);
 
   return (
     <div className="mx-auto flex max-w-[880px] flex-col gap-4">
-      <div>
-        <span className="rotulo">Hoy</span>
-        <h2 className="text-[30px] leading-tight capitalize">{formatearFechaLarga(hoy)}</h2>
-        <p className="mt-0.5 text-sm text-tinta-2">
-          {jornadaDeHoy
-            ? `${jornadaDeHoy.pedidos} pedidos en ${jornadaDeHoy.rutas} rutas · ${formatearDuracion(jornadaDeHoy.minutosEnRuta)} en ruta.`
-            : "Todavía no has subido las capturas de hoy."}
-        </p>
-      </div>
+      <SelectorDeDia dia={dia} hoy={hoy} alElegir={setDia} cargadas={porFecha} />
 
       <CargarCapturas deshabilitado={!puedeCargar} />
 
-      {faltantes.length > 0 && (
-        <Aviso
-          tono="atento"
-          titulo={`Falta ${faltantes.length === 1 ? "un día" : `${faltantes.length} días`} de esta semana`}
-        >
-          <p>
-            {faltantes.map((d) => `${nombreDelDia(d.fecha)} ${formatearFecha(d.fecha)}`).join(", ")}.
-            Puedes subirlo cuando quieras: manda la fecha de la captura, no la de carga.
-          </p>
-        </Aviso>
-      )}
-
-      <div className="grid gap-4 md:grid-cols-2 md:items-start">
-        <div className="tarjeta flex flex-col gap-4">
-          <div className="flex items-end justify-between gap-3">
+      <Acordeon
+        titulo={dia === hoy ? "Hoy" : nombreDelDia(dia) + " " + formatearFecha(dia)}
+        resumen={
+          delDia
+            ? `${delDia.pedidos} pedidos · ${delDia.rutas} rutas · ${formatearSoles(delDia.montoCentimos)}`
+            : "Sin cargar"
+        }
+        abiertoPorDefecto
+      >
+        {delDia ? (
+          <div className="flex flex-col gap-3">
             <MontoHero
-              centimos={totalSemana.centimos}
-              pie={`${totalSemana.pedidos} pedidos · ${totalSemana.rutas} rutas · ${cargadasSemana.length} día${cargadasSemana.length === 1 ? "" : "s"}`}
+              centimos={delDia.montoCentimos}
+              pie={`${delDia.pedidos} pedidos en ${delDia.rutas} rutas`}
             />
-            <span className="inline-flex items-center rounded-chip bg-acento-suave px-2 py-0.5 text-[10px] font-bold tracking-wide text-acento-tinta uppercase">
-              abierta
-            </span>
+            <dl className="flex flex-col text-sm">
+              <Dato etiqueta="Tiempo en ruta" valor={formatearDuracion(delDia.minutosEnRuta)} />
+              <Dato etiqueta="Primera salida" valor={delDia.primeraSalida ?? "—"} />
+              <Dato etiqueta="Último regreso" valor={delDia.ultimoRegreso ?? "—"} />
+              {delDia.horaEntrada && delDia.horaSalida && (
+                <Dato
+                  etiqueta="En tienda"
+                  valor={`${delDia.horaEntrada} a ${delDia.horaSalida}`}
+                />
+              )}
+            </dl>
+            <Link
+              href={`/jornada?fecha=${dia}`}
+              className="inline-flex min-h-11 items-center gap-2 self-start text-sm font-semibold text-acento"
+            >
+              Ver y corregir el detalle
+              <Flecha className="size-4" />
+            </Link>
           </div>
+        ) : (
+          <p className="text-sm text-tinta-2">
+            {dia === hoy
+              ? "Todavía no has subido las capturas de hoy."
+              : "Ese día no está cargado. Puedes subirlo cuando quieras: manda la fecha de la captura, no la de hoy."}
+          </p>
+        )}
+      </Acordeon>
+
+      <Acordeon
+        titulo="Esta semana"
+        resumen={`${formatearSoles(totalSemana.centimos)} · ${cargadas.length} de 7 días`}
+      >
+        <div className="flex flex-col gap-4">
+          <MontoHero
+            centimos={totalSemana.centimos}
+            pie={`${totalSemana.pedidos} pedidos · ${totalSemana.rutas} rutas`}
+          />
           <TiraSemana dias={deLaSemana} hoy={hoy} />
           <div className="flex items-center gap-2 text-sm text-tinta-2">
             <Reloj className="size-4" />
             <span>Se paga el viernes {formatearFecha(semana.pago)}</span>
           </div>
-        </div>
-
-        <div className="flex flex-col gap-3">
-          {ultima && (
-            <FilaEnlace
-              href="/historial"
-              titulo={`Última jornada · ${nombreDelDia(ultima.fecha)} ${formatearFecha(ultima.fecha)}`}
-              detalle={`${ultima.pedidos} pedidos · ${ultima.rutas} rutas · ${formatearDuracion(ultima.minutosEnRuta)} en ruta`}
-              valor={formatearSoles(ultima.montoCentimos)}
-            />
+          {faltantes.length > 0 && (
+            <p className="rounded-btn bg-aviso-suave px-3 py-2 text-sm text-aviso">
+              Falta{faltantes.length === 1 ? "" : "n"}{" "}
+              {faltantes.map((d) => nombreDelDia(d.fecha)).join(", ")}.
+            </p>
           )}
-          <FilaEnlace
-            href="/pagos"
-            titulo="Pagos"
-            detalle="Semana en curso, cierres y conciliación"
-          />
+        </div>
+      </Acordeon>
+
+      <Acordeon titulo="Ver más" resumen="Historial, pagos y estadísticas">
+        <div className="flex flex-col gap-2">
+          <FilaEnlace href="/historial" titulo="Historial" detalle="Todos tus días y pedidos" />
+          <FilaEnlace href="/pagos" titulo="Pagos" detalle="Semanas, cierres y conciliación" />
           <FilaEnlace
             href="/estadisticas"
-            titulo="Últimos 30 días"
+            titulo="Estadísticas"
             detalle="Pedidos, tiempos e ingresos"
           />
         </div>
-      </div>
-
-      {filas.length === 0 && (
-        <div className="flex gap-3 rounded-btn bg-sup-2 px-4 py-3 text-sm text-tinta-2">
-          <Alerta className="mt-0.5 size-[18px] shrink-0 text-tinta-3" />
-          <p>
-            Todavía no hay ninguna jornada guardada. Sube las capturas de tu último día de reparto y
-            aparecerá aquí.
-          </p>
-        </div>
-      )}
+      </Acordeon>
     </div>
   );
 }
 
 /**
- * Lo que se ve mientras la base responde.
+ * Elegir qué día se está mirando.
  *
- * Son milisegundos —SQLite está en el propio teléfono— pero dejar la pantalla
- * en blanco, aunque sea un instante, se lee como que la app se colgó. Las
- * formas grises ocupan el sitio de lo que va a llegar.
+ * Los últimos siete días como fichas —que es lo que se consulta el 95 % de las
+ * veces— y un calendario al lado para ir más atrás sin pelearse con flechas.
+ * Un punto bajo la ficha indica que ese día ya está cargado, así se ve de un
+ * vistazo lo que falta sin abrir nada.
  */
-function Esqueleto() {
+function SelectorDeDia({
+  dia,
+  hoy,
+  alElegir,
+  cargadas,
+}: {
+  dia: FechaISO;
+  hoy: FechaISO;
+  alElegir: (f: FechaISO) => void;
+  cargadas: Map<string, unknown>;
+}) {
+  const ultimos = rangoDeFechas(sumarDias(hoy, -6), hoy);
+
   return (
-    <div className="mx-auto flex max-w-[880px] animate-pulse flex-col gap-4" aria-hidden>
-      <div className="flex flex-col gap-2">
-        <div className="h-3 w-16 rounded bg-sup-2" />
-        <div className="h-8 w-64 rounded bg-sup-2" />
+    <div className="flex flex-col gap-2">
+      <div className="flex items-end justify-between gap-3">
+        <h2 className="text-[26px] leading-tight capitalize">{formatearFechaLarga(dia)}</h2>
+        <label className="shrink-0">
+          <span className="sr-only">Elegir otra fecha</span>
+          <input
+            type="date"
+            value={dia}
+            max={hoy}
+            onChange={(e) => e.target.value && alElegir(e.target.value as FechaISO)}
+            className="min-h-11 rounded-btn border border-linea-fuerte bg-sup px-3 text-sm"
+          />
+        </label>
       </div>
-      <div className="h-[92px] rounded-card bg-sup-2" />
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="h-[196px] rounded-card bg-sup-2" />
-        <div className="flex flex-col gap-3">
-          <div className="h-[68px] rounded-card bg-sup-2" />
-          <div className="h-[68px] rounded-card bg-sup-2" />
-        </div>
+
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+        {ultimos.map((fecha) => {
+          const elegido = fecha === dia;
+          return (
+            <button
+              key={fecha}
+              type="button"
+              onClick={() => alElegir(fecha)}
+              aria-pressed={elegido}
+              className={`flex min-h-[58px] w-[52px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-btn border text-xs ${
+                elegido
+                  ? "border-acento bg-acento text-acento-texto"
+                  : "border-linea bg-sup-2 text-tinta-2"
+              }`}
+            >
+              <span className="capitalize">{nombreDelDia(fecha).slice(0, 3)}</span>
+              <b className="text-base font-semibold">{fecha.slice(8)}</b>
+              <span
+                aria-hidden
+                className={`size-1.5 rounded-full ${
+                  cargadas.has(fecha)
+                    ? elegido
+                      ? "bg-acento-texto"
+                      : "bg-acento"
+                    : "bg-transparent"
+                }`}
+              />
+            </button>
+          );
+        })}
       </div>
+    </div>
+  );
+}
+
+function Dato({ etiqueta, valor }: { etiqueta: string; valor: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 border-b border-linea py-2 last:border-0">
+      <dt className="text-tinta-2">{etiqueta}</dt>
+      <dd className="font-medium">{valor}</dd>
     </div>
   );
 }
@@ -173,26 +250,33 @@ function FilaEnlace({
   href,
   titulo,
   detalle,
-  valor,
 }: {
   href: string;
   titulo: string;
   detalle: string;
-  valor?: string;
 }) {
   return (
     <Link
       href={href}
-      className="flex items-center justify-between gap-3 rounded-card bg-sup-2 px-4 py-3 hover:brightness-[.98]"
+      className="flex min-h-[56px] items-center justify-between gap-3 rounded-btn bg-sup px-4 py-3"
     >
       <span className="flex min-w-0 flex-col">
         <b className="text-sm font-semibold">{titulo}</b>
         <span className="text-sm text-tinta-2">{detalle}</span>
       </span>
-      <span className="flex shrink-0 items-center gap-2">
-        {valor && <span className="monto text-sm">{valor}</span>}
-        <Flecha className="size-4 text-tinta-3" />
-      </span>
+      <Flecha className="size-4 shrink-0 text-tinta-3" />
     </Link>
+  );
+}
+
+function Esqueleto() {
+  return (
+    <div className="mx-auto flex max-w-[880px] animate-pulse flex-col gap-4" aria-hidden>
+      <div className="h-8 w-56 rounded bg-sup-2" />
+      <div className="h-[58px] rounded-btn bg-sup-2" />
+      <div className="h-[92px] rounded-card bg-sup-2" />
+      <div className="h-[72px] rounded-card bg-sup-2" />
+      <div className="h-[72px] rounded-card bg-sup-2" />
+    </div>
   );
 }

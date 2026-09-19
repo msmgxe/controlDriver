@@ -1,5 +1,7 @@
 "use client";
 
+import { useCapa } from "@/hooks/useCapa";
+
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -60,12 +62,33 @@ interface PedidoEditable {
   montoManualCentimos: number | null;
 }
 
-function leerCarga(): RespuestaExtraccion | null {
+/**
+ * Los días pendientes de revisar.
+ *
+ * Una carga puede traer varios: al final de la semana nadie va seleccionando
+ * las capturas de tres en tres, sube el carrete entero. El sistema los separa
+ * por fecha y Revisión los encadena, uno detrás de otro.
+ */
+function leerCola(): RespuestaExtraccion[] {
   try {
     const crudo = sessionStorage.getItem(CLAVE_REVISION);
-    return crudo ? (JSON.parse(crudo) as RespuestaExtraccion) : null;
+    if (!crudo) return [];
+    const guardado = JSON.parse(crudo) as { dias?: RespuestaExtraccion[] };
+    return Array.isArray(guardado.dias) ? guardado.dias : [];
   } catch {
-    return null;
+    return [];
+  }
+}
+
+/** Quita el día ya guardado y deja el resto para la vuelta siguiente. */
+function descartarPrimero(): number {
+  try {
+    const quedan = leerCola().slice(1);
+    if (quedan.length === 0) sessionStorage.removeItem(CLAVE_REVISION);
+    else sessionStorage.setItem(CLAVE_REVISION, JSON.stringify({ dias: quedan }));
+    return quedan.length;
+  } catch {
+    return 0;
   }
 }
 
@@ -76,7 +99,9 @@ export function Contenido() {
   // Este componente solo se monta en cliente (ver page.tsx), así que se puede
   // leer sessionStorage en el inicializador en vez de sincronizarlo con un
   // efecto: menos renders y ningún desajuste de hidratación.
-  const [datos] = useState<RespuestaExtraccion | null>(leerCarga);
+  const [cola] = useState<RespuestaExtraccion[]>(leerCola);
+  const datos = cola[0] ?? null;
+  const diasEnCola = cola.length;
   const [fecha, setFecha] = useState(() => datos?.jornada.fecha ?? "");
   const [pedidos, setPedidos] = useState<PedidoEditable[]>(() =>
     (datos?.jornada.ordenes ?? []).map((o) => ({
@@ -177,10 +202,14 @@ export function Contenido() {
       setError(resultado.error);
       return;
     }
-    try {
-      sessionStorage.removeItem(CLAVE_REVISION);
-    } catch {
-      /* da igual: ya está guardada */
+    const pendientes = descartarPrimero();
+    if (pendientes > 0) {
+      /* Quedan días de esta misma carga. Se recarga la pantalla para que
+         arranque limpia con el siguiente: reutilizar el estado del día
+         anterior dejaría tramos y horarios del día que se acaba de guardar. */
+      router.refresh();
+      window.location.reload();
+      return;
     }
     router.push("/");
     router.refresh();
@@ -188,6 +217,17 @@ export function Contenido() {
 
   return (
     <div className="mx-auto flex max-w-[880px] flex-col gap-4">
+      {diasEnCola > 1 && (
+        <div className="flex items-center gap-3 rounded-btn bg-acento-suave px-4 py-3 text-sm text-acento-tinta">
+          <b className="shrink-0 rounded-chip bg-acento px-2 py-0.5 text-xs font-bold text-acento-texto">
+            1 de {diasEnCola}
+          </b>
+          <p>
+            Tus capturas son de {diasEnCola} días distintos. Se guardan de uno en uno; al
+            confirmar este pasarás al siguiente.
+          </p>
+        </div>
+      )}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h2 className="text-[30px] leading-tight">Revisión</h2>
         <span className="rotulo">
@@ -500,6 +540,8 @@ function HojaTramo({
     document.addEventListener("keydown", alPulsar);
     return () => document.removeEventListener("keydown", alPulsar);
   }, [onCerrar]);
+
+  useCapa(onCerrar);
 
   return (
     <div

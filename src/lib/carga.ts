@@ -86,7 +86,7 @@ export async function procesarCapturas(
 
     const datos = await leerCapturas(comprimidas);
 
-    if (datos.imagenesLeidas === 0) {
+    if (datos.dias.length === 0) {
       return {
         ok: false,
         error:

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useCapa } from "@/hooks/useCapa";
 import { useRouter } from "next/navigation";
 
 import {
@@ -327,6 +328,8 @@ function HojaTramo({
   onGuardar: (tramo: number, km: number | null, montoManualCentimos: number | null) => void;
 }) {
   const [manual, setManual] = useState("");
+
+  useCapa(onCerrar);
 
   return (
     <div

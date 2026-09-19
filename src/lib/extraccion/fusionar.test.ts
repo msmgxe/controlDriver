@@ -1,6 +1,7 @@
+import type { ImagenExtraida } from "./esquema";
 import { describe, expect, it } from "vitest";
 import { parsearRespuestas } from "./esquema";
-import { fusionarCapturas } from "./fusionar";
+import { fusionarCapturas, fusionarPorFecha } from "./fusionar";
 import { hayBloqueos, validarJornada } from "./validar";
 
 /* ---------------------------------------------------------------------------
@@ -288,5 +289,92 @@ describe("validarJornada", () => {
     const alerta = validarJornada(j, { hoy: HOY }).find((a) => a.codigo === "tarjeta-incompleta");
     expect(alerta?.nivel).toBe("bloqueo");
     expect(alerta?.referencias).toEqual(["v12240588wofp-01"]);
+  });
+});
+
+describe("capturas de varios días", () => {
+  const conFecha = (fecha: string | null, codigos: string[]): ImagenExtraida => ({
+    tipo_pantalla: "ordenes",
+    fecha,
+    contador_rutas: null,
+    contador_ordenes: null,
+    resumen_ordenes: null,
+    rutas: [],
+    ordenes: codigos.map((codigo) => ({
+      codigo,
+      ruta: 1,
+      estado: "Entregado",
+      legible_completo: true,
+    })),
+  });
+
+  it("separa dos días en dos jornadas", () => {
+    const dias = fusionarPorFecha([
+      conFecha("2026-09-17", ["v11111111wofp-01"]),
+      conFecha("2026-09-18", ["v22222222wofp-01"]),
+    ]);
+    expect(dias).toHaveLength(2);
+    expect(dias[0].fecha).toBe("2026-09-17");
+    expect(dias[1].fecha).toBe("2026-09-18");
+  });
+
+  it("las devuelve de más antigua a más reciente aunque se suban al revés", () => {
+    const dias = fusionarPorFecha([
+      conFecha("2026-09-18", ["v22222222wofp-01"]),
+      conFecha("2026-09-17", ["v11111111wofp-01"]),
+    ]);
+    expect(dias.map((d) => d.fecha)).toEqual(["2026-09-17", "2026-09-18"]);
+  });
+
+  it("una captura sin fecha va al último día visto antes de ella", () => {
+    // Es el caso real: solo la primera captura de cada día trae la cabecera,
+    // porque al hacer scroll para fotografiar el resto la fecha desaparece.
+    const dias = fusionarPorFecha([
+      conFecha("2026-09-17", ["v11111111wofp-01"]),
+      conFecha(null, ["v11111112wofp-01"]),
+      conFecha("2026-09-18", ["v22222222wofp-01"]),
+      conFecha(null, ["v22222223wofp-01"]),
+    ]);
+    expect(dias).toHaveLength(2);
+    expect(dias[0].ordenes.map((o) => o.codigo)).toEqual([
+      "v11111111wofp-01",
+      "v11111112wofp-01",
+    ]);
+    expect(dias[1].ordenes.map((o) => o.codigo)).toEqual([
+      "v22222222wofp-01",
+      "v22222223wofp-01",
+    ]);
+  });
+
+  it("si solo hay un día, las capturas sin fecha caen ahí sin dudar", () => {
+    const dias = fusionarPorFecha([
+      conFecha(null, ["v11111112wofp-01"]),
+      conFecha("2026-09-17", ["v11111111wofp-01"]),
+    ]);
+    expect(dias).toHaveLength(1);
+    expect(dias[0].fecha).toBe("2026-09-17");
+    expect(dias[0].ordenes).toHaveLength(2);
+  });
+
+  it("sigue deduplicando dentro de cada día", () => {
+    const dias = fusionarPorFecha([
+      conFecha("2026-09-17", ["v11111111wofp-01", "v11111112wofp-01"]),
+      conFecha("2026-09-17", ["v11111112wofp-01", "v11111113wofp-01"]),
+    ]);
+    expect(dias).toHaveLength(1);
+    expect(dias[0].ordenes).toHaveLength(3);
+  });
+
+  it("ninguna captura no produce ningún día", () => {
+    expect(fusionarPorFecha([])).toEqual([]);
+  });
+
+  it("un día ya no se marca como conflicto de fechas", () => {
+    // Era el error que impedía subir la semana entera de una vez.
+    const dias = fusionarPorFecha([
+      conFecha("2026-09-17", ["v11111111wofp-01"]),
+      conFecha("2026-09-18", ["v22222222wofp-01"]),
+    ]);
+    expect(dias.every((d) => d.fechasEnConflicto.length === 0)).toBe(true);
   });
 });
