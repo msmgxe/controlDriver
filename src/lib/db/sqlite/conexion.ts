@@ -18,7 +18,7 @@
  *     verdad —el mismo esquema, las mismas consultas— en vez de un simulacro
  *     que siempre dice que sí.
  */
-import { ESQUEMA, NOMBRE_BASE, VERSION_ESQUEMA } from "./esquema";
+import { ESQUEMA, NOMBRE_BASE, VERSION_ESQUEMA, migrar } from "./esquema";
 
 /** Lo mínimo que tiene que saber hacer una base para esta aplicación. */
 export interface Motor {
@@ -110,6 +110,10 @@ async function motorDeCapacitor(): Promise<Motor> {
 
   if (!(await db.isDBOpen()).result) await db.open();
   await db.execute(ESQUEMA.join("\n"));
+  await migrar({
+    consultar: async <T,>(sql: string) => ((await db.query(sql)).values ?? []) as T[],
+    ejecutar: (sql: string) => db.execute(sql),
+  });
 
   /* En el navegador no hay disco: lo escrito vive en memoria hasta que se
      vuelca a IndexedDB a mano. En el celular esto no hace nada. */

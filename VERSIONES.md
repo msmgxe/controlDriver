@@ -36,6 +36,30 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v9 — 19/09/2026
+Hecha a partir de las capturas reales de la app de reparto, que por fin
+llegaron.
+- **Arreglado:** contaba de más. La lista de un día abre con una o dos rutas
+  de la noche anterior (20:21, 21:24) que ya se cuentan ese día. Se reconocen
+  porque la hora retrocede al pasar a la mañana, y porque un pedido no puede
+  estar guardado en dos días. Así salían 16 pedidos en un día de 12.
+- **Arreglado:** las rutas se numeraban por hora; ahora por el orden de la
+  lista de la app, que es el que usan los pedidos con su «Ruta 1».
+- **Arreglado:** el lector confundía el `14` del contador de órdenes con el
+  número de una ruta, y no entendía los iconos del resumen.
+- **Arreglado:** la etiqueta de ruta de cada pedido va en su misma fila; ahora
+  se busca ahí primero.
+- **Nuevo:** en Revisión cada pedido se puede corregir —código, ruta, estado,
+  tramo— o borrar, con confirmación. Los pedidos sin ruta son filas tocables.
+- **Nuevo:** en un día guardado también se puede borrar un pedido.
+- **Nuevo:** las capturas guardadas se pasan deslizando, como un carrusel.
+- **Arreglado:** se guardaban repetidas —33 de un día de 11—. Ya no, y las que
+  había se limpian solas al abrir el día.
+- **Arreglado:** los pedidos se ordenan por la hora de su ruta.
+- **Arreglado:** tras editar un día guardado, el cambio no se veía hasta salir.
+- **Arreglado:** una base de una versión anterior no recibía las columnas
+  nuevas. Ahora se migra sola al abrir la app.
+
 ### v8 — 19/09/2026
 Tercera tanda del uso real. La lectura se reescribió a partir de cómo son de
 verdad las capturas: rutas por un lado, **pedidos agrupados por ruta** por

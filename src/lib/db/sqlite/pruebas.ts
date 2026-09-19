@@ -29,17 +29,42 @@ export interface Prueba {
 }
 
 /**
- * Guarda una imagen como prueba. Devuelve su id.
+ * Guarda una imagen como prueba, **si no está ya**. Devuelve su id, o el de la
+ * que ya estaba.
  *
- * `ordenId` la ata a un pedido concreto —el caso de la foto que se saca al
- * añadir un pedido a mano—; sin él, respalda el día entero, que es lo que
- * hacen las capturas de la carga.
+ * Subir el mismo día dos veces es lo más normal —se prueba, se corrige, se
+ * vuelve a subir—, y cada vez se guardaban todas las capturas de nuevo: once
+ * capturas subidas tres veces eran 33. Se evitan dos clases de repetición:
+ *
+ *   · **idénticas**: la misma captura otra vez. Se reconoce por la huella de
+ *     sus bytes.
+ *   · **redundantes**: una captura distinta pero que no aporta nada, porque
+ *     todo lo que se leyó en ella —códigos y horarios— ya está en otra del
+ *     mismo día. Pasa al volver a fotografiar la misma parte de la lista.
+ *
+ * `ordenId` la ata a un pedido concreto —la foto de un pedido a mano—; sin él,
+ * respalda el día entero.
  */
 export async function guardarPrueba(
   fecha: FechaISO,
   imagen: Blob,
   ordenId?: string,
+  contenido: readonly string[] = [],
 ): Promise<string> {
+  const huella = await huellaDe(await imagen.arrayBuffer());
+
+  const identica = await consultar<{ id: string }>(
+    `select id from pruebas where fecha = ? and huella = ? limit 1`,
+    [fecha, huella],
+  );
+  if (identica[0]) return identica[0].id;
+
+  if (!ordenId && contenido.length > 0) {
+    const yaVisto = await contenidoDelDia(fecha);
+    const aportaAlgo = contenido.some((c) => !yaVisto.has(c));
+    if (!aportaAlgo) return "";
+  }
+
   const id = nuevoId();
   const archivo = `${CARPETA}/${fecha}/${id}.jpg`;
 
@@ -51,9 +76,13 @@ export async function guardarPrueba(
   });
 
   await ejecutar(
-    `insert into pruebas (id, fecha, orden_id, archivo, bytes, creado_en)
-     values (?, ?, ?, ?, ?, ?)`,
-    [id, fecha, ordenId ?? null, archivo, imagen.size, new Date().toISOString()],
+    `insert into pruebas (id, fecha, orden_id, archivo, bytes, huella, contenido, creado_en)
+     values (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id, fecha, ordenId ?? null, archivo, imagen.size, huella,
+      contenido.length > 0 ? JSON.stringify(contenido) : null,
+      new Date().toISOString(),
+    ],
   );
   return id;
 }
@@ -110,6 +139,71 @@ export async function borrarPrueba(id: string): Promise<void> {
     }
   }
   await ejecutar(`delete from pruebas where id = ?`, [id]);
+}
+
+/** Todo lo que ya respaldan las capturas guardadas de un día. */
+async function contenidoDelDia(fecha: FechaISO): Promise<Set<string>> {
+  const filas = await consultar<{ contenido: string | null }>(
+    `select contenido from pruebas where fecha = ? and contenido is not null`,
+    [fecha],
+  );
+  const visto = new Set<string>();
+  for (const f of filas) {
+    try {
+      for (const c of JSON.parse(f.contenido as string) as string[]) visto.add(c);
+    } catch {
+      /* Una fila rota no impide mirar las demás. */
+    }
+  }
+  return visto;
+}
+
+/**
+ * Quita las capturas repetidas de un día, dejando la más antigua de cada una.
+ *
+ * Arregla lo que se guardó antes de que existiera la huella. Solo borra
+ * capturas **idénticas byte a byte** a otra que se queda, así que no se pierde
+ * nada. Devuelve cuántas quitó.
+ */
+export async function quitarRepetidas(fecha: FechaISO): Promise<number> {
+  const filas = await consultar<{ id: string; archivo: string; huella: string | null }>(
+    `select id, archivo, huella from pruebas where fecha = ? order by creado_en asc`,
+    [fecha],
+  );
+
+  const vistas = new Set<string>();
+  let quitadas = 0;
+
+  for (const fila of filas) {
+    let huella = fila.huella;
+    if (!huella) {
+      try {
+        const { data } = await Filesystem.readFile({ path: fila.archivo, directory: Directory.Data });
+        huella = await huellaDe(deBase64(typeof data === "string" ? data : ""));
+        await ejecutar(`update pruebas set huella = ? where id = ?`, [huella, fila.id]);
+      } catch {
+        continue; // Sin poder leerla no se puede comparar: se deja.
+      }
+    }
+
+    if (vistas.has(huella)) {
+      await borrarPrueba(fila.id);
+      quitadas++;
+    } else {
+      vistas.add(huella);
+    }
+  }
+  return quitadas;
+}
+
+async function huellaDe(bytes: ArrayBuffer | Uint8Array): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", bytes as BufferSource);
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function deBase64(texto: string): Uint8Array {
+  const binario = atob(texto);
+  return Uint8Array.from(binario, (c) => c.charCodeAt(0));
 }
 
 /** Borra todas las pruebas de un día. */

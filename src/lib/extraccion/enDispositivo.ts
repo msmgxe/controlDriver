@@ -27,6 +27,7 @@ import { guardarPrueba } from "@/lib/db/sqlite/pruebas";
 
 import { agruparPorFecha, fusionarCapturas } from "./fusionar";
 import { interpretarConContexto, type ContextoEntreCapturas } from "./ocr";
+import { quitarArrastre } from "./arrastre";
 import { validarJornada } from "./validar";
 import type { ImagenExtraida } from "./esquema";
 
@@ -141,19 +142,38 @@ export async function leerCapturas(imagenes: readonly Blob[]): Promise<Resultado
 
   const dias: DiaLeido[] = [];
   for (const [fechaDelGrupo, delDia] of agruparPorFecha(leidas, (l) => l.extraida.fecha)) {
-    const jornada = fusionarCapturas(delDia.map((l) => l.extraida));
+    const fusionada = fusionarCapturas(delDia.map((l) => l.extraida));
+
+    /* Fuera lo que la app arrastra de la noche anterior: las primeras rutas si
+       son de noche, y cualquier pedido que ya esté guardado en otro día —un
+       pedido no se cobra dos veces—. Se consulta la base con **todos** los
+       códigos, antes de quitar nada, precisamente para poder reconocerlos. */
+    const enOtrosDias = await codigosYaRegistrados(fusionada.ordenes.map((o) => o.codigo));
+    const jornada = quitarArrastre(fusionada, enOtrosDias);
 
     /* Las capturas se guardan como prueba del día. Si la tienda discute un
        pago, el pantallazo original es lo que lo zanja. Se guardan aquí y no al
        confirmar porque es aquí donde se sabe a qué día pertenece cada una, y
        en Revisión ya solo viajan los datos, no las imágenes. */
-    if (fechaDelGrupo) {
-      for (const { imagen } of delDia) {
-        try {
-          await guardarPrueba(fechaDelGrupo as never, imagen);
-        } catch {
-          /* Guardar la prueba es un extra: que falle no puede tumbar la carga. */
-        }
+    for (const { imagen, extraida } of delDia) {
+      /* Bajo la fecha que dice **la propia captura** —la cabecera va fija en
+         todas—, y solo si no se sabe, la del grupo. Así una captura de otro
+         día que se colara no queda archivada como prueba de este. */
+      const suFecha = extraida.fecha ?? fechaDelGrupo;
+      if (!suFecha) continue;
+
+      // Lo que respalda: sus códigos y sus horarios. Si ya está todo en otra
+      // captura del mismo día, esta no se guarda.
+      const contenido = [
+        ...extraida.ordenes.map((o) => `p:${o.codigo}`),
+        ...extraida.rutas
+          .filter((r) => r.hora_inicio && r.hora_fin)
+          .map((r) => `r:${r.hora_inicio}-${r.hora_fin}`),
+      ];
+      try {
+        await guardarPrueba(suFecha as never, imagen, undefined, contenido);
+      } catch {
+        /* Guardar la prueba es un extra: que falle no puede tumbar la carga. */
       }
     }
 
@@ -162,8 +182,7 @@ export async function leerCapturas(imagenes: readonly Blob[]): Promise<Resultado
       perfil?.tiendaId ?? null,
       perfil?.vehiculo,
     );
-    const previos = await codigosYaRegistrados(jornada.ordenes.map((o) => o.codigo));
-    const alertas = validarJornada(jornada, { hoy, codigosEnOtrasFechas: previos });
+    const alertas = validarJornada(jornada, { hoy, codigosEnOtrasFechas: enOtrosDias });
     const montoTramo1 = pagoDelTramo(regla, 1) ?? 1000;
 
     dias.push({

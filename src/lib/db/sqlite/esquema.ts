@@ -27,7 +27,7 @@
  */
 
 /** Versión del esquema. Subirla dispara las migraciones de `migrar()`. */
-export const VERSION_ESQUEMA = 5;
+export const VERSION_ESQUEMA = 6;
 
 export const NOMBRE_BASE = "rutas-a";
 
@@ -166,6 +166,12 @@ export const ESQUEMA: string[] = [
         carga— o un pedido concreto, cuando se añade a mano con su foto. */
      orden_id   text references ordenes (id) on delete cascade,
      archivo    text not null,
+     /* Huella de los bytes: dos capturas idénticas —la misma subida dos
+        veces— tienen la misma. */
+     huella     text,
+     /* Lo que se leyó en ella —códigos y horarios—, para no guardar una
+        captura que no aporta nada que no esté ya en otra del mismo día. */
+     contenido  text,
      bytes      integer not null default 0,
      creado_en  text not null
    );`,
@@ -182,6 +188,8 @@ export const ESQUEMA: string[] = [
    );`,
 
   `create index if not exists idx_jornadas_fecha    on jornadas (fecha desc);`,
+  `create unique index if not exists uq_rutas_numero   on rutas (jornada_id, numero);`,
+  `create unique index if not exists uq_ordenes_codigo on ordenes (jornada_id, codigo);`,
   `create index if not exists idx_rutas_jornada     on rutas (jornada_id);`,
   `create index if not exists idx_ordenes_jornada   on ordenes (jornada_id);`,
   `create index if not exists idx_ordenes_codigo    on ordenes (codigo);`,
@@ -232,3 +240,44 @@ export const ESQUEMA: string[] = [
        from ordenes group by jornada_id
      ) o on o.jornada_id = j.id;`,
 ];
+
+/**
+ * Columnas añadidas a tablas que ya existían.
+ *
+ * `create table if not exists` no toca una tabla que ya está creada: si una
+ * versión nueva le añade una columna, el teléfono que tenía la versión
+ * anterior **no la recibe**, y la primera consulta que la nombre revienta. Es
+ * un fallo que no se ve al probar —en un teléfono recién instalado todo está—
+ * y que aparece justo en el de quien ya usaba la app, con sus datos dentro.
+ *
+ * Cada vez que se añada una columna a una tabla existente, va también aquí.
+ * `migrar` la añade solo si falta, así que es seguro ejecutarlo siempre.
+ */
+export const COLUMNAS_ANADIDAS: ReadonlyArray<[tabla: string, columna: string, definicion: string]> = [
+  ["perfil", "vehiculo", "text not null default 'auto'"],
+  ["jornadas", "vehiculo", "text not null default 'auto'"],
+  ["reglas_pago", "vehiculo", "text not null default 'auto'"],
+  ["ordenes", "manual", "integer not null default 0"],
+  ["pruebas", "orden_id", "text"],
+  ["pruebas", "huella", "text"],
+  ["pruebas", "contenido", "text"],
+];
+
+/** Lo mínimo que necesita `migrar` de una base, sea cual sea el motor. */
+export interface BaseMigrable {
+  consultar<T>(sql: string): Promise<T[]>;
+  ejecutar(sql: string): Promise<unknown>;
+}
+
+/** Añade las columnas que falten. Idempotente: se ejecuta en cada arranque. */
+export async function migrar(base: BaseMigrable): Promise<string[]> {
+  const anadidas: string[] = [];
+  for (const [tabla, columna, definicion] of COLUMNAS_ANADIDAS) {
+    const existentes = await base.consultar<{ name: string }>(`pragma table_info(${tabla})`);
+    if (existentes.length === 0) continue; // la tabla no existe: la crea el esquema
+    if (existentes.some((c) => c.name === columna)) continue;
+    await base.ejecutar(`alter table ${tabla} add column ${columna} ${definicion}`);
+    anadidas.push(`${tabla}.${columna}`);
+  }
+  return anadidas;
+}

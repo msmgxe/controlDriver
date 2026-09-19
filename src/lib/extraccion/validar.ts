@@ -1,3 +1,4 @@
+import type { Descartes } from "./arrastre";
 import { diasEntre, formatearFecha, type FechaISO } from "@/lib/fechas";
 import { RE_CODIGO_PEDIDO } from "./esquema";
 import type { JornadaFusionada } from "./fusionar";
@@ -10,7 +11,14 @@ import type { JornadaFusionada } from "./fusionar";
  * códigos podría cambiar y no queremos que la app se rompa por eso.
  */
 
-export type NivelAlerta = "bloqueo" | "aviso";
+/**
+ * - `bloqueo`: impide guardar, porque se guardaría un dato incorrecto.
+ * - `aviso`: algo que conviene revisar, pero se puede guardar igual.
+ * - `info`: lo que la aplicación hizo bien por su cuenta y conviene saber.
+ *   No es un error y no se pinta como tal: pintar de amarillo una corrección
+ *   correcta es justo lo que llenaba la pantalla de falsas alarmas.
+ */
+export type NivelAlerta = "bloqueo" | "aviso" | "info";
 
 export type CodigoAlerta =
   | "fechas-mixtas"
@@ -25,7 +33,8 @@ export type CodigoAlerta =
   | "ruta-inexistente"
   | "tarjeta-incompleta"
   | "codigo-formato"
-  | "codigo-en-otra-fecha";
+  | "codigo-en-otra-fecha"
+  | "arrastre-descartado";
 
 export interface Alerta {
   nivel: NivelAlerta;
@@ -65,10 +74,22 @@ export interface OpcionesValidacion {
  * aviso que no se puede ignorar no es un aviso, es un muro.
  */
 export function validarJornada(
-  jornada: JornadaFusionada,
+  jornada: JornadaFusionada & { descartes?: Descartes },
   opciones: OpcionesValidacion,
 ): Alerta[] {
   const alertas: Alerta[] = [];
+
+  /* Los contadores de la app de reparto cuentan la lista **entera**, arrastre
+     de la noche anterior incluido. Para compararlos con lo que queda del día
+     hay que sumarle lo que se descartó; si no, cada descarte correcto
+     aparecería como un pedido que falta. */
+  const descartes = jornada.descartes ?? { rutas: [], ordenes: [] };
+  const pedidosEnLista = jornada.ordenes.length + descartes.ordenes.length;
+  const rutasEnLista = jornada.rutas.length + descartes.rutas.length;
+
+  if (descartes.ordenes.length > 0 || descartes.rutas.length > 0) {
+    alertas.push(explicarDescartes(descartes));
+  }
   const { hoy, fechaElegida = null, codigosEnOtrasFechas = {} } = opciones;
 
   /* --- fecha de la jornada (§4.5, §6) --- */
@@ -108,8 +129,8 @@ export function validarJornada(
   }
 
   /* --- contadores contra lo extraído (§6) --- */
-  if (jornada.contadorOrdenes !== null && jornada.ordenes.length !== jornada.contadorOrdenes) {
-    const faltan = jornada.contadorOrdenes - jornada.ordenes.length;
+  if (jornada.contadorOrdenes !== null && pedidosEnLista !== jornada.contadorOrdenes) {
+    const faltan = jornada.contadorOrdenes - pedidosEnLista;
     alertas.push({
       nivel: "aviso",
       codigo: "faltan-capturas-ordenes",
@@ -120,8 +141,8 @@ export function validarJornada(
     });
   }
 
-  if (jornada.contadorRutas !== null && jornada.rutas.length !== jornada.contadorRutas) {
-    const faltan = jornada.contadorRutas - jornada.rutas.length;
+  if (jornada.contadorRutas !== null && rutasEnLista !== jornada.contadorRutas) {
+    const faltan = jornada.contadorRutas - rutasEnLista;
     alertas.push({
       nivel: "aviso",
       codigo: "faltan-capturas-rutas",
@@ -242,4 +263,43 @@ function rutasSolapadas(jornada: JornadaFusionada): string[] {
     }
   }
   return pares;
+}
+
+/**
+ * Explica en una frase qué se quitó y por qué.
+ *
+ * Quitar pedidos sin decirlo sería peor que no quitarlos: si un día la regla se
+ * equivoca, el repartidor tiene que poder verlo y reclamar. Por eso se nombran
+ * las rutas por su hora —que es como las recuerda— y los pedidos por su código.
+ */
+function explicarDescartes(descartes: Descartes): Alerta {
+  const partes: string[] = [];
+
+  if (descartes.rutas.length > 0) {
+    const numeros = descartes.rutas.map((r) => r.numero);
+    const horas = descartes.rutas.map((r) => r.hora_inicio ?? "?");
+    const deRuta = descartes.ordenes.filter((o) => o.motivo === "ruta-anterior").length;
+    partes.push(
+      `${numeros.length === 1 ? `La ruta ${numeros[0]}` : `Las rutas ${numeros.join(" y ")}`} ` +
+        `(${horas.join(" y ")}) ${numeros.length === 1 ? "es" : "son"} de la noche anterior` +
+        (deRuta > 0 ? ` y sus ${deRuta} pedido${deRuta === 1 ? "" : "s"} ya se cuentan ese día` : "") +
+        ".",
+    );
+  }
+
+  const repetidos = descartes.ordenes.filter((o) => o.motivo === "ya-guardado");
+  if (repetidos.length > 0) {
+    const fechas = [...new Set(repetidos.map((o) => o.fechaPrevia).filter(Boolean))] as FechaISO[];
+    partes.push(
+      `${repetidos.length === 1 ? "Un pedido ya estaba guardado" : `${repetidos.length} pedidos ya estaban guardados`} ` +
+        `el ${fechas.map(formatearFecha).join(", ")}: un pedido no se cobra dos veces.`,
+    );
+  }
+
+  return {
+    nivel: "info",
+    codigo: "arrastre-descartado",
+    mensaje: `No se cuentan en este día. ${partes.join(" ")}`,
+    referencias: descartes.ordenes.map((o) => o.codigo),
+  };
 }

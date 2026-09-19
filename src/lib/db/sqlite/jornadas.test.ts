@@ -75,14 +75,16 @@ describe("guardar y leer", () => {
   it("numera los pedidos con la ruta a la que pertenecen, no con su id", async () => {
     await guardarJornada(jornadaDe("2026-09-16", 3, 6), "reemplazar");
     const j = await jornadaPorFecha("2026-09-16" as FechaISO);
-    expect(j!.ordenes.map((o) => o.ruta)).toEqual([1, 2, 3, 1, 2, 3]);
+    // Enseña el número de ruta, no su id; y agrupados por la hora de su ruta.
+    expect(j!.ordenes.map((o) => o.ruta)).toEqual([1, 1, 2, 2, 3, 3]);
   });
 
-  it("ordena rutas por número y pedidos por posición", async () => {
+  it("ordena rutas por número y pedidos por la hora de su ruta", async () => {
     await guardarJornada(jornadaDe("2026-09-16", 4, 8), "reemplazar");
     const j = await jornadaPorFecha("2026-09-16" as FechaISO);
     expect(j!.rutas.map((r) => r.numero)).toEqual([1, 2, 3, 4]);
-    expect(j!.ordenes.map((o) => o.posicion)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    // Los pedidos 1 y 5 son de la ruta 1 (09:00), el 2 y el 6 de la 2…
+    expect(j!.ordenes.map((o) => o.posicion)).toEqual([1, 5, 2, 6, 3, 7, 4, 8]);
   });
 
   it("calcula la duración de cada ruta", async () => {
@@ -216,7 +218,7 @@ describe("pedidos añadidos a mano", () => {
 
     const j = await jornadaPorFecha("2026-09-16" as FechaISO);
     expect(j!.ordenes).toHaveLength(7);
-    expect(j!.ordenes.at(-1)!.codigo).toBe("v99999999wofp-01");
+    expect(j!.ordenes.some((o) => o.codigo === "v99999999wofp-01")).toBe(true);
   });
 
   it("queda marcado como manual, para saber de dónde salió la cifra", async () => {
@@ -295,5 +297,33 @@ describe("pedidos añadidos a mano", () => {
 
     const [dia] = await resumenPorRango("2026-09-16" as FechaISO, "2026-09-16" as FechaISO);
     expect(dia.montoCentimos).toBe(2 * 1000 + 1150);
+  });
+});
+
+describe("orden de los pedidos", () => {
+  it("van por la hora de salida de su ruta, no por el orden de lectura", async () => {
+    const base = jornadaDe("2026-09-16", 2, 0);
+    await guardarJornada(
+      {
+        ...base,
+        rutas: [
+          { numero: 1, estado: "Finalizado", horaInicio: "15:00", horaFin: "15:30" },
+          { numero: 2, estado: "Finalizado", horaInicio: "10:00", horaFin: "10:30" },
+        ],
+        ordenes: [
+          { codigo: "v11111111wofp-01", estado: "Entregado", posicion: 1, ruta: 1, tramo: 1, km: null, montoCentimos: 1000 },
+          { codigo: "v22222222wofp-01", estado: "Entregado", posicion: 2, ruta: 2, tramo: 1, km: null, montoCentimos: 1000 },
+          { codigo: "v33333333wofp-01", estado: "Entregado", posicion: 3, ruta: null, tramo: 1, km: null, montoCentimos: 1000 },
+        ],
+      },
+      "reemplazar",
+    );
+    const j = await jornadaPorFecha("2026-09-16" as FechaISO);
+    // La ruta 2 salió a las 10:00: sus pedidos van primero. Los sin ruta, al final.
+    expect(j!.ordenes.map((o) => o.codigo)).toEqual([
+      "v22222222wofp-01",
+      "v11111111wofp-01",
+      "v33333333wofp-01",
+    ]);
   });
 });

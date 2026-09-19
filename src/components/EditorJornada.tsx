@@ -8,6 +8,7 @@ import {
   cambiarHorarioDeJornada,
   cambiarTramoDePedido,
   eliminarJornada,
+  eliminarPedido,
 } from "@/app/(app)/jornada/acciones";
 import { Alerta, Check } from "@/components/iconos";
 import { Aviso, ChipTramo, EstadoPedido } from "@/components/ui";
@@ -34,6 +35,7 @@ export function EditorJornada({
   regla,
   editable,
   esHoy,
+  alCambiar,
 }: {
   fecha: string;
   jornada: {
@@ -45,6 +47,15 @@ export function EditorJornada({
   regla: ReglaPago;
   editable: boolean;
   esHoy: boolean;
+  /**
+   * Vuelve a leer el día después de un cambio.
+   *
+   * Dentro del APK no hay servidor que devuelva la página actualizada: la
+   * pantalla lee la base del teléfono una vez y ya. `router.refresh()`, que era
+   * lo que se usaba, no vuelve a leerla, así que un tramo cambiado se guardaba
+   * pero no se veía hasta salir y volver.
+   */
+  alCambiar?: () => void;
 }) {
   const router = useRouter();
   const [pendiente, iniciar] = useTransition();
@@ -64,6 +75,7 @@ export function EditorJornada({
       setAviso(r.ok ? { tono: "bien", texto: r.mensaje } : { tono: "mal", texto: r.error });
       if (r.ok) {
         alTerminar?.();
+        alCambiar?.();
         router.refresh();
       }
     });
@@ -274,6 +286,12 @@ export function EditorJornada({
           regla={regla}
           pendiente={pendiente}
           onCerrar={() => setEditando(null)}
+          onBorrar={() =>
+            ejecutar(
+              () => eliminarPedido(fecha, editando.id),
+              () => setEditando(null),
+            )
+          }
           onGuardar={(tramo, km, montoManualCentimos) =>
             ejecutar(
               () =>
@@ -320,14 +338,17 @@ function HojaTramo({
   pendiente,
   onCerrar,
   onGuardar,
+  onBorrar,
 }: {
   orden: OrdenFila;
   regla: ReglaPago;
   pendiente: boolean;
   onCerrar: () => void;
   onGuardar: (tramo: number, km: number | null, montoManualCentimos: number | null) => void;
+  onBorrar: () => void;
 }) {
   const [manual, setManual] = useState("");
+  const [confirmandoBorrado, setConfirmandoBorrado] = useState(false);
 
   useCapa(onCerrar);
 
@@ -414,6 +435,44 @@ function HojaTramo({
               Aplicar
             </button>
           </div>
+        </div>
+
+        {/* Borrar pide confirmación: no se puede deshacer, y en un día guardado
+            el pedido ya cuenta para el pago de la semana. */}
+        <div className="border-t border-linea pt-4">
+          {confirmandoBorrado ? (
+            <div className="flex flex-col gap-3 rounded-btn bg-mal-suave p-3">
+              <p className="text-sm text-mal">
+                ¿Borrar el pedido <b className="font-mono">{orden.codigo}</b>? Dejará de contar para
+                el pago de esta semana.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={onBorrar}
+                  disabled={pendiente}
+                  className="min-h-11 flex-1 rounded-btn bg-mal px-4 text-sm font-semibold text-white"
+                >
+                  Sí, borrarlo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmandoBorrado(false)}
+                  className="boton-sec flex-1"
+                >
+                  No
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmandoBorrado(true)}
+              className="min-h-11 w-full rounded-btn px-4 text-sm font-semibold text-mal"
+            >
+              Borrar este pedido
+            </button>
+          )}
         </div>
 
         <button type="button" className="boton-sec" onClick={onCerrar} disabled={pendiente}>

@@ -6,6 +6,7 @@ import {
   actualizarHorario,
   actualizarTramo,
   borrarJornada,
+  borrarPedido,
   jornadaPorFecha,
   reglaVigente,
 } from "@/lib/db/sqlite/jornadas";
@@ -147,4 +148,29 @@ export async function eliminarJornada(
     };
   }
   return { ok: true, mensaje: `Jornada del ${fecha} borrada.` };
+}
+
+/**
+ * Borra un pedido de un día ya guardado.
+ *
+ * Para cuando el lector tomó mal un dato y el pedido nunca debió estar: un
+ * código leído de otra captura, un arrastre de la noche anterior que se coló.
+ * La pantalla pide confirmación antes de llegar aquí. Como el resto de
+ * ediciones, no se permite en una semana cerrada.
+ */
+export async function eliminarPedido(fecha: string, ordenId: string): Promise<Resultado> {
+  if (!esFechaISO(fecha)) return { ok: false, error: "Fecha no válida." };
+
+  const editable = await semanaEditable(fecha);
+  if (!editable.ok) return { ok: false, error: editable.error };
+
+  try {
+    await borrarPedido(ordenId);
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "No se pudo borrar el pedido.",
+    };
+  }
+  return { ok: true, mensaje: "Pedido borrado." };
 }

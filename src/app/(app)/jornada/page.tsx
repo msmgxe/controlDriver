@@ -97,6 +97,7 @@ function Contenido() {
         regla={regla}
         editable={editable}
         esHoy={fecha === hoyEnLima()}
+        alCambiar={recargar}
       />
 
       {editable && (

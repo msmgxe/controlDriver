@@ -181,6 +181,7 @@ export async function jornadasPorRango(
 
     // Los pedidos guardan el id de su ruta, pero la interfaz enseña el número.
     const numeroPorId = new Map(misRutas.map((r) => [r.id, r.numero]));
+    const inicioPorNumero = new Map(misRutas.map((r) => [r.numero, r.horaInicio ?? "99:99"]));
 
     const misOrdenes: OrdenFila[] = (ordenesPorJornada.get(j.id) ?? [])
       .map((o) => ({
@@ -194,7 +195,16 @@ export async function jornadasPorRango(
         montoCentimos: o.monto_centimos,
         manual: aBool(o.manual),
       }))
-      .sort((a, b) => a.posicion - b.posicion);
+      /* En el orden en que se hicieron: por la hora de salida de su ruta, y
+         dentro de cada ruta en el orden de la lista. Ordenar solo por la
+         posición de lectura dejaba el historial saltando de la tarde a la
+         mañana, porque las capturas no se suben necesariamente en orden. Los
+         pedidos sin ruta van al final, donde se ven y se pueden corregir. */
+      .sort((a, b) => {
+        const ha = a.ruta === null ? "99:99" : (inicioPorNumero.get(a.ruta) ?? "99:99");
+        const hb = b.ruta === null ? "99:99" : (inicioPorNumero.get(b.ruta) ?? "99:99");
+        return ha.localeCompare(hb) || a.posicion - b.posicion;
+      });
 
     return {
       id: j.id,

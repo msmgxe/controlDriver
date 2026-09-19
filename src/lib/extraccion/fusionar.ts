@@ -20,6 +20,11 @@ import type {
 export interface RutaFusionada extends RutaExtraida {
   /** Cuántas capturas la traían. Solo para diagnóstico. */
   apariciones: number;
+  /**
+   * Orden de su primera aparición, bajando por las capturas. Es el orden de la
+   * lista de la app de reparto, que es el que manda para numerar —no la hora—.
+   */
+  posicion: number;
 }
 
 export interface OrdenFusionada extends OrdenExtraida {
@@ -76,11 +81,12 @@ export function fusionarCapturas(imagenes: readonly ImagenExtraida[]): JornadaFu
 
       const previa = rutasPorClave.get(clave);
       if (!previa) {
-        rutasPorClave.set(clave, { ...ruta, apariciones: 1 });
+        rutasPorClave.set(clave, { ...ruta, apariciones: 1, posicion: rutasPorClave.size + 1 });
       } else {
         rutasPorClave.set(clave, {
           ...combinarRuta(previa, ruta),
           apariciones: previa.apariciones + 1,
+          posicion: previa.posicion,
         });
       }
     }
@@ -117,7 +123,9 @@ export function fusionarCapturas(imagenes: readonly ImagenExtraida[]): JornadaFu
     resumenOrdenes,
     rutas: numerarRutas([...rutasPorClave.values()]),
     ordenes: cuadrarConElResumen(
-      [...ordenesPorCodigo.values()].sort((a, b) => a.posicion - b.posicion),
+      completarRutasPorVecinos(
+        [...ordenesPorCodigo.values()].sort((a, b) => a.posicion - b.posicion),
+      ),
       resumenOrdenes,
     ),
     conteoImagenes,
@@ -127,29 +135,30 @@ export function fusionarCapturas(imagenes: readonly ImagenExtraida[]): JornadaFu
 /**
  * Pone a cada ruta su número definitivo.
  *
- * Las rutas del día se numeran en el orden en que ocurren: la 1 es la primera
- * salida, la 2 la siguiente. Eso permite reconstruir el número de una ruta a
- * la que no se le vio el círculo, a partir de las que sí se leyeron:
+ * El número es el de **la lista de la app de reparto**, y esa lista no va por
+ * orden de hora: suele empezar con una o dos rutas de la noche anterior —la 1 a
+ * las 20:21, la 2 a las 21:24— y recién la 3 es de la mañana. Numerar por hora,
+ * que es lo que se hacía, mandaba esas rutas al final como si fueran la 8 y la
+ * 9, y los pedidos que dicen "Ruta 1" quedaban apuntando a la ruta equivocada.
  *
- *     10:03  «1» leído
- *     11:04  ?            → 2, porque va justo después de la 1
- *     12:09  «3» leído
+ * Por eso se numera por **orden de aparición** bajando por las capturas, que es
+ * el orden de la lista. Un número leído en el círculo se respeta siempre; los
+ * que faltan se rellenan contando desde el leído más cercano:
  *
- * Un número **leído** se respeta siempre: es lo que dice la app de reparto y
- * lo que citan los pedidos con su `Ruta N`. Solo se rellenan los huecos. Si no
- * se leyó ninguno, se numeran por orden de salida desde la 1.
+ *     «1» 20:21    leído
+ *      ?  21:24    → 2, justo detrás de la 1
+ *     «3» 10:03    leído
+ *
+ * Si no se leyó ninguno, se numeran desde la 1 en el orden de la lista.
  */
 export function numerarRutas(rutas: readonly RutaFusionada[]): RutaFusionada[] {
-  const ordenadas = [...rutas].sort((a, b) =>
-    (a.hora_inicio ?? "99:99").localeCompare(b.hora_inicio ?? "99:99"),
-  );
-
-  const numeros = ordenadas.map((r) => (r.numero_deducido ? null : r.numero));
+  const enLista = [...rutas].sort((a, b) => a.posicion - b.posicion);
+  const numeros = enLista.map((r) => (r.numero_deducido ? null : r.numero));
 
   for (let i = 0; i < numeros.length; i++) {
     if (numeros[i] !== null) continue;
 
-    // La ruta leída más cercana por delante marca desde dónde contar.
+    // El leído más cercano por delante marca desde dónde contar.
     let j = i - 1;
     while (j >= 0 && numeros[j] === null) j--;
     if (j >= 0) {
@@ -157,15 +166,42 @@ export function numerarRutas(rutas: readonly RutaFusionada[]): RutaFusionada[] {
       continue;
     }
 
-    // Si no hay ninguna antes, se cuenta hacia atrás desde la siguiente leída.
+    // Si no hay ninguno antes, se cuenta hacia atrás desde el siguiente leído.
     let k = i + 1;
     while (k < numeros.length && numeros[k] === null) k++;
     numeros[i] = k < numeros.length ? Math.max(1, (numeros[k] as number) - (k - i)) : i + 1;
   }
 
-  return ordenadas
-    .map((r, i) => ({ ...r, numero: numeros[i] as number, numero_deducido: r.numero_deducido }))
+  return enLista
+    .map((r, i) => ({ ...r, numero: numeros[i] as number }))
     .sort((a, b) => a.numero - b.numero);
+}
+
+/**
+ * Pone la ruta a un pedido al que no se le leyó, **solo cuando es seguro**.
+ *
+ * La lista de pedidos de la app va ordenada por ruta —1, 1, 2, 2, 3…—. Así
+ * que si el pedido de antes y el de después son de la misma ruta, el de en
+ * medio también lo es, sin ninguna duda.
+ *
+ * Si son de rutas distintas, el pedido está en la frontera y podría ser de
+ * cualquiera de las dos. Ahí no se adivina: se deja sin ruta para que se vea y
+ * se corrija. Con dos pedidos por ruta, que es lo normal, casi todos están en
+ * una frontera, así que esto rescata pocos; el rescate de verdad viene del
+ * solapamiento entre capturas —el mismo pedido sale en dos y en una se leyó
+ * la etiqueta—, que ya resuelve la fusión.
+ */
+export function completarRutasPorVecinos(ordenes: OrdenFusionada[]): OrdenFusionada[] {
+  return ordenes.map((o, i) => {
+    if (o.ruta !== null) return o;
+
+    let antes: number | null = null;
+    for (let j = i - 1; j >= 0 && antes === null; j--) antes = ordenes[j].ruta;
+    let despues: number | null = null;
+    for (let k = i + 1; k < ordenes.length && despues === null; k++) despues = ordenes[k].ruta;
+
+    return antes !== null && antes === despues ? { ...o, ruta: antes } : o;
+  });
 }
 
 /**

@@ -65,10 +65,33 @@ function soloDigitos(trozo: string): string {
 const RE_FECHA = /resumen\s+(?:del?\s+)?(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})/;
 
 /** `Rutas 7` — el contador de la cabecera. En plural, a diferencia de `Ruta 4`. */
-const RE_CONTADOR_RUTAS = /^rutas\s*:?\s*(\d{1,3})$/;
+const RE_CONTADOR_RUTAS = /^rutas\s*[:(]?\s*(\d{1,3})\s*\)?$/;
 
 /** `Órdenes 14` — ya sin tilde por `normalizar`. */
-const RE_CONTADOR_ORDENES = /^ordenes\s*:?\s*(\d{1,3})$/;
+const RE_CONTADOR_ORDENES = /^ordenes\s*[:(]?\s*(\d{1,3})\s*\)?$/;
+
+/**
+ * En la pantalla real los contadores van dentro de un círculo junto a la
+ * pestaña: `Rutas (7)`. El lector a menudo devuelve la palabra y el número en
+ * líneas separadas, y ese `14` suelto se tomaba por el número de una ruta.
+ */
+const RE_PESTANA_RUTAS = /^rutas$/;
+const RE_PESTANA_ORDENES = /^ordenes$/;
+
+/**
+ * Un número que puede llevar delante el icono de su tarjeta.
+ *
+ * El resumen pone un ✓ verde, un ⚠ amarillo y un ! rojo delante de cada cifra.
+ * El lector los convierte en lo que le parece más cercano: un símbolo, un
+ * número dentro de un círculo, o una letra —la O por el ✓, la A por el ⚠—.
+ */
+const RE_NUMERO_CON_ICONO = /^(?:[^\w\s]|[oaq@©]|[\u2460-\u24ff])?\s*(\d{1,3})$/;
+
+/** `1 Ruta • Finalizado`: el círculo con el número y la palabra en la misma línea. */
+const RE_NUMERO_Y_RUTA = /^(\d{1,3})\s*[.·•\-)]?\s*ruta\b/;
+
+/** `Ruta 4` en cualquier punto de la línea, para cuando va junto al código. */
+const RE_RUTA_EN_LINEA = /\bruta\s*:?\s*(\d{1,3})\b/;
 
 /** `De: 10:03 a 10:27 horas` */
 const RE_HORARIO = /de:?\s*(\d{1,2}:\d{2})\s*(?:a|-|–)\s*(\d{1,2}:\d{2})/;
@@ -115,6 +138,13 @@ const ESTADOS: ReadonlyArray<{ patron: RegExp; canonico: string }> = [
   { patron: /^pendiente$/, canonico: "Pendiente" },
 ];
 
+/** Los mismos estados, buscados dentro de una línea que trae más cosas. */
+const ESTADOS_EN_LINEA: ReadonlyArray<{ patron: RegExp; canonico: string }> = [
+  { patron: /\bentrega\s+parcial\b/, canonico: "Entrega parcial" },
+  { patron: /\bno\s+entregado\b/, canonico: "No entregado" },
+  { patron: /\bentregado\b/, canonico: "Entregado" },
+];
+
 function estadoDe(linea: string): string | null {
   for (const { patron, canonico } of ESTADOS) {
     if (patron.test(linea)) return canonico;
@@ -122,35 +152,32 @@ function estadoDe(linea: string): string | null {
   return null;
 }
 
-/** `Entregado 14` cuando etiqueta y número vienen en la misma línea. */
-const RE_RESUMEN = /^(entregado|entrega\s+parcial|no\s+entregado)\s*:?\s*(\d{1,3})$/;
-
 /**
- * Localiza la tarjeta de resumen y devuelve sus líneas, para apartarlas.
+ * Lee y aparta la cabecera fija de la pantalla: los contadores de las
+ * pestañas y la tarjeta de resumen.
  *
- * Esta función nació de un error real y caro. La tarjeta de arriba de la
- * pantalla de Órdenes dice `Entregado 14 · Entrega parcial 0 · No entregado 0`,
- * pero el lector **no siempre devuelve la etiqueta y su número juntos**: al
- * estar en líneas visuales distintas, suelen salir separados.
+ * Va en una pasada previa, antes que el resto, por una razón que costó cara:
+ * todo lo de la cabecera son **números sueltos y rótulos de estado**, que es
+ * exactamente lo que el resto del intérprete busca en las tarjetas. Si no se
+ * aparta antes, el `14` del contador de órdenes se toma por el número de una
+ * ruta y el `No entregado` del resumen por el estado de un pedido —que fue lo
+ * que pintó de rojo un día entero en que se entregó todo—.
  *
- * El resultado era que el intérprete veía un `No entregado` suelto, lo tomaba
- * por el estado de un pedido, y marcaba en rojo los dieciocho pedidos de un
- * día en que se entregó todo. Un dato inventado con toda la apariencia de ser
- * correcto, que es la peor clase de error.
- *
- * Se distingue por dos señales que la tarjeta de resumen siempre cumple y una
- * tarjeta de pedido nunca: aparece **antes del primer código de pedido**, y su
- * etiqueta va **pegada a un número suelto**.
+ * El orden importa: primero los contadores, luego el resumen. El primer
+ * rótulo del resumen se decide mirando la línea anterior, y si esa línea es el
+ * `14` del contador, se equivocaba de lado.
  */
-function lineasDelResumen(lineas: readonly string[]): {
+function lineasDeCabecera(lineas: readonly string[]): {
   consumidas: Set<number>;
+  contadorRutas: number | null;
+  contadorOrdenes: number | null;
   resumen: { entregado: number; parcial: number; noEntregado: number } | null;
 } {
   const consumidas = new Set<number>();
-  const resumen = { entregado: 0, parcial: 0, noEntregado: 0 };
-  let hay = false;
+  let contadorRutas: number | null = null;
+  let contadorOrdenes: number | null = null;
 
-  // Hasta dónde puede estar el resumen: nunca después del primer pedido.
+  // Hasta dónde llega la cabecera: nunca más allá del primer pedido.
   let limite = lineas.length;
   for (let i = 0; i < lineas.length; i++) {
     if (RE_CODIGO.test(lineas[i])) {
@@ -159,66 +186,118 @@ function lineasDelResumen(lineas: readonly string[]): {
     }
   }
 
-  /* Se reúnen primero los candidatos y **luego** se decide. Consumir sobre la
-     marcha se comía también el estado de un pedido cuyo código viniera detrás,
-     que es un orden que el lector sí produce. */
-  const candidatos: Array<{ linea: number; numero: number | null; etiqueta: string; conNumero: number | null }> = [];
-
+  /* --- contadores de las pestañas --- */
   for (let i = 0; i < limite; i++) {
     const linea = normalizar(lineas[i]);
-
-    const juntos = linea.match(RE_RESUMEN);
-    if (juntos) {
-      candidatos.push({ linea: i, etiqueta: juntos[1], numero: Number(juntos[2]), conNumero: null });
+    const junto =
+      linea.match(RE_CONTADOR_RUTAS) ?? linea.match(RE_CONTADOR_ORDENES);
+    if (junto) {
+      if (RE_CONTADOR_RUTAS.test(linea)) contadorRutas = Number(junto[1]);
+      else contadorOrdenes = Number(junto[1]);
+      consumidas.add(i);
       continue;
     }
 
-    if (/^(entregado|entrega\s+parcial|no\s+entregado)$/.test(linea)) {
-      candidatos.push({ linea: i, etiqueta: linea, numero: null, conNumero: null });
+    const esPestanaRutas = RE_PESTANA_RUTAS.test(linea);
+    const esPestanaOrdenes = RE_PESTANA_ORDENES.test(linea);
+    if ((esPestanaRutas || esPestanaOrdenes) && i + 1 < limite) {
+      const m = normalizar(lineas[i + 1]).match(RE_NUMERO_CON_ICONO);
+      consumidas.add(i);
+      if (m) {
+        if (esPestanaRutas) contadorRutas = Number(m[1]);
+        else contadorOrdenes = Number(m[1]);
+        consumidas.add(i + 1);
+      }
     }
   }
 
-  /* De qué lado está el número de cada etiqueta.
-     
-     En la tarjeta, la cifra va grande arriba y el rótulo debajo, así que el
-     lector suele devolver `14 · Entregado`. Pero no siempre: hay teléfonos que
-     la dan al revés. Y decidirlo etiqueta por etiqueta no vale, porque en una
-     lista `14 · Entregado · 0 · Entrega parcial` cada rótulo tiene un número a
-     cada lado —mirar solo hacia abajo le asignaba a "Entregado" el cero del
-     siguiente—. Se decide una vez, por dónde empieza la serie. */
-  const primera = candidatos[0]?.linea ?? -1;
-  const numeroAntes =
-    primera > 0 && RE_NUMERO_SUELTO.test(normalizar(lineas[primera - 1]));
-
-  for (const c of candidatos) {
-    const vecino = numeroAntes ? c.linea - 1 : c.linea + 1;
-    if (vecino < 0 || vecino >= limite) continue;
-    const m = normalizar(lineas[vecino]).match(RE_NUMERO_SUELTO);
-    if (m) {
-      c.numero = Number(m[1]);
-      c.conNumero = vecino;
-    }
-  }
-
-  /* La tarjeta de resumen enseña siempre los tres estados, cada uno con su
-     número. Una etiqueta suelta y sin número no es el resumen: es el estado de
-     un pedido cuyo código el lector devolvió después. Exigir dos señales evita
-     confundir los dos casos. */
-  const conNumero = candidatos.filter((c) => c.numero !== null);
-  const esResumen = conNumero.length >= 2 || (conNumero.length === 1 && candidatos.length >= 2);
-  if (!esResumen) return { consumidas, resumen: null };
-
-  for (const c of candidatos) {
+  /* --- tarjeta de resumen --- */
+  const resumen = { entregado: 0, parcial: 0, noEntregado: 0 };
+  let hay = false;
+  const anotar = (etiqueta: string, cuantos: number) => {
     hay = true;
-    consumidas.add(c.linea);
-    if (c.conNumero !== null) consumidas.add(c.conNumero);
-    if (c.numero === null) continue;
-    if (c.etiqueta.startsWith("entrega ")) resumen.parcial = c.numero;
-    else if (c.etiqueta.startsWith("no ")) resumen.noEntregado = c.numero;
-    else resumen.entregado = c.numero;
+    if (etiqueta.startsWith("entrega ")) resumen.parcial = cuantos;
+    else if (etiqueta.startsWith("no ")) resumen.noEntregado = cuantos;
+    else resumen.entregado = cuantos;
+  };
+
+  const RE_ETIQUETAS = /(entrega\s+parcial|no\s+entregado|entregado)/g;
+
+  /* Leído por filas: una línea con los rótulos y la siguiente con las cifras.
+     Pasa cuando el lector recorre las tres tarjetas de izquierda a derecha. */
+  for (let i = 0; i < limite - 1; i++) {
+    if (consumidas.has(i)) continue;
+    const linea = normalizar(lineas[i]);
+    const etiquetas = [...linea.matchAll(RE_ETIQUETAS)].map((m) => m[1]);
+    if (etiquetas.length < 2) continue;
+
+    const cifras = [...normalizar(lineas[i + 1]).matchAll(/\d{1,3}/g)].map((m) => Number(m[0]));
+    if (cifras.length < etiquetas.length) continue;
+
+    etiquetas.forEach((e, k) => anotar(e, cifras[k]));
+    consumidas.add(i);
+    consumidas.add(i + 1);
   }
 
-  return { consumidas, resumen: hay ? resumen : null };
+  /* Leído por columnas: cada rótulo con su cifra justo debajo —o, en algunos
+     teléfonos, justo encima—. Se reúnen primero los candidatos y luego se
+     decide; consumir sobre la marcha se comía el estado de un pedido. */
+  const candidatos: Array<{ linea: number; etiqueta: string }> = [];
+  for (let i = 0; i < limite; i++) {
+    if (consumidas.has(i)) continue;
+    const linea = normalizar(lineas[i]);
+    if (/^(entregado|entrega\s+parcial|no\s+entregado)$/.test(linea)) {
+      candidatos.push({ linea: i, etiqueta: linea });
+      continue;
+    }
+    const juntos = linea.match(
+      /^(entregado|entrega\s+parcial|no\s+entregado)\s*:?\s*(?:[^\w\s]|[oaq@©])?\s*(\d{1,3})$/,
+    );
+    if (juntos) {
+      anotar(juntos[1], Number(juntos[2]));
+      consumidas.add(i);
+    }
+  }
+
+  /* La cifra, ¿encima o debajo del rótulo? Se decide una vez para las tres
+     tarjetas, y **mirando los extremos**, no el medio.
+
+     En el medio no se puede saber: en «Entregado · 14 · Entrega parcial · 0»
+     cada rótulo tiene una cifra a cada lado, y decidirlo rótulo a rótulo le
+     daba a cada uno la del vecino. En los extremos sí: si las cifras van
+     debajo, el último rótulo tiene la suya detrás; si van encima, el primero
+     la tiene delante y detrás del último ya no queda ninguna. Ante la duda,
+     debajo, que es como está la pantalla real. */
+  const cifraDe = (i: number): number | null => {
+    if (i < 0 || i >= limite || consumidas.has(i)) return null;
+    const m = normalizar(lineas[i]).match(RE_NUMERO_CON_ICONO);
+    return m ? Number(m[1]) : null;
+  };
+  const primera = candidatos[0]?.linea ?? -1;
+  const ultima = candidatos.at(-1)?.linea ?? -1;
+  const cifraEncima =
+    primera >= 0 && cifraDe(primera - 1) !== null && cifraDe(ultima + 1) === null;
+
+  const conCifra = candidatos.map((c) => {
+    const vecino = cifraEncima ? c.linea - 1 : c.linea + 1;
+    return { ...c, vecino, cifra: cifraDe(vecino) };
+  });
+
+  /* Una sola etiqueta suelta y sin cifra no es el resumen: es el estado de un
+     pedido cuyo código el lector devolvió después. El resumen enseña siempre
+     sus tres tarjetas. */
+  const utiles = conCifra.filter((c) => c.cifra !== null);
+  if (utiles.length >= 2 || (utiles.length === 1 && candidatos.length >= 2)) {
+    for (const c of conCifra) {
+      consumidas.add(c.linea);
+      if (c.cifra !== null) {
+        consumidas.add(c.vecino);
+        anotar(c.etiqueta, c.cifra);
+      }
+    }
+  }
+
+  return { consumidas, contadorRutas, contadorOrdenes, resumen: hay ? resumen : null };
 }
 
 /* ---------------------------------------------------------------------------
@@ -283,7 +362,8 @@ export function interpretarConContexto(
     .map((l) => l.trim())
     .filter((l) => l.length > 0);
 
-  const { consumidas, resumen } = lineasDelResumen(lineas);
+  const cabecera = lineasDeCabecera(lineas);
+  const { consumidas, resumen } = cabecera;
 
   /* --- qué forma tiene la pantalla --- */
   let codigos = 0;
@@ -325,8 +405,8 @@ export function interpretarConContexto(
   const numeroAntesDelHorario = primerNumero !== -1 && primerNumero < primerHorario;
 
   let fecha: string | null = null;
-  let contadorRutas: number | null = null;
-  let contadorOrdenes: number | null = null;
+  let contadorRutas: number | null = cabecera.contadorRutas;
+  let contadorOrdenes: number | null = cabecera.contadorOrdenes;
 
   const rutas: RutaExtraida[] = [];
   const ordenes: OrdenExtraida[] = [];
@@ -369,8 +449,20 @@ export function interpretarConContexto(
     const mCodigo = cruda.match(RE_CODIGO);
     if (mCodigo) {
       const codigo = `v${soloDigitos(mCodigo[1])}wofp-${soloDigitos(mCodigo[2])}`;
-      const estado = buscarEstado(lineas, i, orientacionEstado, consumidas);
-      const ruta = agrupada ? rutaVigente : buscarRuta(lineas, i, orientacionRuta, consumidas);
+
+      /* En la pantalla real la etiqueta `Ruta 1` va en la misma fila que el
+         código, a la derecha, y el lector a menudo los devuelve juntos. Se
+         mira primero ahí: es la asociación más segura que hay. */
+      const resto = normalizar(cruda.replace(RE_CODIGO, " "));
+      const rutaEnLaLinea = resto.match(RE_RUTA_EN_LINEA);
+      const estadoEnLaLinea = ESTADOS_EN_LINEA.find((e) => e.patron.test(resto))?.canonico ?? null;
+
+      const estado = estadoEnLaLinea ?? buscarEstado(lineas, i, orientacionEstado, consumidas);
+      const ruta = rutaEnLaLinea
+        ? Number(rutaEnLaLinea[1])
+        : agrupada
+          ? rutaVigente
+          : buscarRuta(lineas, i, orientacionRuta, consumidas);
 
       ordenes.push({
         codigo,
@@ -381,6 +473,13 @@ export function interpretarConContexto(
       numeroDeCabecera = null;
       numeroSuelto = null;
       estadoPendiente = null;
+      continue;
+    }
+
+    /* --- tarjeta de la pantalla de rutas: «1 Ruta • Finalizado» --- */
+    const mNumeroYRuta = linea.match(RE_NUMERO_Y_RUTA);
+    if (mNumeroYRuta) {
+      numeroDeCabecera = Number(mNumeroYRuta[1]);
       continue;
     }
 

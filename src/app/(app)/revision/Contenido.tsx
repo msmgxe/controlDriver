@@ -9,6 +9,7 @@ import { CLAVE_REVISION } from "@/lib/carga";
 import { Alerta, Check } from "@/components/iconos";
 import { Aviso, ChipTramo, EstadoPedido } from "@/components/ui";
 import { confirmarJornada } from "./acciones";
+import { RE_CODIGO_PEDIDO } from "@/lib/extraccion/esquema";
 import type { Alerta as AlertaValidacion } from "@/lib/extraccion/validar";
 import type { JornadaFusionada } from "@/lib/extraccion/fusionar";
 import { hoyEnLima } from "@/lib/fechas";
@@ -116,7 +117,8 @@ export function Contenido() {
   );
   const [horaEntrada, setHoraEntrada] = useState(() => datos?.permanencia?.horaEntrada ?? "");
   const [horaSalida, setHoraSalida] = useState(() => datos?.permanencia?.horaSalida ?? "");
-  const [editando, setEditando] = useState<string | null>(null);
+  // Por posición en la lista y no por código: el código también se puede corregir.
+  const [editando, setEditando] = useState<number | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -164,6 +166,7 @@ export function Contenido() {
   const { jornada, alertas } = datos;
   const bloqueos = alertas.filter((a) => a.nivel === "bloqueo");
   const avisos = alertas.filter((a) => a.nivel === "aviso");
+  const informativas = alertas.filter((a) => a.nivel === "info");
   const faltaFecha = fecha === "";
   const fechaFutura = fecha !== "" && fecha > hoy;
   const puedeGuardar =
@@ -272,6 +275,14 @@ export function Contenido() {
 
       {bloqueos.map((a) => (
         <Aviso key={a.codigo} tono="mal" titulo={a.mensaje}>
+          {a.referencias && a.referencias.length > 0 && (
+            <p className="font-mono text-xs">{a.referencias.join(", ")}</p>
+          )}
+        </Aviso>
+      ))}
+
+      {informativas.map((a) => (
+        <Aviso key={a.codigo} tono="bien" titulo={a.mensaje}>
           {a.referencias && a.referencias.length > 0 && (
             <p className="font-mono text-xs">{a.referencias.join(", ")}</p>
           )}
@@ -410,10 +421,15 @@ export function Contenido() {
                   {ruta.numero}
                 </span>
                 <span className="flex min-w-0 flex-col">
-                  <b className="font-mono text-sm font-medium">
-                    {ruta.hora_inicio ?? "--:--"} → {ruta.hora_fin ?? "--:--"}
+                  <b className="text-sm font-semibold">
+                    Ruta {ruta.numero}
+                    <span className="ml-2 font-mono font-medium text-tinta-2">
+                      {ruta.hora_inicio ?? "--:--"} → {ruta.hora_fin ?? "--:--"}
+                    </span>
                   </b>
-                  <span className="text-xs text-tinta-3">{suyos.length} pedidos</span>
+                  <span className="text-xs text-tinta-3">
+                    {suyos.length} pedido{suyos.length === 1 ? "" : "s"}
+                  </span>
                 </span>
                 {duracion !== null && (
                   <span className="ml-auto font-mono text-sm whitespace-nowrap text-tinta-2">
@@ -423,45 +439,39 @@ export function Contenido() {
               </div>
 
               {suyos.map((p) => (
-                <button
+                <FilaPedido
                   key={p.codigo}
-                  type="button"
-                  onClick={() => setEditando(p.codigo)}
-                  className="flex w-full items-center gap-3 border-b border-linea px-4 py-3 text-left last:border-b-0 hover:bg-sup-2"
-                >
-                  <span className="flex min-w-0 flex-1 flex-col gap-1">
-                    <span className="flex flex-wrap items-center gap-2">
-                      <span
-                        className={`codigo ${p.tramo > 1 ? "text-acento-tinta" : ""}`}
-                      >
-                        {p.codigo}
-                      </span>
-                    </span>
-                    <span className="flex flex-wrap items-center gap-2">
-                      <EstadoPedido estado={p.estado} />
-                      <ChipTramo tramo={p.tramo} />
-                    </span>
-                  </span>
-                  <span className="monto text-sm whitespace-nowrap">
-                    {p.tramo === TRAMO_MAS_DE_12_KM && p.montoManualCentimos === null
-                      ? "falta monto"
-                      : formatearSoles(montoDe(p))}
-                  </span>
-                </button>
+                  pedido={p}
+                  monto={montoDe(p)}
+                  onAbrir={() => setEditando(pedidos.indexOf(p))}
+                />
               ))}
             </div>
           );
         })}
       </div>
 
-      {/* Pedidos que ninguna ruta reclama: no deberían existir, pero si la
-          extracción falla es mejor verlos que perderlos. */}
+      {/* Pedidos a los que no se les leyó la ruta. Antes salían como una lista
+          de códigos en un aviso, sin forma de tocarlos: se veía el problema y
+          no se podía arreglar. Ahora son filas como las demás, y al tocarlas
+          se les asigna la ruta. */}
       {(pedidosPorRuta.get(null) ?? []).length > 0 && (
-        <Aviso tono="atento" titulo="Pedidos sin ruta asignada">
-          <p className="font-mono text-xs">
-            {(pedidosPorRuta.get(null) ?? []).map((p) => p.codigo).join(", ")}
-          </p>
-        </Aviso>
+        <div className="overflow-hidden rounded-card border border-aviso bg-sup">
+          <div className="border-b border-linea bg-aviso-suave px-4 py-3">
+            <b className="text-sm font-semibold text-aviso">Sin ruta</b>
+            <p className="text-xs text-aviso">
+              Toca cada uno para decir de qué ruta es. Si no lo sabes, se puede guardar igual.
+            </p>
+          </div>
+          {(pedidosPorRuta.get(null) ?? []).map((p) => (
+            <FilaPedido
+              key={p.codigo}
+              pedido={p}
+              monto={montoDe(p)}
+              onAbrir={() => setEditando(pedidos.indexOf(p))}
+            />
+          ))}
+        </div>
       )}
 
       {error && <Aviso tono="mal" titulo="No se pudo guardar">{error}</Aviso>}
@@ -491,15 +501,19 @@ export function Contenido() {
         </div>
       </div>
 
-      {editando && (
-        <HojaTramo
-          pedido={pedidos.find((p) => p.codigo === editando)!}
+      {editando !== null && pedidos[editando] && (
+        <HojaPedido
+          pedido={pedidos[editando]}
           regla={regla}
+          rutas={jornada.rutas.map((r) => ({ numero: r.numero, inicio: r.hora_inicio }))}
+          otrosCodigos={pedidos.filter((_, i) => i !== editando).map((p) => p.codigo)}
           onCerrar={() => setEditando(null)}
-          onGuardar={(cambios) => {
-            setPedidos((lista) =>
-              lista.map((p) => (p.codigo === editando ? { ...p, ...cambios } : p)),
-            );
+          onGuardar={(cambios, cerrar = true) => {
+            setPedidos((lista) => lista.map((p, i) => (i === editando ? { ...p, ...cambios } : p)));
+            if (cerrar) setEditando(null);
+          }}
+          onBorrar={() => {
+            setPedidos((lista) => lista.filter((_, i) => i !== editando));
             setEditando(null);
           }}
         />
@@ -517,17 +531,86 @@ function minutosEntre(inicio: string, fin: string): number {
  * Hoja inferior con los cinco tramos (§13)
  * ------------------------------------------------------------------------ */
 
-function HojaTramo({
+/**
+ * Una fila de pedido. Toda la fila se puede tocar para corregirla.
+ *
+ * El número que acompaña al código es su **posición en la lista** de la app de
+ * reparto, no una ruta: la ruta va en la cabecera de la tarjeta. Se dice así,
+ * con la palabra, porque dos números en círculo parecidos —uno de ruta y otro
+ * de pedido— eran justo lo que confundía.
+ */
+function FilaPedido({
+  pedido: p,
+  monto,
+  onAbrir,
+}: {
+  pedido: PedidoEditable;
+  monto: number;
+  onAbrir: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onAbrir}
+      className="flex w-full items-center gap-3 border-b border-linea px-4 py-3 text-left last:border-b-0 hover:bg-sup-2"
+    >
+      <span className="flex min-w-0 flex-1 flex-col gap-1">
+        <span className={`codigo ${p.tramo > 1 ? "text-acento-tinta" : ""}`}>{p.codigo}</span>
+        <span className="flex flex-wrap items-center gap-2">
+          <EstadoPedido estado={p.estado} />
+          <ChipTramo tramo={p.tramo} />
+        </span>
+      </span>
+      <span className="flex flex-col items-end gap-1">
+        <span className="monto text-sm whitespace-nowrap">
+          {p.tramo === TRAMO_MAS_DE_12_KM && p.montoManualCentimos === null
+            ? "falta monto"
+            : formatearSoles(monto)}
+        </span>
+        <span className="text-xs font-semibold text-acento">Corregir</span>
+      </span>
+    </button>
+  );
+}
+
+const ESTADOS_EDITABLES = ["Entregado", "Entrega parcial", "No entregado"] as const;
+
+/**
+ * Corregir un pedido: su código, su ruta, su estado y su tramo, o borrarlo.
+ *
+ * Existe porque el lector se equivoca, y cuando se equivoca la única salida
+ * que había era aceptar el dato malo o no guardar el día. El código se puede
+ * reescribir —si leyó un 3 por un 8—, la ruta elegir de la lista, y el pedido
+ * entero borrar si nunca debió estar.
+ *
+ * Borrar pide confirmación porque no se puede deshacer desde aquí. El resto se
+ * aplica al momento: es fácil de volver a cambiar.
+ */
+function HojaPedido({
   pedido,
   regla,
+  rutas,
+  otrosCodigos,
   onCerrar,
   onGuardar,
+  onBorrar,
 }: {
   pedido: PedidoEditable;
   regla: ReglaPago;
+  rutas: Array<{ numero: number; inicio: string | null }>;
+  otrosCodigos: string[];
   onCerrar: () => void;
-  onGuardar: (cambios: Partial<PedidoEditable>) => void;
+  onGuardar: (cambios: Partial<PedidoEditable>, cerrar?: boolean) => void;
+  onBorrar: () => void;
 }) {
+  const [codigo, setCodigo] = useState(pedido.codigo);
+  const [confirmandoBorrado, setConfirmandoBorrado] = useState(false);
+  const codigoLimpio = codigo.trim().toLowerCase();
+  const errorCodigo = !RE_CODIGO_PEDIDO.test(codigoLimpio)
+    ? "Debe tener la forma v12238726wofp-01."
+    : otrosCodigos.includes(codigoLimpio)
+      ? "Ese código ya está en la lista: un pedido no se cuenta dos veces."
+      : null;
   const [km, setKm] = useState(pedido.km === null ? "" : String(pedido.km));
   const [manual, setManual] = useState(
     pedido.montoManualCentimos === null ? "" : String(pedido.montoManualCentimos / 100),
@@ -553,18 +636,84 @@ function HojaTramo({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Tramo del pedido"
-        className="flex w-full max-w-md flex-col gap-4 rounded-t-hoja bg-sup px-4 pt-4 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] shadow-alta sm:rounded-hoja sm:pb-5"
+        aria-label="Corregir el pedido"
+        className="flex max-h-[92dvh] w-full max-w-md flex-col gap-4 overflow-y-auto rounded-t-hoja bg-sup px-4 pt-4 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] shadow-alta sm:rounded-hoja sm:pb-5"
       >
         <span className="mx-auto h-1 w-9 rounded-full bg-linea-fuerte sm:hidden" />
 
         <div>
-          <h3 className="text-[22px]">Tramo del pedido</h3>
+          <h3 className="text-[22px]">Corregir el pedido</h3>
           <p className="text-sm text-tinta-2">
-            <span className="codigo">{pedido.codigo}</span>
-            {pedido.ruta !== null && ` · ruta ${pedido.ruta}`}
+            Compara con tu captura y cambia lo que el lector haya tomado mal.
           </p>
         </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="codigo-pedido" className="text-sm font-semibold">
+            Código del pedido
+          </label>
+          <div className="flex gap-2">
+            <input
+              id="codigo-pedido"
+              value={codigo}
+              onChange={(e) => setCodigo(e.target.value)}
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
+              className="min-h-11 flex-1 rounded-btn border border-linea-fuerte bg-sup px-3 font-mono text-base"
+            />
+            <button
+              type="button"
+              className="boton-sec"
+              disabled={codigoLimpio === pedido.codigo || errorCodigo !== null}
+              onClick={() => onGuardar({ codigo: codigoLimpio }, false)}
+            >
+              Cambiar
+            </button>
+          </div>
+          {codigoLimpio !== pedido.codigo && errorCodigo && (
+            <p className="text-xs text-mal">{errorCodigo}</p>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-semibold">Ruta</span>
+            <select
+              value={pedido.ruta ?? ""}
+              onChange={(e) =>
+                onGuardar({ ruta: e.target.value === "" ? null : Number(e.target.value) }, false)
+              }
+              className="min-h-11 rounded-btn border border-linea-fuerte bg-sup px-2 text-base"
+            >
+              <option value="">Sin ruta</option>
+              {rutas.map((r) => (
+                <option key={r.numero} value={r.numero}>
+                  Ruta {r.numero}
+                  {r.inicio ? ` · ${r.inicio}` : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-semibold">Estado</span>
+            <select
+              value={pedido.estado}
+              onChange={(e) => onGuardar({ estado: e.target.value }, false)}
+              className="min-h-11 rounded-btn border border-linea-fuerte bg-sup px-2 text-base"
+            >
+              {ESTADOS_EDITABLES.map((e) => (
+                <option key={e} value={e}>
+                  {e}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <h4 className="border-t border-linea pt-4 text-sm font-semibold">
+          Tramo de distancia
+        </h4>
 
         <div role="radiogroup" aria-label="Tramo de distancia" className="flex flex-col gap-2">
           {regla.tramos.map((t) => (
@@ -681,8 +830,43 @@ function HojaTramo({
           </p>
         </div>
 
+        <div className="border-t border-linea pt-4">
+          {confirmandoBorrado ? (
+            <div className="flex flex-col gap-3 rounded-btn bg-mal-suave p-3">
+              <p className="text-sm text-mal">
+                ¿Borrar el pedido <b className="font-mono">{pedido.codigo}</b>? No se contará ni se
+                pagará en este día.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={onBorrar}
+                  className="min-h-11 flex-1 rounded-btn bg-mal px-4 text-sm font-semibold text-white"
+                >
+                  Sí, borrarlo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmandoBorrado(false)}
+                  className="boton-sec flex-1"
+                >
+                  No
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmandoBorrado(true)}
+              className="min-h-11 w-full rounded-btn px-4 text-sm font-semibold text-mal"
+            >
+              Borrar este pedido
+            </button>
+          )}
+        </div>
+
         <button type="button" className="boton-sec" onClick={onCerrar}>
-          Cerrar
+          Listo
         </button>
       </div>
     </div>
