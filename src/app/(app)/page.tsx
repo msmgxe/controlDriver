@@ -9,6 +9,7 @@ import { usePuedeEscribir } from "@/components/Licencia";
 import { Flecha, Reloj } from "@/components/iconos";
 import { MontoHero, TiraSemana } from "@/components/ui";
 import { useDatos } from "@/hooks/useDatos";
+import { useVersion } from "@/hooks/useVersion";
 import { resumenPorRango } from "@/lib/db/sqlite/jornadas";
 import {
   formatearDuracion,
@@ -161,7 +162,30 @@ export default function PaginaInicio() {
           />
         </div>
       </Acordeon>
+
+      <PieDeVersion />
     </div>
+  );
+}
+
+/**
+ * Qué versión está corriendo, al pie de Inicio.
+ *
+ * Nace de un fallo concreto: alguien estuvo probando una versión de hace
+ * varios cambios sin saberlo, porque nada en la propia app se lo decía. El
+ * número solo vivía en Ajustes, y a nadie se le ocurre ir a mirarlo si no
+ * sospecha que algo anda desactualizado. Aquí está a la vista sin buscarlo,
+ * en la pantalla que se abre siempre primero.
+ */
+function PieDeVersion() {
+  const datos = useVersion();
+  if (!datos) return null;
+
+  return (
+    <p className="pt-2 text-center text-xs text-tinta-3">
+      Rutas-A · versión {datos.version}
+      {datos.build !== "—" && ` (${datos.build})`}
+    </p>
   );
 }
 

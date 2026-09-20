@@ -4,7 +4,7 @@ import { useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 
 import { SeccionLicencia } from "@/components/SeccionLicencia";
-import { useDatos } from "@/hooks/useDatos";
+import { useVersion } from "@/hooks/useVersion";
 
 import { Candado, Check, Huella } from "@/components/iconos";
 import {
@@ -340,13 +340,7 @@ function SeccionDiagnostico() {
  * tarde buscándolo.
  */
 function SeccionVersion() {
-  const { datos } = useDatos(async () => {
-    const { Capacitor } = await import("@capacitor/core");
-    if (!Capacitor.isNativePlatform()) return { version: "navegador", build: "—" };
-    const { App } = await import("@capacitor/app");
-    const info = await App.getInfo();
-    return { version: info.version, build: String(info.build) };
-  }, []);
+  const datos = useVersion();
 
   return (
     <section className="tarjeta flex items-center justify-between gap-3">

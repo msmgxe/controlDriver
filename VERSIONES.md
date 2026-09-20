@@ -36,6 +36,13 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v17 — 19/09/2026
+- **Nuevo:** Inicio enseña al pie qué versión está corriendo. Antes solo vivía
+  en Ajustes, y nadie va a mirarlo si no sospecha que algo está
+  desactualizado. Nace de que alguien probó una versión de varios cambios
+  atrás sin saberlo, porque nada se lo decía en la pantalla que se abre
+  siempre primero.
+
 ### v16 — 19/09/2026
 - **Nuevo:** las barras de "pedidos contra permanencia" y la línea de tiempo
   de la licencia, traídas de la infografía a la app real. Sustituyen a una
