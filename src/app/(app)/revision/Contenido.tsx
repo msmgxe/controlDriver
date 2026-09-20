@@ -10,6 +10,7 @@ import { Alerta, Check } from "@/components/iconos";
 import { Aviso } from "@/components/ui";
 import { confirmarJornada } from "./acciones";
 import { FilaPedidoSimple } from "@/components/FilaPedidoSimple";
+import { ListaDeRutas, RutaManual } from "@/components/RutaManual";
 import { RE_CODIGO_PEDIDO } from "@/lib/extraccion/esquema";
 import type { Alerta as AlertaValidacion } from "@/lib/extraccion/validar";
 import type { JornadaFusionada } from "@/lib/extraccion/fusionar";
@@ -57,6 +58,13 @@ interface RespuestaExtraccion {
   imagenesLeidas: number;
   imagenesDescartadas: number;
   uso: { modelo: string; tokensEntrada: number; tokensSalida: number } | null;
+}
+
+interface RutaEditable {
+  numero: number;
+  estado: string;
+  hora_inicio: string | null;
+  hora_fin: string | null;
 }
 
 interface PedidoEditable {
@@ -121,6 +129,17 @@ export function Contenido({ alSiguiente }: { alSiguiente?: () => void } = {}) {
       montoManualCentimos: null,
     })),
   );
+  /* Editable, y no solo lo que trajo la lectura: la captura de Rutas puede
+     salir cortada, o el día puede no tener ninguna captura de rutas —se
+     cargó entero a mano—, y entonces hace falta poder crearlas aquí mismo. */
+  const [rutas, setRutas] = useState<RutaEditable[]>(() =>
+    (datos?.jornada.rutas ?? []).map((r) => ({
+      numero: r.numero,
+      estado: r.estado,
+      hora_inicio: r.hora_inicio,
+      hora_fin: r.hora_fin,
+    })),
+  );
   const [horaEntrada, setHoraEntrada] = useState(() => datos?.permanencia?.horaEntrada ?? "");
   const [horaSalida, setHoraSalida] = useState(() => datos?.permanencia?.horaSalida ?? "");
   // Por posición en la lista y no por código: el código también se puede corregir.
@@ -179,9 +198,7 @@ export function Contenido({ alSiguiente }: { alSiguiente?: () => void } = {}) {
   const avisos = alertas.filter((a) => a.nivel === "aviso");
   const informativas = alertas.filter((a) => a.nivel === "info");
   const descartes = datos?.jornada.descartes;
-  const rutasDelDia = recuperados && descartes
-    ? [...(datos?.jornada.rutas ?? []), ...descartes.rutas].sort((a, b) => a.numero - b.numero)
-    : (datos?.jornada.rutas ?? []);
+  const rutasDelDia = rutas;
 
   const horaDeRuta = new Map(rutasDelDia.map((r) => [r.numero, r.hora_inicio]));
   const pedidosEnOrden = [...pedidos].sort((a, b) => {
@@ -204,6 +221,17 @@ export function Contenido({ alSiguiente }: { alSiguiente?: () => void } = {}) {
       })),
       ...lista,
     ]);
+    setRutas((lista) =>
+      [
+        ...lista,
+        ...descartes.rutas.map((r) => ({
+          numero: r.numero,
+          estado: r.estado,
+          hora_inicio: r.hora_inicio,
+          hora_fin: r.hora_fin,
+        })),
+      ].sort((a, b) => a.numero - b.numero),
+    );
     setRecuperados(true);
   }
   const faltaFecha = fecha === "";
@@ -229,7 +257,7 @@ export function Contenido({ alSiguiente }: { alSiguiente?: () => void } = {}) {
       modo: "reemplazar",
       horaEntrada: horaEntrada || null,
       horaSalida: horaSalida || null,
-      rutas: rutasDelDia.map((r) => ({
+      rutas: rutas.map((r) => ({
         numero: r.numero,
         estado: r.estado,
         horaInicio: r.hora_inicio,
@@ -454,6 +482,40 @@ export function Contenido({ alSiguiente }: { alSiguiente?: () => void } = {}) {
           )}
         </section>
       )}
+
+      {/* Las rutas del día. Sin esto no hay dónde asignar la ruta de un
+          pedido: si una captura de Rutas salió cortada, o si el día se está
+          escribiendo entero a mano, la lista de rutas está vacía y el
+          selector de cada pedido no tiene nada que ofrecer. */}
+      <section className="flex flex-col gap-3 rounded-card bg-sup-2 p-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <span className="rotulo">Rutas del día</span>
+          <span className="text-xs text-tinta-3">
+            {rutas.length} {rutas.length === 1 ? "ruta" : "rutas"}
+          </span>
+        </div>
+        <ListaDeRutas
+          rutas={rutas.map((r) => ({ numero: r.numero, horaInicio: r.hora_inicio, horaFin: r.hora_fin }))}
+          onBorrar={(numero) => {
+            setRutas((lista) => lista.filter((r) => r.numero !== numero));
+            // El pedido no se pierde: se queda sin ruta, como en un día guardado.
+            setPedidos((lista) =>
+              lista.map((p) => (p.ruta === numero ? { ...p, ruta: null } : p)),
+            );
+          }}
+        />
+        <RutaManual
+          siguienteNumero={Math.max(0, ...rutas.map((r) => r.numero)) + 1}
+          onGuardar={(datos) =>
+            setRutas((lista) =>
+              [
+                ...lista.filter((r) => r.numero !== datos.numero),
+                { numero: datos.numero, estado: "Finalizado", hora_inicio: datos.horaInicio, hora_fin: datos.horaFin },
+              ].sort((a, b) => a.numero - b.numero),
+            )
+          }
+        />
+      </section>
 
       <p className="text-sm text-tinta-2">
         Todos los pedidos entran en el tramo 1 (0 a 3 km). Toca solo los que pasaron de 3 km.

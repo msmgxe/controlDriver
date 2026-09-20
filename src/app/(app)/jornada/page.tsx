@@ -8,11 +8,13 @@ import { Acordeon } from "@/components/Acordeon";
 import { EditorJornada } from "@/components/EditorJornada";
 import { PedidoManual } from "@/components/PedidoManual";
 import { PruebasDelDia } from "@/components/PruebasDelDia";
+import { ListaDeRutas, RutaManual } from "@/components/RutaManual";
 import { Flecha } from "@/components/iconos";
 import { Aviso, Vacio } from "@/components/ui";
 import { useDatos } from "@/hooks/useDatos";
 import { jornadaPorFecha, reglaVigente } from "@/lib/db/sqlite/jornadas";
 import { estadoDeSemana } from "@/lib/db/sqlite/liquidaciones";
+import { borrarRuta, guardarRuta } from "@/lib/db/sqlite/rutas";
 import { perfilActual } from "@/lib/db/sqlite/perfil";
 import { esFechaISO, formatearFechaLarga, hoyEnLima } from "@/lib/fechas";
 
@@ -99,6 +101,35 @@ function Contenido() {
         esHoy={fecha === hoyEnLima()}
         alCambiar={recargar}
       />
+
+      {editable && (
+        <Acordeon
+          titulo="Rutas del día"
+          resumen={`${jornada.rutas.length} ${jornada.rutas.length === 1 ? "ruta" : "rutas"}`}
+        >
+          <div className="flex flex-col gap-3">
+            {/* Sin esto no hay dónde elegir la ruta de un pedido: si la
+                captura salió cortada o el día se escribió entero a mano, la
+                lista de rutas está vacía y el selector de "Añadir un pedido"
+                no tiene nada que ofrecer. */}
+            <ListaDeRutas
+              rutas={jornada.rutas.map((r) => ({
+                numero: r.numero,
+                horaInicio: r.horaInicio,
+                horaFin: r.horaFin,
+              }))}
+              onBorrar={(numero) => {
+                const ruta = jornada.rutas.find((r) => r.numero === numero);
+                if (ruta) void borrarRuta(ruta.id).then(recargar);
+              }}
+            />
+            <RutaManual
+              siguienteNumero={Math.max(0, ...jornada.rutas.map((r) => r.numero)) + 1}
+              onGuardar={(datos) => void guardarRuta(fecha, datos).then(recargar)}
+            />
+          </div>
+        </Acordeon>
+      )}
 
       {editable && (
         <Acordeon

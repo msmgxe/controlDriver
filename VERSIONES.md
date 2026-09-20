@@ -36,6 +36,14 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v15 — 19/09/2026
+- **Nuevo:** se pueden crear, editar y borrar rutas a mano, en Revisión y en
+  el detalle de un día guardado. Sin esto no había dónde asignarle una ruta a
+  un pedido cuando la captura de Rutas salía cortada o el día se escribía
+  entero a mano: el selector de ruta aparecía vacío.
+- Borrar una ruta no borra sus pedidos: se quedan sin ruta, y se ven para
+  asignarles otra.
+
 ### v14 — 19/09/2026
 - **Arreglado:** «No se pudo abrir la base de datos ·
   *Connection rutas-a already exists*». Al recargarse la pantalla —lo hacía al
