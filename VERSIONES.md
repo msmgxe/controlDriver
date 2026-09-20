@@ -36,6 +36,24 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v18 — 20/09/2026
+- **Nuevo:** botón opcional para reordenar las rutas del 1 en adelante por
+  hora de salida, en Revisión y en el detalle de un día guardado, con
+  confirmación antes de aplicarlo. Los pedidos siguen su ruta —están
+  enlazados por su id, no por el número— así que nada se desordena por
+  debajo.
+- **Nuevo: respaldo y restauración.** En Ajustes, "Crear y compartir" genera
+  un archivo con tus jornadas, rutas, pedidos y liquidaciones, y lo entrega al
+  selector de Android para guardarlo en Drive o mandártelo por WhatsApp o
+  correo. "Restaurar" lee ese archivo, enseña qué trae antes de tocar nada, y
+  pide confirmar porque reemplaza todo lo que haya en el teléfono.
+- Aclaración importante: una actualización normal —instalar una versión
+  encima de la anterior, como se hace desde la v13— **nunca borra datos**.
+  El respaldo es para lo que sí borra: desinstalar, perder el teléfono o
+  cambiar de aparato.
+- Inicio recuerda hacer un respaldo si nunca se hizo uno, o si el último ya
+  tiene más de dos semanas.
+
 ### v17 — 19/09/2026
 - **Nuevo:** Inicio enseña al pie qué versión está corriendo. Antes solo vivía
   en Ajustes, y nadie va a mirarlo si no sospecha que algo está

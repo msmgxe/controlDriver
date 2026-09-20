@@ -11,6 +11,7 @@ import {
   reglaVigente,
 } from "@/lib/db/sqlite/jornadas";
 import { estadoDeSemana } from "@/lib/db/sqlite/liquidaciones";
+import { reordenarRutasDelDia } from "@/lib/db/sqlite/rutas";
 import { ESTADOS_DE_PEDIDO, actualizarPedido } from "@/lib/db/sqlite/pedidos";
 import { perfilActual } from "@/lib/db/sqlite/perfil";
 import { esFechaISO, type FechaISO } from "@/lib/fechas";
@@ -210,4 +211,27 @@ export async function corregirPedido(
     };
   }
   return { ok: true, mensaje: "Pedido corregido." };
+}
+
+/**
+ * Renumera las rutas del día por hora de salida. Opcional: solo se usa si la
+ * lista quedó desordenada —capturas fuera de secuencia, rutas añadidas a
+ * mano— y se prefiere que los números sigan el orden real de la jornada.
+ */
+export async function reordenarRutas(fecha: string): Promise<Resultado> {
+  const editable = await semanaEditable(fecha as FechaISO);
+  if (!editable.ok) return { ok: false, error: editable.error };
+
+  try {
+    const cambios = await reordenarRutasDelDia(fecha as FechaISO);
+    return {
+      ok: true,
+      mensaje: cambios === 0 ? "Ya estaban en orden." : `${cambios} rutas renumeradas.`,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "No se pudieron reordenar las rutas.",
+    };
+  }
 }

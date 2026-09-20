@@ -102,3 +102,76 @@ export async function borrarRuta(rutaId: string): Promise<void> {
     );
   }
 }
+
+/**
+ * Calcula la renumeración por hora, sin tocar la base.
+ *
+ * Devuelve un mapa **número viejo → número nuevo**. Las rutas sin hora de
+ * salida van al final, en el orden en que ya estaban entre ellas: no hay
+ * forma honesta de saber cuándo salieron, así que no se inventa.
+ *
+ * Separada de `reordenarRutasDelDia` para poder probarla sin una base de
+ * datos de por medio, y para que Revisión —donde las rutas todavía no se han
+ * guardado— pueda usar el mismo cálculo sobre su propio estado en memoria.
+ */
+export function reordenarPorHora(
+  rutas: ReadonlyArray<{ numero: number; horaInicio: string | null }>,
+): Map<number, number> {
+  const ordenadas = [...rutas].sort((a, b) => {
+    if (a.horaInicio === null && b.horaInicio === null) return a.numero - b.numero;
+    if (a.horaInicio === null) return 1;
+    if (b.horaInicio === null) return -1;
+    return a.horaInicio.localeCompare(b.horaInicio) || a.numero - b.numero;
+  });
+
+  const mapa = new Map<number, number>();
+  ordenadas.forEach((r, i) => mapa.set(r.numero, i + 1));
+  return mapa;
+}
+
+/**
+ * Renumera las rutas de un día ya guardado, por hora de salida.
+ *
+ * Solo cambia el número: los pedidos apuntan a su ruta por el id, no por el
+ * número, así que nada se desordena por debajo. Devuelve cuántas rutas
+ * cambiaron de número —0 significa que ya estaban en orden—, para que la
+ * pantalla lo pueda decir.
+ *
+ * Va en dos pasadas porque el número es único dentro del día: pasar
+ * directamente de "3" a "1" mientras otra ruta todavía es "1" chocaría contra
+ * esa restricción a mitad de camino. Primero se apartan todas a números
+ * negativos, que no chocan con nada, y luego se ponen los definitivos.
+ */
+export async function reordenarRutasDelDia(fecha: FechaISO): Promise<number> {
+  const jornadas = await consultar<{ id: string }>(
+    `select id from jornadas where fecha = ?`,
+    [fecha],
+  );
+  const jornadaId = jornadas[0]?.id;
+  if (!jornadaId) return 0;
+
+  const rutas = await consultar<{ id: string; numero: number; hora_inicio: string | null }>(
+    `select id, numero, hora_inicio from rutas where jornada_id = ?`,
+    [jornadaId],
+  );
+  if (rutas.length === 0) return 0;
+
+  const mapa = reordenarPorHora(rutas.map((r) => ({ numero: r.numero, horaInicio: r.hora_inicio })));
+  const cambios = rutas.filter((r) => mapa.get(r.numero) !== r.numero);
+  if (cambios.length === 0) return 0;
+
+  await enTransaccion(async () => {
+    for (const r of rutas) {
+      await ejecutar(`update rutas set numero = ? where id = ?`, [-(mapa.get(r.numero) as number), r.id]);
+    }
+    for (const r of rutas) {
+      await ejecutar(`update rutas set numero = ? where id = ?`, [mapa.get(r.numero), r.id]);
+    }
+    await ejecutar(
+      `update jornadas set actualizado_en = ?, sincronizado = 0 where id = ?`,
+      [ahora(), jornadaId],
+    );
+  });
+
+  return cambios.length;
+}

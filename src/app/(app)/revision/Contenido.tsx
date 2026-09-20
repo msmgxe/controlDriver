@@ -11,7 +11,8 @@ import { Aviso } from "@/components/ui";
 import { confirmarJornada } from "./acciones";
 import { DueloDePago } from "@/components/DueloDePago";
 import { FilaPedidoSimple } from "@/components/FilaPedidoSimple";
-import { ListaDeRutas, RutaManual } from "@/components/RutaManual";
+import { BotonReordenar, ListaDeRutas, RutaManual } from "@/components/RutaManual";
+import { reordenarPorHora } from "@/lib/db/sqlite/rutas";
 import { RE_CODIGO_PEDIDO } from "@/lib/extraccion/esquema";
 import type { Alerta as AlertaValidacion } from "@/lib/extraccion/validar";
 import type { JornadaFusionada } from "@/lib/extraccion/fusionar";
@@ -504,6 +505,26 @@ export function Contenido({ alSiguiente }: { alSiguiente?: () => void } = {}) {
             )
           }
         />
+        {rutas.length > 1 && (
+          <BotonReordenar
+            onConfirmar={() => {
+              // Todavía no hay nada guardado: la ruta de cada pedido se
+              // arrastra por su número, así que el mapa de renumeración se
+              // aplica en los dos sitios a la vez.
+              const mapa = reordenarPorHora(
+                rutas.map((r) => ({ numero: r.numero, horaInicio: r.hora_inicio })),
+              );
+              setRutas((lista) =>
+                lista
+                  .map((r) => ({ ...r, numero: mapa.get(r.numero) ?? r.numero }))
+                  .sort((a, b) => a.numero - b.numero),
+              );
+              setPedidos((lista) =>
+                lista.map((p) => (p.ruta === null ? p : { ...p, ruta: mapa.get(p.ruta) ?? p.ruta })),
+              );
+            }}
+          />
+        )}
       </section>
 
       <p className="text-sm text-tinta-2">

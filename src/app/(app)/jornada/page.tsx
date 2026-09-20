@@ -6,9 +6,10 @@ import { useSearchParams } from "next/navigation";
 
 import { Acordeon } from "@/components/Acordeon";
 import { EditorJornada } from "@/components/EditorJornada";
+import { reordenarRutas } from "./acciones";
 import { PedidoManual } from "@/components/PedidoManual";
 import { PruebasDelDia } from "@/components/PruebasDelDia";
-import { ListaDeRutas, RutaManual } from "@/components/RutaManual";
+import { BotonReordenar, ListaDeRutas, RutaManual } from "@/components/RutaManual";
 import { Flecha } from "@/components/iconos";
 import { Aviso, Vacio } from "@/components/ui";
 import { useDatos } from "@/hooks/useDatos";
@@ -127,6 +128,14 @@ function Contenido() {
               siguienteNumero={Math.max(0, ...jornada.rutas.map((r) => r.numero)) + 1}
               onGuardar={(datos) => void guardarRuta(fecha, datos).then(recargar)}
             />
+            {jornada.rutas.length > 1 && (
+              <BotonReordenar
+                onConfirmar={async () => {
+                  await reordenarRutas(fecha);
+                  recargar();
+                }}
+              />
+            )}
           </div>
         </Acordeon>
       )}

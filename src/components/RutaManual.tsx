@@ -161,3 +161,73 @@ export function ListaDeRutas({
     </div>
   );
 }
+
+/**
+ * Reordenar las rutas del 1 al N, por hora de salida.
+ *
+ * Es opcional a propósito: casi siempre las rutas ya salen en orden, y
+ * forzarlo en cada día sería tocar algo que no hace falta tocar. Existe para
+ * cuando sí se desordenan —capturas subidas fuera de secuencia, una ruta
+ * añadida a mano al final que en realidad fue la primera—.
+ *
+ * Pide confirmación porque cambia el número de todas las rutas del día a la
+ * vez y no hay un solo paso atrás una vez guardado: mejor preguntar antes que
+ * sorprender después.
+ */
+export function BotonReordenar({
+  onConfirmar,
+}: {
+  onConfirmar: () => void | Promise<void>;
+}) {
+  const [confirmando, setConfirmando] = useState(false);
+  const [aplicando, setAplicando] = useState(false);
+
+  async function aplicar() {
+    setAplicando(true);
+    try {
+      await onConfirmar();
+    } finally {
+      setAplicando(false);
+      setConfirmando(false);
+    }
+  }
+
+  if (!confirmando) {
+    return (
+      <button
+        type="button"
+        onClick={() => setConfirmando(true)}
+        className="boton-secundario self-start"
+      >
+        Reordenar por hora
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-2 rounded-btn bg-aviso-suave p-3">
+      <p className="text-sm text-aviso">
+        Las rutas quedarán numeradas del 1 en adelante, de la que salió más temprano a la que
+        salió más tarde.
+      </p>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => void aplicar()}
+          disabled={aplicando}
+          className="min-h-11 flex-1 rounded-btn bg-acento px-4 text-sm font-semibold text-acento-texto disabled:opacity-60"
+        >
+          {aplicando ? "Reordenando…" : "Sí, reordenar"}
+        </button>
+        <button
+          type="button"
+          onClick={() => setConfirmando(false)}
+          disabled={aplicando}
+          className="boton-secundario"
+        >
+          No
+        </button>
+      </div>
+    </div>
+  );
+}

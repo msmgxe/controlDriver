@@ -10,6 +10,7 @@ import { Flecha, Reloj } from "@/components/iconos";
 import { MontoHero, TiraSemana } from "@/components/ui";
 import { useDatos } from "@/hooks/useDatos";
 import { useVersion } from "@/hooks/useVersion";
+import { diasEntre } from "@/lib/licencia/estado";
 import { resumenPorRango } from "@/lib/db/sqlite/jornadas";
 import {
   formatearDuracion,
@@ -163,6 +164,7 @@ export default function PaginaInicio() {
         </div>
       </Acordeon>
 
+      <RecordatorioDeRespaldo />
       <PieDeVersion />
     </div>
   );
@@ -177,6 +179,43 @@ export default function PaginaInicio() {
  * sospecha que algo anda desactualizado. Aquí está a la vista sin buscarlo,
  * en la pantalla que se abre siempre primero.
  */
+/**
+ * Recuerda hacer un respaldo si nunca se hizo uno, o si el último ya tiene
+ * más de dos semanas.
+ *
+ * La base vive solo en este teléfono, y hasta que exista la copia en la nube
+ * un respaldo manual es la única red de seguridad real. Se avisa aquí, en
+ * Inicio, y no solo en Ajustes: nadie va a Ajustes a buscar algo que no sabe
+ * que necesita.
+ */
+function RecordatorioDeRespaldo() {
+  const { datos: ultimo } = useDatos(async () => {
+    const { ultimoRespaldoCreado } = await import("@/lib/db/sqlite/respaldo");
+    return ultimoRespaldoCreado();
+  }, []);
+
+  if (ultimo === undefined) return null; // todavía cargando
+
+  const mensaje =
+    ultimo === null
+      ? "Todavía no has hecho ningún respaldo de tus datos."
+      : diasEntre(ultimo.slice(0, 10), hoyEnLima()) >= 14
+        ? `Tu último respaldo fue hace ${diasEntre(ultimo.slice(0, 10), hoyEnLima())} días.`
+        : null;
+
+  if (!mensaje) return null;
+
+  return (
+    <Link
+      href="/ajustes"
+      className="mx-auto flex w-full max-w-[880px] items-center justify-between gap-3 rounded-btn bg-sup-2 px-4 py-2.5 text-sm text-tinta-2"
+    >
+      <span>{mensaje}</span>
+      <b className="shrink-0 text-tinta">Respaldar</b>
+    </Link>
+  );
+}
+
 function PieDeVersion() {
   const datos = useVersion();
   if (!datos) return null;
