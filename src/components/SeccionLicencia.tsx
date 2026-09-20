@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useLicencia } from "@/components/Licencia";
 import { useDatos } from "@/hooks/useDatos";
 import { activarCertificado, identificadorDelDispositivo } from "@/lib/licencia/almacen";
-import { mensajeDeLicencia } from "@/lib/licencia/estado";
+import { mensajeDeLicencia, type EstadoLicencia } from "@/lib/licencia/estado";
 
 /**
  * Tu licencia: en qué estado está, el código de este teléfono y dónde pegar
@@ -80,6 +80,10 @@ export function SeccionLicencia() {
         </p>
       )}
 
+      {/* Los tres tramos de un mes, de la infografía: mismo dibujo, ahora en
+          la propia app y no solo explicándola desde fuera. */}
+      <LineaDeLicencia estado={licencia?.estado} />
+
       <div className="flex flex-col gap-1.5">
         <span className="text-sm font-semibold">1. El código de este teléfono</span>
         <div className="flex items-center gap-2">
@@ -132,5 +136,62 @@ export function SeccionLicencia() {
         </p>
       )}
     </section>
+  );
+}
+
+/**
+ * Los tres tramos de un mes, como una barra segmentada.
+ *
+ * El mismo dibujo de la infografía ("La licencia, mes a mes"): un tramo
+ * activo, siete días de gracia, y solo lectura. El tramo en el que está
+ * ahora mismo esta licencia se resalta, para que el esquema deje de ser una
+ * explicación abstracta y pase a decir "estás aquí".
+ */
+function LineaDeLicencia({ estado }: { estado?: EstadoLicencia }) {
+  const activo = estado === "activa" || estado === "prueba";
+  const enGracia = estado === "gracia";
+  const soloLectura = estado === "vencida" || estado === "sin_licencia";
+
+  return (
+    <div
+      role="img"
+      aria-label="Un mes pagado con todo activo, luego siete días de gracia, y después solo lectura."
+      className="flex min-h-14 overflow-hidden rounded-btn text-[13px] font-semibold"
+    >
+      <Tramo etiqueta="Mes pagado" detalle="todo funciona" peso={30} activo={activo}
+        clases="bg-acento text-acento-texto" />
+      <Tramo etiqueta="7 días de gracia" peso={11} activo={enGracia}
+        clases="bg-aviso-suave text-aviso" />
+      <Tramo etiqueta="Solo lectura" peso={13} activo={soloLectura}
+        clases="bg-sup-2 text-tinta-2" />
+    </div>
+  );
+}
+
+function Tramo({
+  etiqueta,
+  detalle,
+  peso,
+  activo,
+  clases,
+}: {
+  etiqueta: string;
+  detalle?: string;
+  peso: number;
+  activo: boolean;
+  clases: string;
+}) {
+  return (
+    <div
+      style={{ flex: peso }}
+      className={`grid place-items-center px-2 py-2 text-center leading-tight ${clases} ${
+        activo ? "" : "opacity-45"
+      }`}
+    >
+      <span>
+        {etiqueta}
+        {detalle && <span className="block font-normal opacity-80">{detalle}</span>}
+      </span>
+    </div>
   );
 }

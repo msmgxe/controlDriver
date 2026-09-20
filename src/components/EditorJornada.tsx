@@ -1,5 +1,6 @@
 "use client";
 
+import { DueloDePago } from "@/components/DueloDePago";
 import { FilaPedidoSimple } from "@/components/FilaPedidoSimple";
 
 import { useState, useTransition } from "react";
@@ -173,18 +174,15 @@ export function EditorJornada({
             )}
           </div>
 
-          <dl className="flex flex-col border-t border-linea pt-3">
-            <Fila
-              etiqueta="Por pedidos"
-              valor={formatearSoles(totalPedidos)}
-              tachado={ganaPermanencia}
+          {/* Pedidos y permanencia como barras que compiten: la más larga es
+              lo que se cobra. De la infografía —"compiten, no se suman"—. */}
+          {horas > 0 && (
+            <DueloDePago
+              pedidosCentimos={totalPedidos}
+              permanenciaCentimos={montoPermanencia}
+              horas={horas}
             />
-            <Fila
-              etiqueta={`Por permanencia${horas > 0 ? ` (${horas} h)` : ""}`}
-              valor={horas > 0 ? formatearSoles(montoPermanencia) : "—"}
-              tachado={!ganaPermanencia && horas > 0}
-            />
-          </dl>
+          )}
         </section>
       )}
 
@@ -290,26 +288,6 @@ export function EditorJornada({
   );
 }
 
-function Fila({
-  etiqueta,
-  valor,
-  tachado,
-}: {
-  etiqueta: string;
-  valor: string;
-  tachado: boolean;
-}) {
-  return (
-    <div className="flex items-baseline justify-between gap-3 py-1 text-sm">
-      <dt className={tachado ? "text-tinta-3" : "font-semibold"}>{etiqueta}</dt>
-      <dd
-        className={`font-mono tabular-nums ${tachado ? "text-tinta-3 line-through" : "font-semibold"}`}
-      >
-        {valor}
-      </dd>
-    </div>
-  );
-}
 
 function HojaTramo({
   orden,

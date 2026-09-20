@@ -9,6 +9,7 @@ import { CLAVE_REVISION } from "@/lib/carga";
 import { Alerta, Check } from "@/components/iconos";
 import { Aviso } from "@/components/ui";
 import { confirmarJornada } from "./acciones";
+import { DueloDePago } from "@/components/DueloDePago";
 import { FilaPedidoSimple } from "@/components/FilaPedidoSimple";
 import { ListaDeRutas, RutaManual } from "@/components/RutaManual";
 import { RE_CODIGO_PEDIDO } from "@/lib/extraccion/esquema";
@@ -441,28 +442,16 @@ export function Contenido({ alSiguiente }: { alSiguiente?: () => void } = {}) {
             </p>
           </div>
 
-          {/* Se paga el mayor de los dos, no la suma. Decirlo así evita que
-              alguien lea el total como si fuera pedidos + permanencia. */}
-          <dl className="flex flex-col border-t border-linea pt-3">
-            <div className="flex items-baseline justify-between gap-3 py-1 text-sm">
-              <dt className={ganaPermanencia ? "text-tinta-3" : "font-semibold"}>Por pedidos</dt>
-              <dd
-                className={`font-mono tabular-nums ${ganaPermanencia ? "text-tinta-3 line-through" : "font-semibold"}`}
-              >
-                {formatearSoles(totalPedidos)}
-              </dd>
-            </div>
-            <div className="flex items-baseline justify-between gap-3 py-1 text-sm">
-              <dt className={ganaPermanencia ? "font-semibold" : "text-tinta-3"}>
-                Por permanencia
-              </dt>
-              <dd
-                className={`font-mono tabular-nums ${ganaPermanencia ? "font-semibold" : "text-tinta-3 line-through"}`}
-              >
-                {formatearSoles(montoPermanencia)}
-              </dd>
-            </div>
-          </dl>
+          {/* Pedidos y permanencia como barras que compiten: la más larga es
+              lo que se cobra. De la infografía —"compiten, no se suman"—, más
+              claro de un vistazo que una lista con tachado. */}
+          {horasEnTienda > 0 && (
+            <DueloDePago
+              pedidosCentimos={totalPedidos}
+              permanenciaCentimos={montoPermanencia}
+              horas={horasEnTienda}
+            />
+          )}
 
           {ganaPermanencia ? (
             <Aviso tono="bien" titulo="Hoy te cubre la permanencia">

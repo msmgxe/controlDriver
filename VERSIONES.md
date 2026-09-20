@@ -36,6 +36,16 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v16 — 19/09/2026
+- **Nuevo:** las barras de "pedidos contra permanencia" y la línea de tiempo
+  de la licencia, traídas de la infografía a la app real. Sustituyen a una
+  lista con tachado que decía lo mismo en texto.
+- Si ves el mensaje viejo de "Cierra la aplicación del todo y vuelve a
+  entrar" en el error de base de datos, o no ves el botón Inicio arriba:
+  **no tienes esta versión instalada.** Desinstala (`adb uninstall
+  pe.rutasa.app`) y vuelve a instalar — es la firma nueva desde la v13,
+  y no se instala encima de una v12 o anterior.
+
 ### v15 — 19/09/2026
 - **Nuevo:** se pueden crear, editar y borrar rutas a mano, en Revisión y en
   el detalle de un día guardado. Sin esto no había dónde asignarle una ruta a
