@@ -11,7 +11,7 @@ import { Aviso } from "@/components/ui";
 import { confirmarJornada } from "./acciones";
 import { DueloDePago } from "@/components/DueloDePago";
 import { FilaPedidoSimple } from "@/components/FilaPedidoSimple";
-import { BotonReordenar, ListaDeRutas, RutaManual } from "@/components/RutaManual";
+import { BotonReordenar, LectorDeRutas, ListaDeRutas, RutaManual } from "@/components/RutaManual";
 import { reordenarPorHora } from "@/lib/db/sqlite/rutas";
 import { RE_CODIGO_PEDIDO } from "@/lib/extraccion/esquema";
 import type { Alerta as AlertaValidacion } from "@/lib/extraccion/validar";
@@ -504,6 +504,25 @@ export function Contenido({ alSiguiente }: { alSiguiente?: () => void } = {}) {
               ].sort((a, b) => a.numero - b.numero),
             )
           }
+        />
+        {/* Fija al día que se está revisando: aquí nada se guarda todavía,
+            así que la ruta se mezcla en el estado en memoria, no en la base. */}
+        <LectorDeRutas
+          fecha={fecha}
+          fechaEditable={false}
+          onLeidas={(_fecha, nuevas) => {
+            setRutas((lista) =>
+              [
+                ...lista.filter((r) => !nuevas.some((n) => n.numero === r.numero)),
+                ...nuevas.map((r) => ({
+                  numero: r.numero,
+                  estado: "Finalizado",
+                  hora_inicio: r.horaInicio,
+                  hora_fin: r.horaFin,
+                })),
+              ].sort((a, b) => a.numero - b.numero),
+            );
+          }}
         />
         {rutas.length > 1 && (
           <BotonReordenar

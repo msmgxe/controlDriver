@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { Check, Flecha } from "@/components/iconos";
+import { hoyEnLima } from "@/lib/fechas";
 
 /**
  * Añadir o corregir una ruta a mano.
@@ -228,6 +229,177 @@ export function BotonReordenar({
           No
         </button>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Rutas de una o más fotos, con la fecha a la que pertenecen.
+ *
+ * El mismo lector que usa la carga principal, pero acotado a **solo rutas**:
+ * sin pedidos, sin arrastre de la noche anterior, sin las alertas de un día
+ * completo. Sirve para el caso suelto —"tengo la foto de dos rutas que me
+ * faltaron"— sin tener que rehacer la revisión de un día entero.
+ *
+ * La fecha es explícita y no se adivina de la captura: si `fechaEditable` es
+ * `false` —dentro de Revisión, donde ya existe un selector de fecha para todo
+ * el día— se usa tal cual; si no, se puede elegir, porque desde el detalle de
+ * un día concreto puede llegar la foto de la ruta de *otro* día.
+ */
+export function LectorDeRutas({
+  fecha,
+  fechaEditable = true,
+  onLeidas,
+}: {
+  fecha: string;
+  fechaEditable?: boolean;
+  onLeidas: (
+    fecha: string,
+    rutas: Array<{ numero: number; horaInicio: string | null; horaFin: string | null }>,
+  ) => void | Promise<void>;
+}) {
+  const [abierto, setAbierto] = useState(false);
+  const [fechaElegida, setFechaElegida] = useState(fecha);
+  const [estado, setEstado] = useState<"reposo" | "leyendo" | "listas" | "guardando" | "error">(
+    "reposo",
+  );
+  const [leidas, setLeidas] = useState<Array<{ numero: number; horaInicio: string | null; horaFin: string | null }>>([]);
+  const [error, setError] = useState<string | null>(null);
+  const entrada = useRef<HTMLInputElement>(null);
+
+  async function alElegirFotos(e: React.ChangeEvent<HTMLInputElement>) {
+    const archivos = Array.from(e.target.files ?? []);
+    if (entrada.current) entrada.current.value = "";
+    if (archivos.length === 0) return;
+
+    setEstado("leyendo");
+    setError(null);
+    try {
+      const { lecturaDisponible, leerRutasDeCapturas } = await import("@/lib/extraccion/enDispositivo");
+      if (!lecturaDisponible()) {
+        throw new Error("Leer capturas solo funciona en la app instalada, no en el navegador.");
+      }
+      const { paraLeer } = await import("@/lib/carga");
+      const preparadas = await Promise.all(archivos.map((a) => paraLeer(a)));
+      const rutas = await leerRutasDeCapturas(preparadas);
+
+      if (rutas.length === 0) {
+        throw new Error("No se reconoció ninguna ruta en esas fotos. Asegúrate de que son de la pestaña Rutas.");
+      }
+      setLeidas(rutas);
+      setEstado("listas");
+    } catch (fallo) {
+      setEstado("error");
+      setError(fallo instanceof Error ? fallo.message : "No se pudieron leer las fotos.");
+    }
+  }
+
+  async function confirmar() {
+    setEstado("guardando");
+    try {
+      await onLeidas(fechaElegida, leidas);
+      setAbierto(false);
+      setLeidas([]);
+      setEstado("reposo");
+    } catch (fallo) {
+      setEstado("error");
+      setError(fallo instanceof Error ? fallo.message : "No se pudieron guardar las rutas.");
+    }
+  }
+
+  if (!abierto) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setFechaElegida(fecha);
+          setLeidas([]);
+          setEstado("reposo");
+          setAbierto(true);
+        }}
+        className="boton-secundario self-start"
+      >
+        Leer rutas de una foto
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3 rounded-card border border-linea-fuerte bg-sup p-4">
+      <h4 className="font-semibold">Rutas desde una foto</h4>
+
+      <label className="flex flex-col gap-1.5">
+        <span className="text-sm font-semibold">Fecha de esas rutas</span>
+        <input
+          type="date"
+          value={fechaElegida}
+          max={hoyEnLima()}
+          disabled={!fechaEditable}
+          onChange={(e) => setFechaElegida(e.target.value)}
+          className="min-h-[52px] rounded-btn border border-linea-fuerte bg-sup px-3 text-base disabled:opacity-60"
+        />
+        {!fechaEditable && (
+          <span className="text-xs text-tinta-3">La del día que estás revisando.</span>
+        )}
+      </label>
+
+      {estado === "listas" || estado === "guardando" ? (
+        <>
+          <p className="text-sm text-tinta-2">
+            {leidas.length} {leidas.length === 1 ? "ruta encontrada" : "rutas encontradas"}:
+          </p>
+          <ListaDeRutas
+            rutas={leidas}
+            onBorrar={
+              estado === "guardando"
+                ? undefined
+                : (n) => setLeidas((l) => l.filter((r) => r.numero !== n))
+            }
+          />
+          {error && <p className="text-sm text-mal">{error}</p>}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => void confirmar()}
+              disabled={leidas.length === 0 || estado === "guardando"}
+              className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-btn bg-acento px-4 text-sm font-semibold text-acento-texto disabled:opacity-50"
+            >
+              <Check className="size-4" />
+              {estado === "guardando"
+                ? "Guardando…"
+                : `Guardar ${leidas.length === 1 ? "esta ruta" : "estas rutas"}`}
+            </button>
+            <button
+              type="button"
+              onClick={() => setAbierto(false)}
+              disabled={estado === "guardando"}
+              className="boton-secundario"
+            >
+              Cancelar
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <input
+            ref={entrada}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            multiple
+            onChange={(e) => void alElegirFotos(e)}
+            disabled={estado === "leyendo"}
+            className="text-sm"
+          />
+          <p className="text-xs text-tinta-3">
+            Una o varias capturas de la pestaña Rutas. Si se repiten por el scroll, se juntan solas.
+          </p>
+          {estado === "leyendo" && <p className="text-sm text-tinta-2">Leyendo…</p>}
+          {error && <p className="text-sm text-mal">{error}</p>}
+          <button type="button" onClick={() => setAbierto(false)} className="boton-secundario self-start">
+            Cancelar
+          </button>
+        </>
+      )}
     </div>
   );
 }

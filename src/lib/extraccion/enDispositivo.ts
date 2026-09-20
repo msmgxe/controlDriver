@@ -26,7 +26,7 @@ import { pagoDelTramo } from "@/lib/pagos/reglas";
 import { guardarPrueba } from "@/lib/db/sqlite/pruebas";
 
 import { agruparPorFecha, fusionarCapturas } from "./fusionar";
-import { interpretarConContexto, type ContextoEntreCapturas } from "./ocr";
+import { interpretarCaptura, interpretarConContexto, type ContextoEntreCapturas } from "./ocr";
 import { quitarArrastre } from "./arrastre";
 import { validarJornada } from "./validar";
 import type { ImagenExtraida } from "./esquema";
@@ -267,4 +267,36 @@ export async function ultimaLectura(): Promise<string | null> {
   } catch {
     return null;
   }
+}
+
+/**
+ * Lee solo las rutas de una o más capturas, sin pasar por el resto del
+ * flujo —ni pedidos, ni arrastre de la noche anterior, ni alertas—.
+ *
+ * Sirve para añadir rutas sueltas a un día, con foto, sin tener que rehacer
+ * la revisión completa de un día entero: se lee cada imagen, se fusionan las
+ * que se repiten por el scroll —igual que en la carga normal, por horario y
+ * no por número— y se devuelve la lista ya sin duplicados.
+ *
+ * Una imagen que no se pudo leer no tumba a las demás: se salta y se sigue,
+ * porque perder una no tiene por qué perder las otras.
+ */
+export async function leerRutasDeCapturas(
+  imagenes: readonly Blob[],
+): Promise<Array<{ numero: number; horaInicio: string | null; horaFin: string | null }>> {
+  const leidas: ImagenExtraida[] = [];
+
+  for (const imagen of imagenes) {
+    try {
+      const lineas = await leerTexto(imagen);
+      leidas.push(interpretarCaptura(lineas));
+    } catch {
+      /* Se salta esta imagen; las demás siguen su curso. */
+    }
+  }
+
+  const fusion = fusionarCapturas(leidas);
+  return fusion.rutas
+    .map((r) => ({ numero: r.numero, horaInicio: r.hora_inicio, horaFin: r.hora_fin }))
+    .sort((a, b) => a.numero - b.numero);
 }

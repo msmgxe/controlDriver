@@ -72,7 +72,7 @@ export async function comprimir(archivo: Blob, ladoMayor = LADO_PRUEBA): Promise
  * comprimir, que es lo que mejor lee el lector —cada recompresión JPEG
  * emborrona un poco las letras pequeñas—.
  */
-async function paraLeer(archivo: Blob): Promise<Blob> {
+export async function paraLeer(archivo: Blob): Promise<Blob> {
   try {
     const bitmap = await createImageBitmap(archivo);
     const lado = Math.max(bitmap.width, bitmap.height);

@@ -9,7 +9,7 @@ import { EditorJornada } from "@/components/EditorJornada";
 import { reordenarRutas } from "./acciones";
 import { PedidoManual } from "@/components/PedidoManual";
 import { PruebasDelDia } from "@/components/PruebasDelDia";
-import { BotonReordenar, ListaDeRutas, RutaManual } from "@/components/RutaManual";
+import { BotonReordenar, LectorDeRutas, ListaDeRutas, RutaManual } from "@/components/RutaManual";
 import { Flecha } from "@/components/iconos";
 import { Aviso, Vacio } from "@/components/ui";
 import { useDatos } from "@/hooks/useDatos";
@@ -127,6 +127,15 @@ function Contenido() {
             <RutaManual
               siguienteNumero={Math.max(0, ...jornada.rutas.map((r) => r.numero)) + 1}
               onGuardar={(datos) => void guardarRuta(fecha, datos).then(recargar)}
+            />
+            {/* La fecha se puede elegir: desde el detalle de un día puede
+                llegar la foto de la ruta de *otro* día que faltó cargar. */}
+            <LectorDeRutas
+              fecha={fecha}
+              onLeidas={async (fechaElegida, rutas) => {
+                for (const r of rutas) await guardarRuta(fechaElegida, r);
+                if (fechaElegida === fecha) recargar();
+              }}
             />
             {jornada.rutas.length > 1 && (
               <BotonReordenar

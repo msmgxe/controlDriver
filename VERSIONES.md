@@ -36,6 +36,16 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v19 — 20/09/2026
+- **Nuevo:** "Leer rutas de una foto", en Revisión y en el detalle de un día
+  guardado. Una o más capturas de la pestaña Rutas, se leen con el mismo
+  lector de siempre, se enseñan antes de guardar, y se pueden quitar de la
+  lista una por una antes de confirmar.
+- En el detalle de un día guardado, la fecha de esas rutas se puede elegir:
+  puede llegar la foto de la ruta de *otro* día que faltó cargar, sin salir de
+  donde se está. En Revisión queda fija al día que se está revisando, porque
+  ahí ya hay un selector de fecha para todo el día.
+
 ### v18 — 20/09/2026
 - **Nuevo:** botón opcional para reordenar las rutas del 1 en adelante por
   hora de salida, en Revisión y en el detalle de un día guardado, con
