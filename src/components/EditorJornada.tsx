@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import {
   cambiarHorarioDeJornada,
   cambiarTramoDePedido,
+  corregirPedido,
   eliminarJornada,
   eliminarPedido,
 } from "@/app/(app)/jornada/acciones";
@@ -258,7 +259,11 @@ export function EditorJornada({
         <HojaTramo
           orden={editando}
           regla={regla}
+          rutas={jornada.rutas.map((r) => ({ numero: r.numero, inicio: r.horaInicio }))}
           pendiente={pendiente}
+          onCorregir={(cambios) =>
+            ejecutar(() => corregirPedido(fecha, editando.id, cambios))
+          }
           onCerrar={() => setEditando(null)}
           onBorrar={() =>
             ejecutar(
@@ -309,20 +314,25 @@ function Fila({
 function HojaTramo({
   orden,
   regla,
+  rutas,
   pendiente,
   onCerrar,
   onGuardar,
   onBorrar,
+  onCorregir,
 }: {
   orden: OrdenFila;
   regla: ReglaPago;
+  rutas: Array<{ numero: number; inicio: string | null }>;
   pendiente: boolean;
   onCerrar: () => void;
   onGuardar: (tramo: number, km: number | null, montoManualCentimos: number | null) => void;
   onBorrar: () => void;
+  onCorregir: (cambios: { codigo?: string; ruta?: number | null; estado?: string }) => void;
 }) {
   const [manual, setManual] = useState("");
   const [confirmandoBorrado, setConfirmandoBorrado] = useState(false);
+  const [codigo, setCodigo] = useState(orden.codigo);
 
   useCapa(onCerrar);
 
@@ -336,17 +346,81 @@ function HojaTramo({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Tramo del pedido"
-        className="flex w-full max-w-md flex-col gap-4 rounded-t-hoja bg-sup px-4 pt-4 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] shadow-alta sm:rounded-hoja sm:pb-5"
+        aria-label="Corregir el pedido"
+        className="flex max-h-[92dvh] w-full max-w-md flex-col gap-4 overflow-y-auto rounded-t-hoja bg-sup px-4 pt-4 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] shadow-alta sm:rounded-hoja sm:pb-5"
       >
         <span className="mx-auto h-1 w-9 rounded-full bg-linea-fuerte sm:hidden" />
         <div>
-          <h3 className="text-[22px]">Tramo del pedido</h3>
-          <p className="text-sm text-tinta-2">
-            <span className="codigo">{orden.codigo}</span>
-            {orden.ruta !== null && ` · ruta ${orden.ruta}`}
-          </p>
+          <h3 className="text-[22px]">Corregir el pedido</h3>
+          <p className="text-sm text-tinta-2">Compara con tu captura y cambia lo que haga falta.</p>
         </div>
+
+        {/* Código, ruta y estado también en un día guardado. Antes solo se
+            podía cambiar el tramo, y si el lector le ponía la ruta de al lado
+            había que borrar el día entero y volver a cargarlo. */}
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="codigo-guardado" className="text-sm font-semibold">
+            Código del pedido
+          </label>
+          <div className="flex gap-2">
+            <input
+              id="codigo-guardado"
+              value={codigo}
+              onChange={(e) => setCodigo(e.target.value)}
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
+              className="min-h-11 flex-1 rounded-btn border border-linea-fuerte bg-sup px-3 font-mono text-base"
+            />
+            <button
+              type="button"
+              className="boton-sec"
+              disabled={pendiente || codigo.trim().toLowerCase() === orden.codigo}
+              onClick={() => onCorregir({ codigo })}
+            >
+              Cambiar
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-semibold">Ruta</span>
+            <select
+              value={orden.ruta ?? ""}
+              disabled={pendiente}
+              onChange={(e) =>
+                onCorregir({ ruta: e.target.value === "" ? null : Number(e.target.value) })
+              }
+              className="min-h-11 rounded-btn border border-linea-fuerte bg-sup px-2 text-base"
+            >
+              <option value="">Sin ruta</option>
+              {rutas.map((r) => (
+                <option key={r.numero} value={r.numero}>
+                  Ruta {r.numero}
+                  {r.inicio ? ` · ${r.inicio}` : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-semibold">Estado</span>
+            <select
+              value={orden.estado}
+              disabled={pendiente}
+              onChange={(e) => onCorregir({ estado: e.target.value })}
+              className="min-h-11 rounded-btn border border-linea-fuerte bg-sup px-2 text-base"
+            >
+              {["Entregado", "Entrega parcial", "No entregado"].map((e) => (
+                <option key={e} value={e}>
+                  {e}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <h4 className="border-t border-linea pt-4 text-sm font-semibold">Tramo de distancia</h4>
 
         <div role="radiogroup" aria-label="Tramo de distancia" className="flex flex-col gap-2">
           {regla.tramos.map((t) => (

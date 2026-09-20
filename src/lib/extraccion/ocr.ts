@@ -147,9 +147,19 @@ const ESTADOS_EN_LINEA: ReadonlyArray<{ patron: RegExp; canonico: string }> = [
   { patron: /\bentregado\b/, canonico: "Entregado" },
 ];
 
+/**
+ * El icono que acompaña al estado, leído como carácter.
+ *
+ * En la pantalla real el estado lleva delante un ✓ en un círculo, y el lector
+ * lo devuelve como lo que le parece: `| Entregado`, `• Entregado`,
+ * `V Entregado`. Buscando el estado exacto no se reconocía ninguno.
+ */
+const RE_ICONO_DELANTE = /^(?:[^\p{L}\p{N}\s]+|[vo©@])\s+/u;
+
 function estadoDe(linea: string): string | null {
+  const sinIcono = linea.replace(RE_ICONO_DELANTE, "");
   for (const { patron, canonico } of ESTADOS) {
-    if (patron.test(linea)) return canonico;
+    if (patron.test(sinIcono)) return canonico;
   }
   return null;
 }
@@ -239,6 +249,41 @@ function lineasDeCabecera(lineas: readonly string[]): {
     etiquetas.forEach((e, k) => anotar(e, cifras[k]));
     consumidas.add(i);
     consumidas.add(i + 1);
+  }
+
+  /* Leído en dos bloques: los tres rótulos seguidos y después las tres
+     cifras seguidas. Es como sale **la pantalla real**, y es la forma que no
+     se había previsto: emparejar cada rótulo con la línea de debajo le daba a
+     "No entregado" el 14 de "Entregado". De ahí salieron todos los pedidos
+     pintados de rojo en días en que se entregó todo. */
+  for (let i = 0; i < limite; i++) {
+    if (consumidas.has(i)) continue;
+    const rotulos: Array<{ linea: number; etiqueta: string }> = [];
+    let j = i;
+    while (j < limite && !consumidas.has(j)) {
+      const l = normalizar(lineas[j]);
+      if (!/^(entregado|entrega\s+parcial|no\s+entregado)$/.test(l)) break;
+      rotulos.push({ linea: j, etiqueta: l });
+      j++;
+    }
+    if (rotulos.length < 2) continue;
+
+    const cifras: Array<{ linea: number; valor: number }> = [];
+    let k = j;
+    while (k < limite && cifras.length < rotulos.length && !consumidas.has(k)) {
+      const m = normalizar(lineas[k]).match(RE_NUMERO_CON_ICONO);
+      if (!m) break;
+      cifras.push({ linea: k, valor: Number(m[1]) });
+      k++;
+    }
+    if (cifras.length !== rotulos.length) continue;
+
+    rotulos.forEach((r, n) => {
+      anotar(r.etiqueta, cifras[n].valor);
+      consumidas.add(r.linea);
+      consumidas.add(cifras[n].linea);
+    });
+    break;
   }
 
   /* Leído por columnas: cada rótulo con su cifra justo debajo —o, en algunos

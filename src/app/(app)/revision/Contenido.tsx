@@ -99,7 +99,7 @@ function descartarPrimero(): number {
   }
 }
 
-export function Contenido() {
+export function Contenido({ alSiguiente }: { alSiguiente?: () => void } = {}) {
   const router = useRouter();
   const hoy = hoyEnLima();
 
@@ -246,11 +246,11 @@ export function Contenido() {
     }
     const pendientes = descartarPrimero();
     if (pendientes > 0) {
-      /* Quedan días de esta misma carga. Se recarga la pantalla para que
-         arranque limpia con el siguiente: reutilizar el estado del día
+      /* Quedan días de esta misma carga. La pantalla se monta de nuevo para
+         que arranque limpia con el siguiente: reutilizar el estado del día
          anterior dejaría tramos y horarios del día que se acaba de guardar. */
-      router.refresh();
-      window.location.reload();
+      window.scrollTo({ top: 0 });
+      alSiguiente?.();
       return;
     }
     router.push("/");

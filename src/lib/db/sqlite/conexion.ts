@@ -40,7 +40,16 @@ function obtenerMotor(): Promise<Motor> {
   if (motor) return Promise.resolve(motor);
   /* Se guarda la promesa, no el motor: si dos pantallas piden la base a la vez
      mientras aún se está abriendo, ambas esperan la misma apertura. */
-  arranque ??= motorDeCapacitor().then((m) => (motor = m));
+  /* Si la apertura falla, se olvida el intento: el siguiente vuelve a probar.
+     Antes el fallo quedaba guardado y cualquier reintento devolvía el mismo
+     error hasta cerrar la aplicación del todo. */
+  arranque ??= motorDeCapacitor().then(
+    (m) => (motor = m),
+    (fallo) => {
+      arranque = null;
+      throw fallo;
+    },
+  );
   return arranque;
 }
 
@@ -101,12 +110,39 @@ async function motorDeCapacitor(): Promise<Motor> {
     await sqlite.initWebStore();
   }
 
-  /* Tras un recargado en caliente la conexión anterior puede seguir viva, y el
-     plugin rechaza abrir dos veces la misma base. */
-  const yaExiste = (await sqlite.isConnection(NOMBRE_BASE, false)).result;
-  const db = yaExiste
-    ? await sqlite.retrieveConnection(NOMBRE_BASE, false)
-    : await sqlite.createConnection(NOMBRE_BASE, false, "no-encryption", VERSION_ESQUEMA, false);
+  /* La base se abre en la parte nativa de Android, y esa parte **sobrevive a
+     que la página se recargue**. Tras un recargado —que la app hace al pasar
+     de un día al siguiente en una carga de varios, o al activar la licencia—,
+     la página empieza de cero sin saber que Android ya la tiene abierta, pide
+     abrirla otra vez, y el plugin se niega: "Connection rutas-a already
+     exists". Eso dejaba la app en la pantalla de "no se pudo abrir la base",
+     justo al terminar de cargar un día.
+
+     La receta del propio plugin: poner de acuerdo las dos partes primero
+     (`checkConnectionsConsistency`) y, si la conexión existe, recuperarla en
+     vez de crearla. Y por si aun así se cuela, un "ya existe" al crear se
+     trata como lo que es —una conexión que se puede reutilizar—, no como un
+     error. */
+  const consistentes = await sqlite
+    .checkConnectionsConsistency()
+    .then((r) => r.result ?? false)
+    .catch(() => false);
+  const yaExiste = await sqlite
+    .isConnection(NOMBRE_BASE, false)
+    .then((r) => r.result ?? false)
+    .catch(() => false);
+
+  let db;
+  if (consistentes && yaExiste) {
+    db = await sqlite.retrieveConnection(NOMBRE_BASE, false);
+  } else {
+    try {
+      db = await sqlite.createConnection(NOMBRE_BASE, false, "no-encryption", VERSION_ESQUEMA, false);
+    } catch (fallo) {
+      if (!String(fallo).includes("already exists")) throw fallo;
+      db = await sqlite.retrieveConnection(NOMBRE_BASE, false);
+    }
+  }
 
   if (!(await db.isDBOpen()).result) await db.open();
   /* Sentencia a sentencia, y cada una con su red. Antes iban todas juntas: si

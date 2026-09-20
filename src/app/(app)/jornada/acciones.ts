@@ -11,6 +11,7 @@ import {
   reglaVigente,
 } from "@/lib/db/sqlite/jornadas";
 import { estadoDeSemana } from "@/lib/db/sqlite/liquidaciones";
+import { ESTADOS_DE_PEDIDO, actualizarPedido } from "@/lib/db/sqlite/pedidos";
 import { perfilActual } from "@/lib/db/sqlite/perfil";
 import { esFechaISO, type FechaISO } from "@/lib/fechas";
 import { TRAMO_MAS_DE_12_KM, pagoDelTramo } from "@/lib/pagos/reglas";
@@ -173,4 +174,40 @@ export async function eliminarPedido(fecha: string, ordenId: string): Promise<Re
     };
   }
   return { ok: true, mensaje: "Pedido borrado." };
+}
+
+const esquemaCorreccion = z.object({
+  codigo: z.string().min(1).max(40).optional(),
+  ruta: z.number().int().min(1).max(99).nullable().optional(),
+  estado: z.enum(ESTADOS_DE_PEDIDO).optional(),
+});
+
+/**
+ * Corrige el código, la ruta o el estado de un pedido ya guardado.
+ *
+ * Antes solo se podía cambiar el tramo o borrar el pedido: si el lector le
+ * ponía la ruta de al lado, la única salida era borrar el día entero y volver
+ * a cargarlo. Las comprobaciones de fondo están en la capa de datos; aquí solo
+ * se mira que la semana se pueda tocar y se traduce el fallo a un mensaje.
+ */
+export async function corregirPedido(
+  fecha: string,
+  ordenId: string,
+  cambios: unknown,
+): Promise<Resultado> {
+  const parseado = esquemaCorreccion.safeParse(cambios);
+  if (!parseado.success) return { ok: false, error: "Datos no válidos." };
+
+  const editable = await semanaEditable(fecha as FechaISO);
+  if (!editable.ok) return { ok: false, error: editable.error };
+
+  try {
+    await actualizarPedido(ordenId, parseado.data);
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "No se pudo corregir el pedido.",
+    };
+  }
+  return { ok: true, mensaje: "Pedido corregido." };
 }

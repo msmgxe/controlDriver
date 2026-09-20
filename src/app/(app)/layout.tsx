@@ -32,7 +32,7 @@ function Contenido({ children }: { children: React.ReactNode }) {
   /* La primera vez que se abre la app no hay ni tienda ni perfil, y sin tienda
      no hay regla de pago que aplicar. Sembrar aquí evita que la primera
      pantalla salga a medio configurar. */
-  const { datos: perfil, error } = useDatos(async () => {
+  const { datos: perfil, error, recargar } = useDatos(async () => {
     await sembrarSiHaceFalta();
     return perfilActual();
   }, []);
@@ -49,10 +49,18 @@ function Contenido({ children }: { children: React.ReactNode }) {
           </span>
           <h1 className="text-2xl">No se pudo abrir la base de datos</h1>
           <p className="text-sm text-tinta-2">
-            Tus datos siguen ahí; lo que falló fue abrirlos. Cierra la aplicación del todo y
-            vuelve a entrar.
+            Tus datos siguen ahí; lo que falló fue abrirlos. Casi siempre basta con volver a
+            intentarlo.
           </p>
-          <p className="rounded-btn bg-sup-2 px-3 py-2 font-mono text-xs text-tinta-3">{error}</p>
+          <button type="button" onClick={recargar} className="boton-principal">
+            Volver a intentar
+          </button>
+          <p className="text-xs text-tinta-3">
+            Si sigue fallando, cierra la aplicación del todo y vuelve a entrar.
+          </p>
+          <p className="rounded-btn bg-sup-2 px-3 py-2 font-mono text-xs text-tinta-3 select-text">
+            {error}
+          </p>
         </div>
       </div>
     );

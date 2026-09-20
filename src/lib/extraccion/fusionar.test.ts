@@ -259,14 +259,25 @@ describe("validarJornada", () => {
     expect(hayBloqueos(alertas)).toBe(false);
   });
 
-  it("avisa de un código ya registrado en otra fecha", () => {
+  it("dice que traerá a este día un pedido guardado en uno posterior", () => {
+    /* Un pedido vive en el día más antiguo en que aparece. Si está guardado en
+       un día posterior es porque aquel lo traía como arrastre de la noche: al
+       guardar este, se le quita a aquel. No es un error, es ordenar. */
+    const alertas = validarJornada(fusionarCrudas(capturas()), {
+      hoy: HOY,
+      codigosEnOtrasFechas: { "v12238726wofp-01": "2026-09-20" },
+    });
+    const aviso = alertas.find((a) => a.codigo === "codigo-en-otra-fecha");
+    expect(aviso?.nivel).toBe("info");
+    expect(aviso?.referencias).toEqual(["v12238726wofp-01"]);
+  });
+
+  it("uno guardado en un día ANTERIOR no genera ese aviso: se descarta antes", () => {
     const alertas = validarJornada(fusionarCrudas(capturas()), {
       hoy: HOY,
       codigosEnOtrasFechas: { "v12238726wofp-01": "2026-09-10" },
     });
-    const aviso = alertas.find((a) => a.codigo === "codigo-en-otra-fecha");
-    expect(aviso?.nivel).toBe("aviso");
-    expect(aviso?.referencias).toEqual(["v12238726wofp-01"]);
+    expect(alertas.find((a) => a.codigo === "codigo-en-otra-fecha")).toBeUndefined();
   });
 
   it("avisa si un pedido apunta a una ruta que no está en las capturas", () => {

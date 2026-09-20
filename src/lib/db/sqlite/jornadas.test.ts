@@ -11,6 +11,7 @@ import { usarMotor } from "./conexion";
 import { motorEnMemoria } from "./motor-en-memoria";
 import {
   actualizarTramo,
+  quitarDeDiasPosteriores,
   agregarPedidoManual,
   borrarPedido,
   borrarJornada,
@@ -347,5 +348,39 @@ describe("el monto de un día es el mismo en todas las pantallas", () => {
     const [dia] = await resumenPorRango("2026-09-17" as FechaISO, "2026-09-17" as FechaISO);
     expect(dia.montoCentimos).toBe(15_000);
     expect(dia.pagaPor).toBe("pedidos");
+  });
+});
+
+describe("un pedido vive en el día más antiguo en que aparece", () => {
+  /* La app de reparto abre cada día con las rutas de la noche anterior. Si se
+     carga el 18 antes que el 17, el 18 se queda con pedidos que son del 17. Al
+     guardar el 17 hay que quitárselos al 18, o se cobrarían dos veces. */
+  it("al guardar un día se le quitan sus pedidos al día posterior", async () => {
+    await guardarJornada(jornadaDe("2026-09-18", 2, 4), "reemplazar");
+    const delDieciocho = (await jornadaPorFecha("2026-09-18" as FechaISO))!.ordenes;
+    const compartido = delDieciocho[0].codigo;
+
+    const movidos = await quitarDeDiasPosteriores("2026-09-17" as FechaISO, [compartido]);
+
+    expect(movidos).toEqual([{ codigo: compartido, fecha: "2026-09-18" }]);
+    const despues = await jornadaPorFecha("2026-09-18" as FechaISO);
+    expect(despues!.ordenes.some((o) => o.codigo === compartido)).toBe(false);
+    expect(despues!.ordenes).toHaveLength(3);
+  });
+
+  it("no toca los días anteriores ni el mismo día", async () => {
+    await guardarJornada(jornadaDe("2026-09-16", 2, 4), "reemplazar");
+    const codigos = (await jornadaPorFecha("2026-09-16" as FechaISO))!.ordenes.map((o) => o.codigo);
+
+    expect(await quitarDeDiasPosteriores("2026-09-17" as FechaISO, codigos)).toEqual([]);
+    expect(await quitarDeDiasPosteriores("2026-09-16" as FechaISO, codigos)).toEqual([]);
+    expect((await jornadaPorFecha("2026-09-16" as FechaISO))!.ordenes).toHaveLength(4);
+  });
+
+  it("deja bien los contadores del día al que se le quitó", async () => {
+    await guardarJornada(jornadaDe("2026-09-18", 2, 4), "reemplazar");
+    const uno = (await jornadaPorFecha("2026-09-18" as FechaISO))!.ordenes[0].codigo;
+    await quitarDeDiasPosteriores("2026-09-17" as FechaISO, [uno]);
+    expect((await jornadaPorFecha("2026-09-18" as FechaISO))!.entregado).toBe(3);
   });
 });

@@ -3,7 +3,12 @@
 import { z } from "zod";
 
 import { esFechaISO, hoyEnLima, type FechaISO } from "@/lib/fechas";
-import { guardarJornada, registrarCarga, reglaVigente } from "@/lib/db/sqlite/jornadas";
+import {
+  guardarJornada,
+  quitarDeDiasPosteriores,
+  registrarCarga,
+  reglaVigente,
+} from "@/lib/db/sqlite/jornadas";
 import { perfilActual } from "@/lib/db/sqlite/perfil";
 import { TRAMO_MAS_DE_12_KM, pagoDelTramo } from "@/lib/pagos/reglas";
 
@@ -151,6 +156,13 @@ export async function confirmarJornada(envio: unknown): Promise<ResultadoConfirm
         ordenes,
       },
       datos.modo,
+    );
+
+    // Los pedidos de este día que otro día posterior tenía como arrastre se
+    // le quitan a aquel: un pedido vive en el día en que se hizo.
+    await quitarDeDiasPosteriores(
+      datos.fecha as FechaISO,
+      ordenes.map((o) => o.codigo),
     );
 
     if (datos.uso) {

@@ -36,6 +36,24 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v14 — 19/09/2026
+- **Arreglado:** «No se pudo abrir la base de datos ·
+  *Connection rutas-a already exists*». Al recargarse la pantalla —lo hacía al
+  pasar de un día al siguiente en una carga de varios—, Android seguía con la
+  base abierta y la app intentaba abrirla otra vez. Ya no se recarga, se
+  reutiliza la conexión, y el botón «Volver a intentar» ahora funciona de
+  verdad.
+- **Arreglado:** el resumen de la captura se leía al revés. Los tres rótulos
+  salen seguidos y luego las tres cifras, y se emparejaban mal: «14» acababa en
+  «No entregado». Ese era el origen de los pedidos en rojo.
+- **Arreglado:** el estado no se reconocía porque el ✓ se lee como `|`, `•` o
+  `V` delante de la palabra.
+- **Nuevo:** en un día guardado se puede corregir el código, la ruta y el
+  estado de un pedido, no solo el tramo.
+- **Nuevo:** un pedido vive en el día más antiguo en que aparece. Si cargas el
+  17 después del 18, los pedidos que el 18 tenía como arrastre se pasan al 17 y
+  se le quitan al 18.
+
 ### v13 — 19/09/2026
 - **Nuevo: firma propia.** La app se firma con una clave tuya, guardada en
   `~/.rutas-a`, en vez de la de pruebas. Sin esto, perder la clave de pruebas

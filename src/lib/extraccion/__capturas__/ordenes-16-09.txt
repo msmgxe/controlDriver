@@ -1,0 +1,36 @@
+12:14
+G
+?.•
+36.1
+kB/s
+aatll
+5G
+D: 78%
+Resumen del 16/09/2026
+Rutas
+Órdenes 14
+Entregado
+Entrega parcial
+No entregado
+14
+0
+0
+V12238726wofp-01
+Ruta 1
+| Entregado
+v12238812wofp-01
+Ruta 1
+• Entregado
+v12239232wofp-01
+Ruta 2
+• Entregado
+v12239089wofp-01
+Ruta 2
+• Entregado
+v12239528wofp-01
+Ruta 3
+• Entregado
+v12239312wofp-01
+Ruta 3
+Cerrar
+A Borrar

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import dynamic from "next/dynamic";
 
 /**
@@ -16,6 +17,10 @@ const Contenido = dynamic(() => import("./Contenido").then((m) => m.Contenido), 
   loading: () => <p className="py-10 text-center text-sm text-tinta-3">Cargando la revisión…</p>,
 });
 
+/* Al guardar un día de una carga de varios, se pasa al siguiente **montando la
+   pantalla de nuevo**, no recargando la página. La recarga era lo que dejaba a
+   Android con la base abierta y a la app intentando abrirla otra vez. */
 export default function PaginaRevision() {
-  return <Contenido />;
+  const [vuelta, setVuelta] = useState(0);
+  return <Contenido key={vuelta} alSiguiente={() => setVuelta((v) => v + 1)} />;
 }

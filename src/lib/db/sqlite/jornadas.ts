@@ -537,6 +537,44 @@ export async function agregarPedidoManual(
   });
 }
 
+/**
+ * Quita de los días **posteriores** los pedidos que acaban de guardarse en
+ * `fecha`. Devuelve de dónde se quitó cada uno.
+ *
+ * Un pedido vive en el día más antiguo en que aparece, que es el día en que
+ * se hizo. La app de reparto enseña al principio de cada día las rutas de la
+ * noche anterior, así que si se carga el 18 antes que el 17, el 18 se queda
+ * con pedidos que son del 17. Al guardar el 17, esos pedidos se le quitan al
+ * 18: si no, se cobrarían dos veces.
+ */
+export async function quitarDeDiasPosteriores(
+  fecha: FechaISO,
+  codigos: readonly string[],
+): Promise<Array<{ codigo: string; fecha: FechaISO }>> {
+  if (codigos.length === 0) return [];
+  const huecos = codigos.map(() => "?").join(", ");
+
+  const encontrados = await consultar<{ id: string; codigo: string; jornada_id: string; fecha: string }>(
+    `select o.id, o.codigo, o.jornada_id, j.fecha
+       from ordenes o join jornadas j on j.id = o.jornada_id
+      where j.fecha > ? and o.codigo in (${huecos})`,
+    [fecha, ...codigos],
+  );
+  if (encontrados.length === 0) return [];
+
+  const momento = ahora();
+  await enTransaccion(async () => {
+    for (const e of encontrados) {
+      await ejecutar(`delete from ordenes where id = ?`, [e.id]);
+    }
+    for (const jornadaId of new Set(encontrados.map((e) => e.jornada_id))) {
+      await recontarEstados(jornadaId, momento);
+    }
+  });
+
+  return encontrados.map((e) => ({ codigo: e.codigo, fecha: e.fecha as FechaISO }));
+}
+
 /** Borra un pedido. Para cuando se añadió por error o llegó duplicado. */
 export async function borrarPedido(ordenId: string): Promise<void> {
   const filas = await consultar<{ jornada_id: string }>(

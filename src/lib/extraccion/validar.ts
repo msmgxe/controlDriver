@@ -239,15 +239,28 @@ export function validarJornada(
     });
   }
 
-  const repetidos = jornada.ordenes
-    .filter((o) => codigosEnOtrasFechas[o.codigo] !== undefined && codigosEnOtrasFechas[o.codigo] !== fecha)
-    .map((o) => o.codigo);
-  if (repetidos.length > 0) {
+  /* Un pedido vive en el día más antiguo en que aparece: es el día en que se
+     hizo. Si ya está guardado en un día **posterior**, es que ese otro día lo
+     traía como arrastre —porque se cargó antes que este—, y al guardar este se
+     le quita a aquel. No es un error: es la app poniendo cada pedido en su
+     sitio, y se dice así. (Los guardados en un día anterior ni llegan aquí: se
+     descartan antes, como arrastre.) */
+  const deDiasPosteriores = fecha
+    ? jornada.ordenes.filter((o) => {
+        const otra = codigosEnOtrasFechas[o.codigo];
+        return otra !== undefined && otra > fecha;
+      })
+    : [];
+  if (deDiasPosteriores.length > 0) {
+    const dias = [...new Set(deDiasPosteriores.map((o) => codigosEnOtrasFechas[o.codigo]))];
     alertas.push({
-      nivel: "aviso",
+      nivel: "info",
       codigo: "codigo-en-otra-fecha",
-      mensaje: `${repetidos.length === 1 ? "Un código ya está registrado" : `${repetidos.length} códigos ya están registrados`} en otra fecha.`,
-      referencias: repetidos,
+      mensaje:
+        `${deDiasPosteriores.length === 1 ? "Un pedido estaba guardado" : `${deDiasPosteriores.length} pedidos estaban guardados`} ` +
+        `el ${dias.map(formatearFecha).join(", ")} como arrastre de la noche. Son de este día: ` +
+        "al guardar, se pasan aquí y se quitan de allí, para que no se cobren dos veces.",
+      referencias: deDiasPosteriores.map((o) => o.codigo),
     });
   }
 
