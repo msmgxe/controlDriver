@@ -36,6 +36,12 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v26 — 22/09/2026
+- **Arreglado: la cabina de la moto eléctrica iba al revés.** Quedaba junto a
+  la rueda de atrás, detrás de la caja —como si el camión manejara para
+  atrás—. Ahora va junto a la rueda de adelante, con la caja detrás, como
+  cualquier camión de reparto de verdad y como en la imagen de referencia.
+
 ### v25 — 22/09/2026
 - **Nuevo: más de una tienda, desde el teléfono.** En Ajustes → Tienda,
   modalidad y tarifa se agregan las tiendas que hagan falta y se elige para

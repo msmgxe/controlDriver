@@ -44,13 +44,18 @@ function carroceria(techo: number): { cuerpo: string; vidrios: string } {
 }
 
 /**
- * La moto eléctrica: un camión de caja —cabina chica y baja delante, caja de
- * reparto grande y recta detrás—, sobre las dos mismas ruedas que el auto
- * —para que los dos vehículos midan igual dentro de un ícono chico y no haya
- * que ajustar cada sitio donde se usan—. Es la forma que de verdad se
+ * La moto eléctrica: un camión de caja —caja de reparto grande detrás, cabina
+ * chica y baja delante, con su ventanilla—, sobre las dos mismas ruedas que
+ * el auto —para que los dos vehículos midan igual dentro de un ícono chico y
+ * no haya que ajustar cada sitio donde se usan—. Es la forma que de verdad se
  * reconoce como "reparto" a 36 px: la cabina tiene que ser claramente
  * **pequeña** al lado de la caja, o a ese tamaño el trazo grueso redondea
  * cualquier escalón chico y todo el vehículo se lee como un auto más.
+ *
+ * El vehículo mira hacia la derecha —la estela y el faro del auto van del
+ * mismo lado—, así que la cabina va junto a la rueda derecha (delantera) y
+ * la caja ocupa el resto hacia la izquierda, igual que en un camión de
+ * reparto de verdad: la cabina nunca va detrás de la caja.
  *
  * A diferencia de `carroceria`, los dos trajes no comparten una sola fórmula:
  * la cabina ya está pegada al arco de la rueda delantera y no hay margen para
@@ -58,15 +63,15 @@ function carroceria(techo: number): { cuerpo: string; vidrios: string } {
  */
 const TRICI_CLARO = {
   cuerpo:
-    "M14 44V37Q14 32 20 31L24 30Q26 28 30 28H38L40 12H98L102 24Q108 27 112 32V44" +
+    "M14 44V37Q14 32 20 31L24 30Q28 12 36 12H76L80 28H96L100 30Q106 32 112 36V44" +
     "H101A11 11 0 0 0 79 44H45A11 11 0 0 0 23 44Z",
-  vidrios: "M25 30V28Q25 25 28 25H36V30Z",
+  vidrios: "M83 30V28Q83 25 86 25H94V30Z",
 };
 const TRICI_OSCURO = {
   cuerpo:
-    "M14 44V37Q14 32 20 31L24 30Q26 28 30 28H38L40 17H98L102 26Q108 29 112 33V44" +
+    "M14 44V37Q14 32 20 31L24 30Q28 17 36 17H76L80 30H96L100 32Q106 34 112 38V44" +
     "H101A11 11 0 0 0 79 44H45A11 11 0 0 0 23 44Z",
-  vidrios: "M25 30V28Q25 25 28 25H36V30Z",
+  vidrios: "M83 32V30Q83 27 86 27H94V32Z",
 };
 
 const AUTO = { claro: carroceria(10), oscuro: carroceria(17) };
