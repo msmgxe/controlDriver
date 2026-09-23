@@ -75,8 +75,8 @@ export async function anotarFecha(fecha: string): Promise<void> {
 }
 
 /**
- * Desde cuándo corre el mes de prueba. Se fija la primera vez que se pide y
- * ya no cambia: ni al actualizar la app ni al atrasar el reloj.
+ * Desde cuándo corre la prueba de dos semanas. Se fija la primera vez que se
+ * pide y ya no cambia: ni al actualizar la app ni al atrasar el reloj.
  */
 export async function inicioDePrueba(hoy: string): Promise<string> {
   const guardado = await leer(CLAVE_PRUEBA);

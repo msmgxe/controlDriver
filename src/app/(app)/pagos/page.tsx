@@ -1,6 +1,7 @@
 "use client";
 
 import { AccionesSemana } from "@/components/AccionesSemana";
+import { PanelDeDescansos } from "@/components/PanelDeDescansos";
 import { Alerta, Check, Reloj } from "@/components/iconos";
 import { Aviso, MontoHero, TiraSemana } from "@/components/ui";
 import { useDatos } from "@/hooks/useDatos";
@@ -29,7 +30,8 @@ import { formatearSoles } from "@/lib/pagos/reglas";
 export default function PaginaPagos() {
   const hoy = hoyEnLima();
 
-  const { datos } = useDatos(async () => {
+  const { datos, recargar } = useDatos(
+    async () => {
     const [enCurso, ...anteriores] = await Promise.all([
       liquidacionDeSemana(hoy, hoy),
       liquidacionDeSemana(sumarDias(hoy, -7)),
@@ -41,7 +43,12 @@ export default function PaginaPagos() {
     const { regla } = await reglaVigente(hoy, perfil?.tiendaId ?? null, perfil?.vehiculo);
 
     return { enCurso, anteriores, regla };
-  }, [hoy]);
+    },
+    [hoy],
+    // Marcar un descanso recarga la pantalla; sin conservar, pasaría por el
+    // esqueleto y el aviso de «marcaste 2 días» se perdería con él.
+    { conservar: true },
+  );
 
   if (!datos) return <Esqueleto />;
   const { enCurso, anteriores, regla } = datos;
@@ -49,7 +56,12 @@ export default function PaginaPagos() {
   const diasSemana = rangoDeFechas(enCurso.liquidacion.semana.inicio, enCurso.liquidacion.semana.fin).map(
     (fecha) => {
       const dia = enCurso.liquidacion.detalle.porDia.find((d) => d.fecha === fecha);
-      return { fecha, cargado: Boolean(dia), pedidos: dia?.pedidos ?? 0 };
+      return {
+        fecha,
+        cargado: Boolean(dia),
+        pedidos: dia?.pedidos ?? 0,
+        descanso: !dia && enCurso.liquidacion.diasDescanso.includes(fecha),
+      };
     },
   );
 
@@ -68,10 +80,10 @@ export default function PaginaPagos() {
 
       <section className="overflow-hidden rounded-card">
         <div className="flex items-center justify-between gap-2 bg-acento px-4 py-2 text-xs font-bold tracking-wider text-acento-texto uppercase">
-          <span>Semana en curso</span>
-          <span>
-            {formatearFecha(enCurso.liquidacion.semana.inicio)} –{" "}
-            {formatearFecha(enCurso.liquidacion.semana.fin)}
+          <span>Sem. en curso</span>
+          <span className="font-mono">
+            {formatearFecha(enCurso.liquidacion.semana.inicio).slice(0, 5)} –{" "}
+            {formatearFecha(enCurso.liquidacion.semana.fin).slice(0, 5)}
           </span>
         </div>
         <div className="flex flex-col gap-4 bg-sup-2 p-5">
@@ -137,16 +149,12 @@ export default function PaginaPagos() {
             </div>
           )}
 
-          {faltan.length > 0 && (
-            <Aviso
-              tono="atento"
-              titulo={`Faltan ${faltan.length} día${faltan.length === 1 ? "" : "s"} por subir`}
-            >
-              <p>
-                {faltan.map((f) => nombreDelDia(f)).join(", ")}. ¿No trabajaste o falta la carga?
-              </p>
-            </Aviso>
-          )}
+          {/* Los días sin cargar: se suben, o se dice que no se trabajaron. */}
+          <PanelDeDescansos
+            faltan={faltan}
+            descansos={enCurso.liquidacion.diasDescanso}
+            alCambiar={recargar}
+          />
 
           {enCurso.liquidacion.pedidosSinTarifa.length > 0 && (
             <Aviso
@@ -174,7 +182,7 @@ export default function PaginaPagos() {
 
       <div className="grid gap-4 md:grid-cols-2 md:items-start">
         <section>
-          <span className="rotulo">Semanas anteriores</span>
+          <span className="rotulo">Sem. anteriores</span>
           <div className="mt-2 flex flex-col gap-2">
             {anteriores.map((s) => (
               <FilaSemana key={s.liquidacion.semana.inicio} semana={s} />

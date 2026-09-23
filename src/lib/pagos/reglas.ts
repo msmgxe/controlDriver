@@ -31,7 +31,7 @@ export type TipoVehiculo = z.infer<typeof esquemaVehiculo>;
 
 export const VEHICULOS: ReadonlyArray<{ id: TipoVehiculo; nombre: string }> = [
   { id: "auto", nombre: "Auto" },
-  { id: "moto", nombre: "Moto" },
+  { id: "moto", nombre: "Moto eléctrica" },
   { id: "bicicleta", nombre: "Bicicleta" },
 ];
 
@@ -108,6 +108,31 @@ export const REGLA_INICIAL: ReglaPago = {
     redondeoHoras: "abajo",
   },
 };
+
+/**
+ * Cuánto paga la moto eléctrica hasta que se cambie: un sol único por pedido,
+ * sin tramos por distancia (§ modalidad).
+ */
+export const TARIFA_MOTO_ELECTRICA = 6.0;
+
+/**
+ * Una regla de **un solo tramo**, sin techo de distancia: paga lo mismo
+ * cualquier pedido, sea cual sea el recorrido.
+ *
+ * Es la forma de la moto eléctrica: a diferencia del auto, que cobra más
+ * cuanto más lejos es el pedido, la tienda le paga a la moto un monto fijo. No
+ * hay tabla de tramos que editar, solo un número.
+ */
+export function reglaTarifaUnica(monto: number): ReglaPago {
+  return {
+    moneda: "PEN",
+    base: "por_pedido",
+    // `hasta` no importa —todo pedido cae aquí—, pero tiene que ser un número
+    // grande y no `Infinity`: el esquema exige `z.number()`.
+    tramos: [{ id: 1, desde: 0, hasta: 9999, monto }],
+    garantiaPermanencia: null,
+  };
+}
 
 /**
  * Tramo abierto de §17.2: la tabla no cubre los pedidos de más de 12 km. Hasta

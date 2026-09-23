@@ -20,6 +20,20 @@ import { useCallback, useEffect, useState } from "react";
  * usan para reconocer un hook y aplicarle sus reglas; llamarlo `usarDatos`
  * las desactivaría en silencio. Es del mismo orden que `onClick` o `className`.
  */
+export interface OpcionesDatos {
+  /**
+   * Al **recargar** (no al cambiar de dependencias), seguir enseñando los datos
+   * de antes hasta que lleguen los nuevos.
+   *
+   * Sin esto, cada `recargar()` dejaba `datos` en null y la pantalla pasaba por
+   * el esqueleto: un parpadeo, y peor, todo lo que hubiera dentro se desmontaba
+   * y perdía su estado —el aviso «marcaste 2 días como descanso», con su
+   * «Deshacer», desaparecía justo al marcarlos—. Es opt-in porque otras
+   * pantallas cuentan con ese reinicio para cerrar sus formularios.
+   */
+  conservar?: boolean;
+}
+
 export interface Datos<T> {
   datos: T | null;
   cargando: boolean;
@@ -31,6 +45,8 @@ export interface Datos<T> {
 interface Resultado<T> {
   /** Para qué consulta es este resultado. Si no coincide, está caduco. */
   clave: string;
+  /** Las dependencias solas, sin el contador de recargas. */
+  deps: string;
   datos: T | null;
   error: string | null;
 }
@@ -38,10 +54,12 @@ interface Resultado<T> {
 export function useDatos<T>(
   consulta: () => Promise<T>,
   dependencias: readonly unknown[] = [],
+  opciones: OpcionesDatos = {},
 ): Datos<T> {
   const [intento, setIntento] = useState(0);
   const [resultado, setResultado] = useState<Resultado<T>>({
     clave: "",
+    deps: "",
     datos: null,
     error: null,
   });
@@ -50,7 +68,8 @@ export function useDatos<T>(
      resultado que ya se tiene y **deducir** si está cargando, en vez de
      encender una bandera a mano dentro del efecto —que provoca un render de
      más y es justo lo que React desaconseja. */
-  const clave = JSON.stringify(dependencias) + "#" + intento;
+  const deps = JSON.stringify(dependencias);
+  const clave = deps + "#" + intento;
 
   useEffect(() => {
     let vigente = true;
@@ -59,12 +78,13 @@ export function useDatos<T>(
       .then((datos) => {
         // Si la pantalla ya se cerró, escribir su estado pisaría los datos de
         // la pantalla siguiente.
-        if (vigente) setResultado({ clave, datos, error: null });
+        if (vigente) setResultado({ clave, deps, datos, error: null });
       })
       .catch((fallo: unknown) => {
         if (vigente) {
           setResultado({
             clave,
+            deps,
             datos: null,
             error: fallo instanceof Error ? fallo.message : "No se pudieron leer los datos.",
           });
@@ -82,6 +102,13 @@ export function useDatos<T>(
 
   const alDia = resultado.clave === clave;
   const recargar = useCallback(() => setIntento((n) => n + 1), []);
+
+  // Una recarga con las mismas dependencias: los datos de antes siguen valiendo
+  // mientras llegan los nuevos (solo si se pidió conservarlos).
+  const seConserva = Boolean(opciones.conservar) && !alDia && resultado.deps === deps;
+  if (seConserva) {
+    return { datos: resultado.datos, cargando: false, error: resultado.error, recargar };
+  }
 
   return {
     datos: alDia ? resultado.datos : null,

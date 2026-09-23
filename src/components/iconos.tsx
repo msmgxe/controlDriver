@@ -153,3 +153,32 @@ export const Trofeo = (p: Props) => (
     <path d="M9 20h6M12 14v6" />
   </Base>
 );
+
+export const Buscar = (p: Props) => (
+  <Base {...p}>
+    <circle cx="11" cy="11" r="6.5" />
+    <path d="m16 16 5 5" />
+  </Base>
+);
+
+/** Un día de descanso. */
+export const Luna = (p: Props) => (
+  <Base {...p}>
+    <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" />
+  </Base>
+);
+
+export const Camara = (p: Props) => (
+  <Base {...p}>
+    <path d="M4 8h3l1.5-2h7L17 8h3v11H4z" />
+    <circle cx="12" cy="13.5" r="3.2" />
+  </Base>
+);
+
+export const Mas = (p: Props) => (
+  <Base {...p}>
+    <path d="M4 7h10M18 7h2M4 17h2M10 17h10" />
+    <circle cx="16" cy="7" r="2" />
+    <circle cx="8" cy="17" r="2" />
+  </Base>
+);

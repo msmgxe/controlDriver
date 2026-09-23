@@ -26,18 +26,20 @@ export type EstadoLicencia =
   | "sin_licencia"
   /** El certificado es válido, pero de otro teléfono. */
   | "otro_dispositivo"
-  /** Recién instalada, sin certificado: el mes de prueba gratis. */
+  /** Recién instalada, sin certificado: la prueba gratis de dos semanas. */
   | "prueba";
 
 /**
  * Días de prueba desde la primera vez que se abre la app.
  *
- * Es el "primer mes gratis" hecho automático: quien la instala la usa entera
- * desde el primer minuto, sin esperar a que nadie le active nada. Pasado el
- * mes, pide su licencia. Reinstalar reinicia la prueba, pero también borra
- * todo lo que tenía cargado, así que no sale a cuenta.
+ * Son dos semanas gratis, automáticas: quien la instala la usa entera desde el
+ * primer minuto, sin esperar a que nadie le active nada. Alcanza para que un
+ * compañero vea sus estadísticas de una semana completa y decida si le sirve,
+ * sin regalar tanto como para que nunca llegue a pagar. Pasada la prueba, pide
+ * su licencia (§ LICENCIAS.md). Reinstalar la reinicia, pero también borra todo
+ * lo que tenía cargado, así que no sale a cuenta.
  */
-export const DIAS_DE_PRUEBA = 30;
+export const DIAS_DE_PRUEBA = 14;
 
 export interface SituacionLicencia {
   estado: EstadoLicencia;
@@ -100,7 +102,7 @@ export function evaluarLicencia(
   }
 
   if (!certificado && pruebaDesde) {
-    // El día que se instala cuenta como el primero: 30 días son hoy y 29 más.
+    // El día que se instala cuenta como el primero: 14 días son hoy y 13 más.
     const quedan = DIAS_DE_PRUEBA - 1 - diasEntre(pruebaDesde, hoy);
     if (quedan >= 0) {
       return {
@@ -182,12 +184,12 @@ export function mensajeDeLicencia(situacion: SituacionLicencia): string {
   const { estado, diasRestantes } = situacion;
 
   if (estado === "prueba") {
-    if (diasRestantes === 0) return "Hoy es el último día de tu mes de prueba.";
+    if (diasRestantes === 0) return "Hoy es el último día de tu prueba.";
     return `Te quedan ${diasRestantes} días de prueba gratis.`;
   }
 
   if (estado === "sin_licencia") {
-    return "Tu mes de prueba terminó. Puedes ver y exportar tus datos; para cargar días nuevos, activa tu licencia en Ajustes.";
+    return "Tu prueba terminó. Puedes ver y exportar tus datos; para cargar días nuevos, activa tu licencia en Ajustes.";
   }
 
   if (estado === "otro_dispositivo") {

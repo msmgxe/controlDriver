@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rutas-A Cuatro Rumbos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=Bricolage+Grotesque:wght@600;700;800&family=DM+Sans:wght@400;500;700&family=Figtree:wght@400;500;600;700&family=Fredoka:wght@500;600;700&family=JetBrains+Mono:wght@400;500&family=Nunito:wght@500;700;800&family=Unbounded:wght@500;700&display=swap">
+<style>
+/* ── La página (el escenario) ─────────────────────────────── */
+:root{
+  --pg:#eceef3; --pg-card:#ffffff; --pg-ink:#14161d; --pg-mut:#586071; --pg-line:#d8dce6; --pg-chip:#e2e5ee;
+  --pg-f:"DM Sans",system-ui,sans-serif; --pg-fm:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --pg:#111318; --pg-card:#191c23; --pg-ink:#eceef3; --pg-mut:#9aa2b2; --pg-line:#2b303b; --pg-chip:#242832;}}
+:root[data-theme="dark"]{
+  --pg:#111318; --pg-card:#191c23; --pg-ink:#eceef3; --pg-mut:#9aa2b2; --pg-line:#2b303b; --pg-chip:#242832;}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--pg);color:var(--pg-ink);font-family:var(--pg-f);font-size:15px;line-height:1.55;
+  padding-inline:clamp(16px,4vw,40px);padding-block:0 64px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1320px;margin-inline:auto}
+h1,h2,h3{margin:0;text-wrap:balance}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+
+.cab{padding-block:44px 22px;display:grid;gap:14px}
+.cab .rot,.rot{font-family:var(--pg-fm);font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--pg-mut)}
+.cab h1{font-family:"Bricolage Grotesque",var(--pg-f);font-size:clamp(34px,6vw,60px);line-height:1.02;letter-spacing:-.03em;font-weight:800;max-width:15ch}
+.cab p.lead{max-width:62ch;color:var(--pg-mut);font-size:16px}
+.claves{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:8px}
+.clave{background:var(--pg-card);border:1px solid var(--pg-line);border-radius:14px;padding:14px 16px;display:grid;gap:4px}
+.clave b{font-size:14px}
+.clave span{color:var(--pg-mut);font-size:13.5px}
+
+.indice{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;margin-inline:calc(-1*clamp(16px,4vw,40px));
+  padding:10px clamp(16px,4vw,40px);background:color-mix(in srgb,var(--pg) 88%,transparent);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--pg-line);display:flex;gap:8px;overflow-x:auto}
+.indice a{flex:none;display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:999px;background:var(--pg-chip);
+  color:var(--pg-ink);text-decoration:none;font-weight:600;font-size:13.5px}
+.indice a i{width:10px;height:10px;border-radius:50%;display:block}
+
+/* Una propuesta */
+.prop{margin-top:56px;display:grid;grid-template-columns:minmax(0,1fr);gap:22px;scroll-margin-top:70px}
+.prop-cab{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center}
+.marca{width:150px;height:96px;border-radius:22px;display:grid;place-items:center;background:var(--bg);flex:none}
+.marca svg{width:128px;height:auto;overflow:visible}
+.prop-cab h2{font-family:var(--fd);font-size:clamp(30px,5vw,46px);letter-spacing:-.02em;line-height:1;margin-block:4px 8px}
+.prop-cab .pitch{color:var(--pg-mut);max-width:60ch}
+.ficha{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.ficha>div{min-width:0;background:var(--pg-card);border:1px solid var(--pg-line);border-radius:14px;padding:14px 16px;display:grid;gap:10px;align-content:start}
+.paleta{display:flex;flex-wrap:wrap;gap:8px}
+.paleta figure{margin:0;display:grid;gap:4px;font-size:11px;color:var(--pg-mut);font-family:var(--pg-fm)}
+.paleta i{display:block;width:46px;height:34px;border-radius:9px;box-shadow:inset 0 0 0 1px rgb(0 0 0/.08)}
+.tipo{display:grid;gap:2px}
+.tipo .d{font-family:var(--fd);font-size:26px;line-height:1.1}
+.tipo .b{font-family:var(--fb);color:var(--pg-mut)}
+.tipo small{font-family:var(--pg-fm);font-size:11px;color:var(--pg-mut)}
+.iconos{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.iconos figure{margin:0;display:grid;justify-items:center;gap:4px;font-size:10.5px;color:var(--pg-mut)}
+.stage{min-width:0;border-radius:28px;background:var(--stage);padding:34px clamp(12px,2vw,20px) 26px}
+.stage-cab{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 20px;margin-bottom:22px;color:var(--stage-ink)}
+.stage-cab b{font-family:var(--fd);font-size:18px}
+.stage-cab span{font-size:13px;opacity:.75;max-width:52ch}
+.phones{display:flex;gap:16px;overflow-x:auto;padding:10px 4px 22px;scroll-snap-type:x proximity;justify-content:safe center}
+.slot{margin:0;flex:none;display:grid;gap:14px;justify-items:center;scroll-snap-align:center}
+.slot figcaption{font-size:12.5px;color:var(--stage-ink);text-align:center;max-width:26ch;line-height:1.35}
+.slot figcaption b{display:block;font-size:13.5px}
+.nuevo{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:99px;background:var(--stage-ink);color:var(--stage);font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;vertical-align:1px}
+.exp{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.exp li{background:var(--pg-card);border:1px solid var(--pg-line);border-radius:14px;padding:14px 16px;display:grid;gap:4px}
+.exp li b{font-size:14px}
+.exp li span{color:var(--pg-mut);font-size:13.5px}
+
+.comp{margin-top:64px;display:grid;gap:16px}
+.comp h2{font-family:"Bricolage Grotesque",var(--pg-f);font-size:clamp(28px,4vw,40px);letter-spacing:-.02em}
+.tabla{overflow-x:auto;border:1px solid var(--pg-line);border-radius:16px;background:var(--pg-card)}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:13.5px}
+th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--pg-line);vertical-align:top}
+th{font-family:var(--pg-fm);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--pg-mut);font-weight:500}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:700;white-space:nowrap}
+.pie{color:var(--pg-mut);max-width:70ch}
+
+@media (max-width:640px){.prop-cab{grid-template-columns:1fr}.marca{width:130px;height:84px}.iconos{grid-template-columns:repeat(5,1fr)}}
+
+/* ── El teléfono: piezas comunes, todo por variables ───────── */
+.ph{width:280px;height:582px;flex:none;border-radius:36px;background:var(--bg);color:var(--ink);font-family:var(--fb);font-size:12.5px;line-height:1.35;
+  position:relative;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 0 0 7px var(--frame,#101216),0 26px 50px -20px rgb(0 0 0/.55)}
+.ph *{box-sizing:border-box}
+.sb{display:flex;justify-content:space-between;align-items:center;padding:11px 22px 4px;font-size:11px;font-weight:700;flex:none}
+.sb svg{width:26px;height:11px}
+.body{flex:1;min-height:0;overflow:hidden;padding:6px 14px 0;display:flex;flex-direction:column;gap:10px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.top .lg{display:flex;align-items:center;gap:8px;font-family:var(--fd);font-weight:var(--fw,700);font-size:16px}
+.top .lg svg{width:44px;height:auto;overflow:visible}
+.h1{font-family:var(--fd);font-size:21px;font-weight:var(--fw,700);letter-spacing:var(--ls,-.01em);line-height:1.08;text-transform:var(--tt,none)}
+.h2{font-family:var(--fd);font-size:14px;font-weight:var(--fw,700);text-transform:var(--tt,none);letter-spacing:var(--ls2,0)}
+.mut{color:var(--mut)}
+.mono{font-family:var(--fm);font-variant-numeric:tabular-nums}
+.card{background:var(--surf);border-radius:var(--r);padding:12px;box-shadow:var(--sh,none);border:var(--bw,0) solid var(--bc,var(--line))}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;border-radius:var(--rb);background:var(--acc);color:var(--acc-ink);
+  font-family:var(--fd);font-weight:var(--fw,700);font-size:14px;width:100%;text-transform:var(--tt,none);letter-spacing:var(--ls2,0);box-shadow:var(--shb,none);border:var(--bw,0) solid var(--bc,transparent)}
+.btn.sec{background:var(--surf);color:var(--ink);border:1px solid var(--line);box-shadow:none}
+.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:var(--sw,1.8);stroke-linecap:var(--cap,round);stroke-linejoin:var(--join,round);flex:none}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px 2px 6px;border-radius:99px;font-size:10.5px;font-weight:700;white-space:nowrap}
+.pill .ic{width:12px;height:12px;stroke-width:2.6}
+.pill.ok{background:var(--okbg);color:var(--ok)}
+.pill.warn{background:var(--warnbg);color:var(--warn)}
+.pill.bad{background:var(--badbg);color:var(--bad)}
+.pill.ruta{background:var(--surf2);color:var(--mut);padding-left:8px}
+
+/* Los días de la semana: se conservan tal cual están en la app */
+.chips{display:flex;gap:5px;padding:0 0 2px}
+.chip{flex:1 1 0;min-width:0;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;border-radius:var(--rb);
+  border:1px solid var(--line);background:var(--surf2);color:var(--mut);font-size:10px}
+.chip b{font-size:14px;font-weight:600;color:inherit}
+.chip i{width:5px;height:5px;border-radius:50%;display:block}
+.chip i.dot{background:var(--acc)}
+.chip.on{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
+.chip.on i.dot{background:var(--acc-ink)}
+.tira{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.tira div{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;border-radius:99px;font-size:9.5px;color:var(--mut)}
+.tira div.ok{color:var(--ink)}
+.tira div.hoy{background:var(--surf2);font-weight:700}
+.tira em{font-style:normal;font-family:var(--fm);font-size:11.5px}
+.tira i{display:block;height:4px;width:100%;border-radius:99px;background:var(--line)}
+.tira .ok i{background:var(--acc)}
+
+.nav{flex:none;display:grid;grid-template-columns:repeat(5,1fr);align-items:center;padding:8px 6px 14px;background:var(--surf);border-top:1px solid var(--line);position:relative}
+.nav a{display:grid;justify-items:center;gap:2px;font-size:9.5px;color:var(--mut);font-weight:600;text-decoration:none}
+.nav a.on{color:var(--acc)}
+.nav a.go{color:var(--acc-ink)}
+
+.fila{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+.fila:last-child{border-bottom:0}
+.fila .cod{font-family:var(--fm);font-size:11.5px;font-weight:500;letter-spacing:-.01em}
+.fila .met{display:flex;gap:6px;align-items:center;color:var(--mut);font-size:10.5px}
+.fila .der{grid-row:span 2;display:grid;justify-items:end;gap:3px}
+.fila .monto{font-family:var(--fm);font-size:11px;color:var(--mut)}
+.buscador{display:flex;align-items:center;gap:8px;background:var(--surf);border-radius:var(--rb);padding:0 12px;min-height:44px;border:1px solid var(--line);box-shadow:var(--shb,none)}
+.buscador input{flex:1;min-width:0;border:0;background:none;outline:0;color:var(--ink);font:inherit;font-size:13px;font-family:var(--fm)}
+.buscador input::placeholder{color:var(--mut)}
+.buscador:focus-within{border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 25%,transparent)}
+.atajos{display:flex;gap:6px;flex-wrap:wrap}
+.atajo{padding:5px 10px;border-radius:99px;background:var(--surf2);color:var(--mut);font-size:11px;font-weight:700;border:1px solid var(--line)}
+.atajo.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.res{overflow:hidden;flex:1;min-height:0}
+.cuenta{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.cuenta b{font-family:var(--fd)}
+.cuenta>span{white-space:nowrap}
+.alerta{display:flex;gap:8px;padding:9px 10px;border-radius:calc(var(--r) - 4px);background:var(--warnbg);color:var(--warn);font-size:11px;line-height:1.35}
+.alerta b{color:inherit}
+.alerta .ic{width:16px;height:16px;margin-top:1px}
+.progreso{height:9px;border-radius:99px;background:var(--surf2);overflow:hidden}
+.progreso span{display:block;height:100%;border-radius:99px;background:var(--acc)}
+.barras{display:flex;align-items:flex-end;gap:5px;height:118px;position:relative;padding-top:16px}
+.barras div{flex:1;display:grid;justify-items:center;align-content:end;gap:3px;height:100%;font-size:9px;color:var(--mut)}
+.barras u{display:block;width:100%;max-width:22px;background:var(--acc);border-radius:6px 6px 2px 2px;text-decoration:none}
+.barras div.vacio u{background:none;border:1px dashed var(--line);height:10px!important}
+.barras b{font-family:var(--fd);font-size:11px;color:var(--ink)}
+.prom{position:absolute;left:0;right:0;border-top:2px dashed var(--acc);opacity:.55}
+
+@keyframes vroom{0%{transform:translateX(-26px);opacity:0}30%{opacity:1}100%{transform:none}}
+@keyframes estela{0%{transform:scaleX(.2);opacity:0}40%{opacity:1}100%{transform:none}}
+.zoom .cuerpo{animation:vroom .7s cubic-bezier(.2,.8,.2,1) both}
+.zoom .estela{transform-origin:right;animation:estela .7s ease-out both}
+@media (prefers-reduced-motion:reduce){.zoom .cuerpo,.zoom .estela{animation:none}}
+
+/* ── Cuatro temas ─────────────────────────────────────────── */
+.tema-a{--bg:#F3EFFF;--surf:#fff;--surf2:#ECE6FF;--ink:#1D1246;--mut:#6B5E9C;--line:#DCD3FA;--acc:#6A4CF5;--acc-ink:#fff;--acc2:#5BE3A4;
+  --ok:#0B7A4D;--okbg:#D5F7E8;--warn:#7A5000;--warnbg:#FFEFC2;--bad:#B3261E;--badbg:#FFE1DE;
+  --r:20px;--rb:15px;--fd:"Fredoka",system-ui,sans-serif;--fb:"Nunito",system-ui,sans-serif;--fm:"JetBrains Mono",ui-monospace,monospace;--fw:600;--ls:0;
+  --bw:2px;--bc:#1D1246;--sh:3px 3px 0 #1D1246;--shb:3px 3px 0 #1D1246;--sw:2.3;--frame:#1D1246;--stage:#6A4CF5;--stage-ink:#fff;--marca:#6A4CF5}
+.tema-b{--bg:#0E1116;--surf:#161B22;--surf2:#1E252E;--ink:#EEF1F5;--mut:#8C97A6;--line:#28303B;--acc:#FF9F1C;--acc-ink:#1A0F00;--acc2:#5CC8FF;
+  --ok:#4BDB97;--okbg:#10301F;--warn:#F2D24B;--warnbg:#2F2A0F;--bad:#FF7A7A;--badbg:#341717;
+  --r:10px;--rb:8px;--fd:"Barlow Condensed","Arial Narrow",sans-serif;--fb:"Barlow",system-ui,sans-serif;--fm:"JetBrains Mono",ui-monospace,monospace;--fw:700;--tt:uppercase;--ls:.02em;--ls2:.05em;
+  --bw:1px;--sw:1.6;--cap:square;--join:miter;--frame:#2A313C;--stage:#171B22;--stage-ink:#EEF1F5;--marca:#0E1116}
+.tema-c{--bg:#EEF4F2;--surf:#fff;--surf2:#E1ECE9;--ink:#0C1A18;--mut:#566B67;--line:#D3E1DE;--acc:#0B857B;--acc-ink:#fff;--acc2:#FF7A5C;
+  --ok:#0B7A52;--okbg:#DCF2E8;--warn:#8F5C08;--warnbg:#FCEFD6;--bad:#B93228;--badbg:#FBE5E2;
+  --r:20px;--rb:14px;--fd:"Bricolage Grotesque",system-ui,sans-serif;--fb:"Figtree",system-ui,sans-serif;--fm:"JetBrains Mono",ui-monospace,monospace;--fw:700;--ls:-.02em;
+  --sh:0 1px 2px rgb(12 26 24/.05),0 14px 30px -20px rgb(12 26 24/.35);--sw:1.8;--frame:#0F1F1D;--stage:#CFE5E0;--stage-ink:#0C1A18;--marca:#D7EDEA}
+.tema-d{--bg:#E6EEF8;--surf:#fff;--surf2:#D9E5F4;--ink:#0A2260;--mut:#4F6390;--line:#C4D5EC;--acc:#1F5CFF;--acc-ink:#fff;--acc2:#FFC800;
+  --ok:#0B7A4D;--okbg:#D8F3E4;--warn:#6F4E00;--warnbg:#FFF0B8;--bad:#B3261E;--badbg:#FFE0DB;
+  --r:16px;--rb:12px;--fd:"Unbounded","Arial Black",sans-serif;--fb:"DM Sans",system-ui,sans-serif;--fm:"JetBrains Mono",ui-monospace,monospace;--fw:700;--ls:-.03em;
+  --sw:2;--frame:#0A2260;--stage:#0A2260;--stage-ink:#fff;--marca:#E6EEF8}
+.prop{--marca-bg:var(--marca)}
+.marca{background:var(--marca-bg)}
+.tema-a .marca,.tema-b .marca{box-shadow:inset 0 0 0 1px rgb(255 255 255/.12)}
+
+/* A · Turbo: pegatinas, borde y sombra dura, mucho color */
+.tema-a .btn.sec{border:2px solid var(--ink);box-shadow:3px 3px 0 var(--ink)}
+.tema-a .chip{border-width:1.5px;border-color:var(--ink)}
+.tema-a .hero{position:relative;overflow:hidden;background:var(--acc);color:#fff;border:2px solid var(--ink);box-shadow:3px 3px 0 var(--ink);border-radius:22px;padding:14px 14px 12px}
+.tema-a .hero .num{font-family:var(--fd);font-size:50px;line-height:.95;font-weight:700;letter-spacing:-.02em}
+.tema-a .hero .autito{position:absolute;right:-8px;bottom:8px;width:118px;transform:rotate(-4deg)}
+.tema-a .hero .autito svg{width:100%;height:auto;overflow:visible}
+.tema-a .hero small{opacity:.85;font-size:11.5px;font-weight:700;display:block}
+.tema-a .hero .mono{display:inline-block;margin-top:8px;background:var(--acc2);color:var(--ink);padding:2px 9px;border-radius:99px;font-weight:700;border:2px solid var(--ink);font-size:12px}
+.racha{display:inline-flex;align-items:center;gap:4px;background:var(--acc2);color:var(--ink);border:2px solid var(--ink);border-radius:99px;padding:2px 9px 2px 6px;font-family:var(--fd);font-weight:700;font-size:12px}
+.racha .ic{width:15px;height:15px;stroke:none;fill:var(--ink)}
+.tema-a .nav{border-top:2px solid var(--ink);padding-top:12px}
+.tema-a .nav a.go i{display:grid;place-items:center;width:52px;height:52px;margin-top:-30px;border-radius:50%;background:var(--acc2);border:2px solid var(--ink);box-shadow:3px 3px 0 var(--ink);color:var(--ink)}
+.tema-a .nav a.go{color:var(--ink)}
+.tema-a .nav a.go svg.car{width:38px;height:auto;overflow:visible}
+.tema-a .atajo.on{background:var(--acc);border-color:var(--ink);color:#fff}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;font-size:10.5px}
+.cal b{font-size:9px;color:var(--mut);font-weight:700;padding-bottom:2px}
+.cal button{height:24px;display:grid;place-items:center;font-family:var(--fm);font-size:11px;color:var(--ink);border-radius:8px;position:relative}
+.cal button.cargado::after{content:"";position:absolute;bottom:2px;width:4px;height:4px;border-radius:50%;background:var(--acc)}
+.cal button.dentro{background:var(--surf2);border-radius:0}
+.cal button.borde{background:var(--acc);color:var(--acc-ink);font-weight:700;border-radius:9px}
+.cal button.borde::after{background:var(--acc-ink)}
+.cal button.fuera{color:var(--mut);opacity:.45}
+.cal-cab{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+
+/* B · Asfalto: señalética de carretera, alto contraste */
+.tema-b .h1{font-size:26px}
+.tema-b .h2{font-size:15px}
+.tema-b .btn{border-radius:6px;font-size:16px}
+.tema-b .card{border-width:1px}
+.tema-b .via{height:3px;border-radius:2px;background:repeating-linear-gradient(90deg,var(--acc) 0 16px,transparent 16px 28px);opacity:.9}
+.tema-b .rot{color:var(--mut)}
+.tema-b .pill{border-radius:4px;text-transform:uppercase;letter-spacing:.04em;font-family:var(--fd);font-size:11px}
+.tema-b .atajo{border-radius:5px;font-family:var(--fd);font-size:12px;letter-spacing:.05em;text-transform:uppercase}
+.tema-b .chip{border-radius:6px}
+.tema-b .nav a.on{color:var(--acc)}
+.tema-b .nav a.on::before{content:"";position:absolute;top:0;height:3px;width:34px;background:var(--acc)}
+.tema-b .nav a{position:relative;font-family:var(--fd);font-size:11px;letter-spacing:.05em;text-transform:uppercase}
+.tema-b .nav a.go i{display:grid;place-items:center;width:46px;height:34px;border-radius:6px;background:var(--acc);color:var(--acc-ink);margin-bottom:2px}
+.tema-b .nav a.go svg.car{width:34px;height:auto;overflow:visible}
+.gauge{position:relative;display:grid;justify-items:center}
+.gauge svg{width:100%;height:auto;overflow:visible}
+.gauge .lect{position:absolute;bottom:2px;display:grid;justify-items:center;line-height:1}
+.gauge .lect b{font-family:var(--fd);font-size:46px}
+.gauge .lect span{font-family:var(--fd);letter-spacing:.08em;text-transform:uppercase;font-size:11px;color:var(--mut);margin-top:2px}
+.rango-b{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.rango-b label{display:grid;gap:2px;padding:6px 10px;border-radius:8px;background:var(--surf);border:1px solid var(--line)}
+.rango-b label span{font-family:var(--fd);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+.rango-b label b{font-family:var(--fm);font-size:13px;color:var(--acc)}
+
+/* C · Menta: la app de hoy, con auto de firma y coral */
+.tema-c .btn{box-shadow:0 10px 18px -12px var(--acc)}
+.tema-c .nav{border-top:0;box-shadow:0 -8px 24px -18px rgb(12 26 24/.5);border-radius:22px 22px 0 0}
+.tema-c .nav a.go i{display:grid;place-items:center;width:42px;height:42px;border-radius:15px;background:var(--acc);color:#fff;box-shadow:0 8px 14px -8px var(--acc)}
+.tema-c .nav a.go svg.car{width:32px;height:auto;overflow:visible}
+.anillo{--p:86;width:74px;height:74px;border-radius:50%;background:conic-gradient(var(--acc) calc(var(--p)*1%),var(--surf2) 0);display:grid;place-items:center;flex:none}
+.anillo div{width:56px;height:56px;border-radius:50%;background:var(--surf);display:grid;place-items:center;text-align:center;line-height:1}
+.anillo b{font-family:var(--fd);font-size:17px}
+.anillo span{font-size:8.5px;color:var(--mut);margin-top:1px}
+.coral{background:color-mix(in srgb,var(--acc2) 18%,var(--surf));color:#A83A22}
+.rango-c{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center}
+.rango-c label{display:grid;gap:1px;padding:7px 12px;border-radius:14px;background:var(--surf);box-shadow:var(--sh)}
+.rango-c label span{font-size:9.5px;color:var(--mut);font-weight:600}
+.rango-c label b{font-family:var(--fd);font-size:14px}
+.seg{display:grid;grid-template-columns:1fr 1fr;padding:3px;border-radius:99px;background:var(--surf2)}
+.seg button{padding:6px;border-radius:99px;font-size:11.5px;font-weight:700;color:var(--mut)}
+.seg button.on{background:var(--surf);color:var(--ink);box-shadow:0 1px 2px rgb(0 0 0/.12)}
+
+/* D · Mapa: cada día es un recorrido */
+.tema-d .h1{font-size:16px;line-height:1.15}
+.tema-d .h2{font-size:12px}
+.tema-d .btn{font-size:12.5px;border-radius:14px}
+.tema-d .ph{background-color:var(--bg);background-image:linear-gradient(rgb(31 92 255/.06) 1px,transparent 1px),linear-gradient(90deg,rgb(31 92 255/.06) 1px,transparent 1px);background-size:26px 26px}
+.tema-d .nav{border-top:0;border-radius:20px 20px 0 0;box-shadow:0 -10px 24px -16px rgb(10 34 96/.5)}
+.tema-d .nav a.go i{display:grid;place-items:center;width:44px;height:34px;border-radius:12px;background:var(--acc2);color:var(--ink)}
+.tema-d .nav a.go svg.car{width:34px;height:auto;overflow:visible}
+.tema-d .chip.on{background:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 25%,transparent)}
+.recorrido{position:relative;display:grid;gap:0}
+.parada{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;padding:7px 0;position:relative}
+.parada::before{content:"";position:absolute;left:10px;top:0;bottom:0;border-left:2px dashed var(--acc);opacity:.5}
+.parada:first-child::before{top:50%}
+.parada:last-child::before{bottom:50%}
+.parada i{position:relative;z-index:1;width:22px;height:22px;border-radius:50% 50% 50% 4px;transform:rotate(-45deg);background:var(--acc);display:grid;place-items:center}
+.parada i b{transform:rotate(45deg);font-family:var(--fd);font-size:9.5px;color:#fff}
+.parada.fin i{background:var(--acc2)}
+.parada.fin i b{color:var(--ink)}
+.parada .h2{font-size:11.5px}
+.parada small{color:var(--mut);font-size:10.5px}
+.linea-dias{position:relative;display:flex;justify-content:space-between;padding:22px 6px 4px}
+.linea-dias::before{content:"";position:absolute;left:10px;right:10px;top:37px;border-top:2px dashed var(--acc);opacity:.4}
+.linea-dias button{position:relative;z-index:1;display:grid;justify-items:center;gap:3px;font-family:var(--fm);font-size:9.5px;color:var(--mut)}
+.linea-dias button u{width:13px;height:13px;border-radius:50%;background:var(--surf);border:2px solid var(--acc);display:block;text-decoration:none}
+.linea-dias button.dentro u{background:var(--acc)}
+.linea-dias button.borde u{width:17px;height:17px;margin:-2px;background:var(--acc2);border-color:var(--ink)}
+.linea-dias button.borde{color:var(--ink);font-weight:700}
+.linea-dias .rec{position:absolute;top:0;height:16px;border-radius:99px;background:var(--acc);opacity:.15}
+
+/* Ajustes comunes a la ficha */
+mark{background:color-mix(in srgb,var(--acc) 30%,transparent);color:inherit;border-radius:3px;padding:0 1px}
+.prop-cab h2{text-transform:var(--tt,none)}
+.iconos i{width:44px;height:44px;display:grid;place-items:center;border-radius:12px;background:var(--ic-bg);color:var(--ic-fg);border:var(--ic-bd,0)}
+.iconos .ic{width:22px;height:22px}
+.tema-a{--ic-bg:#F3EFFF;--ic-fg:#1D1246;--ic-bd:2px solid #1D1246}
+.tema-b{--ic-bg:#0E1116;--ic-fg:#FF9F1C;--ic-bd:1px solid #28303B}
+.tema-c{--ic-bg:#E1ECE9;--ic-fg:#0B857B}
+.tema-d{--ic-bg:#1F5CFF;--ic-fg:#fff}
+.marca svg .estela,.marca svg .cuerpo{transform-box:fill-box}
+.nav a{cursor:default}
+
+/* Etiqueta «Cargar» legible en cada barra, y ajustes de los últimos detalles */
+.tema-b .nav a.go{color:var(--acc)}
+.tema-c .nav a.go{color:var(--acc)}
+.tema-d .nav a.go{color:var(--ink)}
+.tema-c .alerta{background:#FFE8E1;color:#A5301A}
+.tema-d .btn{white-space:nowrap;font-size:11px;letter-spacing:-.04em}
+.tema-d .btn.sec{font-size:10.5px!important}
+.stage-cab .hint{opacity:1;font-weight:700;flex-basis:100%}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="cab">
+    <span class="rot">Rutas-A · propuestas de diseño</span>
+    <h1>Cuatro rumbos para Rutas-A</h1>
+    <p class="lead">Cuatro maneras de darle personalidad a la app: un auto veloz como marca, un tono más lúdico y ordenado, y la nueva búsqueda de pedidos en un rango de días. Toca el auto de cada propuesta, escribe un código en «Buscar» y elige fechas: funciona con datos de ejemplo.</p>
+    <div class="claves">
+      <div class="clave"><b>Se queda igual</b><span>Los días de la semana: el selector con el punto de «cargado» y la tira L M M J V S D con su barra. En las cuatro propuestas conserva su forma; solo toma los colores del tema.</span></div>
+      <div class="clave"><b>Es nuevo</b><span>Buscar un pedido en un rango de días, siempre en la pantalla 2. Cada propuesta lo resuelve con una idea distinta para elegir las fechas.</span></div>
+      <div class="clave"><b>Son ejemplos</b><span>Los pedidos del 20/09 salen de tus capturas. Todo lo demás —otros días, montos, racha, rutas— es inventado para que las pantallas se vean reales.</span></div>
+    </div>
+  </header>
+
+  <nav class="indice" id="indice" aria-label="Propuestas"></nav>
+  <main id="props"></main>
+
+  <section class="comp" id="comparar">
+    <span class="rot">Para decidir</span>
+    <h2>Lado a lado</h2>
+    <div class="tabla" role="region" aria-label="Comparación de las propuestas" tabindex="0">
+      <table>
+        <thead><tr><th>Criterio</th><th>A · Turbo</th><th>B · Asfalto</th><th>C · Menta</th><th>D · Mapa</th></tr></thead>
+        <tbody>
+          <tr><td>Carácter</td><td>Juguetón y ruidoso: pegatinas, bordes gruesos</td><td>Serio y veloz: señalética de carretera</td><td>Amable y limpio: la app de hoy, afinada</td><td>Narrativo: cada día es un recorrido</td></tr>
+          <tr><td>Lo lúdico</td><td>Racha de días, auto que cruza, botón central</td><td>Velocímetro de ritmo contra tu promedio</td><td>Anillo de la semana, coral para lo importante</td><td>Paradas y pines, el auto avanza por la línea</td></tr>
+          <tr><td>Buscar por rango</td><td>Calendario táctil: toca dos días</td><td>Atajos (Ayer, 7 días…) y desde / hasta</td><td>Atajos y un interruptor «un día / rango»</td><td>Línea de días: toca inicio y fin</td></tr>
+          <tr><td>Con el sol de frente</td><td>Colores fuertes y bordes negros: se lee bien</td><td>El mayor contraste; oscura, pensada para la noche</td><td>Bueno, pero los verdes claros pierden fuerza</td><td>Bueno: azul intenso sobre claro</td></tr>
+          <tr><td>Parecido a la app actual</td><td>Bajo</td><td>Bajo</td><td>Alto: mismos tokens y mismas fuentes</td><td>Medio</td></tr>
+          <tr><td>Esfuerzo de hacerla</td><td>Alto: sombras duras y componentes nuevos</td><td>Medio: paleta oscura y velocímetro</td><td>Bajo: casi todo son variables</td><td>Medio-alto: paradas y línea de días</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="pie">Se pueden mezclar: por ejemplo, la base de C con el recorrido de D y el auto de A. Dime cuál sigo —o la mezcla— y la aplico a toda la app junto con la búsqueda por rango.</p>
+  </section>
+</div>
+<script>
+/* ── Datos de ejemplo ─────────────────────────────────────── */
+// Pedidos por día. El 20/09 son los de tus capturas; el resto se inventa siempre igual.
+const POR_DIA={8:11,9:9,10:12,11:13,12:8,13:10,14:14,15:16,16:14,17:18,18:12,19:0,20:21,21:0};
+const REALES=['v12250012wofp-01:1','v12249443wofp-01:1','v12250480wofp-01:2','v12250435wofp-01:2','v12250473wofp-01:3','v12250818wofp-01:4','v12251163wofp-01:4','v12251660wofp-01:5','v12251350wofp-01:5','v12252179wofp-01:6'];
+const PED=(()=>{
+  let s=7; const rnd=()=>(s=(s*1664525+1013904223)%4294967296)/4294967296;
+  const out=[];
+  for(const [d,n] of Object.entries(POR_DIA)){
+    const dia=+d;
+    for(let i=0;i<n;i++){
+      let c,r;
+      if(dia===20&&i<REALES.length){[c,r]=REALES[i].split(':');r=+r}
+      else{c='v'+(12230000+(dia-8)*1650+Math.floor(rnd()*1500))+'wofp-01';r=1+Math.floor(i/2.4)}
+      const x=rnd(); const e=x<.06?'N':x<.13?'P':'E';
+      out.push({c,d:dia,r,e,m:e==='N'?'0.00':e==='P'?'5.00':'10.00'});
+    }
+  }
+  return out.sort((a,b)=>b.d-a.d||a.c.localeCompare(b.c));
+})();
+
+const suma=(a,b)=>PED.filter(p=>p.d>=a&&p.d<=b).reduce((t,p)=>t+ +p.m,0);
+const SEM=`S/ ${suma(14,20).toFixed(2)}`, HOY=`S/ ${suma(20,20).toFixed(2)}`;
+
+/* ── Iconos: el mismo trazo, cada tema lo dibuja a su manera ── */
+const I={
+  inicio:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>',
+  buscar:'<circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/>',
+  camara:'<path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13.5" r="3.2"/>',
+  calendario:'<rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 3v3M16 3v3"/>',
+  cartera:'<path d="M3 8.5A2.5 2.5 0 0 1 5.5 6H19a2 2 0 0 1 2 2v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17z"/><path d="M3 8.5V7a2 2 0 0 1 2-2h11"/><circle cx="16.5" cy="12.5" r="1.3"/>',
+  barras:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  ajustes:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',
+  ruta:'<circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/>',
+  pedido:'<path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="m3 7.5 9 4.5 9-4.5M12 12v9"/>',
+  check:'<path d="m5 12.5 4.5 4.5L19 7"/>',
+  alerta:'<path d="M12 4 22 20H2z"/><path d="M12 10v4M12 17h.01"/>',
+  cerrar:'<path d="M6 6l12 12M18 6 6 18"/>',
+  atras:'<path d="M15 5l-7 7 7 7"/>',
+  llama:'<path d="M12 2c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z" stroke="none"/>'
+};
+const ico=(n)=>`<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${I[n]}</svg>`;
+
+/* ── El auto: una sola forma, cuatro trajes ───────────────── */
+function car(o){
+  const R=o.roof??12;
+  const sk=o.stroke?`stroke="${o.stroke}" stroke-width="${o.sw||2.5}" stroke-linejoin="round" paint-order="stroke"`:'';
+  const lines={
+    pill:`<path d="M4 30h17M0 38h21M9 46h12" stroke="${o.line}" stroke-width="4" stroke-linecap="round" fill="none"/>`,
+    dash:`<path d="M0 30h21M7 38h14M0 46h21" stroke="${o.line}" stroke-width="3" stroke-dasharray="8 5" fill="none"/>`,
+    trail:`<path d="M0 54C10 54 14 50 24 46" stroke="${o.line}" stroke-width="3.2" stroke-dasharray="0.1 6.5" stroke-linecap="round" fill="none"/><path d="M4 36h16" stroke="${o.line}" stroke-width="3" stroke-linecap="round" opacity=".5"/>`
+  }[o.lines||'pill'];
+  return `<svg class="car" viewBox="0 6 142 52" aria-hidden="true"><g class="estela">${lines}</g><g class="cuerpo" transform="translate(22 0)">
+    <path d="M14 44V37Q14 32 20 31L33 29Q39 ${R+2} 51 ${R}H77Q86 ${R+1} 92 25L96 29Q110 31 112 38V44H101A11 11 0 0 0 79 44H45A11 11 0 0 0 23 44Z" fill="${o.body}" ${sk}/>
+    <path d="M46 27Q49 ${R+4} 54 ${R+3}H63V27ZM67 ${R+3}H76Q81 ${R+4} 85 27H67Z" fill="${o.win}"/>
+    <rect x="107" y="34" width="6" height="4" rx="2" fill="${o.trim}"/>
+    <g fill="${o.wheel}"><circle cx="34" cy="44" r="8.5"/><circle cx="90" cy="44" r="8.5"/></g>
+    <g fill="${o.hub}"><circle cx="34" cy="44" r="3.4"/><circle cx="90" cy="44" r="3.4"/></g></g></svg>`;
+}
+const CAR={
+  a:{body:'#FFD23F',win:'#fff',wheel:'#1D1246',hub:'#5BE3A4',trim:'#fff',line:'#5BE3A4',lines:'pill',roof:11,stroke:'#1D1246',sw:3},
+  b:{body:'#FF9F1C',win:'#0E1116',wheel:'#2A313C',hub:'#EEF1F5',trim:'#EEF1F5',line:'#FF9F1C',lines:'dash',roof:17},
+  c:{body:'#14324A',win:'#fff',wheel:'#14324A',hub:'#fff',trim:'#FF7A5C',line:'#0B857B',lines:'pill',roof:12},
+  d:{body:'#FFC800',win:'#fff',wheel:'#0A2260',hub:'#E6EEF8',trim:'#fff',line:'#1F5CFF',lines:'trail',roof:10,stroke:'#0A2260',sw:2.4}
+};
+const CARN={ // el mismo auto en una sola tinta, para la barra de abajo
+  a:{body:'#1D1246',win:'#5BE3A4',wheel:'#1D1246',hub:'#5BE3A4',trim:'#1D1246',line:'#1D1246',lines:'pill',roof:11},
+  b:{body:'#1A0F00',win:'#FF9F1C',wheel:'#1A0F00',hub:'#FF9F1C',trim:'#1A0F00',line:'#1A0F00',lines:'dash',roof:17},
+  c:{body:'#fff',win:'#0B857B',wheel:'#fff',hub:'#0B857B',trim:'#fff',line:'#fff',lines:'pill',roof:12},
+  d:{body:'#0A2260',win:'#FFC800',wheel:'#0A2260',hub:'#FFC800',trim:'#0A2260',line:'#0A2260',lines:'pill',roof:10}
+};
+
+/* ── Piezas de pantalla ───────────────────────────────────── */
+const chips=(sel=20)=>`<div class="chips">${[['Mar',15,1],['Mié',16,1],['Jue',17,1],['Vie',18,1],['Sáb',19,0],['Dom',20,1],['Lun',21,0]].map(([n,d,c])=>`<div class="chip${d===sel?' on':''}"><span>${n}</span><b>${d}</b><i class="${c?'dot':''}"></i></div>`).join('')}</div>`;
+const tira=()=>`<div class="tira">${[['L',14,1],['M',15,1],['M',16,1],['J',17,1],['V',18,1],['S',19,0],['D',20,1]].map(([a,d,c])=>`<div class="${c?'ok':''}${d===20?' hoy':''}"><span>${a}</span><em>${d}</em><i></i></div>`).join('')}</div>`;
+const SB='<div class="sb"><span>10:41</span><svg viewBox="0 0 26 11" fill="currentColor" aria-hidden="true"><rect x="0" y="6" width="3" height="5" rx="1"/><rect x="5" y="4" width="3" height="7" rx="1"/><rect x="10" y="2" width="3" height="9" rx="1"/><rect x="16" y="1" width="9" height="9" rx="2.5"/></svg></div>';
+const nav=(t,on)=>`<nav class="nav">${[['inicio','Inicio'],['buscar','Buscar'],['go','Cargar'],['barras','Semana'],['ajustes','Más']].map(([k,l])=>k==='go'?`<a class="go"><i>${car(CARN[t])}</i><span>${l}</span></a>`:`<a class="${on===k?'on':''}">${ico(k)}<span>${l}</span></a>`).join('')}</nav>`;
+const phone=(t,inner,on)=>`<div class="ph">${SB}<div class="body">${inner}</div>${nav(t,on)}</div>`;
+
+const ESTADO={E:['ok','check','Entregado'],P:['warn','alerta','Parcial'],N:['bad','cerrar','No entregado']};
+const marcar=(c,q)=>q&&c.includes(q)?c.replace(q,`<mark>${q}</mark>`):c;
+const fila=(p,q='')=>{const e=ESTADO[p.e];return `<div class="fila"><span class="cod">${marcar(p.c,q)}</span><span class="der"><span class="pill ${e[0]}">${ico(e[1])}${e[2]}</span><span class="monto">S/ ${p.m}</span></span><span class="met"><span class="pill ruta">Ruta ${p.r}</span>${p.d} sep</span></div>`};
+
+function gauge(v,max,prom){
+  const L=Math.PI*70, a=180*(prom/max);
+  return `<svg viewBox="0 0 160 90" aria-hidden="true"><path d="M10 80A70 70 0 0 1 150 80" fill="none" stroke="var(--surf2)" stroke-width="12"/>
+  <path d="M10 80A70 70 0 0 1 150 80" fill="none" stroke="var(--acc)" stroke-width="12" stroke-dasharray="${(L*v/max).toFixed(1)} ${L.toFixed(1)}"/>
+  <path d="M2 80A78 78 0 0 1 158 80" fill="none" stroke="var(--line)" stroke-width="5" stroke-dasharray="1.4 9.6"/>
+  <line x1="2" y1="80" x2="16" y2="80" transform="rotate(${a.toFixed(1)} 80 80)" stroke="var(--acc2)" stroke-width="3" stroke-linecap="round"/></svg>`;
+}
+const parada=(n,t,h,x,fin)=>`<div class="parada${fin?' fin':''}"><i><b>${n}</b></i><div><div class="h2">${t}</div><small>${h}</small></div><span class="pill ruta">${x}</span></div>`;
+
+/* ── Las cuatro pantallas de cada propuesta ───────────────── */
+const INICIO={
+ a:()=>`<div class="top"><div class="lg">${car(CAR.a)}<span>Rutas-A</span></div><span class="racha">${ico('llama')}5 días</span></div>
+  <div><div class="h1">Domingo 20</div><div class="mut" style="font-weight:700">septiembre · 6 de 7 días cargados</div></div>${chips()}
+  <div class="hero"><small>Hoy cargaste</small><div class="num">21</div><small>pedidos · 11 rutas</small><span class="mono">${HOY}</span><div class="autito">${car(CAR.a)}</div></div>
+  <div class="card"><div class="cuenta"><span class="h2">Esta semana</span><span class="mono" style="font-weight:700">${SEM}</span></div>${tira()}<div class="mut" style="margin-top:6px">Se paga el viernes 25/09</div></div>
+  <div class="btn">${ico('camara')}Cargar capturas</div>`,
+ b:()=>`<div class="top"><div class="lg">${car(CAR.b)}<span style="letter-spacing:.07em;text-transform:uppercase">Rutas-A</span></div><span class="mono mut" style="font-size:11px">DOM 20 SEP</span></div>
+  <div class="card" style="padding:10px 12px 10px"><div class="cuenta"><span class="h2">Ritmo de hoy</span><span class="pill ok">${ico('check')}+31 % del promedio</span></div>
+   <div class="gauge">${gauge(21,30,16)}<div class="lect"><b>21</b><span>pedidos</span></div></div>
+   <div class="cuenta mono mut" style="font-size:9.5px"><span>0</span><span style="color:var(--acc2)">▎prom. 16</span><span>30</span></div></div>
+  <div class="via"></div>${chips()}
+  <div class="card"><div class="cuenta"><span class="h2">Semana 14–20</span><span class="mono" style="color:var(--acc)">${SEM}</span></div>${tira()}</div>
+  <div class="btn">${ico('camara')}Cargar capturas</div>`,
+ c:()=>`<div class="top"><div class="lg">${car(CAR.c)}<span>Rutas-A</span></div><span class="pill ok">${ico('check')}Todo al día</span></div>
+  <div class="h1" style="font-size:23px">Domingo 20<br>de septiembre</div>${chips()}
+  <div class="card"><div style="display:flex;gap:12px;align-items:center"><div class="anillo"><div><b>6/7</b><span>días</span></div></div>
+   <div><span class="mut">Esta semana</span><div class="h1" style="font-size:24px">${SEM}</div><span class="mut">95 pedidos · 60 rutas</span></div></div><div style="margin-top:8px">${tira()}</div></div>
+  <div class="card" style="display:flex;justify-content:space-between;align-items:center"><div><span class="mut">Hoy</span><div class="h2" style="font-size:16px">21 pedidos · 11 rutas</div></div><span class="mono" style="font-weight:600">${HOY}</span></div>
+  <div class="btn">${ico('camara')}Cargar capturas</div>`,
+ d:()=>`<div class="top"><div class="lg">${car(CAR.d)}<span style="font-size:12px">Rutas-A</span></div><span class="pill ruta">20 sep</span></div>
+  <div class="h1">Tu recorrido de hoy</div>${chips()}
+  <div class="card" style="padding:6px 12px"><div class="recorrido">${parada(4,'Ruta 4','10:57 – 11:31','2 pedidos')}${parada(5,'Ruta 5','12:29 – 13:14','2 pedidos')}${parada(6,'Ruta 6','14:37 – 15:05','1 pedido')}${parada('+5','Otras 5 rutas','hasta las 20:05','13 pedidos',1)}</div></div>
+  <div class="card"><div class="cuenta"><span class="h2">Semana 14–20</span><span class="mono" style="font-weight:700;color:var(--acc)">${SEM}</span></div>${tira()}</div>
+  <div class="btn">${ico('camara')}Cargar capturas</div>`
+};
+
+/* Buscar es interactivo: el texto y el rango filtran de verdad. */
+let uid=0;
+const CAL=()=>{ // septiembre 2026 empieza en martes
+  let h=['L','M','M','J','V','S','D'].map(x=>`<b>${x}</b>`).join('')+'<span></span>';
+  for(let d=1;d<=30;d++)h+=`<button type="button" data-dia="${d}" aria-label="${d} de septiembre">${d}</button>`;
+  return `<div class="cal">${h}</div>`;
+};
+const BUSCAR={
+ a:()=>`<div class="top"><div class="h1">Buscar pedido</div><span class="racha">${ico('buscar')}rango</span></div>
+  <div class="buscador">${ico('buscar')}<input id="q${++uid}" placeholder="Código, p. ej. 12250" inputmode="numeric" autocomplete="off" aria-label="Código del pedido"></div>
+  <div class="card" style="padding:10px"><div class="cal-cab"><span class="h2">Septiembre 2026</span><span class="pill ok rt"></span></div>${CAL()}</div>
+  <div class="cuenta"><b class="h2 n"></b><span class="mono mut tot"></span></div><div class="res" data-n="3"></div>`,
+ b:()=>`<div class="top"><div class="h1">Buscar pedido</div><span class="pill warn">${ico('buscar')}Rango</span></div>
+  <div class="buscador">${ico('buscar')}<input id="q${++uid}" placeholder="12250…" inputmode="numeric" autocomplete="off" aria-label="Código del pedido"></div>
+  <div class="atajos">${[['Ayer',20,20],['Semana',14,20],['7 días',15,21],['14 días',8,21]].map(([t,a,b])=>`<button type="button" class="atajo" data-a="${a}" data-b="${b}">${t}</button>`).join('')}</div>
+  <div class="rango-b"><label><span>Desde</span><b class="da"></b></label><label><span>Hasta</span><b class="db"></b></label></div>
+  <div class="via"></div><div class="cuenta"><b class="h2 n"></b><span class="mono mut tot"></span></div><div class="res" data-n="4"></div>`,
+ c:()=>`<div class="top"><div class="h1">Buscar pedido</div></div>
+  <div class="buscador">${ico('buscar')}<input id="q${++uid}" placeholder="Escribe parte del código" inputmode="numeric" autocomplete="off" aria-label="Código del pedido"></div>
+  <div class="seg"><button type="button" class="on" data-modo="rango">Rango de días</button><button type="button" data-modo="dia">Un día</button></div>
+  <div class="atajos">${[['Ayer',20,20],['Semana',14,20],['7 días',15,21],['14 días',8,21]].map(([t,a,b])=>`<button type="button" class="atajo" data-a="${a}" data-b="${b}">${t}</button>`).join('')}</div>
+  <div class="rango-c"><label><span>Del</span><b class="da"></b></label>${ico('ruta')}<label><span>Al</span><b class="db"></b></label></div>
+  <div class="cuenta"><b class="h2 n"></b><span class="mono mut tot"></span></div><div class="res" data-n="3"></div>`,
+ d:()=>`<div class="top"><div class="h1">Buscar pedido</div><span class="pill ruta rt"></span></div>
+  <div class="buscador">${ico('buscar')}<input id="q${++uid}" placeholder="Código o parte de él" inputmode="numeric" autocomplete="off" aria-label="Código del pedido"></div>
+  <div class="card" style="padding:4px 8px 8px"><span class="mut" style="font-size:10.5px;padding-left:6px">Toca el día de inicio y el de fin</span><div class="linea-dias"></div></div>
+  <div class="cuenta"><b class="h2 n"></b><span class="mono mut tot"></span></div><div class="res" data-n="4"></div>`
+};
+
+function cablear(el){
+  const s={a:14,b:20,q:'',pick:0,modo:'rango'};
+  const $=x=>el.querySelector(x), $$=x=>[...el.querySelectorAll(x)];
+  const dias=Array.from({length:14},(_,i)=>i+8);
+  const pintar=()=>{
+    const N=+$('.res').dataset.n;
+    const l=PED.filter(p=>p.d>=s.a&&p.d<=s.b&&p.c.includes(s.q));
+    const total=l.reduce((t,p)=>t+ +p.m,0);
+    const rango=s.a===s.b?`${s.a} sep`:`${s.a}–${s.b} sep`;
+    $('.n').textContent=l.length===1?'1 pedido':`${l.length} pedidos`;
+    $('.tot').textContent=`${rango} · S/ ${total.toFixed(2)}`;
+    if($('.rt'))$('.rt').textContent=rango;
+    if($('.da')){$('.da').textContent=`${s.a} sep`;$('.db').textContent=`${s.b} sep`}
+    $('.res').innerHTML=l.length?l.slice(0,N).map(p=>fila(p,s.q)).join('')+(l.length>N?`<div class="mut" style="padding-top:6px;font-size:11px">+${l.length-N} más · sigue bajando</div>`:''):`<div class="mut" style="padding:14px 4px;font-size:11.5px"><b style="color:var(--ink)">Ningún pedido</b>${s.q?` con «${s.q}»`:''} entre el ${s.a} y el ${s.b} de septiembre. Amplía el rango o revisa el código.</div>`;
+    $$('.atajo').forEach(b=>b.classList.toggle('on',+b.dataset.a===s.a&&+b.dataset.b===s.b));
+    $$('.cal button').forEach(b=>{const d=+b.dataset.dia;b.className=(d===s.a||d===s.b?'borde':d>s.a&&d<s.b?'dentro':'')+(PED.some(p=>p.d===d)?' cargado':'')+(d>21?' fuera':'')});
+    const ld=$('.linea-dias');
+    if(ld)ld.innerHTML=dias.map(d=>`<button type="button" data-dia="${d}" class="${d===s.a||d===s.b?'borde':d>s.a&&d<s.b?'dentro':''}" aria-label="${d} de septiembre"><u></u>${d}</button>`).join('');
+  };
+  const elegir=d=>{ if(s.modo==='dia'){s.a=s.b=d;return}
+    if(s.pick){s.b=Math.max(s.a,d);s.a=Math.min(s.a,d);s.pick=0}else{s.a=s.b=d;s.pick=1} };
+  el.addEventListener('click',e=>{
+    const dia=e.target.closest('[data-dia]'); if(dia){elegir(+dia.dataset.dia);pintar();return}
+    const at=e.target.closest('.atajo'); if(at){s.a=+at.dataset.a;s.b=+at.dataset.b;s.pick=0;pintar();return}
+    const m=e.target.closest('[data-modo]'); if(m){s.modo=m.dataset.modo;$$('[data-modo]').forEach(b=>b.classList.toggle('on',b===m));if(s.modo==='dia')s.a=s.b=s.b;pintar()}
+  });
+  $('input').addEventListener('input',e=>{s.q=e.target.value.replace(/\D/g,'');pintar()});
+  pintar();
+}
+
+const REVISION={
+ a:'¡Listo! 12 capturas',b:'Lectura completa',c:'Capturas leídas',d:'Recorrido leído'
+};
+const revision=t=>`<div class="top"><div style="display:flex;gap:6px;align-items:center">${ico('atras')}<div class="h1" style="font-size:18px">Revisar 20/09</div></div><span class="pill ok">${ico('check')}Leído</span></div>
+ <div class="card"><div class="cuenta"><span class="h2">${REVISION[t]}</span><span class="mono mut">12 / 12</span></div><div class="progreso" style="margin-top:8px"><span style="width:100%"></span></div>
+  <div class="mut" style="margin-top:6px;font-size:11px">Se leen aquí, en tu celular, de dos en dos.</div></div>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div class="card"><div class="mut">Pedidos</div><div class="h1">19 <span class="mut" style="font-size:13px">de 21</span></div></div><div class="card"><div class="mut">Rutas</div><div class="h1">8 <span class="mut" style="font-size:13px">de 8</span></div></div></div>
+ <div class="alerta">${ico('alerta')}<span><b>Faltan 2 pedidos:</b> la app marca 21 y se leyeron 19. Casi siempre es una tarjeta cortada entre dos capturas.</span></div>
+ <div class="card" style="padding:4px 12px">${fila({c:'v12250818wofp-01',d:20,r:4,e:'E',m:'10.00'})}<div class="fila"><span class="cod">v1225081wofp-01</span><span class="der"><span class="pill warn">${ico('alerta')}Dudoso</span></span><span class="met"><span class="pill ruta">Ruta 5</span>revisa un dígito</span></div></div>
+ <div style="display:grid;grid-template-columns:1fr 1.2fr;gap:8px"><div class="btn sec" style="font-size:12px">Añadir a mano</div><div class="btn" style="font-size:13px">Guardar día</div></div>`;
+
+const semana=t=>{
+  const v=[['L',14],['M',16],['M',14],['J',18],['V',12],['S',0],['D',21]];const v2=[14,16,14,18,12,0,21];
+  return `<div class="top"><div class="h1" style="font-size:19px">Semana 14–20 sep</div><span class="pill ok">${ico('check')}6 de 7</span></div>
+ <div class="card"><span class="mut">Se paga el viernes 25/09</span><div class="h1" style="font-size:30px;margin-block:2px">${SEM}</div><span class="mut">95 pedidos · 60 rutas · promedio 15,8</span></div>
+ <div class="card"><div class="cuenta" style="margin-bottom:2px"><span class="h2">Pedidos por día</span><span class="mono mut" style="font-size:10px">– – promedio</span></div>
+  <div class="barras"><span class="prom" style="bottom:${(14+15.8/21*74).toFixed(0)}px"></span>${v2.map((n,i)=>`<div class="${n?'':'vacio'}">${n?`<b>${n}</b>`:'<b>—</b>'}<u style="height:${n?Math.max(6,n/21*74):10}px"></u><span>${'LMMJVSD'[i]}</span></div>`).join('')}</div></div>
+ <div class="card">${tira()}</div>
+ <div class="card" style="display:flex;justify-content:space-between;align-items:center"><div><div class="h2">Pago del vie 25/09</div><span class="mut">Se concilia al recibirlo</span></div><span class="pill warn">${ico('alerta')}Pendiente</span></div>`;
+};
+
+/* ── Las cuatro propuestas ────────────────────────────────── */
+const P=[
+ {id:'a',n:'Turbo',pitch:'Juguetona y sin miedo al color. Bordes gruesos, sombras duras y un auto amarillo que deja estela. Premia la constancia con una racha que no castiga: un día de descanso no la rompe.',
+  paleta:[['Tinta','#1D1246'],['Violeta','#6A4CF5'],['Menta','#5BE3A4'],['Sol','#FFD23F'],['Lila','#F3EFFF']],tipo:['Fredoka','Nunito'],
+  exp:[['El auto cruza cuando termina la lectura','Un solo gesto de celebración, corto y sin bloquear nada. Con «reducir movimiento» activado se queda quieto.'],['Racha de días cargados','Cuenta los días seguidos con carga y perdona los de descanso. Es un adorno de Inicio, nunca un aviso.'],['Buscar tocando dos días','Un calendario de septiembre con un punto bajo cada día que tiene pedidos: tocas el inicio, tocas el fin.'],['Botón central que es el auto','Cargar capturas siempre a un pulgar de distancia, en el centro de la barra.']],
+  stage:'Pegatinas · racha · botón central'},
+ {id:'b',n:'Asfalto',pitch:'Seria y veloz, hecha con la señalética de la carretera: números condensados, líneas de eje discontinuas y un velocímetro que compara tu ritmo de hoy con el promedio de la semana.',
+  paleta:[['Asfalto','#0E1116'],['Chapa','#1E252E'],['Ámbar','#FF9F1C'],['Cielo','#5CC8FF'],['Hueso','#EEF1F5']],tipo:['Barlow Condensed','Barlow'],
+  exp:[['Velocímetro del día','El arco mide tus pedidos y una marca azul señala tu promedio. De un vistazo sabes si vas por encima.'],['Línea de eje como separador','La raya discontinua ámbar ordena la pantalla: separa lo de hoy de lo de la semana.'],['Buscar con atajos','Ayer, Semana, 7 y 14 días: un toque. Debajo, «Desde» y «Hasta» dicen qué rango se está usando.'],['Pensada para la noche','Fondo oscuro con texto de alto contraste: descansa la vista al terminar el turno.']],
+  stage:'Velocímetro · señalética · modo noche'},
+ {id:'c',n:'Menta',pitch:'La continuación natural de lo que ya existe: mismo verde azulado, mismas fuentes, mismas formas. Suma un auto de firma azul marino, un anillo con la semana y un toque de coral para lo que importa.',
+  paleta:[['Tinta','#0C1A18'],['Menta','#0B857B'],['Marino','#14324A'],['Coral','#FF7A5C'],['Niebla','#EEF4F2']],tipo:['Bricolage Grotesque','Figtree'],
+  exp:[['Anillo de la semana','Días cargados de siete. Ver el círculo casi completo es la única recompensa, y alcanza.'],['Casi todo son variables','Cambia poco código: los colores y radios ya viven en tokens. Es la de menor riesgo.'],['Buscar: un día o un rango','Un interruptor decide si la búsqueda es de un solo día o de varios, con los mismos atajos.'],['Coral solo para avisos','El color nuevo se reserva para lo que pide atención, como «Faltan 2 pedidos».']],
+  stage:'Continuidad · anillo · coral'},
+ {id:'d',n:'Mapa',pitch:'Cada día es un viaje. Las rutas del día pasan a ser paradas sobre una línea, con pines numerados y el auto avanzando hasta la última. La búsqueda por rango se elige sobre una línea de días.',
+  paleta:[['Marino','#0A2260'],['Azul ruta','#1F5CFF'],['Señal','#FFC800'],['Plano','#E6EEF8'],['Blanco','#FFFFFF']],tipo:['Unbounded','DM Sans'],
+  exp:[['Paradas en vez de filas','Ruta 4, Ruta 5, Ruta 6… ordenadas en el tiempo, con su horario y sus pedidos. Se entiende el día sin leer una tabla.'],['Buscar sobre una línea de días','Toca dos puntos de la línea: lo de en medio se ilumina como un tramo de carretera.'],['Fondo de plano','Una cuadrícula muy tenue, como un mapa, que da textura sin competir con los datos.'],['El auto llega al final','Al terminar de cargar, el auto recorre las paradas del día en un par de segundos.']],
+  stage:'Paradas · pines · línea de días'}
+];
+const ICONOS=[['inicio','Inicio'],['buscar','Buscar'],['camara','Cargar'],['calendario','Días'],['cartera','Pagos'],['barras','Stats'],['ruta','Rutas'],['pedido','Pedidos'],['alerta','Aviso'],['ajustes','Ajustes']];
+
+function seccion(p){
+  const slot=(titulo,desc,html,nuevo)=>`<figure class="slot">${html}<figcaption><b>${titulo}${nuevo?'<span class="nuevo">nuevo</span>':''}</b>${desc}</figcaption></figure>`;
+  return `<section class="prop tema-${p.id}" id="${p.id}">
+   <div class="prop-cab"><button class="marca" type="button" aria-label="Ver el auto de ${p.n} en movimiento">${car(CAR[p.id])}</button>
+    <div><span class="rot">Propuesta ${p.id.toUpperCase()}</span><h2>${p.n}</h2><p class="pitch">${p.pitch}</p></div></div>
+   <div class="ficha">
+    <div><span class="rot">Paleta</span><div class="paleta">${p.paleta.map(([n,h])=>`<figure><i style="background:${h}"></i>${n}<br>${h}</figure>`).join('')}</div></div>
+    <div><span class="rot">Tipografía</span><div class="tipo"><span class="d">${p.tipo[0]}</span><span class="b">${p.tipo[1]} para el texto, JetBrains Mono para códigos y montos</span><small>Códigos: v12250818wofp-01</small></div></div>
+    <div><span class="rot">Iconos</span><div class="iconos">${ICONOS.map(([k,l])=>`<figure><i>${ico(k)}</i>${l}</figure>`).join('')}</div></div>
+   </div>
+   <div class="stage"><div class="stage-cab"><b>${p.stage}</b><span>Los días de la semana conservan su forma: solo cambian de color.</span></div>
+    <div class="phones">
+     ${slot('Inicio','Selector de días y tira semanal, como ahora.',phone(p.id,INICIO[p.id](),'inicio'))}
+     ${slot('Buscar por rango','Escribe un código y elige fechas.',phone(p.id,BUSCAR[p.id](),'buscar'),1)}
+     ${slot('Revisión','Lee más rápido y avisa cuántos faltan.',phone(p.id,revision(p.id),'inicio'))}
+     ${slot('Semana','El gráfico de días y el pago.',phone(p.id,semana(p.id),'barras'))}
+    </div></div>
+   <ul class="exp">${p.exp.map(([t,x])=>`<li><b>${t}</b><span>${x}</span></li>`).join('')}</ul></section>`;
+}
+
+document.getElementById('props').innerHTML=P.map(seccion).join('');
+document.getElementById('indice').innerHTML=P.map(p=>`<a href="#${p.id}"><i style="background:${p.paleta[1][1]}"></i>${p.id.toUpperCase()} · ${p.n}</a>`).join('')+'<a href="#comparar">Comparar</a>';
+document.querySelectorAll('.prop').forEach(sec=>{
+  cablear(sec.querySelector('.res').closest('.ph'));
+  const m=sec.querySelector('.marca');
+  const vroom=()=>{m.classList.remove('zoom');void m.offsetWidth;m.classList.add('zoom')};
+  m.addEventListener('click',vroom);setTimeout(vroom,300);
+  const fila4=sec.querySelector('.phones');
+  if(fila4.scrollWidth>fila4.clientWidth+4)sec.querySelector('.stage-cab').insertAdjacentHTML('beforeend','<span class="hint">Desliza para ver las 4 pantallas →</span>');
+});
+</script>
+
+</body>
+</html>

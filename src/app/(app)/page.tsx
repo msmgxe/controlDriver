@@ -3,15 +3,17 @@
 import { useState } from "react";
 import Link from "next/link";
 
-import { Acordeon } from "@/components/Acordeon";
 import { CargarCapturas } from "@/components/CargarCapturas";
 import { usePuedeEscribir } from "@/components/Licencia";
-import { Flecha, Reloj } from "@/components/iconos";
-import { MontoHero, TiraSemana } from "@/components/ui";
+import { PanelDeDescansos } from "@/components/PanelDeDescansos";
+import { Flecha, Luna, Reloj } from "@/components/iconos";
+import { MontoHero, TarjetaDelDia, TiraSemana } from "@/components/ui";
 import { useDatos } from "@/hooks/useDatos";
+import { useVehiculo } from "@/hooks/useVehiculo";
 import { useVersion } from "@/hooks/useVersion";
 import { diasEntre } from "@/lib/licencia/estado";
-import { resumenPorRango } from "@/lib/db/sqlite/jornadas";
+import { descansosPorRango, marcarDescanso, quitarDescanso } from "@/lib/db/sqlite/descansos";
+import { jornadaPorFecha, resumenPorRango } from "@/lib/db/sqlite/jornadas";
 import {
   formatearDuracion,
   formatearFecha,
@@ -26,46 +28,59 @@ import {
 import { formatearSoles } from "@/lib/pagos/reglas";
 
 /**
- * Inicio (§9).
+ * Inicio (§9), con la cara «Mapa»/«Asfalto».
  *
- * El principio de §1 sigue siendo "una sola acción diaria": el botón de cargar
- * manda y está siempre a la vista. Lo demás se reordenó porque la pantalla
- * enseñaba el día, la semana, los avisos y los enlaces a la vez, y quien la
- * abría no sabía dónde mirar.
+ * El principio de §1 sigue siendo "una sola acción diaria": cargar manda y está
+ * siempre a mano —aquí, y en el auto de la barra de abajo—. Lo demás va en este
+ * orden porque es el orden en que se pregunta:
  *
- * Dos decisiones detrás de esta disposición:
- *
- *   · **La fecha se elige arriba y no manda sobre la carga.** Se consulta un
- *     día cualquiera sin que eso cambie lo que se va a subir: las capturas
- *     traen su propia fecha dentro. Atarlas al día elegido sería una trampa
- *     silenciosa —subir el lunes las del domingo lo guardaría mal.
- *
- *   · **Plegado, pero con lo esencial fuera.** Cada sección enseña su cifra
- *     aunque esté cerrada, para no obligar a abrir solo para mirar.
+ *   1. **¿Qué día miro?** Los últimos siete días como fichas. La fecha se elige
+ *      arriba y no manda sobre la carga: las capturas traen su propia fecha, y
+ *      atarlas al día elegido sería una trampa silenciosa —subir el lunes las
+ *      del domingo lo guardaría mal—.
+ *   2. **¿Cuánto llevo?** La cifra grande del día, con el auto.
+ *   3. **¿Por dónde anduve?** El recorrido: cada ruta como una parada.
+ *   4. **¿Y la semana?** Lo que suma, qué días faltan y cuáles fueron descanso.
  */
 export default function PaginaInicio() {
   const hoy = hoyEnLima();
   const [dia, setDia] = useState<FechaISO>(hoy);
   const puedeCargar = usePuedeEscribir();
+  const vehiculo = useVehiculo();
 
   const semana = semanaDe(dia);
+  const desde = sumarDias(hoy, -60);
 
-  const { datos: filas, cargando } = useDatos(
-    () => resumenPorRango(sumarDias(hoy, -60), semana.fin),
+  const { datos, cargando, recargar } = useDatos(
+    async () => {
+      const [filas, descansos] = await Promise.all([
+        resumenPorRango(desde, semana.fin),
+        descansosPorRango(desde, semana.fin),
+      ]);
+      return { filas, descansos };
+    },
     [hoy, semana.fin],
+    { conservar: true },
   );
 
-  if (cargando || !filas) return <Esqueleto />;
+  if (cargando || !datos) return <Esqueleto />;
 
-  const porFecha = new Map(filas.map((f) => [f.fecha, f]));
+  const porFecha = new Map(datos.filas.map((f) => [f.fecha, f]));
+  const descansos = new Set<FechaISO>(datos.descansos);
   const delDia = porFecha.get(dia);
 
   const deLaSemana = rangoDeFechas(semana.inicio, semana.fin).map((fecha) => {
     const f = porFecha.get(fecha);
-    return { fecha, cargado: Boolean(f), pedidos: f?.pedidos ?? 0 };
+    return {
+      fecha,
+      cargado: Boolean(f),
+      pedidos: f?.pedidos ?? 0,
+      descanso: !f && descansos.has(fecha),
+    };
   });
 
   const cargadas = deLaSemana.filter((d) => d.cargado);
+  const deDescanso = deLaSemana.filter((d) => d.descanso).map((d) => d.fecha);
   const totalSemana = cargadas.reduce(
     (acc, d) => {
       const f = porFecha.get(d.fecha)!;
@@ -78,95 +93,278 @@ export default function PaginaInicio() {
     { pedidos: 0, rutas: 0, centimos: 0 },
   );
 
-  const faltantes = deLaSemana.filter((d) => !d.cargado && d.fecha < hoy);
+  // Faltan los días pasados que ni se cargaron ni se dijeron de descanso.
+  const faltan = deLaSemana.filter((d) => !d.cargado && !d.descanso && d.fecha < hoy);
 
   return (
     <div className="mx-auto flex max-w-[880px] flex-col gap-4">
-      <SelectorDeDia dia={dia} hoy={hoy} alElegir={setDia} cargadas={porFecha} />
+      <SelectorDeDia dia={dia} hoy={hoy} alElegir={setDia} cargadas={porFecha} descansos={descansos} />
+
+      {delDia ? (
+        <TarjetaDelDia
+          encabezado={dia === hoy ? "Hoy cargaste" : `El ${nombreDelDia(dia)} cargaste`}
+          cifra={String(delDia.pedidos)}
+          pie={`pedidos · ${delDia.rutas} ruta${delDia.rutas === 1 ? "" : "s"}`}
+          monto={formatearSoles(delDia.montoCentimos)}
+          vehiculo={vehiculo}
+        />
+      ) : (
+        <DiaSinCarga
+          fecha={dia}
+          hoy={hoy}
+          descanso={descansos.has(dia)}
+          puedeEscribir={puedeCargar}
+          alCambiar={recargar}
+        />
+      )}
 
       <CargarCapturas deshabilitado={!puedeCargar} />
 
-      <Acordeon
-        titulo={dia === hoy ? "Hoy" : nombreDelDia(dia) + " " + formatearFecha(dia)}
-        resumen={
-          delDia
-            ? `${delDia.pedidos} pedidos · ${delDia.rutas} rutas · ${formatearSoles(delDia.montoCentimos)}`
-            : "Sin cargar"
-        }
-        abiertoPorDefecto
-      >
-        {delDia ? (
-          <div className="flex flex-col gap-3">
-            <MontoHero
-              centimos={delDia.montoCentimos}
-              pie={`${delDia.pedidos} pedidos en ${delDia.rutas} rutas`}
-            />
-            <dl className="flex flex-col text-sm">
-              <Dato etiqueta="Tiempo en ruta" valor={formatearDuracion(delDia.minutosEnRuta)} />
-              <Dato etiqueta="Primera salida" valor={delDia.primeraSalida ?? "—"} />
-              <Dato etiqueta="Último regreso" valor={delDia.ultimoRegreso ?? "—"} />
-              {delDia.horaEntrada && delDia.horaSalida && (
-                <Dato
-                  etiqueta="En tienda"
-                  valor={`${delDia.horaEntrada} a ${delDia.horaSalida}`}
-                />
-              )}
-            </dl>
-            <Link
-              href={`/jornada?fecha=${dia}`}
-              className="inline-flex min-h-11 items-center gap-2 self-start text-sm font-semibold text-acento"
-            >
-              Ver y corregir el detalle
-              <Flecha className="size-4" />
-            </Link>
-          </div>
-        ) : (
-          <p className="text-sm text-tinta-2">
-            {dia === hoy
-              ? "Todavía no has subido las capturas de hoy."
-              : "Ese día no está cargado. Puedes subirlo cuando quieras: manda la fecha de la captura, no la de hoy."}
-          </p>
-        )}
-      </Acordeon>
+      {delDia && (
+        <Recorrido
+          fecha={dia}
+          hoy={hoy}
+          minutosEnRuta={delDia.minutosEnRuta}
+          horaEntrada={delDia.horaEntrada}
+          horaSalida={delDia.horaSalida}
+        />
+      )}
 
-      <Acordeon
-        titulo="Esta semana"
-        resumen={`${formatearSoles(totalSemana.centimos)} · ${cargadas.length} de 7 días`}
-      >
-        <div className="flex flex-col gap-4">
-          <MontoHero
-            centimos={totalSemana.centimos}
-            pie={`${totalSemana.pedidos} pedidos · ${totalSemana.rutas} rutas`}
-          />
-          <TiraSemana dias={deLaSemana} hoy={hoy} />
-          <div className="flex items-center gap-2 text-sm text-tinta-2">
-            <Reloj className="size-4" />
-            <span>Se paga el viernes {formatearFecha(semana.pago)}</span>
-          </div>
-          {faltantes.length > 0 && (
-            <p className="rounded-btn bg-aviso-suave px-3 py-2 text-sm text-aviso">
-              Falta{faltantes.length === 1 ? "" : "n"}{" "}
-              {faltantes.map((d) => nombreDelDia(d.fecha)).join(", ")}.
-            </p>
-          )}
+      <section className="tarjeta flex flex-col gap-4" aria-label="La semana">
+        <div className="flex items-baseline justify-between gap-2">
+          <h3 className="text-base">
+            Sem. {Number(semana.inicio.slice(8, 10))}–{Number(semana.fin.slice(8, 10))}
+          </h3>
+          <span className="font-mono text-xs text-tinta-3">
+            {cargadas.length} de 7 días
+            {deDescanso.length > 0 && ` · ${deDescanso.length} descanso`}
+          </span>
         </div>
-      </Acordeon>
-
-      <Acordeon titulo="Ver más" resumen="Historial, pagos y estadísticas">
-        <div className="flex flex-col gap-2">
-          <FilaEnlace href="/historial" titulo="Historial" detalle="Todos tus días y pedidos" />
-          <FilaEnlace href="/pagos" titulo="Pagos" detalle="Semanas, cierres y conciliación" />
-          <FilaEnlace
-            href="/estadisticas"
-            titulo="Estadísticas"
-            detalle="Pedidos, tiempos e ingresos"
-          />
+        <MontoHero
+          centimos={totalSemana.centimos}
+          pie={`${totalSemana.pedidos} pedidos · ${totalSemana.rutas} rutas`}
+        />
+        <TiraSemana dias={deLaSemana} hoy={hoy} />
+        <div className="flex items-center gap-2 text-sm text-tinta-2">
+          <Reloj className="size-4" />
+          <span>Se paga el viernes {formatearFecha(semana.pago)}</span>
         </div>
-      </Acordeon>
+        <PanelDeDescansos
+          faltan={faltan.map((d) => d.fecha)}
+          descansos={deDescanso}
+          alCambiar={recargar}
+        />
+      </section>
 
       <RecordatorioDeRespaldo />
       <PieDeVersion />
     </div>
+  );
+}
+
+/**
+ * Un día que no está cargado: se puede subir, o decir que no se trabajó.
+ *
+ * Es lo que en Pagos se contesta con «No trabajé esos días», pero para un solo
+ * día y desde donde se está mirando: si el jueves fue libre, se dice aquí mismo.
+ */
+function DiaSinCarga({
+  fecha,
+  hoy,
+  descanso,
+  puedeEscribir,
+  alCambiar,
+}: {
+  fecha: FechaISO;
+  hoy: FechaISO;
+  descanso: boolean;
+  puedeEscribir: boolean;
+  alCambiar: () => void;
+}) {
+  const [ocupado, setOcupado] = useState(false);
+  const esFuturo = fecha > hoy;
+
+  async function cambiar() {
+    setOcupado(true);
+    try {
+      if (descanso) await quitarDescanso([fecha]);
+      else await marcarDescanso([fecha]);
+      alCambiar();
+    } finally {
+      setOcupado(false);
+    }
+  }
+
+  if (descanso) {
+    return (
+      <section className="tarjeta flex items-center gap-3" aria-label="Día de descanso">
+        <span className="grid size-11 shrink-0 place-items-center rounded-full bg-descanso text-descanso-tinta">
+          <Luna className="size-6" />
+        </span>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <b className="text-base font-bold">Día de descanso</b>
+          <span className="text-sm text-tinta-2">Dijiste que no trabajaste este día.</span>
+        </div>
+        <button
+          type="button"
+          className="boton-sec shrink-0"
+          disabled={!puedeEscribir || ocupado}
+          onClick={() => void cambiar()}
+        >
+          Quitar
+        </button>
+      </section>
+    );
+  }
+
+  return (
+    <section className="tarjeta flex flex-col gap-3" aria-label="Sin cargar">
+      <div>
+        <b className="text-base font-bold">{fecha === hoy ? "Hoy" : "Ese día"}: sin cargar</b>
+        <p className="text-sm text-tinta-2">
+          {fecha === hoy
+            ? "Todavía no has subido las capturas de hoy."
+            : esFuturo
+              ? "Ese día todavía no llega."
+              : "Puedes subirlo cuando quieras: manda la fecha de la captura, no la de hoy."}
+        </p>
+      </div>
+      {!esFuturo && (
+        <button
+          type="button"
+          className="boton-sec self-start"
+          disabled={!puedeEscribir || ocupado}
+          onClick={() => void cambiar()}
+        >
+          <Luna className="size-[18px]" />
+          No trabajé este día
+        </button>
+      )}
+    </section>
+  );
+}
+
+/**
+ * El recorrido del día: cada ruta, una parada.
+ *
+ * Es la lista de rutas que ya se leyó de las capturas, puesta como se recorrió:
+ * de arriba abajo, con su horario y cuántos pedidos tuvo. Se enseñan las tres
+ * primeras y el resto se resume en una parada final, para que la pantalla no se
+ * alargue en un día de once rutas; el detalle completo está un toque más allá.
+ */
+function Recorrido({
+  fecha,
+  hoy,
+  minutosEnRuta,
+  horaEntrada,
+  horaSalida,
+}: {
+  fecha: FechaISO;
+  hoy: FechaISO;
+  minutosEnRuta: number;
+  horaEntrada: string | null;
+  horaSalida: string | null;
+}) {
+  const { datos: jornada } = useDatos(() => jornadaPorFecha(fecha), [fecha], { conservar: true });
+  if (!jornada || jornada.rutas.length === 0) return null;
+
+  const rutas = [...jornada.rutas].sort((a, b) => a.numero - b.numero);
+  const pedidosDe = (numero: number) => jornada.ordenes.filter((o) => o.ruta === numero).length;
+
+  const visibles = rutas.slice(0, 3);
+  const resto = rutas.slice(3);
+  const pedidosResto = resto.reduce((s, r) => s + pedidosDe(r.numero), 0);
+  const ultimoFin = resto.map((r) => r.horaFin).filter(Boolean).sort().at(-1);
+
+  return (
+    <section className="tarjeta flex flex-col gap-1" aria-label="Recorrido del día">
+      <h3 className="text-base">{fecha === hoy ? "Tu recorrido de hoy" : "El recorrido de ese día"}</h3>
+
+      <ol className="flex flex-col">
+        {visibles.map((r, i) => {
+          const n = pedidosDe(r.numero);
+          return (
+            <Parada
+              key={r.id}
+              primera={i === 0}
+              ultima={resto.length === 0 && i === visibles.length - 1}
+              pin={String(r.numero)}
+              titulo={`Ruta ${r.numero}`}
+              detalle={
+                r.horaInicio && r.horaFin ? `${r.horaInicio} – ${r.horaFin}` : "Sin horario"
+              }
+              etiqueta={`${n} pedido${n === 1 ? "" : "s"}`}
+            />
+          );
+        })}
+        {resto.length > 0 && (
+          <Parada
+            fin
+            ultima
+            pin={`+${resto.length}`}
+            titulo={`Otras ${resto.length} ruta${resto.length === 1 ? "" : "s"}`}
+            detalle={ultimoFin ? `hasta las ${ultimoFin}` : "…"}
+            etiqueta={`${pedidosResto} pedido${pedidosResto === 1 ? "" : "s"}`}
+          />
+        )}
+      </ol>
+
+      <dl className="mt-1 flex flex-col text-sm">
+        <Dato etiqueta="Tiempo en ruta" valor={formatearDuracion(minutosEnRuta)} />
+        {horaEntrada && horaSalida && (
+          <Dato etiqueta="En tienda" valor={`${horaEntrada} a ${horaSalida}`} />
+        )}
+      </dl>
+      <Link
+        href={`/jornada?fecha=${fecha}`}
+        className="inline-flex min-h-11 items-center gap-2 self-start text-sm font-semibold text-acento"
+      >
+        Ver y corregir el detalle
+        <Flecha className="size-4" />
+      </Link>
+    </section>
+  );
+}
+
+/** Una parada del recorrido: un pin numerado sobre una línea discontinua. */
+function Parada({
+  pin,
+  titulo,
+  detalle,
+  etiqueta,
+  primera = false,
+  ultima = false,
+  fin = false,
+}: {
+  pin: string;
+  titulo: string;
+  detalle: string;
+  etiqueta: string;
+  primera?: boolean;
+  ultima?: boolean;
+  fin?: boolean;
+}) {
+  return (
+    <li
+      className={`relative grid grid-cols-[24px_1fr_auto] items-center gap-3 py-2 before:absolute before:left-3 before:border-l-2 before:border-dashed before:border-acento/40 before:content-[''] ${
+        primera ? "before:top-1/2" : "before:top-0"
+      } ${ultima ? "before:bottom-1/2" : "before:bottom-0"}`}
+    >
+      <span
+        className={`relative z-10 grid size-6 -rotate-45 place-items-center rounded-[50%_50%_50%_4px] ${
+          fin ? "bg-acento-2 text-acento-2-tinta" : "bg-acento text-acento-texto"
+        }`}
+      >
+        <b className="rotate-45 font-mono text-[10px] leading-none">{pin}</b>
+      </span>
+      <span className="flex min-w-0 flex-col">
+        <b className="truncate text-sm font-bold">{titulo}</b>
+        <span className="font-mono text-xs text-tinta-3">{detalle}</span>
+      </span>
+      <span className="rounded-chip bg-sup-2 px-2.5 py-0.5 text-[11px] font-semibold text-tinta-2">
+        {etiqueta}
+      </span>
+    </li>
   );
 }
 
@@ -241,18 +439,24 @@ function SelectorDeDia({
   hoy,
   alElegir,
   cargadas,
+  descansos,
 }: {
   dia: FechaISO;
   hoy: FechaISO;
   alElegir: (f: FechaISO) => void;
   cargadas: Map<string, unknown>;
+  descansos: ReadonlySet<FechaISO>;
 }) {
   const ultimos = rangoDeFechas(sumarDias(hoy, -6), hoy);
 
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-end justify-between gap-3">
-        <h2 className="text-[26px] leading-tight capitalize">{formatearFechaLarga(dia)}</h2>
+        {/* Sin el año: ya lo dice el selector de al lado, y con la letra condensada y en
+            mayúsculas del modo oscuro la fecha entera ocupaba cuatro líneas. */}
+        <h2 className="text-[26px] leading-tight first-letter:uppercase">
+          {formatearFechaLarga(dia).replace(/ de \d{4}$/, "")}
+        </h2>
         <label className="shrink-0">
           <span className="sr-only">Elegir otra fecha</span>
           <input
@@ -268,12 +472,17 @@ function SelectorDeDia({
       <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
         {ultimos.map((fecha) => {
           const elegido = fecha === dia;
+          const cargado = cargadas.has(fecha);
+          const descanso = !cargado && descansos.has(fecha);
           return (
             <button
               key={fecha}
               type="button"
               onClick={() => alElegir(fecha)}
               aria-pressed={elegido}
+              aria-label={`${nombreDelDia(fecha)} ${Number(fecha.slice(8))}${
+                cargado ? ", cargado" : descanso ? ", descanso" : ""
+              }`}
               className={`flex min-h-[58px] w-[52px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-btn border text-xs ${
                 elegido
                   ? "border-acento bg-acento text-acento-texto"
@@ -282,14 +491,18 @@ function SelectorDeDia({
             >
               <span className="capitalize">{nombreDelDia(fecha).slice(0, 3)}</span>
               <b className="text-base font-semibold">{fecha.slice(8)}</b>
+              {/* Un punto: del color de la marca si está cargado, amarillo si fue
+                  descanso. La forma no cambia; el aria-label dice cuál es. */}
               <span
                 aria-hidden
                 className={`size-1.5 rounded-full ${
-                  cargadas.has(fecha)
+                  cargado
                     ? elegido
                       ? "bg-acento-texto"
                       : "bg-acento"
-                    : "bg-transparent"
+                    : descanso
+                      ? "bg-descanso ring-1 ring-tinta/30"
+                      : "bg-transparent"
                 }`}
               />
             </button>
@@ -306,29 +519,6 @@ function Dato({ etiqueta, valor }: { etiqueta: string; valor: string }) {
       <dt className="text-tinta-2">{etiqueta}</dt>
       <dd className="font-medium">{valor}</dd>
     </div>
-  );
-}
-
-function FilaEnlace({
-  href,
-  titulo,
-  detalle,
-}: {
-  href: string;
-  titulo: string;
-  detalle: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="flex min-h-[56px] items-center justify-between gap-3 rounded-btn bg-sup px-4 py-3"
-    >
-      <span className="flex min-w-0 flex-col">
-        <b className="text-sm font-semibold">{titulo}</b>
-        <span className="text-sm text-tinta-2">{detalle}</span>
-      </span>
-      <Flecha className="size-4 shrink-0 text-tinta-3" />
-    </Link>
   );
 }
 

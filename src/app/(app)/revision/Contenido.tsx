@@ -578,7 +578,7 @@ export function Contenido({ alSiguiente }: { alSiguiente?: () => void } = {}) {
 
       {error && <Aviso tono="mal" titulo="No se pudo guardar">{error}</Aviso>}
 
-      <div className="sticky bottom-0 -mx-4 -mb-16 border-t border-linea bg-papel/90 px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] backdrop-blur-md">
+      <div className="sticky bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] -mx-4 border-t border-linea bg-papel/90 px-4 pt-3 pb-4 backdrop-blur-md lg:bottom-0 lg:-mb-16 lg:pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
         <div className="mx-auto max-w-[880px]">
           <button
             type="button"

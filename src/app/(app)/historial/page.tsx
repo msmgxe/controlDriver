@@ -37,8 +37,8 @@ import { formatearSoles } from "@/lib/pagos/reglas";
  */
 
 const RANGOS = [
-  { id: "semana", etiqueta: "Esta semana" },
-  { id: "pasada", etiqueta: "Semana pasada" },
+  { id: "semana", etiqueta: "Esta sem." },
+  { id: "pasada", etiqueta: "Sem. pasada" },
   { id: "mes", etiqueta: "Este mes" },
   { id: "anterior", etiqueta: "Mes pasado" },
 ] as const;

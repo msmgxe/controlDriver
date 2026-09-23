@@ -38,13 +38,18 @@ export function Contenido() {
 
       setEstado({ fase: "comprimiendo", listas: 0, total: archivos.length });
 
-      const resultado = await procesarCapturas(archivos, (n) => {
-        setEstado({
-          fase: n === archivos.length ? "leyendo" : "comprimiendo",
-          listas: n,
-          total: archivos.length,
-        });
-      });
+      const resultado = await procesarCapturas(
+        archivos,
+        (n) => {
+          // Al terminar de preparar se empieza a leer, y la cuenta vuelve a cero.
+          setEstado(
+            n === archivos.length
+              ? { fase: "leyendo", listas: 0, total: archivos.length }
+              : { fase: "comprimiendo", listas: n, total: archivos.length },
+          );
+        },
+        (n) => setEstado({ fase: "leyendo", listas: n, total: archivos.length }),
+      );
 
       if (resultado.ok) router.replace("/revision");
       else setEstado({ fase: "error", mensaje: resultado.error });

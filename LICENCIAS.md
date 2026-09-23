@@ -5,7 +5,7 @@ la carpeta del proyecto. Es un solo comando por compañero y por pago.
 
 ## El recorrido completo
 
-1. **Tu compañero instala la app.** Tiene 30 días de prueba con todo, sin que
+1. **Tu compañero instala la app.** Tiene 14 días de prueba con todo, sin que
    hagas nada.
 2. **Te paga por Yape** y te manda el **código de su teléfono**: lo copia en
    *Ajustes → Tu licencia → Copiar* y te lo pega por WhatsApp.

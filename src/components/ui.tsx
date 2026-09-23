@@ -1,4 +1,6 @@
-import { Alerta, Check, Equis, Medio } from "@/components/iconos";
+import { Auto } from "@/components/Auto";
+import type { TipoVehiculo } from "@/lib/pagos/reglas";
+import { Alerta, Check, Equis, Luna, Medio } from "@/components/iconos";
 import { formatearFecha, nombreDelDia, type FechaISO } from "@/lib/fechas";
 import { formatearSoles } from "@/lib/pagos/reglas";
 
@@ -121,6 +123,12 @@ export function MontoHero({
 
 /* --------------------------------------------------------------------------
  * Tira de la semana (lunes a domingo)
+ *
+ * Cada día está en uno de tres estados, y ninguno depende solo del color: lleva
+ * la barra de abajo y, para el descanso, además la luna.
+ *   · cargado   → barra del color de la marca
+ *   · descanso  → barra amarilla (azul cielo en oscuro) y una luna
+ *   · sin nada  → barra tenue
  * ------------------------------------------------------------------------ */
 
 const LETRAS = ["L", "M", "X", "J", "V", "S", "D"];
@@ -129,29 +137,88 @@ export function TiraSemana({
   dias,
   hoy,
 }: {
-  dias: { fecha: FechaISO; cargado: boolean; pedidos: number }[];
+  dias: { fecha: FechaISO; cargado: boolean; pedidos: number; descanso?: boolean }[];
   hoy: FechaISO;
 }) {
+  const hayDescanso = dias.some((d) => d.descanso);
+
   return (
-    <div className="grid grid-cols-7 gap-1">
-      {dias.map((d, i) => (
-        <div
-          key={d.fecha}
-          title={`${nombreDelDia(d.fecha)} ${formatearFecha(d.fecha)}${
-            d.cargado ? ` · ${d.pedidos} pedidos` : " · sin carga"
-          }`}
-          className={`flex flex-col items-center gap-1 rounded-chip py-2 text-[10px] ${
-            d.fecha === hoy ? "bg-sup-2 font-bold" : ""
-          } ${d.cargado ? "text-tinta" : "text-tinta-3"}`}
-        >
-          <span>{LETRAS[i]}</span>
-          <span className="font-mono text-xs">{Number(d.fecha.slice(8, 10))}</span>
-          <span
-            className={`h-1 w-full rounded-full ${d.cargado ? "bg-acento" : "bg-linea"}`}
-          />
-        </div>
-      ))}
+    <div className="flex flex-col gap-2">
+      <div className="grid grid-cols-7 gap-1">
+        {dias.map((d, i) => (
+          <div
+            key={d.fecha}
+            title={`${nombreDelDia(d.fecha)} ${formatearFecha(d.fecha)}${
+              d.cargado ? ` · ${d.pedidos} pedidos` : d.descanso ? " · descanso" : " · sin carga"
+            }`}
+            className={`flex flex-col items-center gap-1 rounded-chip py-2 text-[10px] ${
+              d.fecha === hoy ? "bg-sup-2 font-bold" : ""
+            } ${d.cargado || d.descanso ? "text-tinta" : "text-tinta-3"}`}
+          >
+            <span>{LETRAS[i]}</span>
+            <span className="font-mono text-xs">{Number(d.fecha.slice(8, 10))}</span>
+            <span
+              className={`h-1 w-full rounded-full ${
+                d.cargado ? "bg-acento" : d.descanso ? "bg-descanso" : "bg-linea"
+              }`}
+            />
+            {d.descanso && !d.cargado ? (
+              <Luna aria-label="Descanso" className="size-3 text-tinta-2" />
+            ) : (
+              <span className="size-3" aria-hidden />
+            )}
+          </div>
+        ))}
+      </div>
+      {hayDescanso && (
+        <p className="flex items-center gap-1.5 text-[11px] text-tinta-2">
+          <span className="h-1 w-4 rounded-full bg-descanso" aria-hidden />
+          Descanso: los días que dijiste que no trabajaste.
+        </p>
+      )}
     </div>
+  );
+}
+
+/* --------------------------------------------------------------------------
+ * La cifra del día
+ *
+ * Es el «Hoy cargaste 21» de la propuesta Turbo, en los colores de la cara
+ * activa: el número grande, cuánto suma, y el auto con su estela.
+ * ------------------------------------------------------------------------ */
+
+export function TarjetaDelDia({
+  encabezado,
+  cifra,
+  pie,
+  monto,
+  vehiculo = "auto",
+  animado = true,
+}: {
+  encabezado: string;
+  cifra: string;
+  pie: string;
+  /** Lo que se cobra; sin él, no hay pastilla. */
+  monto?: string;
+  /** Con qué vehículo, para dibujar el que toca (ver `useVehiculo`). */
+  vehiculo?: TipoVehiculo;
+  animado?: boolean;
+}) {
+  return (
+    <section className="tarjeta-dia" aria-label={`${encabezado} ${cifra} ${pie}`}>
+      <p className="text-[13px] font-semibold opacity-90">{encabezado}</p>
+      <p className="font-display text-[56px] leading-[0.95] font-bold tracking-tight tabular-nums">
+        {cifra}
+      </p>
+      <p className="text-[13px] font-semibold opacity-90">{pie}</p>
+      {monto && <span className="pastilla">{monto}</span>}
+      <Auto
+        vehiculo={vehiculo}
+        sobreAcento
+        animado={animado}
+        className="pointer-events-none absolute -right-2 bottom-3 w-[44%] max-w-[190px] -rotate-[4deg]"
+      />
+    </section>
   );
 }
 

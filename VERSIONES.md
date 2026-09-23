@@ -36,6 +36,158 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v25 — 22/09/2026
+- **Nuevo: más de una tienda, desde el teléfono.** En Ajustes → Tienda,
+  modalidad y tarifa se agregan las tiendas que hagan falta y se elige para
+  cuál es la carga de hoy —antes solo existía la que se creaba sola al
+  instalar, y no había forma de cambiarla—. Cada tienda tiene su propia
+  modalidad y su propia tarifa, completamente aparte de las demás: cambiar la
+  de una no toca la de otra. Una tienda nueva empieza con la tabla por tramos
+  del código hasta que se edite.
+- **Aclarado: elegir "tarifa única" es opcional y por tienda.** No cambia
+  nada por su cuenta: las tiendas que ya tenían su tabla por tramos —como
+  Wong - Aldabas— la conservan tal cual hasta que alguien decida lo contrario
+  a mano, tienda por tienda.
+- **Arreglado: la lista de tiendas podía salir vacía en el primerísimo
+  arranque**, por la misma carrera de la v23 —esta pantalla la leía sin
+  esperar a que la tienda del código terminara de crearse—. Ya espera.
+
+### v24 — 22/09/2026
+- **Cambiado: nuevo ícono para la moto eléctrica.** Pasa de ser un auto con
+  otra carrocería a un camión de caja —cabina chica y baja, caja de reparto
+  grande y recta detrás—, al estilo de los íconos de reparto de siempre. Es lo
+  que de verdad se distingue de un auto en un ícono chico: una silueta que
+  solo se inclina un poco no se nota a 36 px, una con un salto de altura claro
+  sí.
+- **Nuevo: tarifa única también para el auto.** Había tiendas que no encajaban
+  en ninguna de las dos: pagan un monto fijo por pedido —S/ 8.50, S/ 10— **con
+  auto**, no solo con moto. El editor de tarifas de Ajustes ya no está atado a
+  la modalidad: es un interruptor **Única / Por tramo** que se aplica a la
+  modalidad activa, sea cual sea. Cambiarlo no toca la tarifa anterior —queda
+  guardada, con la fecha en que dejó de usarse— ni lo ya cobrado con ella.
+
+### v23 — 22/09/2026
+- **Nuevo: modalidad moto eléctrica, con tarifa única.** En **Ajustes →
+  Modalidad y tarifas** se elige con qué se reparte —Auto o Moto eléctrica— y
+  se edita la tarifa de la que esté activa. El auto sigue cobrando por tramo de
+  distancia, como siempre; la moto eléctrica cobra **un monto único por
+  pedido** (S/ 6.00 hasta que se cambie), sin tabla de tramos. Cambiar de
+  modalidad no toca lo ya cargado: cada jornada guarda la tarifa con la que se
+  leyó, así que un cambio a mitad de semana no reescribe lo que ya se cobró. Al
+  pasar a moto eléctrica por primera vez, su tarifa se crea sola con el monto
+  por defecto —si no, habría caído en la tabla de tramos del auto, que la moto
+  no tiene—.
+- **Nuevo: ícono propio para la moto eléctrica.** El auto de la marca
+  (cabecera, menú y botón de cargar) dibuja ahora un vehículo de caja —cabina
+  baja, caja de reparto alta y recta— cuando la modalidad es moto eléctrica, en
+  vez del auto. Cambia de ícono en cuanto se cambia la modalidad, sin recargar
+  la app.
+- **Nuevo: dos caras más en Apariencia.** Turbo (propuesta A: violeta, bordes
+  gruesos, Fredoka) y Menta (propuesta C: el verde de siempre, afinado,
+  Bricolage Grotesque) se suman a Mapa y Asfalto. Las cuatro están en el
+  selector de Ajustes; Turbo y Menta se eligen a mano y se quedan fijas —a
+  diferencia de Mapa/Asfalto, no seguían al reloj del teléfono desde antes—.
+- **Cambiado: la prueba gratis pasa de 30 a 14 días.** Vencida, sigue en solo
+  lectura tal como ya funcionaba: se ve y se exporta todo, pero no se cargan
+  días nuevos. Sirve para dar de probar la app a un compañero sin regalar tanto
+  como para que nunca llegue a pagar (ver LICENCIAS.md para emitirle su
+  licencia después).
+- **Arreglado: la app podía quedarse sin tienda para siempre en el
+  primerísimo arranque.** Dos pantallas pueden llamar a la siembra inicial
+  casi a la vez —la base está vacía, cada una ve que falta la tienda y trata
+  de crearla—, y como el nombre de la tienda es único, la segunda en escribir
+  reventaba contra esa restricción. La pantalla que perdía la carrera se
+  quedaba sin datos y **no lo reintentaba nunca**: parecía que la app no
+  terminaba de configurarse. Ahora, si crear la tienda falla por eso, se relee
+  la que ya existe en vez de fallar.
+- **Arreglado: el ícono del vehículo no se enteraba de un cambio de
+  modalidad** hasta recargar la app entera —el menú y la barra de abajo viven
+  fuera de las pantallas y no se vuelven a montar al navegar—. Ahora se
+  refresca en cada cambio de pantalla.
+
+### v22 — 21/09/2026
+- **Nuevo diseño: «Mapa» (claro) y «Asfalto» (oscuro).** Salen de las
+  propuestas D y B (`prototipo/propuestas-diseno.html`). En **Ajustes →
+  Apariencia** se elige entre *Claro* (Mapa), *Oscuro* (Asfalto) y
+  *Automático* (sigue al teléfono, como hasta ahora). La elección se guarda y
+  se aplica antes de pintar, para que no haya un fogonazo del tema equivocado
+  al abrir la app. Claro usa Unbounded y DM Sans; oscuro, Barlow Condensed en
+  mayúsculas y Barlow. Los códigos de pedido siguen en JetBrains Mono.
+- **El auto de la marca**, en la cabecera, en el menú y en el botón del centro
+  de la barra de abajo. Cambia de traje con el modo: amarillo y con estela de
+  puntos en claro, ámbar y con estela de rayas en oscuro.
+- **La cifra del día en Inicio** («Hoy cargaste 21 pedidos · 11 rutas · S/ …»,
+  con el auto y su estela), el gadget de la propuesta Turbo con los colores de
+  cada modo. Debajo, **el recorrido**: cada ruta del día como una parada, con
+  su horario y sus pedidos.
+- **Barra de abajo** con cinco puertas: Inicio, Buscar, el auto (cargar
+  capturas **desde cualquier pantalla**), *Sem.* y Más. «Más» abre el menú de
+  siempre (Historial, Estadísticas, Ajustes). La palabra «Semana» se abrevia a
+  **Sem.** donde no cabía: la barra, la tarjeta de la semana, Pagos y los
+  filtros de Historial.
+- **Nuevo: Buscar pedidos en un rango de días.** Parte del código, un rango, o
+  las dos cosas. El rango se elige con un atajo (Hoy, 7, 14, 30 días), tocando
+  el primer y el último día sobre la línea de los últimos 30, o escribiendo las
+  dos fechas. Los resultados salen agrupados por día y llevan a su detalle.
+- **Nuevo: días de descanso.** Donde Pagos preguntaba «¿No trabajaste o falta la
+  carga?» ahora hay un botón **«No trabajé esos días»**: se eligen los días (por
+  defecto todos) y quedan marcados como descanso. Un descanso deja de ser un
+  hueco —no cuenta en «faltan días por subir» ni en Estadísticas—, se ve en la
+  tira de la semana (barra amarilla en claro, azul en oscuro, y una luna) y en
+  el gráfico, no cambia lo que se cobra, se puede deshacer al momento y se puede
+  quitar día a día. En Inicio, un día sin cargar tiene su propio «No trabajé
+  este día». Si más tarde se carga ese día, el descanso se quita solo. Viaja en
+  el respaldo.
+- **Ojo:** el APK sigue sin probarse en teléfono. El diseño sí se revisó en
+  pantalla (claro y oscuro) con la misma compilación que va dentro del APK.
+
+### v21 — 21/09/2026
+- **Arreglado: la ruta y el estado de los pedidos.** El lector de texto del
+  teléfono entregaba solo líneas, en el orden que le saliera, y el intérprete
+  adivinaba a qué pedido pertenecía cada «Ruta 4» y cada «Entregado» por
+  la línea que iba antes o después. Con las capturas reales del 20/09, **la
+  mitad de los pedidos salían con la ruta del vecino** y la Ruta 1 se leía como
+  la 2. Ahora hay un lector propio (`LectorTexto`, en `android/`) que devuelve
+  también **dónde** está cada texto, y `geometria.ts` asigna la ruta que está
+  *en la fila* del código y el estado que está *debajo* de él. El rabo de una
+  tarjeta cortada por arriba o por abajo se descarta en vez de pegárselo a un
+  vecino.
+- **Arreglado: pedidos que se perdían sin aviso.** Un código con un dígito de
+  más o de menos, la «o» de «wofp» leída como cero, o un guion raro, no casaba
+  con el patrón y el pedido desaparecía. Ahora se conserva y se marca como
+  dudoso. Además, una `B` se leía como 6 (es un 8), y `(O Entregado)` no se
+  reconocía como estado porque el borde de la píldora sale como paréntesis.
+  El «De:» de una ruta ya no es obligatorio, y admite `19.31` además de `19:31`.
+- **Más rápido.** El lector antiguo creaba un reconocedor nuevo en *cada*
+  captura y no lo cerraba nunca; el nuevo se crea una vez y trabaja de dos en
+  dos. La copia reducida que se guarda como prueba se prepara mientras se lee,
+  en vez de antes de empezar. Y la pantalla dice «7 de 12 leídas» en vez de un
+  «tarda unos segundos» fijo.
+- **Avisa mejor cuántos faltan.** «Faltan 2 pedidos: la app marca 21 y se
+  leyeron 19», con la causa habitual y qué hacer. Si el contador de la pestaña
+  no se leyó, se usa la suma del resumen.
+- **Ojo, esto no se ha probado en un teléfono.** Se probó con lecturas reales de
+  las capturas del 20/09 (hechas con el lector de macOS, no con el de Android) y
+  con 359 pruebas; el código nativo compila. Si el lector nuevo falla, la app
+  cae al de antes. En **Ajustes → última lectura** cada captura dice con cuál
+  se leyó (`posiciones` es el bueno) y cuántos ms tardó, y al final va el texto
+  tal como lo devolvió el lector, con sus cajas: con eso se ve qué pasó.
+
+### v20 — 20/09/2026
+- **Nuevo:** "Leer pedidos de una foto", en el detalle de un día guardado,
+  dentro de "Añadir un pedido", junto a "Añadir un pedido a mano". Una o más
+  capturas de la pestaña Órdenes, para la fecha que se elija (por defecto la
+  del día abierto). Antes de guardar se enseñan los pedidos nuevos, con cada
+  uno quitable de la lista, y aparte los que ya estaban registrados.
+- **Solo entran los nuevos.** Un pedido cuyo código ya está guardado —en ese
+  día o en cualquier otro— no se añade: un pedido no se cobra dos veces. Se
+  dice cuántos eran y en qué día está cada uno, y subir dos veces la misma
+  foto no duplica nada.
+- Los pedidos entran en tramo 1 con el monto de la tarifa de esa fecha, y con
+  su ruta si ese día la tiene; si no, sin ruta, para asignarla después. Una
+  fecha de una semana cerrada se rechaza, como el resto de ediciones. Si la
+  foto trae una fecha distinta a la elegida, se avisa, pero no se cambia sola.
+
 ### v19 — 20/09/2026
 - **Nuevo:** "Leer rutas de una foto", en Revisión y en el detalle de un día
   guardado. Una o más capturas de la pestaña Rutas, se leen con el mismo

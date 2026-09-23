@@ -3,6 +3,8 @@
 import { useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 
+import { SeccionApariencia } from "@/components/SeccionApariencia";
+import { SeccionModalidad } from "@/components/SeccionModalidad";
 import { SeccionLicencia } from "@/components/SeccionLicencia";
 import { SeccionRespaldo } from "@/components/SeccionRespaldo";
 import { useVersion } from "@/hooks/useVersion";
@@ -68,6 +70,10 @@ export default function PaginaAjustes() {
   return (
     <div className="mx-auto flex max-w-[880px] flex-col gap-4">
       <h2 className="text-[30px] leading-tight">Ajustes</h2>
+
+      <SeccionApariencia />
+
+      <SeccionModalidad />
 
       <section className="tarjeta flex flex-col gap-4">
         <div className="flex items-start gap-3">

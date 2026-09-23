@@ -151,14 +151,25 @@ export async function guardarRegla(
  * Crea la tienda del código y su regla para que nada quede a medio configurar:
  * un perfil sin tienda no tiene regla de pago que aplicar, y los cálculos
  * caerían al respaldo sin que nadie se entere.
+ *
+ * **Segura de llamar a la vez desde dos sitios.** Más de una pantalla la
+ * llama al montar —el armazón, y cualquier sección que necesite un perfil
+ * seguro sin esperar al armazón—, y en el primerísimo arranque, con la base
+ * todavía vacía, las dos pueden llegar al mismo tiempo a "no hay tienda,
+ * creo una". `tiendas.nombre` es única, así que la segunda en escribir
+ * chocaba contra esa restricción y **la llamada entera reventaba** —no solo
+ * esa pantalla se quedaba sin datos: se quedaba así para siempre, porque
+ * nada la reintentaba—. Ahora, si crear la tienda falla por eso, se relee
+ * la lista y se usa la que ganó la carrera, en vez de lanzar.
  */
 export async function sembrarSiHaceFalta(nombre = "Wong - Aldabas"): Promise<void> {
-  const tiendas = await listarTiendas();
-  if (tiendas.length > 0) return;
+  const tiendaId = await tiendaSembrada(nombre);
 
-  const tiendaId = await guardarTienda({ nombre });
-  await guardarRegla(tiendaId, VEHICULO_POR_DEFECTO, "2000-01-01", REGLA_INICIAL);
-
+  // Con dos guardarPerfil concurrentes y sin perfil todavía, podrían salir
+  // dos filas en vez de una —no hay restricción que lo impida, a diferencia
+  // de la tienda—, pero las dos apuntarían a la misma tienda y con los mismos
+  // datos por defecto: inofensivo, y arreglarlo exige tocar la forma en que
+  // se identifica "el" perfil. Se deja así a propósito.
   const perfil = await perfilActual();
   if (!perfil) {
     await guardarPerfil({
@@ -168,5 +179,22 @@ export async function sembrarSiHaceFalta(nombre = "Wong - Aldabas"): Promise<voi
       horaEntrada: "09:00",
       horaSalida: "22:00",
     });
+  }
+}
+
+/** El id de la tienda del código, creándola si hace falta. Ver `sembrarSiHaceFalta`. */
+async function tiendaSembrada(nombre: string): Promise<string> {
+  const existentes = await listarTiendas();
+  if (existentes.length > 0) return existentes[0].id;
+
+  try {
+    const tiendaId = await guardarTienda({ nombre });
+    await guardarRegla(tiendaId, VEHICULO_POR_DEFECTO, "2000-01-01", REGLA_INICIAL);
+    return tiendaId;
+  } catch (fallo) {
+    // Probablemente el nombre único: otra llamada se adelantó. Se usa la suya.
+    const ganadora = await listarTiendas();
+    if (ganadora.length > 0) return ganadora[0].id;
+    throw fallo; // No era la carrera: el fallo es de verdad.
   }
 }

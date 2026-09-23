@@ -4,17 +4,22 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { Auto } from "@/components/Auto";
 import { BloqueoApp } from "@/components/BloqueoApp";
+import { ProveedorDeCarga, useCarga } from "@/components/CargaDeCapturas";
+import { usePuedeEscribir } from "@/components/Licencia";
 import {
   Barras,
+  Buscar,
   Calendario,
   Candado,
   Cartera,
   Casa,
   Gente,
-  Menu,
+  Mas,
   Salir,
 } from "@/components/iconos";
+import { useVehiculo } from "@/hooks/useVehiculo";
 import { cerrarDeNuevo } from "@/lib/bloqueo";
 /** Dentro del APK solo existe el repartidor; el administrador vive en la web. */
 type Rol = "admin" | "driver";
@@ -22,8 +27,12 @@ type Rol = "admin" | "driver";
 /**
  * Armazón de la app del driver.
  *
- * Móvil: cajón lateral oculto que abre el botón hamburguesa.
- * Desde 900 px: el mismo cajón queda fijo como barra lateral y el botón
+ * **Móvil**: una barra de abajo con cinco puertas —Inicio, Buscar, el auto que
+ * carga capturas, la semana y «Más»—, siempre a un pulgar. «Más» abre el mismo
+ * cajón lateral de siempre, con lo que no cabe en la barra (Historial,
+ * Estadísticas, Ajustes, Salir).
+ *
+ * **Desde 900 px**: el cajón queda fijo como barra lateral y la de abajo
  * desaparece. Una sola estructura para los dos tamaños (§9).
  */
 
@@ -36,6 +45,7 @@ interface Destino {
 
 const DESTINOS: Destino[] = [
   { href: "/", nombre: "Hoy", Icono: Casa },
+  { href: "/buscar", nombre: "Buscar", Icono: Buscar },
   { href: "/historial", nombre: "Historial", Icono: Calendario },
   { href: "/pagos", nombre: "Pagos", Icono: Cartera },
   { href: "/estadisticas", nombre: "Estadísticas", Icono: Barras },
@@ -45,7 +55,33 @@ const DESTINOS_ADMIN: Destino[] = [
   { href: "/admin", nombre: "Usuarios", Icono: Gente, soloAdmin: true },
 ];
 
-export function Armazon({
+/**
+ * La barra de abajo. «Sem.» y no «Semana»: con cinco puertas en un ancho de
+ * teléfono, la palabra entera no cabe y se cortaba.
+ */
+const PUERTAS: Array<{ href: string; nombre: string; Icono: typeof Casa }> = [
+  { href: "/", nombre: "Inicio", Icono: Casa },
+  { href: "/buscar", nombre: "Buscar", Icono: Buscar },
+  { href: "/pagos", nombre: "Sem.", Icono: Cartera },
+];
+
+export function Armazon(props: {
+  children: React.ReactNode;
+  nombre: string;
+  email: string | null;
+  rol: Rol;
+}) {
+  // La carga vive aquí, por encima de las pantallas, para que el auto de la
+  // barra de abajo pueda abrirla desde cualquiera de ellas.
+  const puedeEscribir = usePuedeEscribir();
+  return (
+    <ProveedorDeCarga deshabilitado={!puedeEscribir}>
+      <ArmazonInterno {...props} />
+    </ProveedorDeCarga>
+  );
+}
+
+function ArmazonInterno({
   children,
   nombre,
   email,
@@ -59,6 +95,8 @@ export function Armazon({
   const ruta = usePathname();
   const router = useRouter();
   const [abierto, setAbierto] = useState(false);
+  const { abrir, trabajando } = useCarga();
+  const vehiculo = useVehiculo();
 
   useEffect(() => {
     function alPulsar(e: KeyboardEvent) {
@@ -72,6 +110,11 @@ export function Armazon({
     [...DESTINOS, ...DESTINOS_ADMIN].find((d) =>
       d.href === "/" ? ruta === "/" : ruta.startsWith(d.href),
     ) ?? DESTINOS[0];
+
+  /* Qué puerta de la barra de abajo está encendida. Todo lo que no tiene puerta
+     propia —Historial, Estadísticas, Ajustes— cuelga de «Más». */
+  const puertaActiva =
+    PUERTAS.find((p) => (p.href === "/" ? ruta === "/" : ruta.startsWith(p.href)))?.href ?? "mas";
 
   /* En el APK no hay sesión que cerrar: los datos son del dueño del teléfono
      y no viajan a ningún lado. Lo equivalente es echar el cerrojo, que es lo
@@ -91,8 +134,9 @@ export function Armazon({
             abierto ? "translate-x-0 shadow-alta" : "-translate-x-full"
           }`}
         >
-          <div className="flex items-baseline gap-2 px-3 pt-2 pb-4">
-            <strong className="font-display text-3xl font-bold tracking-tight">Rutas-A</strong>
+          <div className="flex items-center gap-2 px-3 pt-2 pb-4">
+            <Auto vehiculo={vehiculo} animado className="w-14 shrink-0" />
+            <strong className="font-display text-2xl font-bold tracking-tight">Rutas-A</strong>
           </div>
 
           <nav className="flex flex-col gap-0.5">
@@ -141,7 +185,12 @@ export function Armazon({
             <Link
               href="/ajustes"
               onClick={() => setAbierto(false)}
-              className="flex min-h-12 items-center gap-3 rounded-full px-3 text-[15px] font-medium text-tinta-2 hover:bg-sup-2 hover:text-tinta"
+              aria-current={ruta.startsWith("/ajustes") ? "page" : undefined}
+              className={`flex min-h-12 items-center gap-3 rounded-full px-3 text-[15px] ${
+                ruta.startsWith("/ajustes")
+                  ? "bg-acento-suave font-semibold text-acento-tinta"
+                  : "font-medium text-tinta-2 hover:bg-sup-2 hover:text-tinta"
+              }`}
             >
               <Candado className="size-5 shrink-0" />
               Ajustes
@@ -179,41 +228,83 @@ export function Armazon({
 
         <div className="flex min-w-0 flex-col">
           <header className="sticky top-[env(safe-area-inset-top,0px)] z-20 flex items-center gap-3 border-b border-linea bg-papel/85 px-4 py-3 backdrop-blur-md lg:border-transparent">
-            <button
-              type="button"
-              aria-label="Abrir menú"
-              aria-expanded={abierto}
-              aria-controls="cajon"
-              onClick={() => setAbierto((v) => !v)}
-              className="-ml-1.5 grid size-11 place-items-center rounded-btn hover:bg-sup-2 lg:hidden"
-            >
-              <Menu className="size-6" />
-            </button>
+            {/* La marca, en el móvil: el auto y el nombre de la pantalla. En
+                escritorio la marca ya está en la barra lateral. */}
+            <Auto vehiculo={vehiculo} className="w-11 shrink-0 lg:hidden" />
             <h1 className="min-w-0 flex-1 truncate text-[22px]">{actual.nombre}</h1>
-
-            {/* Inicio, siempre a mano. El menú lleva a todas partes, pero son
-                dos toques; y desde una pantalla que se torció —una revisión a
-                medias, un aviso de error— lo que se busca es volver al
-                principio de un toque. */}
-            <Link
-              href="/"
-              aria-label="Ir al inicio"
-              aria-current={ruta === "/" ? "page" : undefined}
-              onClick={() => setAbierto(false)}
-              className={`inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-chip px-3 text-sm font-semibold ${
-                ruta === "/"
-                  ? "bg-acento-suave text-acento-tinta"
-                  : "bg-acento text-acento-texto"
-              }`}
-            >
-              <Casa className="size-[18px]" />
-              Inicio
-            </Link>
           </header>
 
-          <main className="flex-1 px-4 pt-4 pb-16">{children}</main>
+          <main className="flex-1 px-4 pt-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] lg:pb-16">
+            {children}
+          </main>
         </div>
       </div>
+
+      {/* La barra de abajo: cinco puertas, la del medio es el auto. */}
+      <nav
+        aria-label="Navegación principal"
+        className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 items-end rounded-t-[20px] border-t border-linea bg-sup px-1 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] shadow-[0_-10px_24px_-16px_rgb(10_34_96/0.5)] lg:hidden"
+      >
+        {PUERTAS.slice(0, 2).map((p) => (
+          <PuertaDeLaBarra key={p.href} {...p} activa={puertaActiva === p.href} />
+        ))}
+
+        <button
+          type="button"
+          onClick={abrir}
+          disabled={trabajando}
+          aria-label="Cargar capturas"
+          className="group flex min-h-14 flex-col items-center justify-end gap-1 text-[11px] font-semibold text-tinta-2 disabled:opacity-60"
+        >
+          <span className="boton-auto">
+            <Auto vehiculo={vehiculo} mono animado={false} className="w-9" />
+          </span>
+          Cargar
+        </button>
+
+        {PUERTAS.slice(2).map((p) => (
+          <PuertaDeLaBarra key={p.href} {...p} activa={puertaActiva === p.href} />
+        ))}
+
+        <button
+          type="button"
+          aria-label="Más: historial, estadísticas y ajustes"
+          aria-expanded={abierto}
+          aria-controls="cajon"
+          onClick={() => setAbierto((v) => !v)}
+          className={`flex min-h-14 flex-col items-center justify-end gap-1 text-[11px] font-semibold ${
+            puertaActiva === "mas" || abierto ? "text-acento" : "text-tinta-2"
+          }`}
+        >
+          <Mas className="size-6" />
+          Más
+        </button>
+      </nav>
     </BloqueoApp>
+  );
+}
+
+function PuertaDeLaBarra({
+  href,
+  nombre,
+  Icono,
+  activa,
+}: {
+  href: string;
+  nombre: string;
+  Icono: typeof Casa;
+  activa: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      aria-current={activa ? "page" : undefined}
+      className={`flex min-h-14 flex-col items-center justify-end gap-1 text-[11px] font-semibold ${
+        activa ? "text-acento" : "text-tinta-2"
+      }`}
+    >
+      <Icono className="size-6" />
+      {nombre}
+    </Link>
   );
 }

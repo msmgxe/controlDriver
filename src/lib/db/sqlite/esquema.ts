@@ -187,6 +187,18 @@ export const ESQUEMA: string[] = [
      creado_en      text not null
    );`,
 
+  /* Los días en que **no se trabajó**, dichos por el repartidor.
+
+     Sin esto no había forma de distinguir «no trabajé el lunes» de «me falta
+     subir el lunes»: los dos eran un hueco, y la app insistía en que faltaba
+     un día por subir cada vez que se abría Pagos. Un día de descanso no lleva
+     pedidos ni rutas, solo la fecha; si más tarde se carga una jornada de ese
+     día, el descanso se quita solo. */
+  `create table if not exists dias_descanso (
+     fecha     text primary key,
+     creado_en text not null
+   );`,
+
   `create index if not exists idx_jornadas_fecha    on jornadas (fecha desc);`,
   `create unique index if not exists uq_rutas_numero   on rutas (jornada_id, numero);`,
   `create unique index if not exists uq_ordenes_codigo on ordenes (jornada_id, codigo);`,

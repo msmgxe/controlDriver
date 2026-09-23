@@ -2,99 +2,222 @@
 
 /* ===========================================================================
    Rutas-A — tokens de diseño (§9)
-   Salieron del prototipo de Fase 0: prototipo/rutalog-prototipo.html
 
-   Dos superficies, decididas tras comparar tres direcciones:
-     · La app del driver usa la dirección **Moderna**: contenedores teñidos sin
-       bordes, esquinas muy redondeadas, aire, hojas inferiores. Es lo que hoy
-       espera cualquiera de una app de celular.
-     · El panel /admin usa la dirección **Profesional**: reglas finas en vez de
-       tarjetas, esquinas casi rectas, densidad alta, sin sombras. Se lee en un
-       monitor y se parece a un documento de liquidación.
+   La app tiene dos caras completas, elegibles en Ajustes (ver
+   `src/lib/apariencia.ts`). Las dos salen de las propuestas de diseño de
+   `prototipo/propuestas-diseno.html`:
 
-   Los valores viven en :root y se redefinen bajo prefers-color-scheme, así que
-   el tema cambia solo y no hace falta la variante dark: de Tailwind para nada
-   que use estos tokens.
+     · **Claro = «Mapa» (D).** Plano azul pálido, azul de ruta, amarillo de
+       señal. Unbounded para títulos y cifras, DM Sans para el texto.
+     · **Oscuro = «Asfalto» (B).** Asfalto casi negro, ámbar de línea de eje,
+       azul cielo. Títulos en Barlow Condensed y mayúsculas, como un cartel de
+       carretera; Barlow para el texto.
+
+   El panel /admin usa aparte la dirección Profesional (más abajo).
+
+   Los valores viven en :root y se redefinen para el modo oscuro bajo
+   `data-modo="oscuro"`, que pone un script antes de pintar. Nada usa la
+   variante dark: de Tailwind.
    =========================================================================== */
 
 :root {
   /* — superficies y tinta — */
-  --papel: #eff3f2;
+  --papel: #e6eef8;
   --sup: #ffffff;
-  --sup-2: #e7efed;
-  --tinta: #0c1a18;
-  --tinta-2: #465956;
-  --tinta-3: #7a8b88;
-  --linea: #dce6e4;
-  --linea-fuerte: #c2d2cf;
+  --sup-2: #d9e5f4;
+  --tinta: #0a2260;
+  --tinta-2: #3e5183;
+  --tinta-3: #52658f;
+  --linea: #c4d5ec;
+  --linea-fuerte: #a9bfdf;
 
   /* — acento: identidad, rutas y montos — */
-  --acento: #0e9488;
-  --acento-tinta: #0a6f66;
-  --acento-suave: #d7edea;
+  --acento: #1f5cff;
+  --acento-tinta: #1244cc;
+  --acento-suave: #dce6ff;
   --acento-texto: #ffffff;
 
-  /* — gráfico: rampa ordinal de un solo tono.
-       Validada con la herramienta de la skill dataviz: monotonía de
-       luminosidad, salto ≥ 0.06 entre pasos y contraste del extremo claro
-       contra la superficie. — */
-  --barra: #0e9488;
-  --barra-extra: #57b8ae;
+  /* — el segundo color de la marca: la señal amarilla del auto y de los días
+       de descanso. Nunca lleva texto blanco encima. — */
+  --acento-2: #ffc800;
+  --acento-2-tinta: #0a2260;
+
+  /* — gráfico: rampa ordinal de un solo tono. — */
+  --barra: #1f5cff;
+  --barra-extra: #8aa9ff;
 
   /* — estados de entrega. Escala reservada: no se reutiliza como serie de
-       datos. Verde/ámbar/rojo no puede pasar la separación para daltonismo de
-       todos los pares, así que en la interfaz SIEMPRE van con icono y etiqueta
-       de texto, nunca color solo. Es también lo que pide §9. — */
-  --bien: #0e8a5f;
-  --bien-suave: #dcf2e8;
-  --aviso: #a3690a;
-  --aviso-suave: #fbf0da;
-  --mal: #c0392f;
-  --mal-suave: #fbe7e4;
+       datos. En la interfaz SIEMPRE van con icono y etiqueta de texto, nunca
+       color solo (§9). — */
+  --bien: #0b7a4d;
+  --bien-suave: #d8f3e4;
+  --aviso: #6f4e00;
+  --aviso-suave: #fff0b8;
+  --mal: #b3261e;
+  --mal-suave: #ffe0db;
+
+  /* — un día de descanso: ni cargado ni pendiente — */
+  --descanso: #ffc800;
+  --descanso-tinta: #0a2260;
 
   /* — tipografía — */
-  --f-display: var(--fuente-bricolage), var(--fuente-figtree), system-ui, sans-serif;
-  --f-texto: var(--fuente-figtree), system-ui, sans-serif;
+  --f-display: var(--fuente-unbounded), var(--fuente-dm-sans), system-ui, sans-serif;
+  --f-texto: var(--fuente-dm-sans), system-ui, sans-serif;
   --f-mono: var(--fuente-jetbrains), ui-monospace, Menlo, monospace;
+  /* Unbounded es muy ancha: los títulos se encogen para que quepan en el
+     ancho de una pantalla de celular sin cambiar los tamaños de cada uno. */
+  --zoom-titulo: 0.8;
+  --tt-titulo: none;
 
   /* — forma y densidad — */
   --r-chip: 999px;
+  --r-btn: 12px;
+  --r-card: 16px;
+  --r-hoja: 24px;
+  --borde-ancho: 0px;
+  --pad-card: 16px;
+  --peso-titulo: 700;
+  --track-titulo: -0.03em;
+  --sombra-card: 0 1px 2px rgb(10 34 96 / 0.06), 0 14px 28px -20px rgb(10 34 96 / 0.4);
+  --sombra-alta: 0 8px 20px -6px rgb(10 34 96 / 0.2), 0 30px 60px -30px rgb(10 34 96 / 0.5);
+}
+
+:root[data-modo="oscuro"] {
+  --papel: #0e1116;
+  --sup: #161b22;
+  --sup-2: #1e252e;
+  --tinta: #eef1f5;
+  --tinta-2: #aab4c2;
+  --tinta-3: #808b9b;
+  --linea: #28303b;
+  --linea-fuerte: #3a4452;
+  --acento: #ff9f1c;
+  --acento-tinta: #ffb84d;
+  --acento-suave: #3a2a0c;
+  --acento-texto: #1a0f00;
+  --acento-2: #5cc8ff;
+  --acento-2-tinta: #0e1116;
+  --barra: #ff9f1c;
+  --barra-extra: #9a5e0f;
+  --bien: #4bdb97;
+  --bien-suave: #10301f;
+  --aviso: #f2d24b;
+  --aviso-suave: #2f2a0f;
+  --mal: #ff7a7a;
+  --mal-suave: #341717;
+  --descanso: #5cc8ff;
+  --descanso-tinta: #0e1116;
+
+  --f-display: var(--fuente-barlow-condensed), var(--fuente-barlow), system-ui, sans-serif;
+  --f-texto: var(--fuente-barlow), system-ui, sans-serif;
+  /* Barlow Condensed es estrecha y de ojo pequeño: los títulos crecen un poco,
+     y van en mayúsculas, como en un cartel de carretera. */
+  --zoom-titulo: 1.14;
+  --tt-titulo: uppercase;
+
+  --r-chip: 6px;
+  --r-btn: 8px;
+  --r-card: 10px;
+  --r-hoja: 14px;
+  --borde-ancho: 1px;
+  --pad-card: 14px;
+  --track-titulo: 0.02em;
+  --sombra-card: none;
+  --sombra-alta: 0 8px 20px -6px rgb(0 0 0 / 0.5), 0 30px 60px -30px rgb(0 0 0 / 0.9);
+}
+
+/* ---------------------------------------------------------------------------
+   Turbo (propuesta A) y Menta (propuesta C): los otros dos temas del
+   selector de Ajustes. A diferencia de claro/oscuro no tienen media query que
+   los dispare —se eligen a mano y se quedan— (ver `src/lib/apariencia.ts`).
+   --------------------------------------------------------------------------- */
+:root[data-modo="turbo"] {
+  --papel: #f3efff;
+  --sup: #ffffff;
+  --sup-2: #ece6ff;
+  --tinta: #1d1246;
+  --tinta-2: #6b5e9c;
+  --tinta-3: #9c8fc7;
+  --linea: #dcd3fa;
+  /* Aquí «línea fuerte» es el borde grueso de las tarjetas: en Turbo es tinta
+     sólida, no un gris más oscuro, para que las tarjetas salgan con el
+     contorno negro de pegatina que pide esta cara. */
+  --linea-fuerte: #1d1246;
+  --acento: #6a4cf5;
+  --acento-tinta: #5636d6;
+  --acento-suave: #e4dbff;
+  --acento-texto: #ffffff;
+  --acento-2: #ffd23f;
+  --acento-2-tinta: #1d1246;
+  --barra: #6a4cf5;
+  --barra-extra: #5be3a4;
+  --bien: #0b7a4d;
+  --bien-suave: #d5f7e8;
+  --aviso: #7a5000;
+  --aviso-suave: #ffefc2;
+  --mal: #b3261e;
+  --mal-suave: #ffe1de;
+  --descanso: #ffd23f;
+  --descanso-tinta: #1d1246;
+
+  --f-display: var(--fuente-fredoka), var(--fuente-nunito), system-ui, sans-serif;
+  --f-texto: var(--fuente-nunito), system-ui, sans-serif;
+  --zoom-titulo: 0.95;
+  --tt-titulo: none;
+
+  --r-chip: 999px;
+  --r-btn: 15px;
+  --r-card: 20px;
+  --r-hoja: 26px;
+  --borde-ancho: 2px;
+  --pad-card: 18px;
+  --peso-titulo: 700;
+  --track-titulo: 0em;
+  --sombra-card: 3px 3px 0 var(--tinta);
+  --sombra-alta: 5px 5px 0 var(--tinta);
+}
+
+:root[data-modo="menta"] {
+  --papel: #eef4f2;
+  --sup: #ffffff;
+  --sup-2: #e1ece9;
+  --tinta: #0c1a18;
+  --tinta-2: #566b67;
+  --tinta-3: #7e938e;
+  --linea: #d3e1de;
+  --linea-fuerte: #b9ccc7;
+  --acento: #0b857b;
+  --acento-tinta: #076158;
+  --acento-suave: #dcefec;
+  --acento-texto: #ffffff;
+  --acento-2: #ff7a5c;
+  --acento-2-tinta: #0c1a18;
+  --barra: #0b857b;
+  --barra-extra: #7fc4bc;
+  --bien: #0b7a52;
+  --bien-suave: #dcf2e8;
+  --aviso: #8f5c08;
+  --aviso-suave: #fcefd6;
+  --mal: #b93228;
+  --mal-suave: #fbe5e2;
+  --descanso: #ff7a5c;
+  --descanso-tinta: #0c1a18;
+
+  --f-display: var(--fuente-bricolage), var(--fuente-figtree), system-ui, sans-serif;
+  --f-texto: var(--fuente-figtree), system-ui, sans-serif;
+  --zoom-titulo: 1;
+  --tt-titulo: none;
+
+  --r-chip: 999px;
   --r-btn: 14px;
-  --r-card: 18px;
-  --r-hoja: 28px;
+  --r-card: 20px;
+  --r-hoja: 24px;
   --borde-ancho: 0px;
   --pad-card: 20px;
   --peso-titulo: 700;
   --track-titulo: -0.02em;
-  --sombra-card: 0 1px 2px rgb(12 26 24 / 0.05), 0 14px 34px -22px rgb(12 26 24 / 0.35);
+  --sombra-card: 0 1px 2px rgb(12 26 24 / 0.05), 0 14px 30px -20px rgb(12 26 24 / 0.35);
   --sombra-alta: 0 8px 20px -6px rgb(12 26 24 / 0.18), 0 30px 60px -30px rgb(12 26 24 / 0.5);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --papel: #081210;
-    --sup: #121c1b;
-    --sup-2: #1b2a28;
-    --tinta: #e6efee;
-    --tinta-2: #a0b4b1;
-    --tinta-3: #708381;
-    --linea: #22322f;
-    --linea-fuerte: #31443f;
-    --acento: #2dd4bf;
-    --acento-tinta: #7ee8da;
-    --acento-suave: #10312d;
-    --acento-texto: #081210;
-    --barra: #2dd4bf;
-    --barra-extra: #14776e;
-    --bien: #34d399;
-    --bien-suave: #0d2b22;
-    --aviso: #e0a53c;
-    --aviso-suave: #2c2313;
-    --mal: #f87171;
-    --mal-suave: #331a1a;
-    --sombra-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 14px 34px -22px rgb(0 0 0 / 0.8);
-    --sombra-alta: 0 8px 20px -6px rgb(0 0 0 / 0.5), 0 30px 60px -30px rgb(0 0 0 / 0.9);
-  }
 }
 
 /* ---------------------------------------------------------------------------
@@ -133,6 +256,8 @@
   --pad-card: 16px;
   --peso-titulo: 600;
   --track-titulo: -0.01em;
+  --zoom-titulo: 1;
+  --tt-titulo: none;
   --sombra-card: none;
   --sombra-alta: 0 10px 30px -12px rgb(20 32 46 / 0.35);
 }
@@ -170,29 +295,45 @@
    §10 pide que las estadísticas se exporten siempre en tema claro, aunque la
    app esté en oscuro: un PDF con fondo negro es ilegible impreso y gasta tinta.
    Se aplica a un elemento cualquiera —no solo a :root— para poder forzarlo en
-   el bloque que se va a capturar sin tocar el resto de la pantalla.
+   el bloque que se va a capturar sin tocar el resto de la pantalla. Lleva
+   también las fuentes y la forma de «Mapa»: si no, un bloque claro dentro de
+   la app oscura saldría con los títulos en mayúsculas condensadas.
    --------------------------------------------------------------------------- */
 [data-tema="claro"] {
-  --papel: #eff3f2;
+  --papel: #e6eef8;
   --sup: #ffffff;
-  --sup-2: #e7efed;
-  --tinta: #0c1a18;
-  --tinta-2: #465956;
-  --tinta-3: #7a8b88;
-  --linea: #dce6e4;
-  --linea-fuerte: #c2d2cf;
-  --acento: #0e9488;
-  --acento-tinta: #0a6f66;
-  --acento-suave: #d7edea;
+  --sup-2: #d9e5f4;
+  --tinta: #0a2260;
+  --tinta-2: #3e5183;
+  --tinta-3: #52658f;
+  --linea: #c4d5ec;
+  --linea-fuerte: #a9bfdf;
+  --acento: #1f5cff;
+  --acento-tinta: #1244cc;
+  --acento-suave: #dce6ff;
   --acento-texto: #ffffff;
-  --barra: #0e9488;
-  --barra-extra: #57b8ae;
-  --bien: #0e8a5f;
-  --bien-suave: #dcf2e8;
-  --aviso: #a3690a;
-  --aviso-suave: #fbf0da;
-  --mal: #c0392f;
-  --mal-suave: #fbe7e4;
+  --acento-2: #ffc800;
+  --acento-2-tinta: #0a2260;
+  --barra: #1f5cff;
+  --barra-extra: #8aa9ff;
+  --bien: #0b7a4d;
+  --bien-suave: #d8f3e4;
+  --aviso: #6f4e00;
+  --aviso-suave: #fff0b8;
+  --mal: #b3261e;
+  --mal-suave: #ffe0db;
+  --descanso: #ffc800;
+  --descanso-tinta: #0a2260;
+  --f-display: var(--fuente-unbounded), var(--fuente-dm-sans), system-ui, sans-serif;
+  --f-texto: var(--fuente-dm-sans), system-ui, sans-serif;
+  --zoom-titulo: 0.8;
+  --tt-titulo: none;
+  --r-chip: 999px;
+  --r-btn: 12px;
+  --r-card: 16px;
+  --borde-ancho: 0px;
+  --track-titulo: -0.03em;
+  --sombra-card: 0 1px 2px rgb(10 34 96 / 0.06), 0 14px 28px -20px rgb(10 34 96 / 0.4);
 }
 
 @theme inline {
@@ -208,6 +349,10 @@
   --color-acento-tinta: var(--acento-tinta);
   --color-acento-suave: var(--acento-suave);
   --color-acento-texto: var(--acento-texto);
+  --color-acento-2: var(--acento-2);
+  --color-acento-2-tinta: var(--acento-2-tinta);
+  --color-descanso: var(--descanso);
+  --color-descanso-tinta: var(--descanso-tinta);
   --color-barra: var(--barra);
   --color-barra-extra: var(--barra-extra);
   --color-bien: var(--bien);
@@ -251,7 +396,15 @@
     font-family: var(--f-display);
     font-weight: var(--peso-titulo);
     letter-spacing: var(--track-titulo);
+    text-transform: var(--tt-titulo);
     text-wrap: balance;
+  }
+  /* La tipografía de títulos ajusta su tamaño a cada cara: ver --zoom-titulo. */
+  h1,
+  h2,
+  h3,
+  .font-display {
+    zoom: var(--zoom-titulo, 1);
   }
 
   /* §9: foco siempre visible */
@@ -283,6 +436,183 @@
    Utilidades propias. Son las pocas piezas que se repiten en casi toda la app;
    el resto se escribe con clases de Tailwind sobre los tokens de arriba.
    --------------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------------
+   El auto de la marca (ver `src/components/Auto.tsx`).
+   Los colores salen de los tokens de cada cara; los dos trajes están en el
+   mismo SVG y se enseña uno según `data-modo`.
+   --------------------------------------------------------------------------- */
+.auto {
+  overflow: visible;
+  --a-cuerpo: var(--acento-2);
+  --a-vidrio: #ffffff;
+  --a-rueda: var(--tinta);
+  --a-buje: var(--papel);
+  --a-faro: #ffffff;
+  --a-borde: var(--tinta);
+  --a-estela: var(--acento);
+}
+.auto .c-oscuro {
+  display: none;
+}
+:root[data-modo="oscuro"] .auto .c-claro {
+  display: none;
+}
+:root[data-modo="oscuro"] .auto .c-oscuro {
+  display: inline;
+}
+:root[data-modo="oscuro"] .auto {
+  --a-cuerpo: var(--acento);
+  --a-vidrio: var(--papel);
+  --a-rueda: var(--linea-fuerte);
+  --a-buje: var(--tinta);
+  --a-faro: var(--tinta);
+  --a-borde: transparent;
+  --a-estela: var(--acento);
+}
+/* Menta no lleva bordes gruesos en nada: el vehículo tampoco. */
+:root[data-modo="menta"] .auto {
+  --a-borde: transparent;
+}
+/* Sobre una tarjeta del color de la marca, el auto pasa al color contrario. */
+.auto--sobre-acento {
+  --a-estela: var(--acento-texto);
+}
+:root[data-modo="oscuro"] .auto--sobre-acento {
+  --a-cuerpo: var(--acento-texto);
+  --a-vidrio: var(--acento);
+  --a-rueda: var(--acento-texto);
+  --a-buje: var(--acento);
+  --a-faro: var(--acento);
+}
+/* A una sola tinta: la del texto. El «fondo» es lo que asoma por ventanas y llantas. */
+.auto--mono,
+:root[data-modo="oscuro"] .auto--mono {
+  --a-cuerpo: currentColor;
+  --a-rueda: currentColor;
+  --a-estela: currentColor;
+  --a-borde: transparent;
+  --a-vidrio: var(--auto-fondo, transparent);
+  --a-buje: var(--auto-fondo, transparent);
+  --a-faro: var(--auto-fondo, transparent);
+}
+.auto-cuerpo {
+  fill: var(--a-cuerpo);
+}
+.auto-borde {
+  stroke: var(--a-borde);
+  stroke-width: 2.6;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+.auto-vidrio {
+  fill: var(--a-vidrio);
+}
+.auto-faro {
+  fill: var(--a-faro);
+}
+.auto-rueda {
+  fill: var(--a-rueda);
+}
+.auto-buje {
+  fill: var(--a-buje);
+}
+.auto-estela path {
+  fill: none;
+  stroke: var(--a-estela);
+}
+@keyframes auto-llega {
+  from {
+    transform: translateX(-28px);
+    opacity: 0;
+  }
+  35% {
+    opacity: 1;
+  }
+  to {
+    transform: none;
+  }
+}
+.auto--anima {
+  animation: auto-llega 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* El botón del centro de la barra de abajo: el auto, sobre una pastilla del
+   segundo color de la marca (amarillo en claro, ámbar en oscuro). */
+.boton-auto {
+  --auto-fondo: var(--acento-2);
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 36px;
+  margin-bottom: 2px;
+  border-radius: var(--r-btn);
+  background: var(--acento-2);
+  color: var(--acento-2-tinta);
+}
+:root[data-modo="oscuro"] .boton-auto {
+  --auto-fondo: var(--acento);
+  background: var(--acento);
+  color: var(--acento-texto);
+}
+/* En menta el botón va del color principal (verde), no del segundo (coral):
+   así lo pintaba la propuesta C, y deja el coral libre para lo que pide
+   atención. */
+:root[data-modo="menta"] .boton-auto {
+  --auto-fondo: var(--acento);
+  background: var(--acento);
+  color: var(--acento-texto);
+}
+.group:active .boton-auto {
+  transform: translateY(1px);
+}
+
+/* La tarjeta de «Hoy cargaste»: la cifra del día, con el auto y su estela. */
+.tarjeta-dia {
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  padding: 16px 16px 14px;
+  background: var(--acento);
+  color: var(--acento-texto);
+  border: 2px solid var(--tinta);
+  box-shadow: 3px 3px 0 var(--tinta);
+}
+:root[data-modo="oscuro"] .tarjeta-dia {
+  border-radius: var(--r-card);
+  border: 0;
+  box-shadow: none;
+}
+/* Menta no lleva bordes gruesos ni sombra dura en ninguna tarjeta: esta
+   tampoco, aunque sea la más grande de Inicio. */
+:root[data-modo="menta"] .tarjeta-dia {
+  border-radius: var(--r-card);
+  border: 0;
+  box-shadow: var(--sombra-alta);
+}
+.tarjeta-dia .pastilla {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 3px 12px;
+  border-radius: 999px;
+  border: 2px solid var(--tinta);
+  background: var(--acento-2);
+  color: var(--acento-2-tinta);
+  font-family: var(--f-mono);
+  font-weight: 700;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+:root[data-modo="oscuro"] .tarjeta-dia .pastilla {
+  border-color: var(--acento-texto);
+  background: var(--acento-texto);
+  color: var(--acento);
+}
+:root[data-modo="menta"] .tarjeta-dia .pastilla {
+  border: 0;
+}
+
 @layer components {
   .rotulo {
     font-family: var(--f-mono);
@@ -338,6 +668,8 @@
     font-family: var(--f-display);
     font-size: 22px;
     font-weight: var(--peso-titulo);
+    text-transform: var(--tt-titulo);
+    zoom: var(--zoom-titulo, 1);
     box-shadow: 0 10px 24px -14px var(--acento);
     transition: filter 0.12s, transform 0.12s;
   }

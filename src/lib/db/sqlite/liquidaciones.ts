@@ -21,6 +21,7 @@ import { semanaDe, type FechaISO } from "@/lib/fechas";
 
 import type { EstadoSemana, JornadaCompleta, SemanaLiquidada } from "../tipos";
 import { consultar, ejecutar, nuevoId } from "./conexion";
+import { descansosPorRango } from "./descansos";
 import { jornadasPorRango, reglaVigente } from "./jornadas";
 import { perfilActual } from "./perfil";
 
@@ -33,9 +34,10 @@ export async function liquidacionDeSemana(
   const semana = semanaDe(referencia);
   const perfil = await perfilActual();
 
-  const [jornadas, guardada] = await Promise.all([
+  const [jornadas, guardada, descansos] = await Promise.all([
     jornadasPorRango(semana.inicio, semana.fin),
     leerGuardada(semana.inicio),
+    descansosPorRango(semana.inicio, semana.fin),
   ]);
   const { regla } = await reglaVigente(
     semana.fin,
@@ -47,7 +49,7 @@ export async function liquidacionDeSemana(
     jornadas.map(aLiquidable),
     regla,
     semana.inicio,
-    { hasta },
+    { hasta, descansos },
   );
 
   return {

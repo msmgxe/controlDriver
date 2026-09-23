@@ -10,6 +10,7 @@ import { GraficoDias, type DiaGrafico } from "@/components/GraficoDias";
 import { Reloj, Subir, Trofeo } from "@/components/iconos";
 import { Aviso, Cifras, Vacio } from "@/components/ui";
 import { useDatos } from "@/hooks/useDatos";
+import { descansosPorRango } from "@/lib/db/sqlite/descansos";
 import { jornadasPorRango, reglaVigente } from "@/lib/db/sqlite/jornadas";
 import { montoDelDia } from "@/lib/pagos/calcular-liquidacion";
 import { perfilActual } from "@/lib/db/sqlite/perfil";
@@ -55,16 +56,17 @@ function Contenido() {
   const [desde, hasta] = limites(rango, hoy);
 
   const { datos } = useDatos(async () => {
-    const [jornadas, perfil] = await Promise.all([
+    const [jornadas, perfil, descansos] = await Promise.all([
       jornadasPorRango(desde, hasta),
       perfilActual(),
+      descansosPorRango(desde, hasta),
     ]);
     const { regla } = await reglaVigente(hasta, perfil?.tiendaId ?? null, perfil?.vehiculo);
-    return { jornadas, perfil, regla };
+    return { jornadas, perfil, regla, descansos: new Set<FechaISO>(descansos) };
   }, [desde, hasta]);
 
   if (!datos) return <Esqueleto />;
-  const { jornadas, perfil, regla } = datos;
+  const { jornadas, perfil, regla, descansos } = datos;
 
   if (jornadas.length === 0) {
     return (
@@ -79,7 +81,16 @@ function Contenido() {
   const dias: DiaGrafico[] = rangoDeFechas(desde, hasta).map((fecha) => {
     const j = porFecha.get(fecha);
     if (!j) {
-      return { fecha, cargado: false, pedidos: 0, rutas: 0, minutos: 0, centimos: 0, fueraTramo1: 0 };
+      return {
+        fecha,
+        cargado: false,
+        descanso: descansos.has(fecha),
+        pedidos: 0,
+        rutas: 0,
+        minutos: 0,
+        centimos: 0,
+        fueraTramo1: 0,
+      };
     }
     return {
       fecha,
@@ -104,7 +115,8 @@ function Contenido() {
   const totalMinutos = cargados.reduce((s, d) => s + d.minutos, 0);
   const totalCentimos = cargados.reduce((s, d) => s + d.centimos, 0);
   const totalFuera = cargados.reduce((s, d) => s + d.fueraTramo1, 0);
-  const huecos = dias.filter((d) => !d.cargado && d.fecha <= hoy).length;
+  // Un día de descanso no es un hueco: no falta nada por subir.
+  const huecos = dias.filter((d) => !d.cargado && !d.descanso && d.fecha <= hoy).length;
 
   const duraciones = jornadas.flatMap((j) =>
     j.rutas.map((r) => r.duracionMin).filter((d): d is number => d !== null && d > 0),
@@ -157,7 +169,7 @@ function Contenido() {
 
       {huecos > 0 && (
         <Aviso tono="atento" titulo={`${huecos} día${huecos === 1 ? "" : "s"} sin carga en el rango`}>
-          <p>Los huecos no son días sin trabajo. Súbelos y las cifras se recalculan.</p>
+          <p>Un hueco no es un día sin trabajo. Súbelo y las cifras se recalculan; si no trabajaste, márcalo como descanso en Pagos.</p>
         </Aviso>
       )}
 

@@ -19,6 +19,7 @@ import {
   REGLA_INICIAL,
   VEHICULO_POR_DEFECTO,
   esquemaReglaPago,
+  pagoDelTramo,
   type ReglaPago,
   type TipoVehiculo,
 } from "@/lib/pagos/reglas";
@@ -371,6 +372,11 @@ export async function guardarJornada(
       ],
     );
 
+    /* Si ese día estaba marcado como descanso y ahora llega una jornada, se
+       trabajó: el descanso sobra, y dejarlo haría que el día figurara como
+       trabajado y libre a la vez. */
+    await ejecutar(`delete from dias_descanso where fecha = ?`, [datos.fecha]);
+
     if (modo === "reemplazar") {
       // Los pedidos primero: apuntan a rutas con ON DELETE SET NULL, y así no
       // quedan un instante huérfanos apuntando a null.
@@ -537,6 +543,111 @@ export async function agregarPedidoManual(
   });
 }
 
+/** Un pedido tal como salió de una captura: el tramo y el monto los pone quien lo guarda. */
+export interface PedidoLeido {
+  codigo: string;
+  ruta: number | null;
+  estado: string;
+}
+
+/**
+ * Añade a un día los pedidos leídos de una foto, **solo los que no estaban**.
+ *
+ * Un pedido se cobra una vez: si su código ya está guardado —en este día o en
+ * cualquier otro— se deja fuera y se devuelve aparte, con la fecha en que está,
+ * para que la pantalla pueda decirlo. Así se puede subir una captura que se
+ * solapa con lo ya cargado sin miedo a duplicar nada.
+ *
+ * La comprobación va dentro de la misma transacción que la escritura, y a
+ * propósito no reutiliza `codigosYaRegistrados`: aquel se traga los errores
+ * porque solo alimenta un aviso, y aquí un fallo silencioso acabaría
+ * duplicando pedidos.
+ *
+ * Todos nacen en tramo 1, como en la carga normal; el repartidor corrige las
+ * excepciones. Si su ruta no existe ese día, el pedido entra sin ruta —igual
+ * que en Revisión— y se puede asignar después. Si el día no existía, se crea,
+ * pero solo si hay algo nuevo que guardar: una foto de puros repetidos no
+ * deja una jornada vacía detrás.
+ */
+export async function agregarPedidosLeidos(
+  fecha: FechaISO,
+  pedidos: readonly PedidoLeido[],
+): Promise<{ nuevos: number; repetidos: Array<{ codigo: string; fecha: FechaISO }> }> {
+  // Un mismo código dos veces en la lista entra una sola.
+  const unicos = [...new Map(pedidos.map((p) => [p.codigo, p])).values()];
+  if (unicos.length === 0) return { nuevos: 0, repetidos: [] };
+
+  const perfil = await perfilActual();
+  const { regla } = await reglaVigente(fecha, perfil?.tiendaId ?? null, perfil?.vehiculo);
+  const monto = pagoDelTramo(regla, 1) ?? 1000;
+  const momento = ahora();
+
+  return enTransaccion(async () => {
+    const huecos = unicos.map(() => "?").join(", ");
+    const yaEstan = await consultar<{ codigo: string; fecha: string }>(
+      `select o.codigo as codigo, j.fecha as fecha
+         from ordenes o join jornadas j on j.id = o.jornada_id
+        where o.codigo in (${huecos})`,
+      unicos.map((p) => p.codigo),
+    );
+    const dondeEsta = new Map(yaEstan.map((f) => [f.codigo, f.fecha as FechaISO]));
+
+    const nuevos = unicos.filter((p) => !dondeEsta.has(p.codigo));
+    const repetidos = unicos
+      .filter((p) => dondeEsta.has(p.codigo))
+      .map((p) => ({ codigo: p.codigo, fecha: dondeEsta.get(p.codigo) as FechaISO }));
+    if (nuevos.length === 0) return { nuevos: 0, repetidos };
+
+    const existentes = await consultar<{ id: string }>(
+      `select id from jornadas where fecha = ?`,
+      [fecha],
+    );
+    let jornadaId = existentes[0]?.id;
+    if (!jornadaId) {
+      jornadaId = nuevoId();
+      await ejecutar(
+        `insert into jornadas
+           (id, fecha, validacion_ok, tienda_id, vehiculo, creado_en, actualizado_en, sincronizado)
+         values (?, ?, 0, ?, ?, ?, ?, 0)`,
+        [
+          jornadaId, fecha, perfil?.tiendaId ?? null,
+          perfil?.vehiculo ?? VEHICULO_POR_DEFECTO, momento, momento,
+        ],
+      );
+    }
+
+    const rutas = await consultar<{ id: string; numero: number }>(
+      `select id, numero from rutas where jornada_id = ?`,
+      [jornadaId],
+    );
+    const idPorNumero = new Map(rutas.map((r) => [r.numero, r.id]));
+
+    // Al final de lo que ya hay: se añaden, no se intercalan.
+    const ultimas = await consultar<{ ultima: number | null }>(
+      `select max(posicion) as ultima from ordenes where jornada_id = ?`,
+      [jornadaId],
+    );
+    let posicion = ultimas[0]?.ultima ?? 0;
+
+    for (const p of nuevos) {
+      posicion += 1;
+      await ejecutar(
+        `insert into ordenes
+           (id, jornada_id, ruta_id, codigo, estado, posicion, tramo, km, monto_centimos)
+         values (?, ?, ?, ?, ?, ?, 1, null, ?)`,
+        [
+          nuevoId(), jornadaId,
+          p.ruta === null ? null : (idPorNumero.get(p.ruta) ?? null),
+          p.codigo, p.estado, posicion, monto,
+        ],
+      );
+    }
+
+    await recontarEstados(jornadaId, momento);
+    return { nuevos: nuevos.length, repetidos };
+  });
+}
+
 /**
  * Quita de los días **posteriores** los pedidos que acaban de guardarse en
  * `fecha`. Devuelve de dónde se quitó cada uno.
@@ -635,19 +746,45 @@ export async function registrarCarga(datos: {
 }
 
 /**
- * Busca pedidos por código (§10, utilidades).
+ * Busca pedidos por código (§10, utilidades), y opcionalmente **en un rango de
+ * días**.
  *
  * Es la consulta de "la tienda me pregunta por este pedido": en qué fecha fue,
  * en qué ruta y con qué horario. Busca por coincidencia parcial porque casi
  * nunca se tiene el código entero a mano.
+ *
+ * Sin rango, se exigen al menos tres caracteres —con menos, todo coincide y la
+ * lista no dice nada—. **Con rango**, el propio rango ya acota la búsqueda, así
+ * que el texto puede ser corto o faltar del todo: «todos los pedidos del 14 al
+ * 20» es una pregunta legítima.
  */
-export async function buscarPedidos(texto: string): Promise<PedidoEncontrado[]> {
+export async function buscarPedidos(
+  texto: string,
+  opciones: { desde?: FechaISO; hasta?: FechaISO; limite?: number } = {},
+): Promise<PedidoEncontrado[]> {
   const limpio = texto.trim();
-  if (limpio.length < 3) return [];
+  const { desde, hasta } = opciones;
+  const hayRango = Boolean(desde || hasta);
+  if (!hayRango && limpio.length < 3) return [];
 
-  // `%` y `_` son comodines de LIKE: se escapan para que un código con guion
-  // bajo no se convierta en una búsqueda abierta.
-  const patron = `%${limpio.replace(/[%_\\]/g, "\\$&")}%`;
+  const condiciones: string[] = [];
+  const valores: unknown[] = [];
+
+  if (limpio) {
+    // `%` y `_` son comodines de LIKE: se escapan para que un código con guion
+    // bajo no se convierta en una búsqueda abierta.
+    condiciones.push(`o.codigo like ? escape '\\'`);
+    valores.push(`%${limpio.replace(/[%_\\]/g, "\\$&")}%`);
+  }
+  if (desde) {
+    condiciones.push(`j.fecha >= ?`);
+    valores.push(desde);
+  }
+  if (hasta) {
+    condiciones.push(`j.fecha <= ?`);
+    valores.push(hasta);
+  }
+  valores.push(opciones.limite ?? (hayRango ? 300 : 50));
 
   const filas = await consultar<{
     codigo: string;
@@ -664,10 +801,10 @@ export async function buscarPedidos(texto: string): Promise<PedidoEncontrado[]> 
        from ordenes o
        join jornadas j on j.id = o.jornada_id
        left join rutas r on r.id = o.ruta_id
-      where o.codigo like ? escape '\\'
-      order by j.fecha desc
-      limit 50`,
-    [patron],
+      ${condiciones.length ? `where ${condiciones.join(" and ")}` : ""}
+      order by j.fecha desc, o.posicion asc
+      limit ?`,
+    valores,
   );
 
   return filas.map((f) => ({

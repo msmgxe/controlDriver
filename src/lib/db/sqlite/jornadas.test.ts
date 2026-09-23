@@ -13,6 +13,7 @@ import {
   actualizarTramo,
   quitarDeDiasPosteriores,
   agregarPedidoManual,
+  agregarPedidosLeidos,
   borrarPedido,
   borrarJornada,
   buscarPedidos,
@@ -21,6 +22,7 @@ import {
   jornadaPorFecha,
   resumenPorRango,
 } from "./jornadas";
+import { REGLA_INICIAL, pagoDelTramo } from "@/lib/pagos/reglas";
 import type { JornadaParaGuardar } from "../tipos";
 import type { FechaISO } from "@/lib/fechas";
 
@@ -382,5 +384,161 @@ describe("un pedido vive en el día más antiguo en que aparece", () => {
     const uno = (await jornadaPorFecha("2026-09-18" as FechaISO))!.ordenes[0].codigo;
     await quitarDeDiasPosteriores("2026-09-17" as FechaISO, [uno]);
     expect((await jornadaPorFecha("2026-09-18" as FechaISO))!.entregado).toBe(3);
+  });
+});
+
+describe("pedidos leídos de una foto: solo los nuevos", () => {
+  const FECHA = "2026-09-16" as FechaISO;
+  const leido = (n: number, ruta: number | null = 1, estado = "Entregado") => ({
+    codigo: `v${n}wofp-01`,
+    ruta,
+    estado,
+  });
+
+  it("añade los que no estaban y deja fuera los que ya estaban en el día", async () => {
+    // jornadaDe crea v100000…v100005.
+    await guardarJornada(jornadaDe("2026-09-16", 3, 6), "reemplazar");
+
+    const r = await agregarPedidosLeidos(FECHA, [leido(100004), leido(100005), leido(777), leido(778)]);
+
+    expect(r.nuevos).toBe(2);
+    expect(r.repetidos.map((x) => x.codigo).sort()).toEqual(["v100004wofp-01", "v100005wofp-01"]);
+    expect((await jornadaPorFecha(FECHA))!.ordenes).toHaveLength(8);
+  });
+
+  it("subir la misma foto dos veces no duplica nada", async () => {
+    await guardarJornada(jornadaDe("2026-09-16", 3, 6), "reemplazar");
+    const foto = [leido(777), leido(778)];
+
+    await agregarPedidosLeidos(FECHA, foto);
+    const otra = await agregarPedidosLeidos(FECHA, foto);
+
+    expect(otra.nuevos).toBe(0);
+    expect(otra.repetidos).toHaveLength(2);
+    expect((await jornadaPorFecha(FECHA))!.ordenes).toHaveLength(8);
+  });
+
+  it("un pedido registrado en otro día no se añade, y dice en qué día está", async () => {
+    // Un pedido no se cobra dos veces: es el caso del arrastre de la noche anterior.
+    await guardarJornada(jornadaDe("2026-09-15", 2, 2), "reemplazar");
+    await guardarJornada(jornadaDe("2026-09-16", 2, 0), "reemplazar");
+
+    const r = await agregarPedidosLeidos(FECHA, [leido(100001), leido(777)]);
+
+    expect(r.repetidos).toEqual([{ codigo: "v100001wofp-01", fecha: "2026-09-15" }]);
+    expect(r.nuevos).toBe(1);
+    expect((await jornadaPorFecha(FECHA))!.ordenes.map((o) => o.codigo)).toEqual(["v777wofp-01"]);
+  });
+
+  it("un mismo código dos veces en la lista entra una sola", async () => {
+    const r = await agregarPedidosLeidos(FECHA, [leido(777), leido(777)]);
+
+    expect(r.nuevos).toBe(1);
+    expect((await jornadaPorFecha(FECHA))!.ordenes).toHaveLength(1);
+  });
+
+  it("nacen en tramo 1, con su monto, y no cuentan como manuales", async () => {
+    await agregarPedidosLeidos(FECHA, [leido(777, null)]);
+
+    const [o] = (await jornadaPorFecha(FECHA))!.ordenes;
+    expect(o.tramo).toBe(1);
+    expect(o.montoCentimos).toBe(pagoDelTramo(REGLA_INICIAL, 1));
+    expect(o.manual).toBe(false);
+  });
+
+  it("se enlazan con la ruta del día; si esa ruta no existe, entran sin ruta", async () => {
+    await guardarJornada(jornadaDe("2026-09-16", 3, 0), "reemplazar");
+
+    await agregarPedidosLeidos(FECHA, [leido(777, 2), leido(778, 9)]);
+
+    const { ordenes } = (await jornadaPorFecha(FECHA))!;
+    expect(ordenes.find((o) => o.codigo === "v777wofp-01")!.ruta).toBe(2);
+    expect(ordenes.find((o) => o.codigo === "v778wofp-01")!.ruta).toBeNull();
+  });
+
+  it("van al final de lo que ya hay, en el orden de la foto", async () => {
+    await guardarJornada(jornadaDe("2026-09-16", 1, 2), "reemplazar");
+
+    await agregarPedidosLeidos(FECHA, [leido(777, null), leido(778, null)]);
+
+    const { ordenes } = (await jornadaPorFecha(FECHA))!;
+    const posicion = (c: string) => ordenes.find((o) => o.codigo === c)!.posicion;
+    expect(posicion("v777wofp-01")).toBe(3);
+    expect(posicion("v778wofp-01")).toBe(4);
+  });
+
+  it("crea el día si no existía, con los contadores de estado al día", async () => {
+    await agregarPedidosLeidos(FECHA, [leido(777, null), leido(778, null, "No entregado")]);
+
+    const j = await jornadaPorFecha(FECHA);
+    expect(j).not.toBeNull();
+    expect(j!.entregado).toBe(1);
+    expect(j!.noEntregado).toBe(1);
+  });
+
+  it("una foto de puros repetidos no crea un día vacío", async () => {
+    await guardarJornada(jornadaDe("2026-09-15", 1, 2), "reemplazar");
+
+    const r = await agregarPedidosLeidos(FECHA, [leido(100000), leido(100001)]);
+
+    expect(r.nuevos).toBe(0);
+    expect(await jornadaPorFecha(FECHA)).toBeNull();
+  });
+
+  it("los pedidos nuevos entran en el total del día", async () => {
+    await guardarJornada(jornadaDe("2026-09-16", 2, 2, 1000), "reemplazar");
+    await agregarPedidosLeidos(FECHA, [leido(777), leido(778)]);
+
+    const [dia] = await resumenPorRango(FECHA, FECHA);
+    expect(dia.pedidos).toBe(4);
+  });
+});
+
+describe("buscarPedidos en un rango de días", () => {
+  async function tresDias() {
+    await guardarJornada(jornadaDe("2026-09-14", 2, 4), "reemplazar");
+    await guardarJornada(jornadaDe("2026-09-16", 2, 4), "reemplazar");
+    await guardarJornada(jornadaDe("2026-09-20", 2, 4), "reemplazar");
+  }
+
+  it("solo devuelve los pedidos de los días del rango", async () => {
+    await tresDias();
+    const r = await buscarPedidos("", { desde: "2026-09-15" as FechaISO, hasta: "2026-09-19" as FechaISO });
+    expect(r).toHaveLength(4);
+    expect(new Set(r.map((p) => p.fecha))).toEqual(new Set(["2026-09-16"]));
+  });
+
+  it("los extremos del rango cuentan", async () => {
+    await tresDias();
+    const r = await buscarPedidos("", { desde: "2026-09-14" as FechaISO, hasta: "2026-09-16" as FechaISO });
+    expect(new Set(r.map((p) => p.fecha))).toEqual(new Set(["2026-09-14", "2026-09-16"]));
+  });
+
+  it("con rango, el texto puede ser corto: el rango ya acota", async () => {
+    await tresDias();
+    // Sin rango, dos caracteres no buscan nada; con rango sí.
+    expect(await buscarPedidos("10")).toEqual([]);
+    const r = await buscarPedidos("10", { desde: "2026-09-14" as FechaISO, hasta: "2026-09-20" as FechaISO });
+    expect(r.length).toBeGreaterThan(0);
+  });
+
+  it("texto y rango juntos se exigen los dos", async () => {
+    await tresDias();
+    const r = await buscarPedidos("100001", { desde: "2026-09-15" as FechaISO, hasta: "2026-09-17" as FechaISO });
+    expect(r.map((p) => [p.codigo, p.fecha])).toEqual([["v100001wofp-01", "2026-09-16"]]);
+  });
+
+  it("lo más reciente primero, y los pedidos de un día en el orden de la app", async () => {
+    await tresDias();
+    const r = await buscarPedidos("", { desde: "2026-09-14" as FechaISO, hasta: "2026-09-20" as FechaISO });
+    expect(r[0].fecha).toBe("2026-09-20");
+    expect(r.slice(0, 4).map((p) => p.codigo)).toEqual([
+      "v100000wofp-01", "v100001wofp-01", "v100002wofp-01", "v100003wofp-01",
+    ]);
+  });
+
+  it("un rango sin pedidos devuelve una lista vacía", async () => {
+    await tresDias();
+    expect(await buscarPedidos("", { desde: "2026-09-01" as FechaISO, hasta: "2026-09-10" as FechaISO })).toEqual([]);
   });
 });

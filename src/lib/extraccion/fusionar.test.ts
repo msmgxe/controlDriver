@@ -191,7 +191,8 @@ describe("validarJornada", () => {
     const alertas = validarJornada(j, { hoy: HOY });
     const falta = alertas.find((a) => a.codigo === "faltan-capturas-ordenes");
     expect(falta?.nivel).toBe("aviso");
-    expect(falta?.mensaje).toContain("Falta una captura de Órdenes");
+    expect(falta?.mensaje).toMatch(/Faltan? \d+ pedidos?/);
+    expect(falta?.mensaje).toContain("cortada entre dos capturas");
     /* Lo importante del cambio: se avisa pero **se puede guardar**. Guardar
        catorce pedidos de quince es mucho mejor que no guardar ninguno, y el
        que falta se añade a mano. */

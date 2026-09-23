@@ -6,8 +6,8 @@ import { useSearchParams } from "next/navigation";
 
 import { Acordeon } from "@/components/Acordeon";
 import { EditorJornada } from "@/components/EditorJornada";
-import { reordenarRutas } from "./acciones";
-import { PedidoManual } from "@/components/PedidoManual";
+import { agregarPedidosDeFoto, reordenarRutas } from "./acciones";
+import { LectorDePedidos, PedidoManual } from "@/components/PedidoManual";
 import { PruebasDelDia } from "@/components/PruebasDelDia";
 import { BotonReordenar, LectorDeRutas, ListaDeRutas, RutaManual } from "@/components/RutaManual";
 import { Flecha } from "@/components/iconos";
@@ -152,14 +152,29 @@ function Contenido() {
       {editable && (
         <Acordeon
           titulo="Añadir un pedido"
-          resumen="Cuando no salió en ninguna captura"
+          resumen="A mano, o desde una foto"
         >
-          <PedidoManual
-            fecha={fecha}
-            regla={regla}
-            rutas={jornada.rutas.map((r) => r.numero)}
-            alAgregar={recargar}
-          />
+          <div className="flex flex-col gap-3">
+            <PedidoManual
+              fecha={fecha}
+              regla={regla}
+              rutas={jornada.rutas.map((r) => r.numero)}
+              alAgregar={recargar}
+            />
+            {/* Igual que con las rutas, la fecha se puede elegir. Los pedidos
+                que ya estaban registrados no se vuelven a añadir. */}
+            <LectorDePedidos
+              fecha={fecha}
+              onGuardar={async (fechaElegida, pedidos) => {
+                const r = await agregarPedidosDeFoto(fechaElegida, pedidos);
+                if (!r.ok) throw new Error(r.error);
+                return { nuevos: r.nuevos, repetidos: r.repetidos.length };
+              }}
+              alTerminar={(fechaElegida) => {
+                if (fechaElegida === fecha) recargar();
+              }}
+            />
+          </div>
         </Acordeon>
       )}
 

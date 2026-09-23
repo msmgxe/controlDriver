@@ -82,6 +82,11 @@ dependencies {
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
     implementation project(':capacitor-android')
+    /* El lector de texto propio (LectorTextoPlugin) usa el reconocedor de
+       Google directamente. El plugin de OCR que ya venía lo trae, pero como
+       `implementation`, y eso no lo deja ver desde aquí: hay que declararlo
+       otra vez, con la misma versión, para que no haya dos distintas. */
+    implementation "com.google.mlkit:text-recognition:16.0.1"
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"

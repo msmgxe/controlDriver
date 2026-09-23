@@ -114,7 +114,7 @@ export function ServicioPWA() {
   if (!hayAlgo) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex flex-col items-center gap-2 px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex flex-col items-center gap-2 px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] max-lg:bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] max-lg:pb-3">
       {sinConexion && (
         <div className="pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-btn bg-aviso-suave px-4 py-3 text-sm text-aviso shadow-alta">
           <Alerta className="size-[18px] shrink-0" />

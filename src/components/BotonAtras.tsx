@@ -85,7 +85,8 @@ function avisar(texto: string): void {
     "position:fixed",
     "left:50%",
     "transform:translateX(-50%)",
-    "bottom:calc(24px + env(safe-area-inset-bottom, 0px))",
+    // Por encima de la barra de abajo.
+    "bottom:calc(88px + env(safe-area-inset-bottom, 0px))",
     "z-index:9999",
     "padding:10px 18px",
     "border-radius:999px",

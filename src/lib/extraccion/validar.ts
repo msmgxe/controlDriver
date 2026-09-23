@@ -140,16 +140,31 @@ export function validarJornada(
     }
   }
 
-  /* --- contadores contra lo extraído (§6) --- */
-  if (jornada.contadorOrdenes !== null && pedidosEnLista !== jornada.contadorOrdenes) {
-    const faltan = jornada.contadorOrdenes - pedidosEnLista;
+  /* --- contadores contra lo extraído (§6) ---
+
+     La app de reparto dice cuántos pedidos tiene el día en dos sitios: el
+     contador de la pestaña y las tres cifras del resumen. Cualquiera de los
+     dos vale para saber cuántos **deberían** ser; si el de la pestaña no se
+     leyó, se usa la suma del resumen. Antes solo se miraba la pestaña, y un
+     día en que ese círculo no se leía, faltaban pedidos sin que nadie avisara. */
+  const resumenLeido = jornada.resumenOrdenes;
+  const sumaDelResumen = resumenLeido
+    ? resumenLeido.entregado + resumenLeido.parcial + resumenLeido.no_entregado
+    : null;
+  const esperados = jornada.contadorOrdenes ?? sumaDelResumen;
+
+  if (esperados !== null && pedidosEnLista !== esperados) {
+    const faltan = esperados - pedidosEnLista;
     alertas.push({
       nivel: "aviso",
       codigo: "faltan-capturas-ordenes",
       mensaje:
         faltan > 0
-          ? `Falta una captura de Órdenes: la app marca ${jornada.contadorOrdenes} pedidos y se leyeron ${jornada.ordenes.length}.`
-          : `Se leyeron ${jornada.ordenes.length} pedidos pero la app marca ${jornada.contadorOrdenes}. Revisa si se coló una captura de otro día.`,
+          ? `${faltan === 1 ? "Falta 1 pedido" : `Faltan ${faltan} pedidos`}: la app marca ${esperados} y se leyeron ${pedidosEnLista}. ` +
+            "Casi siempre es una tarjeta que quedó cortada entre dos capturas: vuelve a subir esa parte de la lista " +
+            "dejando que se solape un poco con la anterior, o añádelo a mano."
+          : `Se leyeron ${pedidosEnLista} pedidos pero la app marca ${esperados}. ` +
+            "Revisa si se coló una captura de otro día o un código leído dos veces con un dígito distinto.",
     });
   }
 
@@ -168,7 +183,10 @@ export function validarJornada(
   const resumen = jornada.resumenOrdenes;
   if (resumen) {
     const suma = resumen.entregado + resumen.parcial + resumen.no_entregado;
-    if (suma !== jornada.ordenes.length) {
+    // Si el resumen y el contador dicen lo mismo, ya se avisó arriba de lo que
+    // falta: repetirlo con otras palabras solo hace ruido.
+    const yaAvisado = esperados === suma && pedidosEnLista !== esperados;
+    if (suma !== jornada.ordenes.length && !yaAvisado) {
       alertas.push({
         nivel: "aviso",
         codigo: "resumen-no-cuadra",

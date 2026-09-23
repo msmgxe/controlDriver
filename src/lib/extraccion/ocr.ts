@@ -33,13 +33,32 @@ import {
  * ------------------------------------------------------------------------- */
 
 /** Sin acentos y en minúsculas, para comparar sin depender de la tilde. */
-function normalizar(texto: string): string {
+export function normalizar(texto: string): string {
   return texto
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
     .trim();
 }
+
+/**
+ * Qué dígito es cada letra que el lector confunde con uno.
+ *
+ * Cada una se parece a **un** dígito, y la tabla anterior mezclaba dos: la `B`
+ * mayúscula es un 8 —de ahí que un `v12250818` con el último trazo cortado
+ * saliera como `v12250618`, un pedido que no existe—, y la `b` minúscula es un
+ * 6. Lo mismo la `G` (6) y la `g` (9).
+ */
+const DIGITO_DE: Readonly<Record<string, string>> = {
+  o: "0", O: "0", D: "0", Q: "0",
+  l: "1", L: "1", i: "1", I: "1", "|": "1",
+  z: "2", Z: "2",
+  s: "5", S: "5",
+  b: "6", G: "6",
+  T: "7",
+  B: "8",
+  g: "9", q: "9",
+};
 
 /**
  * Arregla las confusiones clásicas de un lector de texto **solo donde toca**.
@@ -50,13 +69,7 @@ function normalizar(texto: string): string {
  * de ahí que se use únicamente dentro del código, donde no hay ambigüedad.
  */
 function soloDigitos(trozo: string): string {
-  return trozo
-    .replace(/[oO]/g, "0")
-    .replace(/[lLiI|]/g, "1")
-    .replace(/[sS]/g, "5")
-    .replace(/[bB]/g, "6")
-    .replace(/[gG]/g, "9")
-    .replace(/[^\d]/g, "");
+  return [...trozo].map((c) => DIGITO_DE[c] ?? c).join("").replace(/[^\d]/g, "");
 }
 
 /* ---------------------------------------------------------------------------
@@ -89,14 +102,40 @@ const RE_PESTANA_ORDENES = /^ordenes$/;
  */
 const RE_NUMERO_CON_ICONO = /^(?:[^\w\s]|[oaq@©]|[\u2460-\u24ff])?\s*(\d{1,3})$/;
 
+/**
+ * La palabra «ruta», con la errata que el lector comete en la letra pequeña y
+ * gris de la etiqueta: una `t` que sale `l`, `1` o `i`.
+ */
+const RUTA = "ru[tl1i]a";
+
 /** `1 Ruta • Finalizado`: el círculo con el número y la palabra en la misma línea. */
-const RE_NUMERO_Y_RUTA = /^(\d{1,3})\s*[.·•\-)]?\s*ruta\b/;
+const RE_NUMERO_Y_RUTA = new RegExp(`^(\\d{1,3})\\s*[.·•\\-)]?\\s*${RUTA}\\b`);
 
 /** `Ruta 4` en cualquier punto de la línea, para cuando va junto al código. */
-const RE_RUTA_EN_LINEA = /\bruta\s*:?\s*(\d{1,3})\b/;
+const RE_RUTA_EN_LINEA = new RegExp(`\\b${RUTA}\\s*:?\\s*(\\d{1,3})\\b`);
 
-/** `De: 10:03 a 10:27 horas` */
-const RE_HORARIO = /de:?\s*(\d{1,2}:\d{2})\s*(?:a|-|–)\s*(\d{1,2}:\d{2})/;
+/**
+ * `De: 10:03 a 10:27 horas`
+ *
+ * El «De:» es opcional y los dos puntos pueden salir como punto o punto y
+ * coma: bastaba que el lector se comiera esa palabra, o cambiara un signo,
+ * para que la ruta entera desapareciera sin dejar rastro. La pareja
+ * «hora a hora» ya es lo bastante específica por sí sola.
+ */
+const RE_HORARIO =
+  /(?:\bde:?\s*)?(\d{1,2})\s*[:.;]\s*(\d{2})\s*(?:a|al|-|–|—)\s*(\d{1,2})\s*[:.;]\s*(\d{2})/;
+
+/** Las dos horas de un horario, ya en `HH:MM`, o null si la línea no trae ninguno. */
+function leerHorario(linea: string): [string, string] | null {
+  const m = linea.match(RE_HORARIO);
+  return m ? [normalizarHora(`${m[1]}:${m[2]}`), normalizarHora(`${m[3]}:${m[4]}`)] : null;
+}
+
+/**
+ * Los caracteres que en un código son dígitos, contando los que el lector
+ * suele poner en su lugar.
+ */
+const DIG = "[0-9oOlLiI|sSbBgGzZqQdDT]";
 
 /**
  * `v12238726wofp-01`
@@ -104,8 +143,24 @@ const RE_HORARIO = /de:?\s*(\d{1,2}:\d{2})\s*(?:a|-|–)\s*(\d{1,2}:\d{2})/;
  * Se admiten espacios de más y se toleran letras donde deberían ir dígitos,
  * porque es justo donde el lector se equivoca. La reconstrucción posterior
  * devuelve siempre la forma canónica.
+ *
+ * Es deliberadamente **más ancha** que el formato real —de 6 a 10 dígitos, y
+ * un sufijo de 1 a 3—. Un pedido que se lee con un dígito de menos o de más
+ * es un pedido leído: se conserva, se marca como dudoso y la pantalla de
+ * Revisión pide mirarlo. Con la regla estricta se perdía en silencio, y
+ * faltaban pedidos sin que nadie supiera por qué. Tampoco se exige que
+ * «wofp» salga exacto: basta `w`, dos caracteres cualesquiera y una `p`, y el
+ * guion admite las variantes tipográficas que ponen los lectores.
  */
-const RE_CODIGO = /v\s*([0-9oOlLiI|sSbBgG]{8})\s*w\s*o\s*f\s*p\s*[-–—]?\s*([0-9oOlLiI|sSbBgG]{2})/i;
+export const RE_CODIGO = new RegExp(
+  `v\\s*(${DIG}{6,10})\\s*(?:w|vv)\\s*[a-z0-9]\\s*[a-z0-9]\\s*p\\s*[-\\u2010-\\u2015\\u2212_.·:]?\\s*(${DIG}{1,3})`,
+  "i",
+);
+
+/** ¿Tiene el código el formato exacto —8 dígitos, `-` y 2 más—? */
+function codigoCompleto(digitos: string, sufijo: string): boolean {
+  return digitos.length === 8 && sufijo.length === 2;
+}
 
 /**
  * `Ruta 4` — en singular: la ruta a la que pertenecen los pedidos.
@@ -115,10 +170,10 @@ const RE_CODIGO = /v\s*([0-9oOlLiI|sSbBgG]{8})\s*w\s*o\s*f\s*p\s*[-–—]?\s*([
  * acompañada. No confunde el contador `Rutas 7`: tras "ruta" exige espacio o
  * dos puntos antes del número, y la "s" del plural no es ninguna de las dos.
  */
-const RE_RUTA_DEL_PEDIDO = /^ruta\s*:?\s*(\d{1,3})\b/;
+export const RE_RUTA_DEL_PEDIDO = new RegExp(`^${RUTA}\\s*:?\\s*(\\d{1,3})\\b`);
 
 /** Estados propios de un pedido. "Finalizado" es de las rutas y no cuenta aquí. */
-const ESTADOS_DE_PEDIDO = new Set(["Entregado", "Entrega parcial", "No entregado"]);
+export const ESTADOS_DE_PEDIDO = new Set(["Entregado", "Entrega parcial", "No entregado"]);
 
 /** Un número suelto: en la pantalla de Rutas es el círculo azul. */
 const RE_NUMERO_SUELTO = /^(\d{1,3})$/;
@@ -156,12 +211,79 @@ const ESTADOS_EN_LINEA: ReadonlyArray<{ patron: RegExp; canonico: string }> = [
  */
 const RE_ICONO_DELANTE = /^(?:[^\p{L}\p{N}\s]+|[vo©@])\s+/u;
 
-function estadoDe(linea: string): string | null {
+/** Distancia de edición entre dos textos cortos. */
+function distancia(a: string, b: string): number {
+  const fila = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    let anterior = fila[0];
+    fila[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const guardado = fila[j];
+      fila[j] = Math.min(
+        fila[j] + 1,
+        fila[j - 1] + 1,
+        anterior + (a[i - 1] === b[j - 1] ? 0 : 1),
+      );
+      anterior = guardado;
+    }
+  }
+  return fila[b.length];
+}
+
+/**
+ * Lo que queda de un rótulo de estado tras quitarle el ruido que le pone el
+ * lector: solo letras y espacios, y sin las letras sueltas del principio o del
+ * final, que son el icono o el borde de la etiqueta.
+ *
+ * El estado va dentro de una **píldora** —un borde redondeado con un ✓ verde
+ * delante—, y el lector devuelve el borde como paréntesis y el ✓ como una
+ * letra: `(O Entregado)`, `(• Entregado`, `V Entregado`. Con la regla de antes
+ * solo se reconocía el estado si el ruido era un símbolo pegado con un
+ * espacio, y `(O Entregado)` se perdía: el pedido salía con el estado por
+ * defecto y marcado como incompleto.
+ */
+function rotuloLimpio(linea: string): string {
+  const palabras = linea
+    .replace(/[^\p{L}\s]/gu, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+  while (palabras.length > 1 && palabras[0].length === 1) palabras.shift();
+  while (palabras.length > 1 && palabras[palabras.length - 1].length === 1) palabras.pop();
+  return palabras.join(" ");
+}
+
+export function estadoDe(linea: string): string | null {
   const sinIcono = linea.replace(RE_ICONO_DELANTE, "");
   for (const { patron, canonico } of ESTADOS) {
     if (patron.test(sinIcono)) return canonico;
   }
-  return null;
+
+  /* Segunda pasada, más permisiva: el rótulo limpio, y aun con una o dos
+     letras mal leídas —«Entregadc», «Entrega do»—. Solo para textos largos, en
+     los que dos letras de diferencia son el lector y no otra palabra. */
+  const limpio = rotuloLimpio(linea);
+  if (limpio.length < 7) return null;
+
+  const exacto = ESTADOS.find(({ canonico }) => limpio === canonico.toLowerCase());
+  if (exacto) return exacto.canonico;
+
+  /* Se elige **el más cercano**, y solo si gana con claridad: «entregado» está
+     a dos letras de «no entregado», y tomar el primero que pase el umbral
+     convertía un estado en el contrario. Tampoco vale una palabra mucho más
+     corta o larga —«Entrega» suelto no es «Entregado»—. */
+  const sinEspacios = limpio.replace(/\s+/g, "");
+  const candidatos = ESTADOS.map(({ canonico }) => {
+    const objetivo = canonico.toLowerCase().replace(/\s+/g, "");
+    const tolera = objetivo.length >= 9 ? 2 : 1;
+    const d = distancia(sinEspacios, objetivo);
+    return { canonico, d, valido: d <= tolera && Math.abs(sinEspacios.length - objetivo.length) <= 1 };
+  })
+    .filter((c) => c.valido)
+    .sort((a, b) => a.d - b.d);
+
+  if (candidatos.length === 0) return null;
+  if (candidatos.length > 1 && candidatos[0].d === candidatos[1].d) return null;
+  return candidatos[0].canonico;
 }
 
 /**
@@ -495,7 +617,9 @@ export function interpretarConContexto(
     /* --- pedidos --- */
     const mCodigo = cruda.match(RE_CODIGO);
     if (mCodigo) {
-      const codigo = `v${soloDigitos(mCodigo[1])}wofp-${soloDigitos(mCodigo[2])}`;
+      const digitos = soloDigitos(mCodigo[1]);
+      const sufijo = soloDigitos(mCodigo[2]);
+      const codigo = `v${digitos}wofp-${sufijo}`;
 
       /* En la pantalla real la etiqueta `Ruta 1` va en la misma fila que el
          código, a la derecha, y el lector a menudo los devuelve juntos. Se
@@ -515,7 +639,9 @@ export function interpretarConContexto(
         codigo,
         ruta,
         estado: estado ?? "Entregado",
-        legible_completo: ruta !== null && estado !== null,
+        /* Un código con un dígito de más o de menos se conserva, pero como
+           dudoso: es un pedido leído a medias, no un pedido perdido. */
+        legible_completo: ruta !== null && estado !== null && codigoCompleto(digitos, sufijo),
       });
       numeroDeCabecera = null;
       numeroSuelto = null;
@@ -542,8 +668,8 @@ export function interpretarConContexto(
     }
 
     /* --- rutas --- */
-    const mHorario = linea.match(RE_HORARIO);
-    if (mHorario) {
+    const horario = leerHorario(linea);
+    if (horario) {
       /* El número se toma de donde dice la orientación de esta captura, y de
          ningún otro sitio. Si no está, se numera por orden y se marca como
          deducido: ese número solo vale dentro de esta captura, y la fusión lo
@@ -556,8 +682,8 @@ export function interpretarConContexto(
       rutas.push({
         numero: numero ?? rutas.length + 1,
         estado: estado ?? "Finalizado",
-        hora_inicio: normalizarHora(mHorario[1]),
-        hora_fin: normalizarHora(mHorario[2]),
+        hora_inicio: horario[0],
+        hora_fin: horario[1],
         legible_completo: true,
         numero_deducido: numero === null,
       });

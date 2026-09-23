@@ -5,6 +5,7 @@ import { z } from "zod";
 import {
   actualizarHorario,
   actualizarTramo,
+  agregarPedidosLeidos,
   borrarJornada,
   borrarPedido,
   jornadaPorFecha,
@@ -14,7 +15,8 @@ import { estadoDeSemana } from "@/lib/db/sqlite/liquidaciones";
 import { reordenarRutasDelDia } from "@/lib/db/sqlite/rutas";
 import { ESTADOS_DE_PEDIDO, actualizarPedido } from "@/lib/db/sqlite/pedidos";
 import { perfilActual } from "@/lib/db/sqlite/perfil";
-import { esFechaISO, type FechaISO } from "@/lib/fechas";
+import { esFechaISO, hoyEnLima, type FechaISO } from "@/lib/fechas";
+import { RE_CODIGO_PEDIDO } from "@/lib/extraccion/esquema";
 import { TRAMO_MAS_DE_12_KM, pagoDelTramo } from "@/lib/pagos/reglas";
 
 /**
@@ -232,6 +234,58 @@ export async function reordenarRutas(fecha: string): Promise<Resultado> {
     return {
       ok: false,
       error: error instanceof Error ? error.message : "No se pudieron reordenar las rutas.",
+    };
+  }
+}
+
+const esquemaPedidosDeFoto = z
+  .array(
+    z.object({
+      codigo: z.string().regex(RE_CODIGO_PEDIDO),
+      ruta: z.number().int().min(1).max(99).nullable(),
+      estado: z.enum(ESTADOS_DE_PEDIDO),
+    }),
+  )
+  .min(1)
+  .max(200);
+
+/**
+ * Añade a un día los pedidos leídos de una foto, sin repetir ninguno.
+ *
+ * La fecha la elige la persona y puede no ser la del día que tiene abierto, así
+ * que aquí se comprueba de nuevo que sea una fecha que se pueda tocar: ni
+ * futura, ni de una semana cerrada. Lo segundo importa más que en las rutas:
+ * un pedido es dinero, y añadirlo por debajo de una liquidación dejaría el
+ * historial diciendo una cosa y el pago otra.
+ *
+ * El "no repetir" lo garantiza la capa de datos, dentro de la misma
+ * transacción que la escritura. Devuelve cuántos entraron y cuáles ya estaban.
+ */
+export async function agregarPedidosDeFoto(
+  fecha: string,
+  pedidos: unknown,
+): Promise<
+  | { ok: true; nuevos: number; repetidos: Array<{ codigo: string; fecha: FechaISO }> }
+  | { ok: false; error: string }
+> {
+  if (!esFechaISO(fecha)) return { ok: false, error: "Fecha no válida." };
+  if (fecha > hoyEnLima()) {
+    return { ok: false, error: "No puedes añadir pedidos a una fecha futura." };
+  }
+
+  const parseado = esquemaPedidosDeFoto.safeParse(pedidos);
+  if (!parseado.success) return { ok: false, error: "Los pedidos leídos no son válidos." };
+
+  const editable = await semanaEditable(fecha);
+  if (!editable.ok) return { ok: false, error: editable.error };
+
+  try {
+    const { nuevos, repetidos } = await agregarPedidosLeidos(fecha, parseado.data);
+    return { ok: true, nuevos, repetidos };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "No se pudieron añadir los pedidos.",
     };
   }
 }

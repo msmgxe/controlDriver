@@ -18,7 +18,7 @@
 import { Capacitor } from "@capacitor/core";
 
 import { consultar, ejecutar } from "@/lib/db/sqlite/conexion";
-import { codigosYaRegistrados, reglaVigente } from "@/lib/db/sqlite/jornadas";
+import { codigosYaRegistrados, reglaVigente, type PedidoLeido } from "@/lib/db/sqlite/jornadas";
 import { perfilActual } from "@/lib/db/sqlite/perfil";
 import { hoyEnLima, type FechaISO } from "@/lib/fechas";
 import { pagoDelTramo } from "@/lib/pagos/reglas";
@@ -26,6 +26,7 @@ import { pagoDelTramo } from "@/lib/pagos/reglas";
 import { guardarPrueba } from "@/lib/db/sqlite/pruebas";
 
 import { agruparPorFecha, fusionarCapturas } from "./fusionar";
+import { leerImagen, type LecturaDeImagen } from "./lectorTexto";
 import { interpretarCaptura, interpretarConContexto, type ContextoEntreCapturas } from "./ocr";
 import { quitarArrastre } from "./arrastre";
 import { validarJornada } from "./validar";
@@ -60,15 +61,54 @@ export function lecturaDisponible(): boolean {
 }
 
 /**
- * Lee una imagen y devuelve sus líneas de texto, en orden de lectura.
+ * Cuántas capturas se leen a la vez.
  *
- * El lector vive en Android, no en la página: la importación es dinámica para
- * que el navegador no intente cargar un plugin nativo que ahí no existe.
+ * Con una sola en vuelo, el teléfono se pasaba la mitad del tiempo esperando:
+ * convertir la imagen, cruzar hacia Android, decodificarla… y solo entonces
+ * leer. Con dos, mientras una se lee la siguiente ya viene de camino. Más de
+ * dos no ayuda —el lector nativo tiene dos— y sí gasta memoria: cada captura
+ * decodificada ocupa unos 13 MB.
  */
-async function leerTexto(imagen: Blob): Promise<string[]> {
-  const { Ocr } = await import("@jcesarmobile/capacitor-ocr");
-  const { results } = await Ocr.process({ image: await aDataUrl(imagen) });
-  return results.map((r) => r.text);
+const LECTURAS_A_LA_VEZ = 2;
+
+type Lectura = { ok: true; lectura: LecturaDeImagen } | { ok: false; error: string };
+
+/**
+ * Lee todas las imágenes, de dos en dos, **conservando el orden**.
+ *
+ * El orden importa porque lo que se hace *después* con cada lectura sí depende
+ * de él —una captura hereda la ruta de la anterior—, pero leerlas no: eso se
+ * puede hacer en cualquier orden y a la vez. Por eso primero se lee todo, en
+ * paralelo, y luego se interpreta en fila.
+ *
+ * Una imagen que no se pudo leer no tumba a las demás: queda como error en su
+ * puesto y las otras siguen.
+ */
+async function leerEnParalelo(
+  imagenes: readonly Blob[],
+  alLeer?: (leidas: number) => void,
+): Promise<Lectura[]> {
+  const resultado: Lectura[] = new Array(imagenes.length);
+  let siguiente = 0;
+  let hechas = 0;
+
+  const trabajador = async () => {
+    for (;;) {
+      const i = siguiente++;
+      if (i >= imagenes.length) return;
+      try {
+        resultado[i] = { ok: true, lectura: await leerImagen(await aDataUrl(imagenes[i])) };
+      } catch (e) {
+        resultado[i] = { ok: false, error: e instanceof Error ? e.message : String(e) };
+      }
+      alLeer?.(++hechas);
+    }
+  };
+
+  await Promise.all(
+    Array.from({ length: Math.min(LECTURAS_A_LA_VEZ, imagenes.length) }, trabajador),
+  );
+  return resultado;
 }
 
 function aDataUrl(blob: Blob): Promise<string> {
@@ -96,27 +136,50 @@ export interface ResultadoLectura {
  * normal cuando uno sube el carrete del fin de semana entero.
  */
 export async function leerCapturas(
-  imagenes: ReadonlyArray<{ lectura: Blob; prueba: Blob }>,
+  imagenes: ReadonlyArray<{ lectura: Blob; prueba: Blob | Promise<Blob> }>,
+  alLeer?: (leidas: number) => void,
 ): Promise<ResultadoLectura> {
   /* Cada imagen viaja junto a lo que se leyó de ella. Hace falta para poder
      guardarla como prueba **del día correcto**: una captura sin cabecera no
      dice de qué día es, y solo se sabe tras agrupar. */
-  const leidas: Array<{ prueba: Blob; extraida: ImagenExtraida }> = [];
+  const leidas: Array<{ prueba: Blob | Promise<Blob>; extraida: ImagenExtraida }> = [];
   const crudo: string[] = [];
+  const detalle: string[] = [];
   let descartadas = 0;
 
   /* Lo que cada captura le deja a la siguiente: si la lista de pedidos
      seguía bajo una ruta al cortarse, la captura de después empieza en esa
      misma ruta aunque no la muestre. */
   let contexto: ContextoEntreCapturas | undefined;
-  let numeroDeCaptura = 0;
 
-  for (const { lectura, prueba } of imagenes) {
+  /* Primero se lee todo, de dos en dos; después se interpreta en el orden en
+     que se tomaron. */
+  const inicio = Date.now();
+  const lecturas = await leerEnParalelo(
+    imagenes.map((i) => i.lectura),
+    alLeer,
+  );
+  const msLeer = Date.now() - inicio;
+
+  for (let k = 0; k < imagenes.length; k++) {
+    const numero = k + 1;
+    const lec = lecturas[k];
+    if (!lec.ok) {
+      descartadas += 1;
+      crudo.push(`── captura ${numero}: NO SE PUDO LEER · ${lec.error} ──`);
+      continue;
+    }
+
+    const { lectura } = lec;
+    crudo.push(
+      `── captura ${numero} · ${lectura.lector}${lectura.tamano ? ` · ${lectura.tamano}` : ""}` +
+        `${lectura.ms !== null ? ` · ${lectura.ms} ms` : ""} ──`,
+      ...lectura.lineas,
+    );
+    detalle.push(`── captura ${numero}, tal como la devolvió el lector (x,y,ancho,alto|texto) ──`, ...lectura.crudo);
+
     try {
-      const lineas = await leerTexto(lectura);
-      numeroDeCaptura++;
-      crudo.push(`── captura ${numeroDeCaptura} ──`, ...lineas);
-      const leida = interpretarConContexto(lineas, contexto);
+      const leida = interpretarConContexto(lectura.lineas, contexto);
       contexto = leida.contexto;
       const extraida = leida.imagen;
 
@@ -126,7 +189,7 @@ export async function leerCapturas(
         descartadas += 1;
         continue;
       }
-      leidas.push({ prueba, extraida });
+      leidas.push({ prueba: imagenes[k].prueba, extraida });
     } catch {
       descartadas += 1;
     }
@@ -185,7 +248,7 @@ export async function leerCapturas(
           .map((r) => `r:${r.hora_inicio}-${r.hora_fin}`),
       ];
       try {
-        await guardarPrueba(suFecha as never, prueba, undefined, contenido);
+        await guardarPrueba(suFecha as never, await prueba, undefined, contenido);
       } catch {
         /* Guardar la prueba es un extra: que falle no puede tumbar la carga. */
       }
@@ -228,7 +291,12 @@ export async function leerCapturas(
     });
   }
 
-  await guardarDiagnostico(crudo);
+  await guardarDiagnostico([
+    `── ${imagenes.length} captura${imagenes.length === 1 ? "" : "s"} leída${imagenes.length === 1 ? "" : "s"} en ${(msLeer / 1000).toFixed(1)} s ──`,
+    ...crudo,
+    "",
+    ...detalle,
+  ]);
   return { dias, imagenesLeidas: leidas.length, imagenesDescartadas: descartadas };
 }
 
@@ -286,17 +354,52 @@ export async function leerRutasDeCapturas(
 ): Promise<Array<{ numero: number; horaInicio: string | null; horaFin: string | null }>> {
   const leidas: ImagenExtraida[] = [];
 
-  for (const imagen of imagenes) {
-    try {
-      const lineas = await leerTexto(imagen);
-      leidas.push(interpretarCaptura(lineas));
-    } catch {
-      /* Se salta esta imagen; las demás siguen su curso. */
-    }
+  for (const lec of await leerEnParalelo(imagenes)) {
+    /* Se salta la imagen que no se pudo leer; las demás siguen su curso. */
+    if (lec.ok) leidas.push(interpretarCaptura(lec.lectura.lineas));
   }
 
   const fusion = fusionarCapturas(leidas);
   return fusion.rutas
     .map((r) => ({ numero: r.numero, horaInicio: r.hora_inicio, horaFin: r.hora_fin }))
     .sort((a, b) => a.numero - b.numero);
+}
+
+/**
+ * Lee solo los pedidos de una o más capturas, sin el resto del flujo —ni
+ * rutas, ni arrastre de la noche anterior, ni alertas—.
+ *
+ * Es la pareja de `leerRutasDeCapturas`: sirve para añadir a un día los
+ * pedidos de una foto suelta sin rehacer la revisión completa. A diferencia de
+ * las rutas, aquí el orden de las capturas **sí importa**: la lista de pedidos
+ * se fotografía haciendo scroll y una captura puede empezar a mitad de una
+ * ruta, así que cada una hereda de la anterior la ruta bajo la que seguía.
+ * Después se fusionan las que se solapan, por código.
+ *
+ * Devuelve también las fechas que traían las capturas —solo la primera de cada
+ * pantalla lleva la cabecera—. No se usan para decidir el día, que lo elige la
+ * persona, sino para avisarle si la foto dice otro.
+ *
+ * Una imagen que no se pudo leer no tumba a las demás.
+ */
+export async function leerPedidosDeCapturas(imagenes: readonly Blob[]): Promise<{
+  pedidos: PedidoLeido[];
+  fechas: FechaISO[];
+}> {
+  const leidas: ImagenExtraida[] = [];
+  let contexto: ContextoEntreCapturas | undefined;
+
+  for (const lec of await leerEnParalelo(imagenes)) {
+    /* Se salta la imagen que no se pudo leer; las demás siguen su curso. */
+    if (!lec.ok) continue;
+    const leida = interpretarConContexto(lec.lectura.lineas, contexto);
+    contexto = leida.contexto;
+    leidas.push(leida.imagen);
+  }
+
+  const fusion = fusionarCapturas(leidas);
+  return {
+    pedidos: fusion.ordenes.map((o) => ({ codigo: o.codigo, ruta: o.ruta, estado: o.estado })),
+    fechas: [...new Set(leidas.map((i) => i.fecha).filter((f): f is FechaISO => f !== null))].sort(),
+  };
 }

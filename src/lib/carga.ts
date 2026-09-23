@@ -99,6 +99,7 @@ export type ResultadoCarga = { ok: true } | { ok: false; error: string };
 export async function procesarCapturas(
   archivos: Blob[],
   alComprimir?: (listas: number) => void,
+  alLeer?: (leidas: number) => void,
 ): Promise<ResultadoCarga> {
   if (archivos.length === 0) {
     return { ok: false, error: "No llegó ninguna imagen." };
@@ -149,17 +150,27 @@ export async function procesarCapturas(
 
   try {
     /* Cada captura en dos tamaños: la de **leer**, a resolución completa, y
-       la de **guardar** como prueba, reducida. La de leer nunca se guarda. */
-    const capturas: Array<{ lectura: Blob; prueba: Blob }> = [];
+       la de **guardar** como prueba, reducida. La de leer nunca se guarda.
+
+       Solo la de leer se prepara aquí, porque es la que hace falta ya. La de
+       guardar se prepara **mientras el teléfono lee**, de una en una y sin
+       que nadie la espere: antes se hacían todas primero, y con doce capturas
+       eran varios segundos de pantalla parada en «Preparando las fotos»
+       antes de que la lectura empezara siquiera. */
+    const capturas: Array<{ lectura: Blob; prueba: Promise<Blob> }> = [];
+    let cadena: Promise<unknown> = Promise.resolve();
     for (const archivo of enOrden) {
-      capturas.push({
-        lectura: await paraLeer(archivo),
-        prueba: await comprimir(archivo, LADO_PRUEBA),
-      });
+      const prueba = cadena
+        .then(() => comprimir(archivo, LADO_PRUEBA))
+        // Si reducirla falla, se guarda tal cual: perder la prueba no puede
+        // tumbar la carga, y esta promesa no debe rechazar sin dueño.
+        .catch(() => archivo);
+      cadena = prueba;
+      capturas.push({ lectura: await paraLeer(archivo), prueba });
       alComprimir?.(capturas.length);
     }
 
-    const datos = await leerCapturas(capturas);
+    const datos = await leerCapturas(capturas, alLeer);
 
     if (datos.dias.length === 0) {
       return {

@@ -106,6 +106,11 @@ export interface Liquidacion {
    */
   diasSinCarga: FechaISO[];
   /**
+   * Los días que el repartidor dijo que **no trabajó**. No son huecos: no se
+   * cuentan en `diasSinCarga` ni deben avisar de nada.
+   */
+  diasDescanso: FechaISO[];
+  /**
    * Pedidos que no se pudieron tarifar. No se suman al monto y hay que
    * resolverlos antes de cerrar la semana.
    */
@@ -118,6 +123,8 @@ export interface OpcionesLiquidacion {
    * semana cerrada, el domingo. Si se omite, se usa el domingo de la semana.
    */
   hasta?: FechaISO;
+  /** Días marcados como descanso. Se quitan de los huecos. */
+  descansos?: readonly FechaISO[];
 }
 
 /**
@@ -265,9 +272,12 @@ export function calcularLiquidacion(
   }
 
   const cargadas = new Set(deLaSemana.map((j) => j.fecha));
-  const diasSinCarga = rangoDeFechas(semana.inicio, minimo(hasta, semana.fin)).filter(
-    (f) => !cargadas.has(f),
-  );
+  /* Un descanso solo cuenta si ese día **no** tiene jornada: si hay pedidos,
+     se trabajó, diga lo que diga una marca vieja. */
+  const dijoDescanso = new Set((opciones.descansos ?? []).filter((f) => !cargadas.has(f)));
+  const diasDelPeriodo = rangoDeFechas(semana.inicio, minimo(hasta, semana.fin));
+  const diasSinCarga = diasDelPeriodo.filter((f) => !cargadas.has(f) && !dijoDescanso.has(f));
+  const diasDescanso = rangoDeFechas(semana.inicio, semana.fin).filter((f) => dijoDescanso.has(f));
 
   return {
     semana,
@@ -280,6 +290,7 @@ export function calcularLiquidacion(
     minutosEnRuta,
     detalle: { porDia, porRuta },
     diasSinCarga,
+    diasDescanso,
     pedidosSinTarifa,
   };
 }

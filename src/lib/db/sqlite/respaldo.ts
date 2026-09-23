@@ -40,6 +40,7 @@ const TABLAS = [
   "rutas",
   "ordenes",
   "liquidaciones",
+  "dias_descanso",
 ] as const;
 
 type NombreTabla = (typeof TABLAS)[number];
@@ -70,6 +71,8 @@ const esquemaRespaldo = z.object({
     rutas: z.array(z.record(z.string(), z.unknown())),
     ordenes: z.array(z.record(z.string(), z.unknown())),
     liquidaciones: z.array(z.record(z.string(), z.unknown())),
+    // Los respaldos anteriores a los días de descanso no la traen.
+    dias_descanso: z.array(z.record(z.string(), z.unknown())).default([]),
   }),
 });
 

@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 
+import { Luna } from "@/components/iconos";
 import { formatearDuracion, formatearFecha, nombreDelDia, type FechaISO } from "@/lib/fechas";
 import { formatearSoles } from "@/lib/pagos/reglas";
 
@@ -25,6 +26,8 @@ import { formatearSoles } from "@/lib/pagos/reglas";
 export interface DiaGrafico {
   fecha: FechaISO;
   cargado: boolean;
+  /** No se trabajó, dicho por el repartidor: no es lo mismo que «sin subir». */
+  descanso?: boolean;
   pedidos: number;
   rutas: number;
   minutos: number;
@@ -103,8 +106,17 @@ export function GraficoDias({ dias }: { dias: DiaGrafico[] }) {
                   key={d.fecha}
                   className="relative flex h-full w-[54px] shrink-0 flex-col items-center justify-end rounded-chip pb-[22px]"
                 >
-                  <span className="mb-1.5 font-mono text-sm text-tinta-3">—</span>
-                  <span className="h-3.5 w-[26px] rounded-chip border border-dashed border-linea-fuerte" />
+                  {d.descanso ? (
+                    <>
+                      <Luna aria-label="Descanso" className="mb-1.5 size-4 text-tinta-2" />
+                      <span className="h-3.5 w-[26px] rounded-chip bg-descanso" />
+                    </>
+                  ) : (
+                    <>
+                      <span className="mb-1.5 font-mono text-sm text-tinta-3">—</span>
+                      <span className="h-3.5 w-[26px] rounded-chip border border-dashed border-linea-fuerte" />
+                    </>
+                  )}
                   <span className="absolute inset-x-0 bottom-0 text-center font-mono text-[9px] text-tinta-3">
                     {Number(d.fecha.slice(8, 10))}
                   </span>
@@ -200,6 +212,12 @@ export function GraficoDias({ dias }: { dias: DiaGrafico[] }) {
           <i className="inline-block size-2.5 rounded-[3px] border border-dashed border-linea-fuerte" />
           Sin carga
         </span>
+        {dias.some((d) => d.descanso) && (
+          <span className="inline-flex items-center gap-1.5">
+            <i className="inline-block size-2.5 rounded-[3px] bg-descanso" />
+            Descanso
+          </span>
+        )}
         <span className="text-acento">– – promedio del rango</span>
       </div>
     </div>
