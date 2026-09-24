@@ -176,6 +176,7 @@ export default function PaginaPagos() {
             estado={enCurso.estado}
             montoCalculadoCentimos={enCurso.liquidacion.montoCalculadoCentimos}
             montoRecibidoCentimos={enCurso.montoRecibidoCentimos}
+            alCambiar={recargar}
           />
         </div>
       </section>

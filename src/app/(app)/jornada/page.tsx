@@ -84,7 +84,10 @@ function Contenido() {
   if (!datos) return <Esqueleto />;
 
   const { jornada, regla, estado } = datos;
-  const editable = estado === "abierta";
+  // Bloquea solo cuando ya se cobró: cerrar la semana en Pagos congela el
+  // monto para poder anotar el pago, pero no debe impedir corregir un pedido
+  // que faltó mientras eso no haya pasado todavía.
+  const editable = estado !== "pagada";
   const rutas = jornada?.rutas ?? [];
   const ordenes = jornada?.ordenes ?? [];
 
@@ -97,18 +100,20 @@ function Contenido() {
         <h2 className="text-[30px] leading-tight capitalize">{formatearFechaLarga(fecha)}</h2>
       </div>
 
-      {!jornada && (
+      {!jornada && editable && (
         <Vacio>
           Este día todavía no tiene nada guardado. Añade tus pedidos abajo —a mano, por cantidad, o
           desde una foto— y el día se crea solo con el primero.
         </Vacio>
       )}
 
-      {jornada && !editable && (
-        <Aviso tono="atento" titulo={`Esta semana está ${estado}`}>
+      {!jornada && !editable && <Vacio>Este día no tiene nada guardado.</Vacio>}
+
+      {!editable && (
+        <Aviso tono="atento" titulo="Esta semana ya está pagada">
           <p>
-            El monto liquidado está congelado. Para corregir algo de este día, reabre la semana
-            desde Pagos.
+            El monto liquidado quedó congelado al registrar el pago. Para corregir algo de este
+            día —incluido añadir un pedido que faltó— reabre la semana desde Pagos.
           </p>
         </Aviso>
       )}

@@ -27,10 +27,10 @@ type Rol = "admin" | "driver";
 /**
  * Armazón de la app del driver.
  *
- * **Móvil**: una barra de abajo con cinco puertas —Inicio, Buscar, el auto que
- * carga capturas, la semana y «Más»—, siempre a un pulgar. «Más» abre el mismo
- * cajón lateral de siempre, con lo que no cabe en la barra (Historial,
- * Estadísticas, Ajustes, Salir).
+ * **Móvil**: una barra de abajo con cinco puertas —Inicio, Pagos, el auto que
+ * carga capturas, Ajustes y «Más»—, siempre a un pulgar. Son las cinco cosas
+ * que se tocan todos los días; «Buscar» y «Historial» no se usan a diario y
+ * viven en «Más», que abre el mismo cajón lateral de siempre.
  *
  * **Desde 900 px**: el cajón queda fijo como barra lateral y la de abajo
  * desaparece. Una sola estructura para los dos tamaños (§9).
@@ -56,13 +56,14 @@ const DESTINOS_ADMIN: Destino[] = [
 ];
 
 /**
- * La barra de abajo. «Sem.» y no «Semana»: con cinco puertas en un ancho de
- * teléfono, la palabra entera no cabe y se cortaba.
+ * La barra de abajo: Inicio y Pagos a la izquierda del auto, Ajustes a la
+ * derecha. «Buscar» se usa poco —solo cuando se te pierde un pedido— y se
+ * quedó mejor guardado en «Más», junto con Historial y Estadísticas.
  */
 const PUERTAS: Array<{ href: string; nombre: string; Icono: typeof Casa }> = [
   { href: "/", nombre: "Inicio", Icono: Casa },
-  { href: "/buscar", nombre: "Buscar", Icono: Buscar },
-  { href: "/pagos", nombre: "Sem.", Icono: Cartera },
+  { href: "/pagos", nombre: "Pagos", Icono: Cartera },
+  { href: "/ajustes", nombre: "Ajustes", Icono: Candado },
 ];
 
 export function Armazon(props: {
@@ -268,7 +269,7 @@ function ArmazonInterno({
 
         <button
           type="button"
-          aria-label="Más: historial, estadísticas y ajustes"
+          aria-label="Más: buscar, historial y estadísticas"
           aria-expanded={abierto}
           aria-controls="cajon"
           onClick={() => setAbierto((v) => !v)}

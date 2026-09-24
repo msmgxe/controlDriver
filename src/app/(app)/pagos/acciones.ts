@@ -24,7 +24,12 @@ async function conSesion(accion: () => Promise<void>): Promise<Resultado> {
   }
 }
 
-/** Cierra la semana y congela su monto, desglose y regla (§13). */
+/**
+ * Congela el monto, el desglose y la regla de la semana (§13), sin marcarla
+ * como pagada todavía. Ya no tiene botón propio —ver `accionRegistrarPago`—
+ * pero la usa por debajo, y queda disponible por si algún día hace falta
+ * congelar una semana antes de saber cuánto se cobró.
+ */
 export async function accionCerrarSemana(semanaInicio: string): Promise<Resultado> {
   if (!esFechaISO(semanaInicio)) return { ok: false, error: "Semana inválida." };
   const perfil = await perfilActual();
@@ -32,7 +37,13 @@ export async function accionCerrarSemana(semanaInicio: string): Promise<Resultad
   return conSesion(() => cerrarSemana(semanaInicio, regla, id));
 }
 
-/** El viernes, el driver registra lo que realmente le pagaron (§13). */
+/**
+ * El viernes, el driver anota lo que realmente le pagaron. Esto es lo único
+ * que bloquea la semana para editarla: antes había un paso aparte —"Cerrar la
+ * semana"— que la bloqueaba sin haber cobrado todavía, y era fácil tocarlo
+ * sin querer y quedarse sin poder corregir un pedido que faltaba. Ahora
+ * cerrar y registrar el pago son la misma acción.
+ */
 export async function accionRegistrarPago(
   semanaInicio: string,
   montoRecibidoSoles: number,
@@ -41,7 +52,16 @@ export async function accionRegistrarPago(
   if (!Number.isFinite(montoRecibidoSoles) || montoRecibidoSoles < 0) {
     return { ok: false, error: "El monto recibido no es válido." };
   }
-  return conSesion(() => registrarPago(semanaInicio, Math.round(montoRecibidoSoles * 100)));
+  return conSesion(async () => {
+    const perfil = await perfilActual();
+    const { regla, id } = await reglaVigente(
+      semanaDe(semanaInicio).fin,
+      perfil?.tiendaId ?? null,
+      perfil?.vehiculo,
+    );
+    await cerrarSemana(semanaInicio, regla, id);
+    await registrarPago(semanaInicio, Math.round(montoRecibidoSoles * 100));
+  });
 }
 
 /** Reabre una semana cerrada para poder corregir una jornada (§13). */

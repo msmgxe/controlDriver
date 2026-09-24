@@ -36,6 +36,31 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v29 — 24/09/2026
+- **Arreglado: "esta semana está cerrada" bloqueaba corregir un pedido sin
+  haber cobrado todavía.** Antes cerrar la semana era un paso aparte de
+  registrar el pago, y era fácil tocarlo sin querer y quedarse sin poder
+  añadir un pedido que faltó. Ahora son la misma acción: la semana se
+  bloquea recién cuando se anota "¿Cuánto te pagaron?", nunca antes. Mientras
+  no se haya cobrado, cualquier día de la semana —incluido hoy— se puede
+  seguir corrigiendo. Reabrir una semana ya pagada para corregir algo sigue
+  ahí, en Pagos.
+- **Arreglado (de fondo): registrar el pago no actualizaba la pantalla.** El
+  dato quedaba guardado, pero Pagos seguía mostrando el formulario como si
+  nada hubiera pasado hasta recargar a mano.
+- **Nuevo: la barra de abajo ahora es Inicio, Pagos, Cargar, Ajustes y
+  Más.** Son las cinco cosas que se tocan todos los días. Buscar e Historial
+  —que se usan poco— se quedaron en "Más", junto con Estadísticas.
+- **Nuevo: la tira de fechas de Inicio va de lunes a domingo, con flechas
+  para moverse de semana.** Antes eran siempre los últimos 7 días termine
+  donde termine la semana, sin forma de ver la anterior. Ahora se
+  corresponde con la semana de pago, y no deja pasar de la semana en curso
+  —no tiene sentido navegar a una que todavía no llega—. Un enlace "Volver a
+  hoy" aparece en cuanto te mueves de la actual.
+- **Nuevo: el recorrido del día se guarda plegado**, con el resumen —rutas y
+  tiempo en ruta— siempre visible y el detalle parada por parada a un toque,
+  para que Inicio no se sienta tan cargado de números.
+
 ### v28 — 24/09/2026
 - **Nuevo: anotar cuántos pedidos se hicieron, sin necesitar el código de
   ninguno todavía.** Para el día en que la captura se perdió, la app de

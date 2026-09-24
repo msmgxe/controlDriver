@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 
+import { Acordeon } from "@/components/Acordeon";
 import { CargarCapturas } from "@/components/CargarCapturas";
 import { usePuedeEscribir } from "@/components/Licencia";
 import { PanelDeDescansos } from "@/components/PanelDeDescansos";
@@ -34,10 +35,11 @@ import { formatearSoles } from "@/lib/pagos/reglas";
  * siempre a mano —aquí, y en el auto de la barra de abajo—. Lo demás va en este
  * orden porque es el orden en que se pregunta:
  *
- *   1. **¿Qué día miro?** Los últimos siete días como fichas. La fecha se elige
- *      arriba y no manda sobre la carga: las capturas traen su propia fecha, y
- *      atarlas al día elegido sería una trampa silenciosa —subir el lunes las
- *      del domingo lo guardaría mal—.
+ *   1. **¿Qué día miro?** La semana en curso como fichas, de lunes a domingo,
+ *      con flechas para moverse a la semana anterior o a la siguiente. La
+ *      fecha se elige arriba y no manda sobre la carga: las capturas traen su
+ *      propia fecha, y atarlas al día elegido sería una trampa silenciosa
+ *      —subir el lunes las del domingo lo guardaría mal—.
  *   2. **¿Cuánto llevo?** La cifra grande del día, con el auto.
  *   3. **¿Por dónde anduve?** El recorrido: cada ruta como una parada.
  *   4. **¿Y la semana?** Lo que suma, qué días faltan y cuáles fueron descanso.
@@ -49,7 +51,10 @@ export default function PaginaInicio() {
   const vehiculo = useVehiculo();
 
   const semana = semanaDe(dia);
-  const desde = sumarDias(hoy, -60);
+  const esSemanaActual = semana.inicio === semanaDe(hoy).inicio;
+  // 60 días antes del lunes que se está mirando, no de hoy: si no, navegar
+  // varias semanas atrás mostraría un día "cargado" en la tira sin sus datos.
+  const desde = sumarDias(semana.inicio, -60);
 
   const { datos, cargando, recargar } = useDatos(
     async () => {
@@ -59,7 +64,7 @@ export default function PaginaInicio() {
       ]);
       return { filas, descansos };
     },
-    [hoy, semana.fin],
+    [desde, semana.fin],
     { conservar: true },
   );
 
@@ -98,7 +103,14 @@ export default function PaginaInicio() {
 
   return (
     <div className="mx-auto flex max-w-[880px] flex-col gap-4">
-      <SelectorDeDia dia={dia} hoy={hoy} alElegir={setDia} cargadas={porFecha} descansos={descansos} />
+      <SelectorDeDia
+        dia={dia}
+        hoy={hoy}
+        dias={deLaSemana}
+        esSemanaActual={esSemanaActual}
+        alElegir={setDia}
+        alMoverSemana={(delta) => setDia((d) => sumarDias(d, delta * 7))}
+      />
 
       {delDia ? (
         <TarjetaDelDia
@@ -286,52 +298,54 @@ function Recorrido({
   const ultimoFin = resto.map((r) => r.horaFin).filter(Boolean).sort().at(-1);
 
   return (
-    <section className="tarjeta flex flex-col gap-1" aria-label="Recorrido del día">
-      <h3 className="text-base">{fecha === hoy ? "Tu recorrido de hoy" : "El recorrido de ese día"}</h3>
-
-      <ol className="flex flex-col">
-        {visibles.map((r, i) => {
-          const n = pedidosDe(r.numero);
-          return (
+    <Acordeon
+      titulo={fecha === hoy ? "Tu recorrido de hoy" : "El recorrido de ese día"}
+      resumen={`${rutas.length} ruta${rutas.length === 1 ? "" : "s"} · ${formatearDuracion(minutosEnRuta)} en ruta`}
+    >
+      <div className="flex flex-col gap-3">
+        <ol className="flex flex-col">
+          {visibles.map((r, i) => {
+            const n = pedidosDe(r.numero);
+            return (
+              <Parada
+                key={r.id}
+                primera={i === 0}
+                ultima={resto.length === 0 && i === visibles.length - 1}
+                pin={String(r.numero)}
+                titulo={`Ruta ${r.numero}`}
+                detalle={
+                  r.horaInicio && r.horaFin ? `${r.horaInicio} – ${r.horaFin}` : "Sin horario"
+                }
+                etiqueta={`${n} pedido${n === 1 ? "" : "s"}`}
+              />
+            );
+          })}
+          {resto.length > 0 && (
             <Parada
-              key={r.id}
-              primera={i === 0}
-              ultima={resto.length === 0 && i === visibles.length - 1}
-              pin={String(r.numero)}
-              titulo={`Ruta ${r.numero}`}
-              detalle={
-                r.horaInicio && r.horaFin ? `${r.horaInicio} – ${r.horaFin}` : "Sin horario"
-              }
-              etiqueta={`${n} pedido${n === 1 ? "" : "s"}`}
+              fin
+              ultima
+              pin={`+${resto.length}`}
+              titulo={`Otras ${resto.length} ruta${resto.length === 1 ? "" : "s"}`}
+              detalle={ultimoFin ? `hasta las ${ultimoFin}` : "…"}
+              etiqueta={`${pedidosResto} pedido${pedidosResto === 1 ? "" : "s"}`}
             />
-          );
-        })}
-        {resto.length > 0 && (
-          <Parada
-            fin
-            ultima
-            pin={`+${resto.length}`}
-            titulo={`Otras ${resto.length} ruta${resto.length === 1 ? "" : "s"}`}
-            detalle={ultimoFin ? `hasta las ${ultimoFin}` : "…"}
-            etiqueta={`${pedidosResto} pedido${pedidosResto === 1 ? "" : "s"}`}
-          />
-        )}
-      </ol>
+          )}
+        </ol>
 
-      <dl className="mt-1 flex flex-col text-sm">
-        <Dato etiqueta="Tiempo en ruta" valor={formatearDuracion(minutosEnRuta)} />
         {horaEntrada && horaSalida && (
-          <Dato etiqueta="En tienda" valor={`${horaEntrada} a ${horaSalida}`} />
+          <dl className="flex flex-col text-sm">
+            <Dato etiqueta="En tienda" valor={`${horaEntrada} a ${horaSalida}`} />
+          </dl>
         )}
-      </dl>
-      <Link
-        href={`/jornada?fecha=${fecha}`}
-        className="inline-flex min-h-11 items-center gap-2 self-start text-sm font-semibold text-acento"
-      >
-        Ver y corregir el detalle
-        <Flecha className="size-4" />
-      </Link>
-    </section>
+        <Link
+          href={`/jornada?fecha=${fecha}`}
+          className="inline-flex min-h-11 items-center gap-2 self-start text-sm font-semibold text-acento"
+        >
+          Ver y corregir el detalle
+          <Flecha className="size-4" />
+        </Link>
+      </div>
+    </Acordeon>
   );
 }
 
@@ -438,26 +452,29 @@ function PieDeVersion() {
 /**
  * Elegir qué día se está mirando.
  *
- * Los últimos siete días como fichas —que es lo que se consulta el 95 % de las
- * veces— y un calendario al lado para ir más atrás sin pelearse con flechas.
- * Un punto bajo la ficha indica que ese día ya está cargado, así se ve de un
- * vistazo lo que falta sin abrir nada.
+ * La semana entera como fichas, de lunes a domingo —así se corresponde con
+ * cómo se paga (§13)— y flechas a los lados para moverse a la semana anterior
+ * o a la siguiente, hasta la actual: no tiene sentido navegar a una semana que
+ * todavía no llega. Un punto bajo la ficha indica que ese día ya está
+ * cargado, así se ve de un vistazo lo que falta sin abrir nada. El calendario
+ * de al lado salta directo a cualquier fecha, sin tener que ir semana por
+ * semana.
  */
 function SelectorDeDia({
   dia,
   hoy,
+  dias,
+  esSemanaActual,
   alElegir,
-  cargadas,
-  descansos,
+  alMoverSemana,
 }: {
   dia: FechaISO;
   hoy: FechaISO;
+  dias: Array<{ fecha: FechaISO; cargado: boolean; descanso: boolean }>;
+  esSemanaActual: boolean;
   alElegir: (f: FechaISO) => void;
-  cargadas: Map<string, unknown>;
-  descansos: ReadonlySet<FechaISO>;
+  alMoverSemana: (delta: -1 | 1) => void;
 }) {
-  const ultimos = rangoDeFechas(sumarDias(hoy, -6), hoy);
-
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-end justify-between gap-3">
@@ -478,46 +495,77 @@ function SelectorDeDia({
         </label>
       </div>
 
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
-        {ultimos.map((fecha) => {
-          const elegido = fecha === dia;
-          const cargado = cargadas.has(fecha);
-          const descanso = !cargado && descansos.has(fecha);
-          return (
-            <button
-              key={fecha}
-              type="button"
-              onClick={() => alElegir(fecha)}
-              aria-pressed={elegido}
-              aria-label={`${nombreDelDia(fecha)} ${Number(fecha.slice(8))}${
-                cargado ? ", cargado" : descanso ? ", descanso" : ""
-              }`}
-              className={`flex min-h-[58px] w-[52px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-btn border text-xs ${
-                elegido
-                  ? "border-acento bg-acento text-acento-texto"
-                  : "border-linea bg-sup-2 text-tinta-2"
-              }`}
-            >
-              <span className="capitalize">{nombreDelDia(fecha).slice(0, 3)}</span>
-              <b className="text-base font-semibold">{fecha.slice(8)}</b>
-              {/* Un punto: del color de la marca si está cargado, amarillo si fue
-                  descanso. La forma no cambia; el aria-label dice cuál es. */}
-              <span
-                aria-hidden
-                className={`size-1.5 rounded-full ${
-                  cargado
-                    ? elegido
-                      ? "bg-acento-texto"
-                      : "bg-acento"
-                    : descanso
-                      ? "bg-descanso ring-1 ring-tinta/30"
-                      : "bg-transparent"
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => alMoverSemana(-1)}
+          aria-label="Semana anterior"
+          className="grid size-9 shrink-0 place-items-center rounded-full text-tinta-2 hover:bg-sup-2 hover:text-tinta"
+        >
+          <Flecha className="size-4 rotate-180" />
+        </button>
+
+        <div className="flex flex-1 gap-1.5 overflow-x-auto pb-1">
+          {dias.map(({ fecha, cargado, descanso }) => {
+            const elegido = fecha === dia;
+            return (
+              <button
+                key={fecha}
+                type="button"
+                onClick={() => alElegir(fecha)}
+                aria-pressed={elegido}
+                aria-label={`${nombreDelDia(fecha)} ${Number(fecha.slice(8))}${
+                  cargado ? ", cargado" : descanso ? ", descanso" : ""
                 }`}
-              />
-            </button>
-          );
-        })}
+                className={`flex min-h-[58px] flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-btn border text-xs ${
+                  elegido
+                    ? "border-acento bg-acento text-acento-texto"
+                    : fecha === hoy
+                      ? "border-acento/50 bg-sup-2 text-tinta-2"
+                      : "border-linea bg-sup-2 text-tinta-2"
+                }`}
+              >
+                <span className="capitalize">{nombreDelDia(fecha).slice(0, 3)}</span>
+                <b className="text-base font-semibold">{fecha.slice(8)}</b>
+                {/* Un punto: del color de la marca si está cargado, amarillo si fue
+                    descanso. La forma no cambia; el aria-label dice cuál es. */}
+                <span
+                  aria-hidden
+                  className={`size-1.5 rounded-full ${
+                    cargado
+                      ? elegido
+                        ? "bg-acento-texto"
+                        : "bg-acento"
+                      : descanso
+                        ? "bg-descanso ring-1 ring-tinta/30"
+                        : "bg-transparent"
+                  }`}
+                />
+              </button>
+            );
+          })}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => alMoverSemana(1)}
+          disabled={esSemanaActual}
+          aria-label="Semana siguiente"
+          className="grid size-9 shrink-0 place-items-center rounded-full text-tinta-2 hover:bg-sup-2 hover:text-tinta disabled:opacity-30 disabled:hover:bg-transparent"
+        >
+          <Flecha className="size-4" />
+        </button>
       </div>
+
+      {!esSemanaActual && (
+        <button
+          type="button"
+          onClick={() => alElegir(hoy)}
+          className="self-start text-xs font-semibold text-acento-tinta underline underline-offset-2"
+        >
+          Volver a hoy
+        </button>
+      )}
     </div>
   );
 }
