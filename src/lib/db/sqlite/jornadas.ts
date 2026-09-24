@@ -649,6 +649,102 @@ export async function agregarPedidosLeidos(
 }
 
 /**
+ * El prefijo con el que nace un pedido añadido "solo por cantidad", antes de
+ * que nadie le ponga su código de verdad. Se usa para reconocerlos en pantalla
+ * —y pedir que se completen— sin necesitar una columna aparte: es un código
+ * que nunca podría venir de una captura real, porque no tiene la forma
+ * `v########wofp-##`.
+ */
+const PREFIJO_PENDIENTE = "pendiente-";
+
+/** ¿Este código es de un pedido que todavía no tiene el suyo de verdad? */
+export function esCodigoPendiente(codigo: string): boolean {
+  return codigo.startsWith(PREFIJO_PENDIENTE);
+}
+
+/**
+ * Anota **cuántos** pedidos se hicieron hoy, sin necesitar el código de
+ * ninguno todavía.
+ *
+ * Para el día en que la captura se perdió, la app de reparto falló, o
+ * simplemente no hay cómo leerla: en vez de elegir entre no cobrar esos
+ * pedidos o inventarles un código, se anota el número ahora —"hice 14
+ * pedidos"— y se completa cada uno después, a su ritmo, igual que se corrige
+ * cualquier otro pedido ya guardado (código, ruta, estado). Mientras tanto
+ * cuentan para el pago de la semana con la tarifa de hoy.
+ *
+ * Cada uno nace con:
+ *   · un código provisional (`esCodigoPendiente` lo reconoce), único siempre
+ *     —no puede chocar ni con un código real ni con otro provisional—;
+ *   · el tramo 1 de la tarifa vigente: S/10 para el auto de siempre, o la
+ *     tarifa única de la moto eléctrica, sea cual sea —el tramo 1 es siempre
+ *     el que se aplica a un pedido del que no se sabe nada más—;
+ *   · el estado "Entregado", el más frecuente con diferencia.
+ *
+ * Si el día no existía, se crea —igual que con un pedido a mano—: registrar
+ * trabajo real no puede exigir haber subido una captura primero.
+ */
+export async function agregarPedidosPorCantidad(
+  fecha: FechaISO,
+  cantidad: number,
+): Promise<{ ordenIds: string[] }> {
+  if (!Number.isInteger(cantidad) || cantidad <= 0) {
+    throw new Error("La cantidad de pedidos tiene que ser un número entero mayor que cero.");
+  }
+
+  const perfil = await perfilActual();
+  const { regla } = await reglaVigente(fecha, perfil?.tiendaId ?? null, perfil?.vehiculo);
+  const monto = pagoDelTramo(regla, 1) ?? 1000;
+  const momento = ahora();
+
+  return enTransaccion(async () => {
+    const existentes = await consultar<{ id: string }>(
+      `select id from jornadas where fecha = ?`,
+      [fecha],
+    );
+    let jornadaId = existentes[0]?.id;
+    if (!jornadaId) {
+      jornadaId = nuevoId();
+      await ejecutar(
+        `insert into jornadas
+           (id, fecha, validacion_ok, tienda_id, vehiculo, creado_en, actualizado_en, sincronizado)
+         values (?, ?, 0, ?, ?, ?, ?, 0)`,
+        [
+          jornadaId, fecha, perfil?.tiendaId ?? null,
+          perfil?.vehiculo ?? VEHICULO_POR_DEFECTO, momento, momento,
+        ],
+      );
+    }
+
+    // Al final de lo que ya hay: se añaden, no se intercalan.
+    const ultimas = await consultar<{ ultima: number | null }>(
+      `select max(posicion) as ultima from ordenes where jornada_id = ?`,
+      [jornadaId],
+    );
+    let posicion = ultimas[0]?.ultima ?? 0;
+
+    const ordenIds: string[] = [];
+    for (let i = 0; i < cantidad; i++) {
+      posicion += 1;
+      const ordenId = nuevoId();
+      // El propio id, que ya es único, alcanza como sufijo: no hace falta
+      // comprobar nada más para saber que este código no existe todavía.
+      const codigo = `${PREFIJO_PENDIENTE}${ordenId.replace(/-/g, "").slice(0, 8)}`;
+      await ejecutar(
+        `insert into ordenes
+           (id, jornada_id, ruta_id, codigo, estado, posicion, tramo, km, monto_centimos, manual)
+         values (?, ?, null, ?, 'Entregado', ?, 1, null, ?, 1)`,
+        [ordenId, jornadaId, codigo, posicion, monto],
+      );
+      ordenIds.push(ordenId);
+    }
+
+    await recontarEstados(jornadaId, momento);
+    return { ordenIds };
+  });
+}
+
+/**
  * Quita de los días **posteriores** los pedidos que acaban de guardarse en
  * `fecha`. Devuelve de dónde se quitó cada uno.
  *

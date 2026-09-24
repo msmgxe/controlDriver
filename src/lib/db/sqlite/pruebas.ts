@@ -109,6 +109,24 @@ export async function pruebasDelDia(fecha: FechaISO): Promise<Prueba[]> {
   }));
 }
 
+/** La prueba de un pedido concreto —su foto de comanda—, o `null` si no tiene. */
+export async function pruebaDeOrden(ordenId: string): Promise<Prueba | null> {
+  const filas = await consultar<{
+    id: string;
+    fecha: string;
+    archivo: string;
+    bytes: number;
+    creado_en: string;
+  }>(
+    `select id, fecha, archivo, bytes, creado_en from pruebas
+      where orden_id = ? order by creado_en desc limit 1`,
+    [ordenId],
+  );
+  const f = filas[0];
+  if (!f) return null;
+  return { id: f.id, fecha: f.fecha as FechaISO, archivo: f.archivo, bytes: f.bytes, creadoEn: f.creado_en };
+}
+
 /**
  * La imagen, lista para pintar en un `<img>`.
  *

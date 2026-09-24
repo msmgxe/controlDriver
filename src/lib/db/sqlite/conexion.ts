@@ -169,6 +169,19 @@ async function motorDeCapacitor(): Promise<Motor> {
   };
   await persistir();
 
+  /* Mientras haya una transacción abierta, ninguna escritura suelta se
+     vuelca todavía: eso lo hace `enTransaccion`, una sola vez, al terminar.
+     Antes cada `ejecutar` volcaba la base entera aunque estuviera a mitad de
+     una transacción —volcarla es exportar el SQLite entero de nuevo—, y ese
+     vuelco a mitad de camino le rompía el estado de la transacción al motor
+     del navegador: la siguiente escritura fallaba con una violación de clave
+     foránea que no existía, y el `rollback` de después fallaba a su vez
+     porque ya no había ninguna transacción activa que deshacer. Agregar
+     varios pedidos de una vez —"cuántos pedidos hiciste", o los que llegan de
+     una foto— es exactamente el caso que lo disparaba. En el celular esto no
+     cambia nada: allí `persistir` ya no hacía nada. */
+  let dentroDeTransaccion = false;
+
   return {
     async consultar<T>(sql: string, valores: unknown[]) {
       const { values } = await db.query(sql, valores as never[]);
@@ -176,18 +189,27 @@ async function motorDeCapacitor(): Promise<Motor> {
     },
     async ejecutar(sql, valores) {
       const { changes } = await db.run(sql, valores as never[], false);
-      await persistir();
+      if (!dentroDeTransaccion) await persistir();
       return changes?.changes ?? 0;
     },
     async enTransaccion(trabajo) {
       await db.beginTransaction();
+      dentroDeTransaccion = true;
       try {
         const resultado = await trabajo();
+        dentroDeTransaccion = false;
         await db.commitTransaction();
         await persistir();
         return resultado;
       } catch (fallo) {
-        await db.rollbackTransaction();
+        dentroDeTransaccion = false;
+        try {
+          await db.rollbackTransaction();
+        } catch {
+          /* Lo que importa mostrar es el error original —el de `trabajo()`—,
+             no que además no se pudo deshacer. Antes este segundo error
+             reemplazaba al primero y lo dejaba irreconocible. */
+        }
         throw fallo;
       }
     },

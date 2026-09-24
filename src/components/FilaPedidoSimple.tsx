@@ -18,6 +18,11 @@
  *
  * La ruta va en una píldora turquesa, el color del teléfono en todo el diseño.
  * Si no se leyó, la píldora es ámbar y dice que se toque para asignarla.
+ *
+ * Un pedido añadido "solo por cantidad" (§ agregarPedidosPorCantidad) todavía
+ * no tiene código de verdad: en vez de enseñar el provisional —que no le dice
+ * nada a nadie—, la fila avisa que falta completarlo. Es la misma idea que la
+ * píldora ámbar de "Sin ruta", aplicada al dato que más urge de un pedido así.
  */
 export function FilaPedidoSimple({
   codigo,
@@ -27,6 +32,7 @@ export function FilaPedidoSimple({
   tramo,
   monto,
   manual = false,
+  porCompletar = false,
   onClick,
 }: {
   codigo: string;
@@ -36,6 +42,8 @@ export function FilaPedidoSimple({
   tramo: number;
   monto: string;
   manual?: boolean;
+  /** Nació de "anotar cuántos pedidos hice": todavía no tiene su código real. */
+  porCompletar?: boolean;
   onClick?: () => void;
 }) {
   const entregado = estado === "Entregado";
@@ -45,10 +53,16 @@ export function FilaPedidoSimple({
       type="button"
       onClick={onClick}
       disabled={!onClick}
-      className="flex w-full flex-col gap-2 border-b border-linea px-4 py-3 text-left last:border-b-0 enabled:hover:bg-sup-2 enabled:active:bg-sup-2"
+      className={`flex w-full flex-col gap-2 border-b border-linea px-4 py-3 text-left last:border-b-0 enabled:hover:bg-sup-2 enabled:active:bg-sup-2 ${
+        porCompletar ? "bg-aviso-suave/40" : ""
+      }`}
     >
       <span className="flex items-baseline justify-between gap-3">
-        <span className="font-mono text-[15px] font-medium tracking-tight">{codigo}</span>
+        {porCompletar ? (
+          <span className="text-[15px] font-semibold text-aviso">Pedido sin código · toca para completar</span>
+        ) : (
+          <span className="font-mono text-[15px] font-medium tracking-tight">{codigo}</span>
+        )}
         <span className="shrink-0 font-mono text-xs text-tinta-3 tabular-nums">{monto}</span>
       </span>
 

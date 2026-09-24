@@ -4,7 +4,12 @@ import { useRef, useState } from "react";
 
 import { Check } from "@/components/iconos";
 import { comprimir } from "@/lib/carga";
-import { agregarPedidoManual, codigosYaRegistrados, type PedidoLeido } from "@/lib/db/sqlite/jornadas";
+import {
+  agregarPedidoManual,
+  agregarPedidosPorCantidad,
+  codigosYaRegistrados,
+  type PedidoLeido,
+} from "@/lib/db/sqlite/jornadas";
 import { guardarPrueba } from "@/lib/db/sqlite/pruebas";
 import { esFechaISO, formatearFecha, hoyEnLima, type FechaISO } from "@/lib/fechas";
 import { RE_CODIGO_PEDIDO } from "@/lib/extraccion/esquema";
@@ -202,6 +207,133 @@ export function PedidoManual({
           Cancelar
         </button>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Anotar **cuántos** pedidos se hicieron, sin el código de ninguno todavía.
+ *
+ * Es la salida para el día en que no hay cómo leer la lista —se perdió la
+ * captura, la app de reparto falló, o el celular no la guardó—: en vez de
+ * elegir entre no cobrar esos pedidos o transcribir códigos inventados, se
+ * anota el número ahora y cada uno se completa después, a su ritmo, tocándolo
+ * en la lista como cualquier otro pedido guardado.
+ *
+ * Cada uno nace con la tarifa de hoy —tramo 1: S/10 para el auto, la tarifa
+ * única para la moto eléctrica— y cuenta para el pago de la semana desde ya.
+ * Se corrige luego si alguno era de un tramo distinto.
+ */
+export function PedidosPorCantidad({
+  fecha,
+  alAgregar,
+}: {
+  fecha: FechaISO;
+  alAgregar: () => void;
+}) {
+  const [abierto, setAbierto] = useState(false);
+  const [cantidad, setCantidad] = useState("");
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [agregados, setAgregados] = useState<number | null>(null);
+
+  const numero = Number(cantidad);
+  const valido = cantidad !== "" && Number.isInteger(numero) && numero > 0 && numero <= 60;
+
+  async function guardar() {
+    if (!valido) {
+      setError(numero > 60 ? "Como mucho 60 pedidos de una vez." : "Pon un número mayor que cero.");
+      return;
+    }
+    setGuardando(true);
+    setError(null);
+    try {
+      const { ordenIds } = await agregarPedidosPorCantidad(fecha, numero);
+      setAgregados(ordenIds.length);
+      setCantidad("");
+      alAgregar();
+    } catch (fallo) {
+      setError(fallo instanceof Error ? fallo.message : "No se pudo guardar.");
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  if (!abierto) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setAbierto(true);
+          setAgregados(null);
+        }}
+        className="boton-secundario self-start"
+      >
+        Anotar cuántos pedidos hice
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3 rounded-card border border-linea-fuerte bg-sup p-4">
+      <h4 className="font-semibold">Cuántos pedidos hiciste</h4>
+
+      {agregados !== null ? (
+        <>
+          <p className="rounded-btn bg-bien-suave px-3 py-2 text-sm text-bien">
+            Se {agregados === 1 ? "agregó 1 pedido" : `agregaron ${agregados} pedidos`}. Tócalos en
+            la lista de arriba —debajo de esta fecha— para ponerles su código, su ruta y su estado.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setAbierto(false);
+              setAgregados(null);
+            }}
+            className="boton-secundario self-start"
+          >
+            Cerrar
+          </button>
+        </>
+      ) : (
+        <>
+          <p className="text-sm text-tinta-2">
+            Para cuando no tienes cómo leer las capturas de ese día. Anota el número ahora; el
+            código, la ruta y el estado de cada uno se completan después.
+          </p>
+
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-semibold">Cantidad de pedidos</span>
+            <input
+              value={cantidad}
+              onChange={(e) => {
+                setCantidad(e.target.value.replace(/\D/g, ""));
+                setError(null);
+              }}
+              placeholder="14"
+              inputMode="numeric"
+              className="min-h-[52px] rounded-btn border border-linea-fuerte bg-sup px-3 font-mono text-base"
+            />
+          </label>
+
+          {error && <p className="rounded-btn bg-mal-suave px-3 py-2 text-sm text-mal">{error}</p>}
+
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => void guardar()}
+              disabled={guardando || !valido}
+              className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-btn bg-acento px-4 text-sm font-semibold text-acento-texto disabled:opacity-50"
+            >
+              <Check className="size-4" />
+              {guardando ? "Guardando…" : "Agregar"}
+            </button>
+            <button type="button" onClick={() => setAbierto(false)} className="boton-secundario">
+              Cancelar
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

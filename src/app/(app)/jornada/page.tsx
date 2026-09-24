@@ -7,11 +7,11 @@ import { useSearchParams } from "next/navigation";
 import { Acordeon } from "@/components/Acordeon";
 import { EditorJornada } from "@/components/EditorJornada";
 import { agregarPedidosDeFoto, reordenarRutas } from "./acciones";
-import { LectorDePedidos, PedidoManual } from "@/components/PedidoManual";
+import { LectorDePedidos, PedidoManual, PedidosPorCantidad } from "@/components/PedidoManual";
 import { PruebasDelDia } from "@/components/PruebasDelDia";
 import { BotonReordenar, LectorDeRutas, ListaDeRutas, RutaManual } from "@/components/RutaManual";
 import { Flecha } from "@/components/iconos";
-import { Aviso, Vacio } from "@/components/ui";
+import { Vacio, Aviso } from "@/components/ui";
 import { useDatos } from "@/hooks/useDatos";
 import { jornadaPorFecha, reglaVigente } from "@/lib/db/sqlite/jornadas";
 import { estadoDeSemana } from "@/lib/db/sqlite/liquidaciones";
@@ -29,6 +29,14 @@ import { esFechaISO, formatearFechaLarga, hoyEnLima } from "@/lib/fechas";
  * ruta. Dentro del APK no hay servidor que resuelva rutas al vuelo: las
  * páginas son archivos fijos, y una ruta con una fecha dentro exigiría generar
  * de antemano una página por cada día que pueda existir.
+ *
+ * **Un día sin nada guardado todavía no es un error.** Antes, si `fecha` no
+ * tenía ninguna jornada, la pantalla entera se rendía a un "no hay nada
+ * aquí" —ni un botón, ni un enlace— y no había forma de llegar a "Añadir un
+ * pedido a mano" para ESE día: había que subir una captura primero, aunque
+ * fuera precisamente la captura la que faltaba. Ahora esta pantalla se abre
+ * igual, con las mismas dos puertas de siempre (a mano, o por cantidad),
+ * trabajando sobre un día vacío hasta que el primer pedido lo crea.
  */
 export default function PaginaJornada() {
   return (
@@ -42,34 +50,43 @@ function Contenido() {
   const params = useSearchParams();
   const fecha = params.get("fecha") ?? "";
 
-  const { datos, cargando, recargar } = useDatos(async () => {
-    if (!esFechaISO(fecha)) return null;
+  const { datos, cargando, recargar } = useDatos(
+    async () => {
+      if (!esFechaISO(fecha)) return null;
 
-    const jornada = await jornadaPorFecha(fecha);
-    if (!jornada) return null;
+      const [jornada, perfil, estado] = await Promise.all([
+        jornadaPorFecha(fecha),
+        perfilActual(),
+        estadoDeSemana(fecha),
+      ]);
+      const { regla } = await reglaVigente(fecha, perfil?.tiendaId ?? null, perfil?.vehiculo);
 
-    const perfil = await perfilActual();
-    const [{ regla }, estado] = await Promise.all([
-      reglaVigente(fecha, perfil?.tiendaId ?? null, perfil?.vehiculo),
-      estadoDeSemana(fecha),
-    ]);
+      return { jornada, regla, estado };
+    },
+    [fecha],
+    // Al agregar el primer pedido de un día vacío, `jornada` pasa de null a
+    // no-null: sin conservar, la pantalla entera pasaría por el esqueleto y
+    // el acordeón que se acababa de abrir para escribir se cerraría solo.
+    { conservar: true },
+  );
 
-    return { jornada, regla, estado };
-  }, [fecha]);
+  if (cargando && !datos) return <Esqueleto />;
 
-  if (cargando) return <Esqueleto />;
-
-  if (!datos) {
+  if (!esFechaISO(fecha)) {
     return (
       <div className="mx-auto flex max-w-[880px] flex-col gap-4">
         <VolverAlHistorial />
-        <Vacio>No hay ninguna jornada guardada en esa fecha.</Vacio>
+        <Vacio>Esa fecha no es válida.</Vacio>
       </div>
     );
   }
 
+  if (!datos) return <Esqueleto />;
+
   const { jornada, regla, estado } = datos;
   const editable = estado === "abierta";
+  const rutas = jornada?.rutas ?? [];
+  const ordenes = jornada?.ordenes ?? [];
 
   return (
     <div className="mx-auto flex max-w-[880px] flex-col gap-4">
@@ -80,7 +97,14 @@ function Contenido() {
         <h2 className="text-[30px] leading-tight capitalize">{formatearFechaLarga(fecha)}</h2>
       </div>
 
-      {!editable && (
+      {!jornada && (
+        <Vacio>
+          Este día todavía no tiene nada guardado. Añade tus pedidos abajo —a mano, por cantidad, o
+          desde una foto— y el día se crea solo con el primero.
+        </Vacio>
+      )}
+
+      {jornada && !editable && (
         <Aviso tono="atento" titulo={`Esta semana está ${estado}`}>
           <p>
             El monto liquidado está congelado. Para corregir algo de este día, reabre la semana
@@ -89,24 +113,27 @@ function Contenido() {
         </Aviso>
       )}
 
-      <EditorJornada
-        fecha={fecha}
-        jornada={{
-          rutas: jornada.rutas,
-          ordenes: jornada.ordenes,
-          horaEntrada: jornada.horaEntrada,
-          horaSalida: jornada.horaSalida,
-        }}
-        regla={regla}
-        editable={editable}
-        esHoy={fecha === hoyEnLima()}
-        alCambiar={recargar}
-      />
+      {jornada && (
+        <EditorJornada
+          fecha={fecha}
+          jornada={{
+            rutas,
+            ordenes,
+            horaEntrada: jornada.horaEntrada,
+            horaSalida: jornada.horaSalida,
+          }}
+          regla={regla}
+          editable={editable}
+          esHoy={fecha === hoyEnLima()}
+          alCambiar={recargar}
+        />
+      )}
 
       {editable && (
         <Acordeon
           titulo="Rutas del día"
-          resumen={`${jornada.rutas.length} ${jornada.rutas.length === 1 ? "ruta" : "rutas"}`}
+          resumen={`${rutas.length} ${rutas.length === 1 ? "ruta" : "rutas"}`}
+          abiertoPorDefecto={!jornada}
         >
           <div className="flex flex-col gap-3">
             {/* Sin esto no hay dónde elegir la ruta de un pedido: si la
@@ -114,30 +141,30 @@ function Contenido() {
                 lista de rutas está vacía y el selector de "Añadir un pedido"
                 no tiene nada que ofrecer. */}
             <ListaDeRutas
-              rutas={jornada.rutas.map((r) => ({
+              rutas={rutas.map((r) => ({
                 numero: r.numero,
                 horaInicio: r.horaInicio,
                 horaFin: r.horaFin,
               }))}
               onBorrar={(numero) => {
-                const ruta = jornada.rutas.find((r) => r.numero === numero);
+                const ruta = rutas.find((r) => r.numero === numero);
                 if (ruta) void borrarRuta(ruta.id).then(recargar);
               }}
             />
             <RutaManual
-              siguienteNumero={Math.max(0, ...jornada.rutas.map((r) => r.numero)) + 1}
+              siguienteNumero={Math.max(0, ...rutas.map((r) => r.numero)) + 1}
               onGuardar={(datos) => void guardarRuta(fecha, datos).then(recargar)}
             />
             {/* La fecha se puede elegir: desde el detalle de un día puede
                 llegar la foto de la ruta de *otro* día que faltó cargar. */}
             <LectorDeRutas
               fecha={fecha}
-              onLeidas={async (fechaElegida, rutas) => {
-                for (const r of rutas) await guardarRuta(fechaElegida, r);
+              onLeidas={async (fechaElegida, rutasLeidas) => {
+                for (const r of rutasLeidas) await guardarRuta(fechaElegida, r);
                 if (fechaElegida === fecha) recargar();
               }}
             />
-            {jornada.rutas.length > 1 && (
+            {rutas.length > 1 && (
               <BotonReordenar
                 onConfirmar={async () => {
                   await reordenarRutas(fecha);
@@ -152,15 +179,14 @@ function Contenido() {
       {editable && (
         <Acordeon
           titulo="Añadir un pedido"
-          resumen="A mano, o desde una foto"
+          resumen="A mano, por cantidad, o desde una foto"
+          abiertoPorDefecto={!jornada}
         >
           <div className="flex flex-col gap-3">
-            <PedidoManual
-              fecha={fecha}
-              regla={regla}
-              rutas={jornada.rutas.map((r) => r.numero)}
-              alAgregar={recargar}
-            />
+            <PedidoManual fecha={fecha} regla={regla} rutas={rutas.map((r) => r.numero)} alAgregar={recargar} />
+            {/* Para cuando no se tiene ni el código a mano: se anota cuántos
+                fueron y se completa cada uno después. */}
+            <PedidosPorCantidad fecha={fecha} alAgregar={recargar} />
             {/* Igual que con las rutas, la fecha se puede elegir. Los pedidos
                 que ya estaban registrados no se vuelven a añadir. */}
             <LectorDePedidos
@@ -178,9 +204,11 @@ function Contenido() {
         </Acordeon>
       )}
 
-      <Acordeon titulo="Capturas de este día" resumen="Tu respaldo si hay que reclamar">
-        <PruebasDelDia fecha={fecha} />
-      </Acordeon>
+      {jornada && (
+        <Acordeon titulo="Capturas de este día" resumen="Tu respaldo si hay que reclamar">
+          <PruebasDelDia fecha={fecha} />
+        </Acordeon>
+      )}
     </div>
   );
 }

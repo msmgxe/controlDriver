@@ -6,7 +6,7 @@ import Link from "next/link";
 import { CargarCapturas } from "@/components/CargarCapturas";
 import { usePuedeEscribir } from "@/components/Licencia";
 import { PanelDeDescansos } from "@/components/PanelDeDescansos";
-import { Flecha, Luna, Reloj } from "@/components/iconos";
+import { Flecha, Luna, Reloj, Subir } from "@/components/iconos";
 import { MontoHero, TarjetaDelDia, TiraSemana } from "@/components/ui";
 import { useDatos } from "@/hooks/useDatos";
 import { useVehiculo } from "@/hooks/useVehiculo";
@@ -230,15 +230,24 @@ function DiaSinCarga({
         </p>
       </div>
       {!esFuturo && (
-        <button
-          type="button"
-          className="boton-sec self-start"
-          disabled={!puedeEscribir || ocupado}
-          onClick={() => void cambiar()}
-        >
-          <Luna className="size-[18px]" />
-          No trabajé este día
-        </button>
+        <div className="flex flex-wrap gap-2">
+          {/* La otra salida de un día sin capturas: anotar los pedidos a mano
+              en vez de decir que no se trabajó. Antes no había cómo llegar
+              aquí sin subir una captura primero. */}
+          <Link href={`/jornada?fecha=${fecha}`} className="boton-sec">
+            <Subir className="size-[18px]" />
+            Añadir pedidos a mano
+          </Link>
+          <button
+            type="button"
+            className="boton-sec"
+            disabled={!puedeEscribir || ocupado}
+            onClick={() => void cambiar()}
+          >
+            <Luna className="size-[18px]" />
+            No trabajé este día
+          </button>
+        </div>
       )}
     </section>
   );

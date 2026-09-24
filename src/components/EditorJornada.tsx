@@ -3,7 +3,7 @@
 import { DueloDePago } from "@/components/DueloDePago";
 import { FilaPedidoSimple } from "@/components/FilaPedidoSimple";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useCapa } from "@/hooks/useCapa";
 import { useRouter } from "next/navigation";
 
@@ -16,6 +16,9 @@ import {
 } from "@/app/(app)/jornada/acciones";
 import { Alerta, Check } from "@/components/iconos";
 import { Aviso } from "@/components/ui";
+import { comprimir } from "@/lib/carga";
+import { esCodigoPendiente } from "@/lib/db/sqlite/jornadas";
+import { borrarPrueba, contenidoDePrueba, guardarPrueba, pruebaDeOrden, type Prueba } from "@/lib/db/sqlite/pruebas";
 import { formatearDuracion } from "@/lib/fechas";
 import type { OrdenFila, RutaFila } from "@/lib/db/tipos";
 import {
@@ -203,6 +206,7 @@ export function EditorJornada({
               tramo={o.tramo}
               monto={formatearSoles(o.montoCentimos ?? 0)}
               manual={o.manual}
+              porCompletar={esCodigoPendiente(o.codigo)}
               onClick={editable && !pendiente ? () => setEditando(o) : undefined}
             />
           ))
@@ -255,6 +259,7 @@ export function EditorJornada({
 
       {editando && (
         <HojaTramo
+          fecha={fecha}
           orden={editando}
           regla={regla}
           rutas={jornada.rutas.map((r) => ({ numero: r.numero, inicio: r.horaInicio }))}
@@ -290,6 +295,7 @@ export function EditorJornada({
 
 
 function HojaTramo({
+  fecha,
   orden,
   regla,
   rutas,
@@ -299,6 +305,7 @@ function HojaTramo({
   onBorrar,
   onCorregir,
 }: {
+  fecha: string;
   orden: OrdenFila;
   regla: ReglaPago;
   rutas: Array<{ numero: number; inicio: string | null }>;
@@ -463,6 +470,8 @@ function HojaTramo({
           </div>
         </div>
 
+        <FotoDelPedido fecha={fecha} ordenId={orden.id} pendiente={pendiente} />
+
         {/* Borrar pide confirmación: no se puede deshacer, y en un día guardado
             el pedido ya cuenta para el pago de la semana. */}
         <div className="border-t border-linea pt-4">
@@ -512,6 +521,132 @@ function HojaTramo({
           )}
         </button>
       </div>
+    </div>
+  );
+}
+
+/**
+ * La foto de la comanda de este pedido, opcional.
+ *
+ * Es la misma idea que la foto de "Pedido a mano" (§ PedidoManual), pero para
+ * cuando el respaldo se agrega *después* de crear el pedido: uno de los que se
+ * añadieron "solo por cantidad", o cualquier otro que en su momento se guardó
+ * sin foto y luego hizo falta respaldar. Un pedido tiene como mucho una: subir
+ * otra reemplaza a la anterior, no la acumula.
+ */
+function FotoDelPedido({
+  fecha,
+  ordenId,
+  pendiente,
+}: {
+  fecha: string;
+  ordenId: string;
+  pendiente: boolean;
+}) {
+  const [prueba, setPrueba] = useState<Prueba | null | undefined>(undefined);
+  const [vista, setVista] = useState<string | null>(null);
+  const [subiendo, setSubiendo] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let vigente = true;
+    pruebaDeOrden(ordenId)
+      .then((p) => {
+        if (vigente) setPrueba(p);
+      })
+      .catch(() => {
+        if (vigente) setPrueba(null);
+      });
+    return () => {
+      vigente = false;
+    };
+  }, [ordenId]);
+
+  const archivoDeLaPrueba = prueba?.archivo ?? null;
+  useEffect(() => {
+    if (!archivoDeLaPrueba) return;
+    let vigente = true;
+    contenidoDePrueba(archivoDeLaPrueba).then((v) => {
+      if (vigente) setVista(v);
+    });
+    return () => {
+      vigente = false;
+    };
+  }, [archivoDeLaPrueba]);
+
+  async function subir(archivo: File) {
+    setSubiendo(true);
+    setError(null);
+    try {
+      // La anterior ya lo respalda: no se guardan dos a la vez.
+      if (prueba) await borrarPrueba(prueba.id);
+      await guardarPrueba(fecha, await comprimir(archivo), ordenId);
+      setPrueba(await pruebaDeOrden(ordenId));
+    } catch (fallo) {
+      setError(fallo instanceof Error ? fallo.message : "No se pudo guardar la foto.");
+    } finally {
+      setSubiendo(false);
+    }
+  }
+
+  async function quitar() {
+    if (!prueba) return;
+    setSubiendo(true);
+    setError(null);
+    try {
+      await borrarPrueba(prueba.id);
+      setPrueba(null);
+      setVista(null);
+    } catch (fallo) {
+      setError(fallo instanceof Error ? fallo.message : "No se pudo quitar la foto.");
+    } finally {
+      setSubiendo(false);
+    }
+  }
+
+  // Todavía no se sabe si tiene foto: no se enseña nada para no parpadear.
+  if (prueba === undefined) return null;
+
+  return (
+    <div className="flex flex-col gap-2 border-t border-linea pt-4">
+      <span className="text-sm font-semibold">Foto de la comanda (opcional)</span>
+
+      {prueba && vista ? (
+        <div className="flex items-center gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element -- viene en base64, no de una URL que Next pueda optimizar */}
+          <img
+            src={vista}
+            alt="Foto de respaldo del pedido"
+            className="size-16 shrink-0 rounded-btn border border-linea-fuerte object-cover"
+          />
+          <button
+            type="button"
+            className="boton-sec"
+            disabled={pendiente || subiendo}
+            onClick={() => void quitar()}
+          >
+            {subiendo ? "Quitando…" : "Quitar foto"}
+          </button>
+        </div>
+      ) : (
+        <label className="flex flex-col gap-1.5">
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            disabled={pendiente || subiendo}
+            onChange={(e) => {
+              const archivo = e.target.files?.[0];
+              e.target.value = "";
+              if (archivo) void subir(archivo);
+            }}
+            className="text-sm"
+          />
+          {subiendo && <span className="text-xs text-tinta-3">Guardando…</span>}
+        </label>
+      )}
+
+      {error && <p className="text-sm text-mal">{error}</p>}
     </div>
   );
 }

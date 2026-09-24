@@ -36,6 +36,39 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v28 — 24/09/2026
+- **Nuevo: anotar cuántos pedidos se hicieron, sin necesitar el código de
+  ninguno todavía.** Para el día en que la captura se perdió, la app de
+  reparto falló, o no hay cómo leerla: se anota el número ahora —"hice
+  14 pedidos"— y cada uno se completa después, a su ritmo, con su código, su
+  ruta y su estado, igual que se corrige cualquier otro pedido ya guardado.
+  Mientras tanto cuentan para el pago de la semana con la tarifa de hoy:
+  tramo 1 siempre —S/10 para el auto de siempre, la tarifa única para la
+  moto eléctrica—, porque es lo único que se puede saber de un pedido sin
+  más datos. En la lista se ven marcados como "Pedido sin código · toca para
+  completar" hasta que se les pone el suyo de verdad.
+- **Nuevo: foto de respaldo por pedido, no solo por día.** Al corregir un
+  pedido ya guardado —venga de una captura, a mano, o solo por cantidad— se
+  le puede adjuntar la foto de su comanda, aparte de las capturas del día
+  entero. Es opcional, y sirve para lo mismo: si la tienda discute justo
+  ese pedido, queda su respaldo.
+- **Arreglado: no había forma de llegar a "añadir un pedido a mano" en un día
+  sin nada guardado.** La pantalla de la jornada exigía que ya existiera un
+  día guardado y, si no, se rendía entera a un "no hay nada aquí" sin
+  ningún botón —había que subir una captura primero, aunque fuera
+  justamente la captura la que faltaba—. Ahora la pantalla se abre igual,
+  con las mismas puertas de siempre para añadir pedidos, y el día se crea
+  solo con el primero. También se agregó el mismo atajo desde Inicio, en la
+  tarjeta de un día sin nada cargado.
+- **Arreglado (de fondo): una transacción con varias escrituras podía
+  quedar a medias, sin avisar por qué.** Cada escritura volcaba la base
+  entera a disco antes de terminar la transacción que la contenía; si esa
+  transacción tenía más de una escritura —como agregar varios pedidos de
+  golpe—, el vuelco a mitad de camino le rompía el estado a la base y la
+  escritura siguiente fallaba con un error que no tenía nada que ver, y ni
+  siquiera se podía deshacer lo ya hecho. Ahora el vuelco espera a que la
+  transacción entera termine, como tenía que ser desde el principio.
+
 ### v26 — 22/09/2026
 - **Arreglado: la cabina de la moto eléctrica iba al revés.** Quedaba junto a
   la rueda de atrás, detrás de la caja —como si el camión manejara para

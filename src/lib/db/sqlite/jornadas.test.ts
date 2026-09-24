@@ -14,14 +14,17 @@ import {
   quitarDeDiasPosteriores,
   agregarPedidoManual,
   agregarPedidosLeidos,
+  agregarPedidosPorCantidad,
   borrarPedido,
   borrarJornada,
   buscarPedidos,
   codigosYaRegistrados,
+  esCodigoPendiente,
   guardarJornada,
   jornadaPorFecha,
   resumenPorRango,
 } from "./jornadas";
+import { actualizarPedido } from "./pedidos";
 import { REGLA_INICIAL, pagoDelTramo } from "@/lib/pagos/reglas";
 import type { JornadaParaGuardar } from "../tipos";
 import type { FechaISO } from "@/lib/fechas";
@@ -300,6 +303,95 @@ describe("pedidos añadidos a mano", () => {
 
     const [dia] = await resumenPorRango("2026-09-16" as FechaISO, "2026-09-16" as FechaISO);
     expect(dia.montoPedidosCentimos).toBe(2 * 1000 + 1150);
+  });
+});
+
+describe("pedidos añadidos solo por cantidad", () => {
+  it("crea un registro por cada uno, con código provisional distinto", async () => {
+    const { ordenIds } = await agregarPedidosPorCantidad("2026-09-20" as FechaISO, 5);
+
+    expect(ordenIds).toHaveLength(5);
+    const j = await jornadaPorFecha("2026-09-20" as FechaISO);
+    expect(j!.ordenes).toHaveLength(5);
+    const codigos = new Set(j!.ordenes.map((o) => o.codigo));
+    expect(codigos.size).toBe(5); // todos distintos
+    expect(j!.ordenes.every((o) => esCodigoPendiente(o.codigo))).toBe(true);
+  });
+
+  it("nacen en tramo 1, al monto vigente de ese día, marcados como manuales", async () => {
+    await agregarPedidosPorCantidad("2026-09-20" as FechaISO, 3);
+
+    const j = await jornadaPorFecha("2026-09-20" as FechaISO);
+    for (const o of j!.ordenes) {
+      expect(o.tramo).toBe(1);
+      expect(o.montoCentimos).toBe(1000); // REGLA_INICIAL, tramo 1
+      expect(o.manual).toBe(true);
+      expect(o.ruta).toBeNull();
+    }
+  });
+
+  it("nacen como Entregado, y cuentan en los contadores del día", async () => {
+    await agregarPedidosPorCantidad("2026-09-20" as FechaISO, 4);
+
+    const j = await jornadaPorFecha("2026-09-20" as FechaISO);
+    expect(j!.entregado).toBe(4);
+    expect(j!.ordenes.every((o) => o.estado === "Entregado")).toBe(true);
+  });
+
+  it("crea la jornada si ese día no existía", async () => {
+    const j = await jornadaPorFecha("2026-09-21" as FechaISO);
+    expect(j).toBeNull();
+
+    await agregarPedidosPorCantidad("2026-09-21" as FechaISO, 2);
+
+    expect(await jornadaPorFecha("2026-09-21" as FechaISO)).not.toBeNull();
+  });
+
+  it("se suma a lo que ya había, sin pisarlo", async () => {
+    await guardarJornada(jornadaDe("2026-09-16", 2, 2), "reemplazar");
+    await agregarPedidosPorCantidad("2026-09-16" as FechaISO, 3);
+
+    const j = await jornadaPorFecha("2026-09-16" as FechaISO);
+    expect(j!.ordenes).toHaveLength(5);
+  });
+
+  it("dos tandas seguidas no chocan entre sí", async () => {
+    await agregarPedidosPorCantidad("2026-09-20" as FechaISO, 3);
+    await agregarPedidosPorCantidad("2026-09-20" as FechaISO, 2);
+
+    const j = await jornadaPorFecha("2026-09-20" as FechaISO);
+    expect(j!.ordenes).toHaveLength(5);
+    expect(new Set(j!.ordenes.map((o) => o.codigo)).size).toBe(5);
+  });
+
+  it("cada uno se puede completar después, como cualquier otro pedido", async () => {
+    const { ordenIds } = await agregarPedidosPorCantidad("2026-09-20" as FechaISO, 1);
+
+    await actualizarPedido(ordenIds[0], { codigo: "v12345678wofp-01" });
+
+    const j = await jornadaPorFecha("2026-09-20" as FechaISO);
+    expect(j!.ordenes[0].codigo).toBe("v12345678wofp-01");
+    expect(esCodigoPendiente(j!.ordenes[0].codigo)).toBe(false);
+  });
+
+  it("rechaza cantidades que no tienen sentido", async () => {
+    await expect(agregarPedidosPorCantidad("2026-09-20" as FechaISO, 0)).rejects.toThrow();
+    await expect(agregarPedidosPorCantidad("2026-09-20" as FechaISO, -3)).rejects.toThrow();
+    await expect(agregarPedidosPorCantidad("2026-09-20" as FechaISO, 1.5)).rejects.toThrow();
+  });
+
+  it("usa la tarifa única de la moto eléctrica cuando es la modalidad activa", async () => {
+    const { guardarPerfil, guardarTienda, guardarRegla } = await import("./perfil");
+    const { reglaTarifaUnica } = await import("@/lib/pagos/reglas");
+
+    const tiendaId = await guardarTienda({ nombre: "Wong - Gardenias" });
+    await guardarRegla(tiendaId, "moto", "2000-01-01", reglaTarifaUnica(6));
+    await guardarPerfil({ nombre: "Yo", tiendaId, vehiculo: "moto" });
+
+    await agregarPedidosPorCantidad("2026-09-20" as FechaISO, 3);
+
+    const j = await jornadaPorFecha("2026-09-20" as FechaISO);
+    expect(j!.ordenes.every((o) => o.montoCentimos === 600)).toBe(true);
   });
 });
 
