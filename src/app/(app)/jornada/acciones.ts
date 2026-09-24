@@ -37,11 +37,16 @@ type Resultado = { ok: true; mensaje: string } | { ok: false; error: string };
 
 async function semanaEditable(fecha: FechaISO): Promise<{ ok: true } | { ok: false; error: string }> {
   const estado = await estadoDeSemana(fecha);
-  if (estado !== "abierta") {
+  // Igual que en la pantalla (§ jornada/page.tsx): lo que bloquea es haber
+  // cobrado, no haber cerrado la semana. Antes este cheque se quedó en el
+  // criterio viejo —solo "abierta" pasaba— y una semana "cerrada" (cerrar y
+  // pagar eran dos pasos separados) se veía editable en pantalla pero
+  // rechazaba cualquier cambio al guardarlo, sin explicación visible.
+  if (estado === "pagada") {
     return {
       ok: false,
       error:
-        "Esa semana está cerrada. Reábrela desde Pagos antes de editar la jornada, para que el monto liquidado y el historial no se contradigan.",
+        "Esa semana ya está pagada. Reábrela desde Pagos antes de editar la jornada, para que el monto liquidado y el historial no se contradigan.",
     };
   }
   return { ok: true };

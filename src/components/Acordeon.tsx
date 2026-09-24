@@ -44,14 +44,25 @@ export function Acordeon({
           {resumen && <span className="truncate text-sm text-tinta-2">{resumen}</span>}
         </span>
         <Flecha
-          className={`size-4 shrink-0 text-tinta-3 transition-transform ${
+          className={`size-4 shrink-0 text-tinta-3 transition-transform duration-300 ${
             abierto ? "-rotate-90" : "rotate-90"
           }`}
         />
       </button>
 
-      <div id={id} hidden={!abierto} className="border-t border-linea px-4 py-4">
-        {children}
+      {/* `grid-template-rows` de 0fr a 1fr, no `hidden`: así la sección crece
+          de verdad en vez de aparecer de golpe, y se siente como algo que
+          responde al toque en vez de un interruptor. `inert` en el envoltorio
+          interior saca el contenido plegado del tabulador y de lectores de
+          pantalla sin tener que quitarlo del DOM —quitarlo es lo que impedía
+          animarlo—. */}
+      <div
+        className="grid transition-[grid-template-rows] duration-300 ease-in-out"
+        style={{ gridTemplateRows: abierto ? "1fr" : "0fr" }}
+      >
+        <div id={id} className="overflow-hidden" inert={!abierto}>
+          <div className="border-t border-linea px-4 py-4">{children}</div>
+        </div>
       </div>
     </section>
   );

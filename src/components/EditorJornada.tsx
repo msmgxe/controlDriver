@@ -264,6 +264,7 @@ export function EditorJornada({
           regla={regla}
           rutas={jornada.rutas.map((r) => ({ numero: r.numero, inicio: r.horaInicio }))}
           pendiente={pendiente}
+          aviso={aviso}
           onCorregir={(cambios) =>
             ejecutar(() => corregirPedido(fecha, editando.id, cambios))
           }
@@ -300,6 +301,7 @@ function HojaTramo({
   regla,
   rutas,
   pendiente,
+  aviso,
   onCerrar,
   onGuardar,
   onBorrar,
@@ -310,6 +312,10 @@ function HojaTramo({
   regla: ReglaPago;
   rutas: Array<{ numero: number; inicio: string | null }>;
   pendiente: boolean;
+  /** El de la pantalla: se repite aquí porque esta hoja tapa la página entera
+      y, si algo falla mientras está abierta —una semana ya pagada, por
+      ejemplo—, el aviso de arriba queda oculto detrás sin que nadie lo vea. */
+  aviso: { tono: "bien" | "mal"; texto: string } | null;
   onCerrar: () => void;
   onGuardar: (tramo: number, km: number | null, montoManualCentimos: number | null) => void;
   onBorrar: () => void;
@@ -339,6 +345,8 @@ function HojaTramo({
           <h3 className="text-[22px]">Corregir el pedido</h3>
           <p className="text-sm text-tinta-2">Compara con tu captura y cambia lo que haga falta.</p>
         </div>
+
+        {aviso && <Aviso tono={aviso.tono === "bien" ? "bien" : "mal"} titulo={aviso.texto} />}
 
         {/* Código, ruta y estado también en un día guardado. Antes solo se
             podía cambiar el tramo, y si el lector le ponía la ruta de al lado

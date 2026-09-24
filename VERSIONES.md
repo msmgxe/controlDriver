@@ -36,6 +36,28 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v30 — 24/09/2026
+- **Arreglado: no dejaba cambiar la tarifa de un pedido de una semana que
+  el driver ya había cerrado sin haber cobrado todavía.** Era un rastro de
+  antes de la v29: la pantalla ya trataba esa semana como editable —el
+  pedido se podía tocar, el tramo se veía tocable—, pero el guardado de
+  verdad seguía comprobando la regla vieja ("solo editable si está
+  'abierta'") y rechazaba el cambio sin que se viera por qué. Ahora las dos
+  comprobaciones dicen lo mismo: bloquea haber cobrado, nada más.
+- **Arreglado (de fondo): un pedido no se podía corregir sin enterarse de
+  por qué.** El aviso de error vivía en la pantalla, detrás de la hoja que
+  tapa la pantalla entera al corregir un pedido —así que cualquier fallo
+  mientras esa hoja estaba abierta quedaba invisible—. Ahora el aviso
+  también se enseña dentro de la hoja.
+- **Nuevo: cambiar de semana en Inicio ahora es un gesto, no un botón.**
+  Se arrastra la tira de días con el dedo, como el carrusel de fotos del
+  celular: la semana sigue al dedo en vivo y la nueva entra deslizándose
+  por donde se la empujó. No se puede arrastrar a una semana que todavía no
+  llega —se siente un tope, no un salto—. Las flechas se quitaron: no se
+  sentían a nada.
+- **Nuevo: las secciones plegables ahora se abren y cierran con movimiento**,
+  en vez de aparecer o desaparecer de golpe.
+
 ### v29 — 24/09/2026
 - **Arreglado: "esta semana está cerrada" bloqueaba corregir un pedido sin
   haber cobrado todavía.** Antes cerrar la semana era un paso aparte de

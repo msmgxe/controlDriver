@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 
 import { Acordeon } from "@/components/Acordeon";
@@ -453,12 +453,14 @@ function PieDeVersion() {
  * Elegir qué día se está mirando.
  *
  * La semana entera como fichas, de lunes a domingo —así se corresponde con
- * cómo se paga (§13)— y flechas a los lados para moverse a la semana anterior
- * o a la siguiente, hasta la actual: no tiene sentido navegar a una semana que
- * todavía no llega. Un punto bajo la ficha indica que ese día ya está
- * cargado, así se ve de un vistazo lo que falta sin abrir nada. El calendario
- * de al lado salta directo a cualquier fecha, sin tener que ir semana por
- * semana.
+ * cómo se paga (§13)—. Se cambia de semana igual que se pasa una foto en el
+ * carrusel de un teléfono: arrastrando con el dedo, la tira sigue el
+ * movimiento en vivo y la semana nueva entra deslizándose por donde empujó
+ * el dedo. No hay flechas —tocarlas no se sentía a nada— y no se puede pasar
+ * de la semana actual: no tiene sentido deslizar a una que todavía no llega.
+ * Un punto bajo la ficha indica que ese día ya está cargado, así se ve de un
+ * vistazo lo que falta sin abrir nada. El calendario de al lado salta directo
+ * a cualquier fecha, sin tener que arrastrar semana por semana.
  */
 function SelectorDeDia({
   dia,
@@ -495,67 +497,14 @@ function SelectorDeDia({
         </label>
       </div>
 
-      <div className="flex items-center gap-1">
-        <button
-          type="button"
-          onClick={() => alMoverSemana(-1)}
-          aria-label="Semana anterior"
-          className="grid size-9 shrink-0 place-items-center rounded-full text-tinta-2 hover:bg-sup-2 hover:text-tinta"
-        >
-          <Flecha className="size-4 rotate-180" />
-        </button>
-
-        <div className="flex flex-1 gap-1.5 overflow-x-auto pb-1">
-          {dias.map(({ fecha, cargado, descanso }) => {
-            const elegido = fecha === dia;
-            return (
-              <button
-                key={fecha}
-                type="button"
-                onClick={() => alElegir(fecha)}
-                aria-pressed={elegido}
-                aria-label={`${nombreDelDia(fecha)} ${Number(fecha.slice(8))}${
-                  cargado ? ", cargado" : descanso ? ", descanso" : ""
-                }`}
-                className={`flex min-h-[58px] flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-btn border text-xs ${
-                  elegido
-                    ? "border-acento bg-acento text-acento-texto"
-                    : fecha === hoy
-                      ? "border-acento/50 bg-sup-2 text-tinta-2"
-                      : "border-linea bg-sup-2 text-tinta-2"
-                }`}
-              >
-                <span className="capitalize">{nombreDelDia(fecha).slice(0, 3)}</span>
-                <b className="text-base font-semibold">{fecha.slice(8)}</b>
-                {/* Un punto: del color de la marca si está cargado, amarillo si fue
-                    descanso. La forma no cambia; el aria-label dice cuál es. */}
-                <span
-                  aria-hidden
-                  className={`size-1.5 rounded-full ${
-                    cargado
-                      ? elegido
-                        ? "bg-acento-texto"
-                        : "bg-acento"
-                      : descanso
-                        ? "bg-descanso ring-1 ring-tinta/30"
-                        : "bg-transparent"
-                  }`}
-                />
-              </button>
-            );
-          })}
-        </div>
-
-        <button
-          type="button"
-          onClick={() => alMoverSemana(1)}
-          disabled={esSemanaActual}
-          aria-label="Semana siguiente"
-          className="grid size-9 shrink-0 place-items-center rounded-full text-tinta-2 hover:bg-sup-2 hover:text-tinta disabled:opacity-30 disabled:hover:bg-transparent"
-        >
-          <Flecha className="size-4" />
-        </button>
-      </div>
+      <TiraDeDiasDeslizable
+        dia={dia}
+        hoy={hoy}
+        dias={dias}
+        esSemanaActual={esSemanaActual}
+        alElegir={alElegir}
+        alMoverSemana={alMoverSemana}
+      />
 
       {!esSemanaActual && (
         <button
@@ -566,6 +515,169 @@ function SelectorDeDia({
           Volver a hoy
         </button>
       )}
+    </div>
+  );
+}
+
+/** Cuánto hay que arrastrar, en píxeles, para que cuente como "cambiar de semana" y no como un toque que tembló. */
+const UMBRAL_ARRASTRE = 8;
+
+function TiraDeDiasDeslizable({
+  dia,
+  hoy,
+  dias,
+  esSemanaActual,
+  alElegir,
+  alMoverSemana,
+}: {
+  dia: FechaISO;
+  hoy: FechaISO;
+  dias: Array<{ fecha: FechaISO; cargado: boolean; descanso: boolean }>;
+  esSemanaActual: boolean;
+  alElegir: (f: FechaISO) => void;
+  alMoverSemana: (delta: -1 | 1) => void;
+}) {
+  const marcoRef = useRef<HTMLDivElement>(null);
+  const [offset, setOffset] = useState(0);
+  const [conTransicion, setConTransicion] = useState(false);
+  // Refs, no estado: cambian en cada milímetro de arrastre y no deben, por sí
+  // solos, disparar un nuevo render —eso ya lo hace `setOffset`.
+  const arrastre = useRef<{ id: number; x0: number; ancho: number; movioBastante: boolean } | null>(
+    null,
+  );
+  const direccionPendiente = useRef<-1 | 1 | null>(null);
+
+  function empezar(e: React.PointerEvent<HTMLDivElement>) {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    arrastre.current = {
+      id: e.pointerId,
+      x0: e.clientX,
+      ancho: marcoRef.current?.clientWidth ?? 320,
+      movioBastante: false,
+    };
+    setConTransicion(false);
+  }
+
+  function mover(e: React.PointerEvent<HTMLDivElement>) {
+    const a = arrastre.current;
+    if (!a || a.id !== e.pointerId) return;
+    let delta = e.clientX - a.x0;
+    if (!a.movioBastante && Math.abs(delta) > UMBRAL_ARRASTRE) {
+      a.movioBastante = true;
+      // Recién ahora, que de verdad es un arrastre y no un toque, se captura
+      // el puntero —para seguir recibiendo `pointermove`/`pointerup` aunque
+      // el dedo se salga del recuadro—. Capturarlo desde el primer toque
+      // desviaba el click entero hacia este contenedor, y el día tocado
+      // dejaba de elegirse: un simple toque nunca llegaba a su botón.
+      e.currentTarget.setPointerCapture(e.pointerId);
+    }
+    // Resistencia si se intenta ir a una semana que todavía no llega: la tira
+    // se mueve, pero un tercio, para que se sienta el tope sin ser rígido.
+    if (delta < 0 && esSemanaActual) delta /= 3;
+    setOffset(delta);
+  }
+
+  function soltar(e: React.PointerEvent<HTMLDivElement>) {
+    const a = arrastre.current;
+    if (!a || a.id !== e.pointerId) return;
+    arrastre.current = null;
+    const delta = e.clientX - a.x0;
+    const umbral = Math.min(64, a.ancho / 4);
+    if (delta <= -umbral && !esSemanaActual) confirmar(1, a.ancho);
+    else if (delta >= umbral) confirmar(-1, a.ancho);
+    else {
+      setConTransicion(true);
+      setOffset(0);
+    }
+  }
+
+  function confirmar(direccion: -1 | 1, ancho: number) {
+    direccionPendiente.current = direccion;
+    setConTransicion(true);
+    setOffset(direccion === 1 ? -ancho : ancho);
+  }
+
+  /** Termina la salida y hace entrar la semana nueva por el lado opuesto. */
+  function alTerminarTransicion() {
+    const direccion = direccionPendiente.current;
+    if (direccion === null) return;
+    direccionPendiente.current = null;
+    const ancho = marcoRef.current?.clientWidth ?? 320;
+    alMoverSemana(direccion);
+    setConTransicion(false);
+    setOffset(direccion === 1 ? ancho : -ancho);
+    // Dos cuadros: el primero deja pintada la tira ya en el borde opuesto sin
+    // transición, el segundo activa la transición y la manda a 0. Uno solo no
+    // basta —el navegador a veces junta el salto y la animación en el mismo
+    // cuadro y no se ve nada moverse.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setConTransicion(true);
+        setOffset(0);
+      });
+    });
+  }
+
+  return (
+    <div
+      ref={marcoRef}
+      className="-mx-4 overflow-hidden px-4"
+      style={{ touchAction: "pan-y" }}
+      onPointerDown={empezar}
+      onPointerMove={mover}
+      onPointerUp={soltar}
+      onPointerCancel={soltar}
+      // Un arrastre que sí cambió de semana no debe, además, elegir el día que
+      // haya quedado bajo el dedo al soltar: eso tocaría un día que no se
+      // quiso tocar.
+      onClickCapture={(e) => {
+        if (arrastre.current?.movioBastante) e.stopPropagation();
+      }}
+    >
+      <div
+        className={`flex gap-1.5 pb-1 ${conTransicion ? "transition-transform duration-200 ease-out" : ""}`}
+        style={{ transform: `translateX(${offset}px)` }}
+        onTransitionEnd={alTerminarTransicion}
+      >
+        {dias.map(({ fecha, cargado, descanso }) => {
+          const elegido = fecha === dia;
+          return (
+            <button
+              key={fecha}
+              type="button"
+              onClick={() => alElegir(fecha)}
+              aria-pressed={elegido}
+              aria-label={`${nombreDelDia(fecha)} ${Number(fecha.slice(8))}${
+                cargado ? ", cargado" : descanso ? ", descanso" : ""
+              }`}
+              className={`flex min-h-[58px] flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-btn border text-xs select-none ${
+                elegido
+                  ? "border-acento bg-acento text-acento-texto"
+                  : fecha === hoy
+                    ? "border-acento/50 bg-sup-2 text-tinta-2"
+                    : "border-linea bg-sup-2 text-tinta-2"
+              }`}
+            >
+              <span className="capitalize">{nombreDelDia(fecha).slice(0, 3)}</span>
+              <b className="text-base font-semibold">{fecha.slice(8)}</b>
+              {/* Un punto: del color de la marca si está cargado, amarillo si fue
+                  descanso. La forma no cambia; el aria-label dice cuál es. */}
+              <span
+                aria-hidden
+                className={`size-1.5 rounded-full ${
+                  cargado
+                    ? elegido
+                      ? "bg-acento-texto"
+                      : "bg-acento"
+                    : descanso
+                      ? "bg-descanso ring-1 ring-tinta/30"
+                      : "bg-transparent"
+                }`}
+              />
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
