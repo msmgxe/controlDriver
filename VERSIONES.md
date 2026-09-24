@@ -36,6 +36,19 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v32 — 24/09/2026
+- **Nuevo: "Anotar cuántos pedidos hice" ahora deja elegir la fecha**, igual
+  que "Leer pedidos de una foto". Sirve para ponerse al día con una jornada
+  pasada que se quedó sin captura a tiempo, no solo con la de hoy. Al
+  guardar en otra fecha, un enlace lleva directo a esa jornada para
+  completar cada pedido con su código, su ruta y su estado.
+- **Nuevo: no deja anotar una cantidad en un día que ya tiene pedidos leídos
+  de una foto.** Mezclar un conteo a ojo con datos ya confirmados los
+  dejaría a los dos sospechosos —ni se sabría qué contaba el número a mano,
+  ni con qué comparar la foto—. Sí se puede seguir sumando a un día que ya
+  tenía pedidos a mano o anotados por cantidad: esos son de la misma
+  familia, alguien anotando lo que hizo.
+
 ### v31 — 24/09/2026
 - **Arreglado: la foto de un pedido solo dejaba tomarla en el momento, no
   elegirla de la galería.** El botón "Foto de la comanda" —y el de "Foto de

@@ -347,12 +347,17 @@ describe("pedidos añadidos solo por cantidad", () => {
     expect(await jornadaPorFecha("2026-09-21" as FechaISO)).not.toBeNull();
   });
 
-  it("se suma a lo que ya había, sin pisarlo", async () => {
+  // `guardarJornada` es la carga completa de una foto —rutas y pedidos
+  // juntos—, así que sus pedidos nacen sin `manual`: la misma regla que
+  // bloquea sumarse a `agregarPedidosLeidos` tiene que bloquear sumarse aquí.
+  it("rechaza un día que ya tiene una jornada cargada de una foto", async () => {
     await guardarJornada(jornadaDe("2026-09-16", 2, 2), "reemplazar");
-    await agregarPedidosPorCantidad("2026-09-16" as FechaISO, 3);
 
+    await expect(agregarPedidosPorCantidad("2026-09-16" as FechaISO, 3)).rejects.toThrow(
+      /ya tiene pedidos leídos/,
+    );
     const j = await jornadaPorFecha("2026-09-16" as FechaISO);
-    expect(j!.ordenes).toHaveLength(5);
+    expect(j!.ordenes).toHaveLength(2);
   });
 
   it("dos tandas seguidas no chocan entre sí", async () => {
@@ -392,6 +397,41 @@ describe("pedidos añadidos solo por cantidad", () => {
 
     const j = await jornadaPorFecha("2026-09-20" as FechaISO);
     expect(j!.ordenes.every((o) => o.montoCentimos === 600)).toBe(true);
+  });
+
+  it("se puede elegir cualquier fecha pasada, no solo la de hoy", async () => {
+    await agregarPedidosPorCantidad("2026-08-01" as FechaISO, 2);
+
+    const j = await jornadaPorFecha("2026-08-01" as FechaISO);
+    expect(j!.ordenes).toHaveLength(2);
+  });
+
+  it("rechaza un día que ya tiene pedidos leídos de una foto", async () => {
+    await agregarPedidosLeidos("2026-09-20" as FechaISO, [
+      { codigo: "v12345678wofp-01", ruta: null, estado: "Entregado" },
+    ]);
+
+    await expect(agregarPedidosPorCantidad("2026-09-20" as FechaISO, 3)).rejects.toThrow(
+      /ya tiene pedidos leídos/,
+    );
+    // No se agregó nada: el día se queda con el único pedido de la foto.
+    const j = await jornadaPorFecha("2026-09-20" as FechaISO);
+    expect(j!.ordenes).toHaveLength(1);
+  });
+
+  it("no lo bloquean pedidos a mano ni añadidos por cantidad, solo los de una foto", async () => {
+    await agregarPedidoManual("2026-09-20" as FechaISO, {
+      codigo: "v12345678wofp-01",
+      ruta: null,
+      estado: "Entregado",
+      tramo: 1,
+      km: null,
+      montoCentimos: 1000,
+    });
+    await agregarPedidosPorCantidad("2026-09-20" as FechaISO, 2);
+
+    const j = await jornadaPorFecha("2026-09-20" as FechaISO);
+    expect(j!.ordenes).toHaveLength(3);
   });
 });
 

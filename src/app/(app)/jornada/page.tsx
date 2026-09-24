@@ -190,8 +190,15 @@ function Contenido() {
           <div className="flex flex-col gap-3">
             <PedidoManual fecha={fecha} regla={regla} rutas={rutas.map((r) => r.numero)} alAgregar={recargar} />
             {/* Para cuando no se tiene ni el código a mano: se anota cuántos
-                fueron y se completa cada uno después. */}
-            <PedidosPorCantidad fecha={fecha} alAgregar={recargar} />
+                fueron y se completa cada uno después. La fecha también se
+                puede elegir, para ponerse al día con una jornada pasada que
+                se quedó sin captura a tiempo. */}
+            <PedidosPorCantidad
+              fecha={fecha}
+              alAgregar={(fechaElegida) => {
+                if (fechaElegida === fecha) recargar();
+              }}
+            />
             {/* Igual que con las rutas, la fecha se puede elegir. Los pedidos
                 que ya estaban registrados no se vuelven a añadir. */}
             <LectorDePedidos

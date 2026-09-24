@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 
 import { Check } from "@/components/iconos";
 import { comprimir } from "@/lib/carga";
@@ -225,24 +226,38 @@ export function PedidoManual({
  * Cada uno nace con la tarifa de hoy —tramo 1: S/10 para el auto, la tarifa
  * única para la moto eléctrica— y cuenta para el pago de la semana desde ya.
  * Se corrige luego si alguno era de un tramo distinto.
+ *
+ * **La fecha se elige**, igual que en `LectorDePedidos`: no siempre es hoy
+ * cuando se nota que faltó anotar un día —a veces se descubre días después,
+ * al revisar la semana en Pagos—. La capa de datos rechaza un día que ya
+ * tenga pedidos leídos de una foto, para no mezclar un conteo a ojo con datos
+ * ya confirmados; el mensaje de ese rechazo se enseña igual que cualquier
+ * otro error de este formulario.
  */
 export function PedidosPorCantidad({
   fecha,
   alAgregar,
 }: {
   fecha: FechaISO;
-  alAgregar: () => void;
+  /** Se llama con la fecha en que de verdad se guardó —puede ser otra—. */
+  alAgregar: (fecha: FechaISO) => void;
 }) {
   const [abierto, setAbierto] = useState(false);
+  const [fechaElegida, setFechaElegida] = useState<string>(fecha);
   const [cantidad, setCantidad] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [agregados, setAgregados] = useState<number | null>(null);
 
   const numero = Number(cantidad);
-  const valido = cantidad !== "" && Number.isInteger(numero) && numero > 0 && numero <= 60;
+  const fechaValida = esFechaISO(fechaElegida) && fechaElegida <= hoyEnLima();
+  const valido = fechaValida && cantidad !== "" && Number.isInteger(numero) && numero > 0 && numero <= 60;
 
   async function guardar() {
+    if (!fechaValida) {
+      setError("Esa fecha no es válida.");
+      return;
+    }
     if (!valido) {
       setError(numero > 60 ? "Como mucho 60 pedidos de una vez." : "Pon un número mayor que cero.");
       return;
@@ -250,10 +265,10 @@ export function PedidosPorCantidad({
     setGuardando(true);
     setError(null);
     try {
-      const { ordenIds } = await agregarPedidosPorCantidad(fecha, numero);
+      const { ordenIds } = await agregarPedidosPorCantidad(fechaElegida as FechaISO, numero);
       setAgregados(ordenIds.length);
       setCantidad("");
-      alAgregar();
+      alAgregar(fechaElegida as FechaISO);
     } catch (fallo) {
       setError(fallo instanceof Error ? fallo.message : "No se pudo guardar.");
     } finally {
@@ -266,6 +281,7 @@ export function PedidosPorCantidad({
       <button
         type="button"
         onClick={() => {
+          setFechaElegida(fecha);
           setAbierto(true);
           setAgregados(null);
         }}
@@ -283,26 +299,53 @@ export function PedidosPorCantidad({
       {agregados !== null ? (
         <>
           <p className="rounded-btn bg-bien-suave px-3 py-2 text-sm text-bien">
-            Se {agregados === 1 ? "agregó 1 pedido" : `agregaron ${agregados} pedidos`}. Tócalos en
-            la lista de arriba —debajo de esta fecha— para ponerles su código, su ruta y su estado.
+            Se {agregados === 1 ? "agregó 1 pedido" : `agregaron ${agregados} pedidos`} el{" "}
+            {formatearFecha(fechaElegida as FechaISO)}.{" "}
+            {fechaElegida === fecha
+              ? "Tócalos en la lista de arriba —debajo de esta fecha— para ponerles su código, su ruta y su estado."
+              : "Entra a la jornada de ese día para ponerles su código, su ruta y su estado."}
           </p>
-          <button
-            type="button"
-            onClick={() => {
-              setAbierto(false);
-              setAgregados(null);
-            }}
-            className="boton-secundario self-start"
-          >
-            Cerrar
-          </button>
+          <div className="flex flex-wrap gap-2">
+            {fechaElegida !== fecha && (
+              <Link href={`/jornada?fecha=${fechaElegida}`} className="boton-sec">
+                Ver esa jornada
+              </Link>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setAbierto(false);
+                setAgregados(null);
+              }}
+              className="boton-secundario self-start"
+            >
+              Cerrar
+            </button>
+          </div>
         </>
       ) : (
         <>
           <p className="text-sm text-tinta-2">
             Para cuando no tienes cómo leer las capturas de ese día. Anota el número ahora; el
-            código, la ruta y el estado de cada uno se completan después.
+            código, la ruta y el estado de cada uno se completan después. También sirve para
+            ponerse al día con un día pasado que se quedó sin captura a tiempo —mientras ese día no
+            tenga ya pedidos leídos de una foto.
           </p>
+
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-semibold">Fecha de esos pedidos</span>
+            <input
+              type="date"
+              value={fechaElegida}
+              max={hoyEnLima()}
+              disabled={guardando}
+              onChange={(e) => {
+                setFechaElegida(e.target.value);
+                setError(null);
+              }}
+              className="min-h-[52px] rounded-btn border border-linea-fuerte bg-sup px-3 text-base disabled:opacity-60"
+            />
+          </label>
 
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-semibold">Cantidad de pedidos</span>

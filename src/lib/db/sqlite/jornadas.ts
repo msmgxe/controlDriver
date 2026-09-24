@@ -683,6 +683,16 @@ export function esCodigoPendiente(codigo: string): boolean {
  *
  * Si el día no existía, se crea —igual que con un pedido a mano—: registrar
  * trabajo real no puede exigir haber subido una captura primero.
+ *
+ * **No entra si ese día ya tiene pedidos de una foto.** Existe para rellenar
+ * la contabilidad de un día que se quedó sin captura a tiempo —de ahí que se
+ * pueda elegir cualquier fecha pasada, no solo la de hoy—, y mezclar un
+ * conteo a ojo con datos ya leídos de verdad los dejaría a los dos
+ * sospechosos: ni se sabría cuáles de los leídos ya estaban contados en el
+ * número a mano, ni el número a mano tendría con qué compararse. Un pedido
+ * añadido a mano o por cantidad, en cambio, no estorba: es de la misma
+ * familia —alguien anotando lo que hizo, no una lectura— y se puede seguir
+ * completando el día con más de lo mismo.
  */
 export async function agregarPedidosPorCantidad(
   fecha: FechaISO,
@@ -690,6 +700,18 @@ export async function agregarPedidosPorCantidad(
 ): Promise<{ ordenIds: string[] }> {
   if (!Number.isInteger(cantidad) || cantidad <= 0) {
     throw new Error("La cantidad de pedidos tiene que ser un número entero mayor que cero.");
+  }
+
+  const conCaptura = await consultar<{ n: number }>(
+    `select count(*) as n from ordenes o
+       join jornadas j on j.id = o.jornada_id
+      where j.fecha = ? and o.manual = 0`,
+    [fecha],
+  );
+  if ((conCaptura[0]?.n ?? 0) > 0) {
+    throw new Error(
+      "Ese día ya tiene pedidos leídos de una foto. Para no duplicar, anota la cantidad en un día que todavía no tenga capturas cargadas.",
+    );
   }
 
   const perfil = await perfilActual();
