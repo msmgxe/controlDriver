@@ -638,10 +638,12 @@ function FotoDelPedido({
         </div>
       ) : (
         <label className="flex flex-col gap-1.5">
+          {/* Sin `capture`: con él, el navegador abre la cámara directo y
+              no deja elegir una foto ya tomada. Sin ese atributo, Android
+              enseña las dos puertas —cámara y galería— y decide la persona. */}
           <input
             type="file"
             accept="image/*"
-            capture="environment"
             disabled={pendiente || subiendo}
             onChange={(e) => {
               const archivo = e.target.files?.[0];

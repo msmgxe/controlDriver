@@ -36,6 +36,13 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v31 — 24/09/2026
+- **Arreglado: la foto de un pedido solo dejaba tomarla en el momento, no
+  elegirla de la galería.** El botón "Foto de la comanda" —y el de "Foto de
+  respaldo" al añadir un pedido a mano— forzaban la cámara a abrirse directo,
+  sin dar la opción de un pedido de otra foto ya tomada antes. Ahora Android
+  enseña las dos puertas —cámara y galería— y decide la persona.
+
 ### v30 — 24/09/2026
 - **Arreglado: no dejaba cambiar la tarifa de un pedido de una semana que
   el driver ya había cerrado sin haber cobrado todavía.** Era un rastro de
