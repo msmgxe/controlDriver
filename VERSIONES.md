@@ -36,6 +36,47 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v33 — 25/09/2026
+Rediseño de todas las pantallas (la opción A del prototipo) y las comandas.
+- **Nuevo: Inicio solo tiene lo esencial.** La tira de semanas arriba —se
+  arrastra con el dedo y las fechas corren sin dejar huecos; al soltar, termina
+  de llegar a la semana de atrás o de adelante—, la tarjeta del día con el auto,
+  «Cargar capturas» y dos acordeones **cerrados**: «Detalle de lo subido»
+  (pestañas Pedidos | Rutas) y «Subir más» (pestañas Pedido | Ruta). Lo
+  acumulado ya no está aquí: pasó a Pagos.
+- **Nuevo: Pagos con la misma tira**, con el monto de cada día debajo de su
+  fecha y el total de la semana elegida arriba. Día por día, Cobro, Tarifa
+  vigente y Otras semanas son acordeones cerrados que dicen su dato sin abrirse.
+- **Nuevo: Estadísticas, Historial, Buscar, Ajustes y Revisión con pestañas y
+  acordeones cerrados.** Historial: semanas plegadas y pestañas Por día |
+  Pedidos. Estadísticas: acordeón nuevo «Por distancia».
+- **Nuevo: la hoja de cada pedido con cuatro pestañas** —Pedido, Cliente,
+  Distancia y Evidencia—, para no cargar la pantalla.
+- **Nuevo: leer comandas una por una.** «Leer una comanda» (en «Subir más»)
+  acepta varias fotos de Hojas de despacho; de cada una saca número de
+  despacho, nombre, dirección y teléfono, y dice qué tan legible salió cada dato
+  (Legible / Dudoso / No se leyó). Si el pedido ya existe, lo completa; si no,
+  lo crea. La foto queda como evidencia.
+- **Nuevo: distancia y tramo automáticos.** Con la dirección del cliente se
+  ubica el punto (con el servicio de direcciones de Android), se mide desde la
+  tienda y se elige el tramo. Un tramo puesto a mano siempre gana; más de 12 km
+  pide el monto.
+- **Nuevo: en Ajustes, cada tienda se ubica y elige cómo mide** —línea recta o
+  por calles, como Waze o Maps—. El punto se pone estando ahí (GPS), pegando un
+  enlace o coordenadas de Google Maps, o buscando la dirección.
+- **Nuevo: buscar por cliente, teléfono o dirección**, además del código.
+- **Nuevo: qué se guarda del cliente lo decides tú** (Ajustes › Comandas y
+  clientes): nombre, dirección, teléfono y foto por separado. El respaldo **no
+  lleva los datos de los clientes** salvo que lo actives.
+- **Cambio: la pantalla de la jornada ya no existe**; sus enlaces llevan al día
+  en Inicio.
+- **Arreglado: la cabecera decía «Hoy» estando en Ajustes.**
+- **Pendiente de probar en el celular:** el lector de comandas, el buscador de
+  direcciones de Android, el GPS y la ruta por calles no se pueden ejecutar
+  en la Mac. El intérprete se afinó con dos fotos reales; con más comandas
+  puede haber que ajustarlo (Ajustes › Si algo no se leyó bien › Última
+  comanda muestra el texto crudo para eso).
+
 ### v32 — 24/09/2026
 - **Nuevo: "Anotar cuántos pedidos hice" ahora deja elegir la fecha**, igual
   que "Leer pedidos de una foto". Sirve para ponerse al día con una jornada

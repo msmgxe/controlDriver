@@ -15,7 +15,7 @@ import {
   type ReglaPago,
   type TipoVehiculo,
 } from "@/lib/pagos/reglas";
-import type { Perfil, Tienda } from "../tipos";
+import type { MetodoDeDistancia, Perfil, Tienda } from "../tipos";
 import { aBool, consultar, deBool, ejecutar, nuevoId } from "./conexion";
 
 const ahora = () => new Date().toISOString();
@@ -97,10 +97,72 @@ export async function guardarPerfil(datos: {
 /* --- Tiendas y sus reglas ------------------------------------------------ */
 
 export async function listarTiendas(): Promise<Tienda[]> {
-  const filas = await consultar<{ id: string; nombre: string; activa: number }>(
-    `select id, nombre, activa from tiendas order by nombre asc`,
+  const filas = await consultar<{
+    id: string;
+    nombre: string;
+    activa: number;
+    lat: number | null;
+    lng: number | null;
+    direccion: string | null;
+    metodo_distancia: string | null;
+    factor_calles: number | null;
+  }>(
+    `select id, nombre, activa, lat, lng, direccion, metodo_distancia, factor_calles
+       from tiendas order by nombre asc`,
   );
-  return filas.map((t) => ({ id: t.id, nombre: t.nombre, activa: aBool(t.activa) }));
+  return filas.map((t) => ({
+    id: t.id,
+    nombre: t.nombre,
+    activa: aBool(t.activa),
+    lat: t.lat,
+    lng: t.lng,
+    direccion: t.direccion,
+    metodoDistancia: t.metodo_distancia === "calles" ? "calles" : "recta",
+    factorCalles: t.factor_calles && t.factor_calles > 0 ? t.factor_calles : 1.3,
+  }));
+}
+
+/**
+ * Dónde está una tienda: el punto de partida de sus repartos.
+ *
+ * De aquí se mide la distancia a cada cliente. Pasar `null` la deja sin
+ * ubicar, y entonces el tramo no se calcula solo: se elige a mano, como
+ * siempre.
+ */
+export async function guardarUbicacionDeTienda(
+  tiendaId: string,
+  ubicacion: { lat: number; lng: number; direccion?: string | null } | null,
+): Promise<void> {
+  await ejecutar(
+    `update tiendas set lat = ?, lng = ?, direccion = ?, actualizado_en = ?, sincronizado = 0
+      where id = ?`,
+    [ubicacion?.lat ?? null, ubicacion?.lng ?? null, ubicacion?.direccion ?? null, ahora(), tiendaId],
+  );
+}
+
+/**
+ * Cómo mide esta tienda la distancia de sus tramos.
+ *
+ * Hay tiendas que miden en línea recta y otras por la ruta que genera Waze o
+ * Maps; cada una lo suyo, y de eso depende en qué tramo cae un pedido.
+ * `factorCalles` es lo que se usa para estimar la ruta cuando no hay señal
+ * para pedirla.
+ */
+export async function guardarMetodoDeDistancia(
+  tiendaId: string,
+  metodo: MetodoDeDistancia,
+  factorCalles?: number,
+): Promise<void> {
+  if (factorCalles !== undefined && !(factorCalles >= 1 && factorCalles <= 3)) {
+    throw new Error("El factor de calles tiene que estar entre 1 y 3.");
+  }
+  await ejecutar(
+    `update tiendas set metodo_distancia = ?,
+            factor_calles = coalesce(?, factor_calles),
+            actualizado_en = ?, sincronizado = 0
+      where id = ?`,
+    [metodo, factorCalles ?? null, ahora(), tiendaId],
+  );
 }
 
 export async function guardarTienda(datos: {

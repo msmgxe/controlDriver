@@ -82,3 +82,53 @@ export async function leerImagen(dataUrl: string): Promise<LecturaDeImagen> {
     return { lineas, lector: "solo-texto", ms: null, tamano: null, crudo: lineas };
   }
 }
+
+/** Lo que devuelve leer una foto con todo el detalle: cada línea, dónde está y cuánto se fía el lector. */
+export interface LecturaConCajas {
+  ancho: number;
+  alto: number;
+  ms: number | null;
+  lineas: Array<{ texto: string; x: number; y: number; w: number; h: number; confianza: number | null }>;
+  /** Con qué se leyó. `posiciones` trae dónde está cada línea; `solo-texto`, nada más que el texto. */
+  lector: "posiciones" | "solo-texto";
+}
+
+/**
+ * Lee una imagen **conservando** la posición y la confianza de cada línea.
+ *
+ * `leerImagen` las descarta porque las capturas de pantalla solo necesitan el
+ * orden. Una foto de una hoja de despacho necesita las dos cosas: la posición,
+ * para quedarse con la columna de los datos y saltarse el sello y la letra a
+ * mano; y la confianza, para marcar qué se leyó con claridad y qué no.
+ */
+export async function leerImagenConCajas(dataUrl: string): Promise<LecturaConCajas> {
+  try {
+    const r = await LectorTexto.leer({ image: dataUrl });
+    return {
+      ancho: r.ancho,
+      alto: r.alto,
+      ms: r.ms,
+      lector: "posiciones",
+      lineas: r.lineas
+        .filter((l) => typeof l.texto === "string")
+        .map((l) => ({
+          texto: l.texto,
+          x: l.x ?? 0,
+          y: l.y ?? 0,
+          w: l.w ?? 0,
+          h: l.h ?? 0,
+          confianza: typeof l.confianza === "number" ? l.confianza : null,
+        })),
+    };
+  } catch {
+    const { Ocr } = await cargarRespaldo();
+    const { results } = await Ocr.process({ image: dataUrl });
+    return {
+      ancho: 0,
+      alto: 0,
+      ms: null,
+      lector: "solo-texto",
+      lineas: results.map((r) => ({ texto: r.text, x: 0, y: 0, w: 0, h: 0, confianza: null })),
+    };
+  }
+}

@@ -27,7 +27,10 @@ import type { FechaISO } from "@/lib/fechas";
 import { montoDelDia } from "@/lib/pagos/calcular-liquidacion";
 import { perfilActual } from "./perfil";
 import type {
+  CampoDeBusqueda,
+  DatosDeCliente,
   FilaResumenDiario,
+  FuenteDeKm,
   JornadaCompleta,
   JornadaParaGuardar,
   ModoDeGuardado,
@@ -176,8 +179,18 @@ export async function jornadasPorRango(
     km: number | null;
     monto_centimos: number | null;
     manual: number;
+    cliente_nombre: string | null;
+    cliente_telefono: string | null;
+    direccion: string | null;
+    lat: number | null;
+    lng: number | null;
+    km_fuente: string | null;
+    tramo_auto: number;
+    fotos: number;
   }>(
-    `select id, jornada_id, ruta_id, codigo, estado, posicion, tramo, km, monto_centimos, manual
+    `select id, jornada_id, ruta_id, codigo, estado, posicion, tramo, km, monto_centimos, manual,
+            cliente_nombre, cliente_telefono, direccion, lat, lng, km_fuente, tramo_auto,
+            (select count(*) from pruebas p where p.orden_id = ordenes.id) as fotos
        from ordenes where jornada_id in (${huecos})`,
     ids,
   );
@@ -212,8 +225,12 @@ export async function jornadasPorRango(
         ruta: o.ruta_id ? (numeroPorId.get(o.ruta_id) ?? null) : null,
         tramo: o.tramo || 1,
         km: o.km,
+        kmFuente: (o.km_fuente as FuenteDeKm | null) ?? null,
         montoCentimos: o.monto_centimos,
         manual: aBool(o.manual),
+        cliente: aCliente(o),
+        tramoAuto: aBool(o.tramo_auto),
+        fotos: o.fotos ?? 0,
       }))
       /* En el orden en que se hicieron: por la hora de salida de su ruta, y
          dentro de cada ruta en el orden de la lista. Ordenar solo por la
@@ -243,6 +260,24 @@ export async function jornadasPorRango(
       ordenes: misOrdenes,
     };
   });
+}
+
+/**
+ * Los datos del cliente de una fila de pedidos, o null si no hay ninguno.
+ *
+ * Un cliente vacío y ningún cliente son lo mismo: así la pantalla no tiene que
+ * distinguir «null» de «un objeto con todo en null» para saber si enseñar algo.
+ */
+export function aCliente(fila: {
+  cliente_nombre: string | null;
+  cliente_telefono: string | null;
+  direccion: string | null;
+  lat: number | null;
+  lng: number | null;
+}): DatosDeCliente | null {
+  const { cliente_nombre: nombre, cliente_telefono: telefono, direccion, lat, lng } = fila;
+  if (!nombre && !telefono && !direccion && lat === null && lng === null) return null;
+  return { nombre, telefono, direccion, lat, lng };
 }
 
 function agrupar<T, C>(filas: T[], clave: (f: T) => C): Map<C, T[]> {
@@ -378,9 +413,22 @@ export async function guardarJornada(
     await ejecutar(`delete from dias_descanso where fecha = ?`, [datos.fecha]);
 
     if (modo === "reemplazar") {
-      // Los pedidos primero: apuntan a rutas con ON DELETE SET NULL, y así no
-      // quedan un instante huérfanos apuntando a null.
-      await ejecutar(`delete from ordenes where jornada_id = ?`, [jornadaId]);
+      /* Los pedidos primero: apuntan a rutas con ON DELETE SET NULL, y así no
+         quedan un instante huérfanos apuntando a null.
+
+         Solo se borran los que **ya no vienen** en esta carga. Los que siguen
+         se actualizan más abajo, y con ellos se conserva lo que la persona ya
+         guardó de cada uno —su cliente, su distancia, la foto de su comanda—:
+         volver a subir las capturas de un día no puede borrar ese trabajo. */
+      if (datos.ordenes.length > 0) {
+        const huecosCodigos = datos.ordenes.map(() => "?").join(", ");
+        await ejecutar(
+          `delete from ordenes where jornada_id = ? and codigo not in (${huecosCodigos})`,
+          [jornadaId, ...datos.ordenes.map((o) => o.codigo)],
+        );
+      } else {
+        await ejecutar(`delete from ordenes where jornada_id = ?`, [jornadaId]);
+      }
       await ejecutar(`delete from rutas where jornada_id = ?`, [jornadaId]);
     }
 
@@ -411,9 +459,12 @@ export async function guardarJornada(
            ruta_id        = excluded.ruta_id,
            estado         = excluded.estado,
            posicion       = excluded.posicion,
-           tramo          = excluded.tramo,
-           km             = excluded.km,
-           monto_centimos = excluded.monto_centimos`,
+           /* Un pedido con distancia ya calculada —de su comanda— conserva su
+              tramo, su distancia y su monto: la captura los trae siempre en
+              tramo 1, y pisarlos borraría lo que la distancia ya decidió. */
+           tramo          = case when ordenes.km is not null then ordenes.tramo else excluded.tramo end,
+           km             = case when ordenes.km is not null then ordenes.km else excluded.km end,
+           monto_centimos = case when ordenes.km is not null then ordenes.monto_centimos else excluded.monto_centimos end`,
         [
           nuevoId(), jornadaId,
           o.ruta === null ? null : (idPorNumero.get(o.ruta) ?? null),
@@ -431,17 +482,28 @@ export async function borrarJornada(fecha: FechaISO): Promise<void> {
   await ejecutar(`delete from jornadas where fecha = ?`, [fecha]);
 }
 
-/** Cambia el tramo de un pedido y recalcula su monto (§13). */
+/**
+ * Cambia el tramo de un pedido y recalcula su monto (§13).
+ *
+ * `conservarKm` deja intacta la distancia que el pedido ya tenía: elegir el
+ * tramo a mano no debe borrar los kilómetros calculados, que siguen siendo un
+ * dato del pedido aunque la persona haya decidido otra cosa. `auto` marca que
+ * el tramo lo puso el cálculo por distancia; cambiado a mano vuelve a falso.
+ */
 export async function actualizarTramo(
   ordenId: string,
   tramo: number,
   montoCentimos: number,
   km: number | null,
+  opciones: { auto?: boolean; kmFuente?: FuenteDeKm | null; conservarKm?: boolean } = {},
 ): Promise<void> {
-  await ejecutar(
-    `update ordenes set tramo = ?, monto_centimos = ?, km = ? where id = ?`,
-    [tramo, montoCentimos, km, ordenId],
-  );
+  const columnas = ["tramo = ?", "monto_centimos = ?", "tramo_auto = ?"];
+  const valores: unknown[] = [tramo, montoCentimos, deBool(opciones.auto ?? false)];
+  if (!opciones.conservarKm) {
+    columnas.push("km = ?", "km_fuente = ?");
+    valores.push(km, km === null ? null : (opciones.kmFuente ?? null));
+  }
+  await ejecutar(`update ordenes set ${columnas.join(", ")} where id = ?`, [...valores, ordenId]);
   // La jornada cambió aunque la fila tocada sea un pedido: hay que resincronizarla.
   await ejecutar(
     `update jornadas set actualizado_en = ?, sincronizado = 0
@@ -863,36 +925,53 @@ export async function registrarCarga(datos: {
   );
 }
 
+/** Sin tildes ni mayúsculas: «José» y «jose» tienen que encontrarse. */
+const sinTildes = (t: string): string =>
+  t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
 /**
  * Busca pedidos por código (§10, utilidades), y opcionalmente **en un rango de
- * días**.
+ * días**, y por **el dato del cliente** que se guardó.
  *
  * Es la consulta de "la tienda me pregunta por este pedido": en qué fecha fue,
  * en qué ruta y con qué horario. Busca por coincidencia parcial porque casi
- * nunca se tiene el código entero a mano.
+ * nunca se tiene el código entero a mano. Y desde las comandas también sirve
+ * para lo contrario: "¿qué pedido era el de la señora Rosa?", buscando por su
+ * nombre, su teléfono o su calle.
  *
  * Sin rango, se exigen al menos tres caracteres —con menos, todo coincide y la
  * lista no dice nada—. **Con rango**, el propio rango ya acota la búsqueda, así
  * que el texto puede ser corto o faltar del todo: «todos los pedidos del 14 al
  * 20» es una pregunta legítima.
+ *
+ * Por cliente, teléfono y dirección se compara en memoria y sin tildes: SQLite
+ * solo ignora mayúsculas en las letras sin acento, y quien busca «jose» quiere
+ * encontrar a «José». Son cientos de filas como mucho —solo entran los pedidos
+ * que guardaron ese dato—, así que no pesa.
  */
 export async function buscarPedidos(
   texto: string,
-  opciones: { desde?: FechaISO; hasta?: FechaISO; limite?: number } = {},
+  opciones: { desde?: FechaISO; hasta?: FechaISO; limite?: number; campo?: CampoDeBusqueda } = {},
 ): Promise<PedidoEncontrado[]> {
   const limpio = texto.trim();
   const { desde, hasta } = opciones;
+  const campo = opciones.campo ?? "codigo";
   const hayRango = Boolean(desde || hasta);
   if (!hayRango && limpio.length < 3) return [];
 
   const condiciones: string[] = [];
   const valores: unknown[] = [];
 
-  if (limpio) {
-    // `%` y `_` son comodines de LIKE: se escapan para que un código con guion
-    // bajo no se convierta en una búsqueda abierta.
-    condiciones.push(`o.codigo like ? escape '\\'`);
-    valores.push(`%${limpio.replace(/[%_\\]/g, "\\$&")}%`);
+  if (campo === "codigo") {
+    if (limpio) {
+      // `%` y `_` son comodines de LIKE: se escapan para que un código con guion
+      // bajo no se convierta en una búsqueda abierta.
+      condiciones.push(`o.codigo like ? escape '\\'`);
+      valores.push(`%${limpio.replace(/[%_\\]/g, "\\$&")}%`);
+    }
+  } else {
+    const columna = { cliente: "cliente_nombre", telefono: "cliente_telefono", direccion: "direccion" }[campo];
+    condiciones.push(`o.${columna} is not null and o.${columna} <> ''`);
   }
   if (desde) {
     condiciones.push(`j.fecha >= ?`);
@@ -902,9 +981,12 @@ export async function buscarPedidos(
     condiciones.push(`j.fecha <= ?`);
     valores.push(hasta);
   }
-  valores.push(opciones.limite ?? (hayRango ? 300 : 50));
+  const limite = opciones.limite ?? (hayRango ? 300 : 50);
+  // Filtrando en memoria, el tope de SQL tiene que dejar pasar bastante más.
+  valores.push(campo === "codigo" ? limite : 5000);
 
   const filas = await consultar<{
+    id: string;
     codigo: string;
     fecha: string;
     numero: number | null;
@@ -912,10 +994,17 @@ export async function buscarPedidos(
     hora_fin: string | null;
     estado: string;
     tramo: number;
+    km: number | null;
     monto_centimos: number | null;
+    cliente_nombre: string | null;
+    cliente_telefono: string | null;
+    direccion: string | null;
+    lat: number | null;
+    lng: number | null;
   }>(
-    `select o.codigo, j.fecha, r.numero, r.hora_inicio, r.hora_fin,
-            o.estado, o.tramo, o.monto_centimos
+    `select o.id, o.codigo, j.fecha, r.numero, r.hora_inicio, r.hora_fin,
+            o.estado, o.tramo, o.km, o.monto_centimos,
+            o.cliente_nombre, o.cliente_telefono, o.direccion, o.lat, o.lng
        from ordenes o
        join jornadas j on j.id = o.jornada_id
        left join rutas r on r.id = o.ruta_id
@@ -925,14 +1014,30 @@ export async function buscarPedidos(
     valores,
   );
 
-  return filas.map((f) => ({
-    codigo: f.codigo,
-    fecha: f.fecha as FechaISO,
-    ruta: f.numero,
-    horaInicio: f.hora_inicio,
-    horaFin: f.hora_fin,
-    estado: f.estado,
-    tramo: f.tramo || 1,
-    montoCentimos: f.monto_centimos,
-  }));
+  const buscado = sinTildes(limpio);
+  const soloDigitos = limpio.replace(/\D/g, "");
+  const coincide = (f: (typeof filas)[number]): boolean => {
+    if (campo === "codigo" || (!limpio && hayRango)) return true;
+    if (campo === "cliente") return sinTildes(f.cliente_nombre ?? "").includes(buscado);
+    if (campo === "direccion") return sinTildes(f.direccion ?? "").includes(buscado);
+    // Teléfono: solo dígitos, así «987 654» y «987-654» encuentran lo mismo.
+    return soloDigitos.length >= 3 && (f.cliente_telefono ?? "").replace(/\D/g, "").includes(soloDigitos);
+  };
+
+  return filas
+    .filter(coincide)
+    .slice(0, limite)
+    .map((f) => ({
+      ordenId: f.id,
+      codigo: f.codigo,
+      fecha: f.fecha as FechaISO,
+      ruta: f.numero,
+      horaInicio: f.hora_inicio,
+      horaFin: f.hora_fin,
+      estado: f.estado,
+      tramo: f.tramo || 1,
+      km: f.km,
+      montoCentimos: f.monto_centimos,
+      cliente: aCliente(f),
+    }));
 }

@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 
+import { Acordeon } from "@/components/Acordeon";
 import { Auto } from "@/components/Auto";
 import { Check } from "@/components/iconos";
+import { Pestanas } from "@/components/Pestanas";
+import { SeccionUbicacion } from "@/components/SeccionUbicacion";
 import { useDatos } from "@/hooks/useDatos";
 import { hoyEnLima } from "@/lib/fechas";
 import { reglaVigente } from "@/lib/db/sqlite/jornadas";
@@ -20,6 +23,7 @@ import {
   REGLA_INICIAL,
   TARIFA_MOTO_ELECTRICA,
   VEHICULO_POR_DEFECTO,
+  formatearSoles,
   reglaTarifaUnica,
   type ReglaPago,
   type TipoVehiculo,
@@ -100,6 +104,7 @@ export function SeccionModalidad() {
   const [agregando, setAgregando] = useState(false);
   const [nombreNuevo, setNombreNuevo] = useState("");
   const [errorTienda, setErrorTienda] = useState<string | null>(null);
+  const [pestana, setPestana] = useState<"tienda" | "ubicacion" | "tarifa">("tienda");
 
   /**
    * Si la tienda pasa a moto eléctrica y nunca tuvo tarifa de moto, se le pone
@@ -168,101 +173,31 @@ export function SeccionModalidad() {
     }
   }
 
+  const regla = vigente?.regla ?? (vehiculo === "moto" ? reglaTarifaUnica(TARIFA_MOTO_ELECTRICA) : REGLA_INICIAL);
+  const cobro =
+    regla.tramos.length <= 1
+      ? `${formatearSoles(Math.round((regla.tramos[0]?.monto ?? 0) * 100))} por pedido`
+      : `desde ${formatearSoles(Math.round(Math.min(...regla.tramos.map((t) => t.monto)) * 100))}`;
+
   return (
-    <section className="tarjeta flex flex-col gap-4" aria-labelledby="titulo-modalidad">
-      <div>
-        <h3 id="titulo-modalidad" className="text-lg">
-          Tienda, modalidad y tarifa
-        </h3>
-        <p className="text-sm text-tinta-2">
-          Para quién repartes, con qué, y cuánto paga cada pedido. Un cambio no toca lo ya cargado.
-        </p>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <span className="rotulo">Tienda</span>
-        <div className="flex flex-wrap gap-2">
-          {tiendas?.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              aria-pressed={t.id === tiendaId}
-              disabled={ocupado}
-              onClick={() => void elegirTienda(t)}
-              className={`min-h-10 rounded-chip border-2 px-3 text-sm font-semibold disabled:opacity-60 ${
-                t.id === tiendaId
-                  ? "border-acento bg-acento-suave text-acento-tinta"
-                  : "border-linea bg-sup text-tinta-2 hover:bg-sup-2"
-              }`}
-            >
-              {t.nombre}
-            </button>
-          ))}
-          {!agregando && (
-            <button
-              type="button"
-              onClick={() => setAgregando(true)}
-              className="min-h-10 rounded-chip border-2 border-dashed border-linea-fuerte px-3 text-sm font-semibold text-tinta-2 hover:bg-sup-2"
-            >
-              + Nueva tienda
-            </button>
-          )}
-        </div>
-
-        {agregando && (
-          <div className="flex flex-col gap-2 rounded-btn bg-sup-2 p-3">
-            <label htmlFor="tienda-nueva" className="text-sm font-semibold">
-              Nombre de la tienda
-            </label>
-            <div className="flex gap-2">
-              <input
-                id="tienda-nueva"
-                value={nombreNuevo}
-                onChange={(e) => setNombreNuevo(e.target.value)}
-                placeholder="Wong - Gardenias"
-                className="min-h-10 min-w-0 flex-1 rounded-btn border border-linea-fuerte bg-sup px-3 text-sm outline-none"
-              />
-              <button
-                type="button"
-                className="boton-sec shrink-0"
-                disabled={ocupado || !nombreNuevo.trim()}
-                onClick={() => void agregarTienda()}
-              >
-                Agregar
-              </button>
-              <button
-                type="button"
-                className="shrink-0 px-2 text-sm text-tinta-2"
-                onClick={() => {
-                  setAgregando(false);
-                  setNombreNuevo("");
-                  setErrorTienda(null);
-                }}
-              >
-                Cancelar
-              </button>
-            </div>
-            {errorTienda && <p className="text-sm text-mal">{errorTienda}</p>}
-          </div>
-        )}
-      </div>
-
-      <div role="radiogroup" aria-label="Modalidad" className="grid grid-cols-2 gap-2">
-        <BotonModalidad
-          valor="auto"
-          activa={vehiculo === "auto"}
-          disabled={ocupado}
-          onClick={() => void elegirModalidad("auto")}
-          titulo="Auto"
-        />
-        <BotonModalidad
-          valor="moto"
-          activa={vehiculo === "moto"}
-          disabled={ocupado}
-          onClick={() => void elegirModalidad("moto")}
-          titulo="Moto eléctrica"
-        />
-      </div>
+    <Acordeon
+      titulo="Tienda, ubicación y tarifa"
+      resumen={
+        tienda
+          ? `${tienda.nombre} · ${vehiculo === "moto" ? "Moto" : "Auto"} · ${cobro}`
+          : "Elige para quién repartes"
+      }
+    >
+      <Pestanas
+        etiqueta="Tienda, ubicación y tarifa"
+        actual={pestana}
+        alCambiar={(id) => setPestana(id as "tienda" | "ubicacion" | "tarifa")}
+        items={[
+          { id: "tienda", etiqueta: "Tienda" },
+          { id: "ubicacion", etiqueta: "Ubicación", punto: tienda?.lat != null },
+          { id: "tarifa", etiqueta: "Tarifa" },
+        ]}
+      />
 
       {mensaje && (
         <p role="status" className="text-sm font-semibold text-bien">
@@ -270,26 +205,125 @@ export function SeccionModalidad() {
         </p>
       )}
 
-      {!tiendaId || !tienda ? (
-        <p className="border-t border-linea pt-4 text-sm text-tinta-2">
-          Elige o crea una tienda arriba para poder guardar una tarifa.
-        </p>
-      ) : (
-        !cargandoRegla && (
-          <EditorTarifa
-            key={`${tienda.id}-${vehiculo}-${vigente?.id ?? "nueva"}`}
-            tiendaId={tienda.id}
-            hoy={hoy}
-            vehiculo={vehiculo}
-            regla={vigente?.regla ?? (vehiculo === "moto" ? reglaTarifaUnica(TARIFA_MOTO_ELECTRICA) : REGLA_INICIAL)}
-            alGuardar={() => {
-              recargarRegla();
-              setMensaje("Tarifa actualizada.");
-            }}
-          />
-        )
+      {pestana === "tienda" && (
+        <>
+          <div className="flex flex-col gap-2">
+            <span className="rotulo">Tienda</span>
+            <div className="flex flex-wrap gap-2">
+              {tiendas?.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  aria-pressed={t.id === tiendaId}
+                  disabled={ocupado}
+                  onClick={() => void elegirTienda(t)}
+                  className={`min-h-10 rounded-chip border-2 px-3 text-sm font-semibold disabled:opacity-60 ${
+                    t.id === tiendaId
+                      ? "border-acento bg-acento-suave text-acento-tinta"
+                      : "border-linea bg-sup text-tinta-2 hover:bg-sup-2"
+                  }`}
+                >
+                  {t.nombre}
+                </button>
+              ))}
+              {!agregando && (
+                <button
+                  type="button"
+                  onClick={() => setAgregando(true)}
+                  className="min-h-10 rounded-chip border-2 border-dashed border-linea-fuerte px-3 text-sm font-semibold text-tinta-2 hover:bg-sup-2"
+                >
+                  + Nueva tienda
+                </button>
+              )}
+            </div>
+
+            {agregando && (
+              <div className="flex flex-col gap-2 rounded-btn bg-sup-2 p-3">
+                <label htmlFor="tienda-nueva" className="text-sm font-semibold">
+                  Nombre de la tienda
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    id="tienda-nueva"
+                    value={nombreNuevo}
+                    onChange={(e) => setNombreNuevo(e.target.value)}
+                    placeholder="Wong - Gardenias"
+                    className="min-h-10 min-w-0 flex-1 rounded-btn border border-linea-fuerte bg-sup px-3 text-sm outline-none"
+                  />
+                  <button
+                    type="button"
+                    className="boton-sec shrink-0"
+                    disabled={ocupado || !nombreNuevo.trim()}
+                    onClick={() => void agregarTienda()}
+                  >
+                    Agregar
+                  </button>
+                  <button
+                    type="button"
+                    className="shrink-0 px-2 text-sm text-tinta-2"
+                    onClick={() => {
+                      setAgregando(false);
+                      setNombreNuevo("");
+                      setErrorTienda(null);
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+                {errorTienda && <p className="text-sm text-mal">{errorTienda}</p>}
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <span className="rotulo">Modalidad</span>
+            <div role="radiogroup" aria-label="Modalidad" className="grid grid-cols-2 gap-2">
+              <BotonModalidad
+                valor="auto"
+                activa={vehiculo === "auto"}
+                disabled={ocupado}
+                onClick={() => void elegirModalidad("auto")}
+                titulo="Auto"
+              />
+              <BotonModalidad
+                valor="moto"
+                activa={vehiculo === "moto"}
+                disabled={ocupado}
+                onClick={() => void elegirModalidad("moto")}
+                titulo="Moto eléctrica"
+              />
+            </div>
+            <p className="text-xs text-tinta-3">Un cambio no toca lo ya cargado: cada día guarda su tienda y su vehículo.</p>
+          </div>
+        </>
       )}
-    </section>
+
+      {pestana === "ubicacion" &&
+        (tienda ? (
+          <SeccionUbicacion key={tienda.id} tienda={tienda} regla={regla} alCambiar={recargarTiendas} />
+        ) : (
+          <p className="text-sm text-tinta-2">Elige o crea una tienda para poder ubicarla.</p>
+        ))}
+
+      {pestana === "tarifa" &&
+        (!tiendaId || !tienda ? (
+          <p className="text-sm text-tinta-2">Elige o crea una tienda para poder guardar una tarifa.</p>
+        ) : (
+          !cargandoRegla && (
+            <EditorTarifa
+              key={`${tienda.id}-${vehiculo}-${vigente?.id ?? "nueva"}`}
+              tiendaId={tienda.id}
+              hoy={hoy}
+              vehiculo={vehiculo}
+              regla={regla}
+              alGuardar={() => {
+                recargarRegla();
+                setMensaje("Tarifa actualizada.");
+              }}
+            />
+          )
+        ))}
+    </Acordeon>
   );
 }
 
@@ -455,7 +489,7 @@ function EditorTarifa({
   }
 
   return (
-    <div className="flex flex-col gap-3 border-t border-linea pt-4">
+    <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
         <span className="text-sm font-semibold">Tarifa</span>
         <div role="radiogroup" aria-label="Forma de cobrar" className="flex gap-0.5 rounded-chip bg-sup-2 p-0.5">

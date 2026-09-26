@@ -53,6 +53,18 @@ export const ESQUEMA: string[] = [
      id             text primary key,
      nombre         text not null unique,
      activa         integer not null default 1,
+     /* El punto de partida de los repartos: de aquí se mide la distancia a cada
+        cliente para calcular el tramo. Se elige en Ajustes. */
+     lat            real,
+     lng            real,
+     direccion      text,
+     /* Cómo mide esta tienda la distancia de sus tramos: 'recta' (en línea
+        recta) o 'calles' (la ruta que genera Waze o Maps). Cada tienda mide a
+        su manera, por eso vive aquí y no en un ajuste general. */
+     metodo_distancia text not null default 'recta',
+     /* Cuando se mide por calles y no hay señal para pedir la ruta, se estima
+        multiplicando la línea recta por este número. */
+     factor_calles  real not null default 1.3,
      creado_en      text not null,
      actualizado_en text not null,
      sincronizado   integer not null default 0
@@ -116,6 +128,20 @@ export const ESQUEMA: string[] = [
      /* Añadido a mano, no leído de una captura. Se marca para que se vea de
         dónde salió cada cifra cuando haya que justificar un pago. */
      manual         integer not null default 0,
+     /* Lo que se sabe del cliente, si se leyó de su comanda o se escribió. Todo
+        es opcional: son datos de una tercera persona y solo se guardan los que
+        la persona elige guardar (ver Ajustes). */
+     cliente_nombre   text,
+     cliente_telefono text,
+     direccion        text,
+     lat              real,
+     lng              real,
+     /* De dónde salió km: 'recta', 'ruta' (pedida a un servicio de rutas),
+        'estimado' (línea recta por el factor de calles) o 'manual'. */
+     km_fuente        text,
+     /* El tramo lo puso el cálculo por distancia, no la persona. Si la persona
+        lo cambia a mano, vuelve a 0 y el cálculo ya no lo pisa. */
+     tramo_auto       integer not null default 0,
      /* La misma razón que en rutas, y además lo que permite el modo
         "combinar": un pedido ya registrado se actualiza, no se repite. */
      unique (jornada_id, codigo)
@@ -273,6 +299,18 @@ export const COLUMNAS_ANADIDAS: ReadonlyArray<[tabla: string, columna: string, d
   ["pruebas", "orden_id", "text"],
   ["pruebas", "huella", "text"],
   ["pruebas", "contenido", "text"],
+  ["tiendas", "lat", "real"],
+  ["tiendas", "lng", "real"],
+  ["tiendas", "direccion", "text"],
+  ["tiendas", "metodo_distancia", "text not null default 'recta'"],
+  ["tiendas", "factor_calles", "real not null default 1.3"],
+  ["ordenes", "cliente_nombre", "text"],
+  ["ordenes", "cliente_telefono", "text"],
+  ["ordenes", "direccion", "text"],
+  ["ordenes", "lat", "real"],
+  ["ordenes", "lng", "real"],
+  ["ordenes", "km_fuente", "text"],
+  ["ordenes", "tramo_auto", "integer not null default 0"],
 ];
 
 /** Lo mínimo que necesita `migrar` de una base, sea cual sea el motor. */

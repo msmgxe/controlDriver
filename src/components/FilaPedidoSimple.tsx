@@ -1,5 +1,7 @@
 "use client";
 
+import { Camara, Usuario } from "@/components/iconos";
+
 /**
  * Una fila de pedido, en la forma más simple que se pudo.
  *
@@ -33,6 +35,9 @@ export function FilaPedidoSimple({
   monto,
   manual = false,
   porCompletar = false,
+  km = null,
+  cliente = null,
+  conFoto = false,
   onClick,
 }: {
   codigo: string;
@@ -44,6 +49,12 @@ export function FilaPedidoSimple({
   manual?: boolean;
   /** Nació de "anotar cuántos pedidos hice": todavía no tiene su código real. */
   porCompletar?: boolean;
+  /** La distancia a la tienda, si se conoce. */
+  km?: number | null;
+  /** El nombre del cliente, si se guardó. */
+  cliente?: string | null;
+  /** Tiene la foto de su comanda como evidencia. */
+  conFoto?: boolean;
   onClick?: () => void;
 }) {
   const entregado = estado === "Entregado";
@@ -89,10 +100,24 @@ export function FilaPedidoSimple({
 
         {tramo > 1 && (
           <span className="rounded-chip border border-linea-fuerte px-2 py-0.5 font-mono text-tinta-2">
-            T{tramo}
+            {tramo === 6 ? "+12 km" : `T${tramo}`}
           </span>
         )}
+        {km !== null && <span className="font-mono text-tinta-2">{km.toFixed(1)} km</span>}
         {manual && <span className="text-tinta-3">· a mano</span>}
+
+        {/* Lo que tiene guardado, sin abrir: el cliente y la foto de su comanda. */}
+        {(cliente || conFoto) && (
+          <span className="ml-auto flex min-w-0 items-center gap-2 text-tinta-3">
+            {cliente && (
+              <span className="flex min-w-0 items-center gap-1">
+                <Usuario className="size-3.5 shrink-0" aria-label="Con cliente" />
+                <span className="max-w-[9rem] truncate">{cliente}</span>
+              </span>
+            )}
+            {conFoto && <Camara className="size-3.5 shrink-0" aria-label="Con foto de la comanda" />}
+          </span>
+        )}
       </span>
     </button>
   );

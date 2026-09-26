@@ -51,11 +51,34 @@ export interface Respaldo {
   tablas: Record<NombreTabla, Record<string, unknown>[]>;
 }
 
-/** Junta todas las filas de todas las tablas, tal como están en la base. */
-export async function crearRespaldo(): Promise<Respaldo> {
+/**
+ * Las columnas de los pedidos que son datos de **otra persona**: el cliente. Un
+ * respaldo se manda por WhatsApp o por correo, y no tiene por qué llevar
+ * nombres, teléfonos, direcciones ni el punto exacto donde vive alguien.
+ */
+const COLUMNAS_DE_CLIENTE = ["cliente_nombre", "cliente_telefono", "direccion", "lat", "lng"] as const;
+
+/**
+ * Junta todas las filas de todas las tablas, tal como están en la base.
+ *
+ * Con `incluirClientes` en falso —lo normal— los pedidos salen **sin** los
+ * datos del cliente. La distancia y el tramo sí van: son parte de cómo se
+ * calculó el pago, y no dicen dónde vive nadie.
+ */
+export async function crearRespaldo(
+  opciones: { incluirClientes?: boolean } = {},
+): Promise<Respaldo> {
   const tablas = {} as Respaldo["tablas"];
   for (const tabla of TABLAS) {
-    tablas[tabla] = await consultar<Record<string, unknown>>(`select * from ${tabla}`);
+    const filas = await consultar<Record<string, unknown>>(`select * from ${tabla}`);
+    tablas[tabla] =
+      tabla === "ordenes" && !opciones.incluirClientes
+        ? filas.map((f) => {
+            const sinCliente = { ...f };
+            for (const c of COLUMNAS_DE_CLIENTE) delete sinCliente[c];
+            return sinCliente;
+          })
+        : filas;
   }
   return { version: VERSION_RESPALDO, generadoEn: new Date().toISOString(), tablas };
 }

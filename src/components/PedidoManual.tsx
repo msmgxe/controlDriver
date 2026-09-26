@@ -307,7 +307,7 @@ export function PedidosPorCantidad({
           </p>
           <div className="flex flex-wrap gap-2">
             {fechaElegida !== fecha && (
-              <Link href={`/jornada?fecha=${fechaElegida}`} className="boton-sec">
+              <Link href={`/?dia=${fechaElegida}`} className="boton-sec">
                 Ver esa jornada
               </Link>
             )}

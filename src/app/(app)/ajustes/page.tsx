@@ -3,13 +3,18 @@
 import { useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 
+import { Acordeon } from "@/components/Acordeon";
 import { SeccionApariencia } from "@/components/SeccionApariencia";
+import { SeccionComandas } from "@/components/SeccionComandas";
 import { SeccionModalidad } from "@/components/SeccionModalidad";
 import { SeccionLicencia } from "@/components/SeccionLicencia";
 import { SeccionRespaldo } from "@/components/SeccionRespaldo";
+import { useDatos } from "@/hooks/useDatos";
 import { useVersion } from "@/hooks/useVersion";
+import { leerAjustesDeComandas } from "@/lib/db/sqlite/ajustes";
+import { espacioOcupado } from "@/lib/db/sqlite/pruebas";
 
-import { Candado, Check, Huella } from "@/components/iconos";
+import { Check, Huella } from "@/components/iconos";
 import {
   activarHuella,
   fijarPin,
@@ -25,8 +30,12 @@ export const dynamic = "force-static";
 /**
  * Ajustes.
  *
- * Por ahora, el bloqueo del dispositivo. Es lo que protege los ingresos y los
- * códigos de pedido si el driver presta o pierde el celular con la sesión
+ * La versión arriba y todo lo demás en acordeones **cerrados**: cada uno dice
+ * su estado sin abrirlo («PIN activo», «Wong - Aldabas · Auto · S/ 10»), y se
+ * abre solo el que se va a tocar.
+ *
+ * El bloqueo del dispositivo protege los ingresos, los códigos de pedido y los
+ * datos de los clientes si el driver presta o pierde el celular con la sesión
  * abierta; la sesión en sí dura semanas a propósito, para no pedir el código
  * de correo todos los días.
  */
@@ -71,23 +80,23 @@ export default function PaginaAjustes() {
     <div className="mx-auto flex max-w-[880px] flex-col gap-4">
       <h2 className="text-[30px] leading-tight">Ajustes</h2>
 
+      <SeccionVersion />
+
       <SeccionApariencia />
 
       <SeccionModalidad />
 
-      <section className="tarjeta flex flex-col gap-4">
-        <div className="flex items-start gap-3">
-          <span className="grid size-10 shrink-0 place-items-center rounded-chip bg-acento-suave text-acento-tinta">
-            <Candado className="size-5" />
-          </span>
-          <div>
-            <h3 className="text-lg">Bloqueo del dispositivo</h3>
-            <p className="text-sm text-tinta-2">
-              Un PIN de 4 dígitos al abrir la app. Tus ingresos y los códigos de tus pedidos no
-              quedan a la vista si prestas el celular.
-            </p>
-          </div>
-        </div>
+      <ComandasYClientes />
+
+      <Acordeon
+        titulo="Bloqueo del dispositivo"
+        resumen={configurado ? `PIN activo${conHuella ? " · con huella" : ""}` : "Sin PIN"}
+        aviso={!configurado}
+      >
+        <p className="text-sm text-tinta-2">
+          Un PIN de 4 dígitos al abrir la app. Tus ingresos, los códigos de tus pedidos y los datos
+          de tus clientes no quedan a la vista si prestas el celular.
+        </p>
 
         {configurado ? (
           <div className="flex flex-wrap items-center gap-3">
@@ -182,26 +191,70 @@ export default function PaginaAjustes() {
           El PIN se guarda solo en este teléfono, cifrado, y no viaja a ningún lado. Es lo único
           que protege tus datos si alguien coge el aparato.
         </p>
-      </section>
-
-      <SeccionVersion />
+      </Acordeon>
 
       <SeccionLicencia />
 
       <SeccionRespaldo />
 
+      <SeccionCapturas />
+
       <SeccionEjemplo />
 
       <SeccionDiagnostico />
-
-      <section className="tarjeta flex flex-col gap-2">
-        <h3 className="text-lg">Tus capturas</h3>
-        <p className="text-sm text-tinta-2">
-          Las fotos se procesan en memoria y se descartan: no se guardan en ningún servidor. Solo se
-          conserva lo que leíste y confirmaste en Revisión.
-        </p>
-      </section>
     </div>
+  );
+}
+
+/**
+ * «Comandas y clientes»: lo que se guarda de cada cliente. El resumen dice qué
+ * datos están activos, que es lo que se quiere saber sin abrirlo.
+ */
+function ComandasYClientes() {
+  const { datos: a } = useDatos(() => leerAjustesDeComandas(), [], { conservar: true });
+  const guarda = a
+    ? [a.guardarNombre && "nombre", a.guardarDireccion && "dirección", a.guardarTelefono && "teléfono"].filter(Boolean)
+    : [];
+  return (
+    <Acordeon
+      titulo="Comandas y clientes"
+      resumen={
+        !a
+          ? "…"
+          : guarda.length === 0
+            ? "No se guarda nada del cliente"
+            : `Guarda ${guarda.join(", ")}`
+      }
+    >
+      <SeccionComandas />
+    </Acordeon>
+  );
+}
+
+/**
+ * Las fotos que quedaron como evidencia de pedidos. Una por pedido, en el
+ * teléfono y en ningún servidor; aquí se ve cuánto ocupan.
+ */
+function SeccionCapturas() {
+  const { datos: uso } = useDatos(() => espacioOcupado(), [], { conservar: true });
+  const mb = uso ? uso.bytes / (1024 * 1024) : 0;
+  return (
+    <Acordeon
+      titulo="Capturas y evidencias"
+      resumen={
+        !uso
+          ? "…"
+          : uso.cuantas === 0
+            ? "Sin fotos guardadas"
+            : `${uso.cuantas} foto${uso.cuantas === 1 ? "" : "s"} · ${mb < 0.1 ? "menos de 0.1" : mb.toFixed(1)} MB`
+      }
+    >
+      <p className="text-sm text-tinta-2">
+        Las capturas se leen en el teléfono y no se guardan en ningún servidor. Solo se conserva lo
+        que leíste y confirmaste, y las fotos que dejaste como evidencia de un pedido o de una
+        comanda. Para borrar una foto, abre el pedido en su día.
+      </p>
+    </Acordeon>
   );
 }
 
@@ -251,8 +304,7 @@ function SeccionEjemplo() {
   }
 
   return (
-    <section className="tarjeta flex flex-col gap-3">
-      <h3 className="text-lg">Datos de ejemplo</h3>
+    <Acordeon titulo="Datos de ejemplo" resumen="Para enseñar la aplicación">
       <p className="text-sm text-tinta-2">
         Llena tres semanas con jornadas inventadas para poder enseñar la aplicación. Incluye un
         día flojo donde se ve pagar la permanencia en vez de los pedidos.
@@ -278,7 +330,7 @@ function SeccionEjemplo() {
       </div>
 
       {mensaje && <p className="text-sm text-tinta-2">{mensaje}</p>}
-    </section>
+    </Acordeon>
   );
 }
 
@@ -293,14 +345,22 @@ function SeccionEjemplo() {
  * Va plegado y al final de Ajustes porque no es para el uso diario.
  */
 function SeccionDiagnostico() {
+  const [ver, setVer] = useState<"captura" | "comanda" | null>(null);
   const [texto, setTexto] = useState<string | null>(null);
-  const [abierto, setAbierto] = useState(false);
   const [copiado, setCopiado] = useState(false);
 
-  async function ver() {
-    const { ultimaLectura } = await import("@/lib/extraccion/enDispositivo");
-    setTexto((await ultimaLectura()) ?? "Todavía no has cargado ninguna captura.");
-    setAbierto(true);
+  async function abrir(cual: "captura" | "comanda") {
+    const leer =
+      cual === "captura"
+        ? (await import("@/lib/extraccion/enDispositivo")).ultimaLectura
+        : (await import("@/lib/comanda/leer")).ultimaLecturaDeComanda;
+    setTexto(
+      (await leer()) ??
+        (cual === "captura"
+          ? "Todavía no has cargado ninguna captura."
+          : "Todavía no has leído ninguna comanda."),
+    );
+    setVer(cual);
   }
 
   async function copiar() {
@@ -315,18 +375,23 @@ function SeccionDiagnostico() {
   }
 
   return (
-    <section className="tarjeta flex flex-col gap-3">
-      <h3 className="text-lg">Si una captura no se leyó bien</h3>
+    <Acordeon titulo="Si algo no se leyó bien" resumen="Ver el texto que sacó el lector">
       <p className="text-sm text-tinta-2">
         Aquí está el texto que sacó el lector de la última carga. Cópialo y mándalo para que se
-        pueda corregir.
+        pueda corregir. Puede contener nombres y teléfonos de clientes: mándalo solo a quien lo
+        arregla.
       </p>
 
-      {!abierto ? (
-        <button type="button" onClick={() => void ver()} className="boton-secundario self-start">
-          Ver la última lectura
+      <div className="flex flex-wrap gap-2">
+        <button type="button" onClick={() => void abrir("captura")} className="boton-secundario">
+          Última captura
         </button>
-      ) : (
+        <button type="button" onClick={() => void abrir("comanda")} className="boton-secundario">
+          Última comanda
+        </button>
+      </div>
+
+      {ver && (
         <>
           <pre className="max-h-64 overflow-auto rounded-btn bg-sup-2 p-3 font-mono text-xs whitespace-pre-wrap">
             {texto}
@@ -336,7 +401,7 @@ function SeccionDiagnostico() {
           </button>
         </>
       )}
-    </section>
+    </Acordeon>
   );
 }
 

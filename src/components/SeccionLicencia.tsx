@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { Acordeon } from "@/components/Acordeon";
 import { useLicencia } from "@/components/Licencia";
 import { useDatos } from "@/hooks/useDatos";
 import { activarCertificado, identificadorDelDispositivo } from "@/lib/licencia/almacen";
@@ -69,9 +70,11 @@ export function SeccionLicencia() {
         : "bg-aviso-suave text-aviso";
 
   return (
-    <section className="tarjeta flex flex-col gap-4">
-      <h3 className="text-lg">Tu licencia</h3>
-
+    <Acordeon
+      titulo="Licencia"
+      resumen={resumenDeLicencia(licencia)}
+      aviso={licencia?.estado === "gracia" || licencia?.estado === "vencida" || licencia?.estado === "sin_licencia"}
+    >
       {licencia && (
         <p className={`rounded-btn px-3 py-2 text-sm font-semibold ${tono}`}>
           {licencia.estado === "activa"
@@ -135,12 +138,29 @@ export function SeccionLicencia() {
           {resultado.texto}
         </p>
       )}
-    </section>
+    </Acordeon>
   );
 }
 
+/** Lo esencial de la licencia, para leerlo sin abrir el acordeón. */
+function resumenDeLicencia(licencia: ReturnType<typeof useLicencia>): string {
+  if (!licencia) return "…";
+  switch (licencia.estado) {
+    case "activa":
+      return `Activa hasta el ${licencia.vigenteHasta?.split("-").reverse().join("/")}`;
+    case "prueba":
+      return "En prueba";
+    case "gracia":
+      return "En gracia: renuévala pronto";
+    case "vencida":
+      return "Vencida · solo lectura";
+    default:
+      return "Sin licencia";
+  }
+}
+
 /**
- * Los tres tramos de un mes, como una barra segmentada.
+ * Los tramos de un mes, como una barra segmentada.
  *
  * El mismo dibujo de la infografía ("La licencia, mes a mes"): un tramo
  * activo, siete días de gracia, y solo lectura. El tramo en el que está

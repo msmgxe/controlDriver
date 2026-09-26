@@ -2,6 +2,8 @@
 
 import { useRef, useState } from "react";
 
+import { Acordeon } from "@/components/Acordeon";
+import { leerAjustesDeComandas } from "@/lib/db/sqlite/ajustes";
 import {
   anotarRespaldoCreado,
   crearRespaldo,
@@ -25,19 +27,17 @@ import { hoyEnLima } from "@/lib/fechas";
  */
 export function SeccionRespaldo() {
   return (
-    <section className="tarjeta flex flex-col gap-5">
-      <div>
-        <h3 className="text-lg">Respaldo de tus datos</h3>
-        <p className="text-sm text-tinta-2">
-          Tus jornadas, rutas, pedidos y liquidaciones. No incluye las fotos de tus capturas ni tu
-          licencia —esa está atada a este teléfono.
-        </p>
-      </div>
+    <Acordeon titulo="Respaldo de tus datos" resumen="Crear una copia o restaurarla">
+      <p className="text-sm text-tinta-2">
+        Tus jornadas, rutas, pedidos y liquidaciones. No incluye las fotos de tus capturas ni tu
+        licencia —esa está atada a este teléfono—. Los datos de tus clientes solo van si lo
+        activas en «Comandas y clientes».
+      </p>
       <BloqueCrear />
       <div className="border-t border-linea pt-5">
         <BloqueRestaurar />
       </div>
-    </section>
+    </Acordeon>
   );
 }
 
@@ -50,7 +50,9 @@ function BloqueCrear() {
     setError(null);
     try {
       const { Capacitor } = await import("@capacitor/core");
-      const respaldo = await crearRespaldo();
+      // Nombres, teléfonos y direcciones de clientes: solo si la persona lo eligió.
+      const { clientesEnRespaldo } = await leerAjustesDeComandas();
+      const respaldo = await crearRespaldo({ incluirClientes: clientesEnRespaldo });
       const contenido = JSON.stringify(respaldo, null, 2);
       const archivo = `rutas-a-respaldo-${hoyEnLima()}.json`;
 

@@ -80,6 +80,8 @@
   --track-titulo: -0.03em;
   --sombra-card: 0 1px 2px rgb(10 34 96 / 0.06), 0 14px 28px -20px rgb(10 34 96 / 0.4);
   --sombra-alta: 0 8px 20px -6px rgb(10 34 96 / 0.2), 0 30px 60px -30px rgb(10 34 96 / 0.5);
+  /* La pestaña activa: en Mapa, una sombra fina; en Turbo, el contorno de tinta. */
+  --sombra-tab: 0 1px 3px rgb(10 34 96 / 0.28);
 }
 
 :root[data-modo="oscuro"] {
@@ -124,6 +126,7 @@
   --track-titulo: 0.02em;
   --sombra-card: none;
   --sombra-alta: 0 8px 20px -6px rgb(0 0 0 / 0.5), 0 30px 60px -30px rgb(0 0 0 / 0.9);
+  --sombra-tab: 0 0 0 1px var(--linea-fuerte);
 }
 
 /* ---------------------------------------------------------------------------
@@ -175,6 +178,7 @@
   --track-titulo: 0em;
   --sombra-card: 3px 3px 0 var(--tinta);
   --sombra-alta: 5px 5px 0 var(--tinta);
+  --sombra-tab: 0 0 0 2px var(--tinta);
 }
 
 :root[data-modo="menta"] {
@@ -218,6 +222,7 @@
   --track-titulo: -0.02em;
   --sombra-card: 0 1px 2px rgb(12 26 24 / 0.05), 0 14px 30px -20px rgb(12 26 24 / 0.35);
   --sombra-alta: 0 8px 20px -6px rgb(12 26 24 / 0.18), 0 30px 60px -30px rgb(12 26 24 / 0.5);
+  --sombra-tab: 0 1px 3px rgb(12 26 24 / 0.25);
 }
 
 /* ---------------------------------------------------------------------------
@@ -334,6 +339,7 @@
   --borde-ancho: 0px;
   --track-titulo: -0.03em;
   --sombra-card: 0 1px 2px rgb(10 34 96 / 0.06), 0 14px 28px -20px rgb(10 34 96 / 0.4);
+  --sombra-tab: 0 1px 3px rgb(10 34 96 / 0.28);
 }
 
 @theme inline {
@@ -628,6 +634,16 @@
     border-radius: var(--r-card);
     padding: var(--pad-card);
     box-shadow: var(--sombra-card);
+  }
+
+  /* Una sección plegable: como una tarjeta, pero el relleno lo pone cada parte
+     (la cabecera y el contenido), no el contenedor. */
+  .acordeon {
+    background: var(--sup);
+    border: var(--borde-ancho) solid var(--linea-fuerte);
+    border-radius: var(--r-card);
+    box-shadow: var(--sombra-card);
+    overflow: hidden;
   }
 
   /* Acción secundaria: la misma altura cómoda para el dedo que la principal,

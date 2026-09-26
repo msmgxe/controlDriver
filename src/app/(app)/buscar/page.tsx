@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
-import { Buscar as IconoBuscar, Flecha } from "@/components/iconos";
+import { Acordeon } from "@/components/Acordeon";
+import { Buscar as IconoBuscar, Flecha, Pin, Telefono, Usuario } from "@/components/iconos";
+import { Pestanas } from "@/components/Pestanas";
 import { EstadoPedido, Vacio } from "@/components/ui";
 import { useDatos } from "@/hooks/useDatos";
 import { buscarPedidos, resumenPorRango } from "@/lib/db/sqlite/jornadas";
@@ -17,7 +19,7 @@ import {
   type FechaISO,
 } from "@/lib/fechas";
 import { formatearSoles } from "@/lib/pagos/reglas";
-import type { PedidoEncontrado } from "@/lib/db/tipos";
+import type { CampoDeBusqueda, PedidoEncontrado } from "@/lib/db/tipos";
 
 /**
  * Buscar un pedido, en un rango de días.
@@ -34,8 +36,21 @@ import type { PedidoEncontrado } from "@/lib/db/tipos";
  *     recorrido, y lo de en medio se ilumina;
  *   · las dos fechas escritas, para irse más atrás de treinta días.
  *
- * Cada resultado lleva al detalle de su día.
+ * **Además del código, se busca por lo que se guardó del cliente**: su nombre,
+ * su teléfono o su calle. Sirve para «¿qué pedido era el de la señora Rosa?».
+ * Solo encuentra en los pedidos donde se guardó ese dato.
+ *
+ * El rango va en un acordeón cerrado: casi siempre basta con el de siempre, y
+ * el acordeón dice cuál es sin abrirlo. Cada resultado lleva al detalle de su
+ * día.
  */
+
+const CAMPOS: Array<{ id: CampoDeBusqueda; etiqueta: string; marcador: string }> = [
+  { id: "codigo", etiqueta: "Código", marcador: "Código o parte de él" },
+  { id: "cliente", etiqueta: "Cliente", marcador: "Nombre del cliente" },
+  { id: "telefono", etiqueta: "Teléfono", marcador: "Teléfono o sus últimos dígitos" },
+  { id: "direccion", etiqueta: "Dirección", marcador: "Calle o urbanización" },
+];
 
 const INICIALES = ["D", "L", "M", "X", "J", "V", "S"];
 const DIAS_EN_LA_LINEA = 30;
@@ -50,6 +65,7 @@ const ATAJOS: Array<{ id: string; nombre: string; dias: number }> = [
 
 export default function PaginaBuscar() {
   const hoy = hoyEnLima();
+  const [campo, setCampo] = useState<CampoDeBusqueda>("codigo");
   const [texto, setTexto] = useState("");
   const [desde, setDesde] = useState<FechaISO>(sumarDias(hoy, -6));
   const [hasta, setHasta] = useState<FechaISO>(hoy);
@@ -66,8 +82,9 @@ export default function PaginaBuscar() {
     [hoy],
   );
 
-  const limpio = texto.replace(/\s/g, "");
-  const clave = `${limpio}|${desde}|${hasta}`;
+  // Un código no lleva espacios; un nombre o una calle, sí.
+  const limpio = campo === "codigo" ? texto.replace(/\s/g, "") : texto.trim();
+  const clave = `${campo}|${limpio}|${desde}|${hasta}`;
   const [resultado, setResultado] = useState<{ clave: string; filas: PedidoEncontrado[] } | null>(
     null,
   );
@@ -78,7 +95,7 @@ export default function PaginaBuscar() {
   useEffect(() => {
     let vigente = true;
     const espera = setTimeout(() => {
-      buscarPedidos(limpio, { desde, hasta })
+      buscarPedidos(limpio, { desde, hasta, campo })
         .then((filas) => vigente && setResultado({ clave, filas }))
         .catch(() => vigente && setResultado({ clave, filas: [] }));
     }, 150);
@@ -86,7 +103,7 @@ export default function PaginaBuscar() {
       vigente = false;
       clearTimeout(espera);
     };
-  }, [clave, limpio, desde, hasta]);
+  }, [clave, limpio, desde, hasta, campo]);
 
   function elegirDia(fecha: FechaISO) {
     setVisibles(POR_PAGINA);
@@ -117,7 +134,7 @@ export default function PaginaBuscar() {
       <div className="flex items-center gap-2 rounded-btn border border-linea-fuerte bg-sup px-3 focus-within:border-acento focus-within:ring-2 focus-within:ring-acento/30">
         <IconoBuscar className="size-5 shrink-0 text-tinta-3" />
         <label htmlFor="codigo-a-buscar" className="sr-only">
-          Código del pedido
+          Qué buscar
         </label>
         <input
           id="codigo-a-buscar"
@@ -126,12 +143,14 @@ export default function PaginaBuscar() {
             setTexto(e.target.value);
             setVisibles(POR_PAGINA);
           }}
-          inputMode="text"
+          inputMode={campo === "telefono" ? "tel" : "text"}
           autoComplete="off"
           autoCapitalize="off"
           spellCheck={false}
-          placeholder="Código o parte de él"
-          className="min-h-12 min-w-0 flex-1 bg-transparent font-mono text-sm outline-none placeholder:text-tinta-3"
+          placeholder={CAMPOS.find((c) => c.id === campo)?.marcador}
+          className={`min-h-12 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-tinta-3 ${
+            campo === "codigo" || campo === "telefono" ? "font-mono" : ""
+          }`}
         />
         {texto && (
           <button
@@ -145,7 +164,30 @@ export default function PaginaBuscar() {
         )}
       </div>
 
-      <section className="tarjeta flex flex-col gap-3" aria-label="Rango de días">
+      <Pestanas
+        etiqueta="Buscar por"
+        actual={campo}
+        alCambiar={(id) => {
+          setCampo(id as CampoDeBusqueda);
+          setTexto("");
+          setVisibles(POR_PAGINA);
+        }}
+        items={CAMPOS.map((c) => ({ id: c.id, etiqueta: c.etiqueta }))}
+      />
+      {campo !== "codigo" && (
+        <p className="-mt-2 text-xs text-tinta-3">
+          Busca solo en los pedidos donde guardaste {campo === "cliente" ? "el nombre" : campo === "telefono" ? "el teléfono" : "la dirección"}.
+        </p>
+      )}
+
+      <Acordeon
+        titulo="Rango de días"
+        resumen={
+          desde === hasta
+            ? formatearFecha(desde)
+            : `${formatearFecha(desde).slice(0, 5)} – ${formatearFecha(hasta).slice(0, 5)}`
+        }
+      >
         <div className="flex flex-wrap gap-2" role="group" aria-label="Atajos de rango">
           {ATAJOS.map((a) => {
             const activo = hasta === hoy && desde === sumarDias(hoy, -(a.dias - 1));
@@ -205,7 +247,7 @@ export default function PaginaBuscar() {
             }}
           />
         </div>
-      </section>
+      </Acordeon>
 
       <div className="flex items-baseline justify-between gap-3" aria-live="polite">
         <h2 className="text-base">
@@ -227,14 +269,14 @@ export default function PaginaBuscar() {
           <Vacio>
             <b className="block text-tinta">Ningún pedido</b>
             {limpio ? `con «${limpio}» ` : ""}entre el {formatearFecha(desde)} y el{" "}
-            {formatearFecha(hasta)}. Amplía el rango o revisa el código.
+            {formatearFecha(hasta)}. Amplía el rango o revisa {campo === "codigo" ? "el código" : "lo que escribiste"}.
           </Vacio>
         )}
 
         {grupos.map(([fecha, pedidos]) => (
           <section key={fecha} className="tarjeta flex flex-col p-0" aria-label={formatearFecha(fecha)}>
             <Link
-              href={`/jornada?fecha=${fecha}`}
+              href={`/?dia=${fecha}`}
               className="flex min-h-11 items-center justify-between gap-2 rounded-t-card bg-sup-2 px-4 text-sm font-bold"
             >
               <span className="capitalize">
@@ -249,7 +291,7 @@ export default function PaginaBuscar() {
               {pedidos.map((p) => (
                 <li key={`${p.fecha}-${p.codigo}`}>
                   <Link
-                    href={`/jornada?fecha=${p.fecha}`}
+                    href={`/?dia=${p.fecha}`}
                     className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 border-t border-linea px-4 py-3"
                   >
                     <span className="codigo min-w-0 truncate">{resaltar(p.codigo, limpio)}</span>
@@ -263,10 +305,39 @@ export default function PaginaBuscar() {
                           {p.horaInicio}–{p.horaFin}
                         </span>
                       )}
+                      {p.tramo > 1 && (
+                        <span className="rounded-chip border border-linea-fuerte px-2 py-0.5 font-mono text-tinta-2">
+                          {p.tramo === 6 ? "+12 km" : `T${p.tramo}`}
+                        </span>
+                      )}
+                      {p.km !== null && <span className="font-mono">{p.km.toFixed(1)} km</span>}
                     </span>
                     <span className="monto justify-self-end text-xs text-tinta-2">
                       {formatearSoles(p.montoCentimos ?? 0)}
                     </span>
+                    {/* Lo que se guardó del cliente: es lo que se buscó, y lo que dice de quién es. */}
+                    {p.cliente && (p.cliente.nombre || p.cliente.telefono || p.cliente.direccion) && (
+                      <span className="col-span-2 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-tinta-2">
+                        {p.cliente.nombre && (
+                          <span className="inline-flex items-center gap-1">
+                            <Usuario className="size-3.5" />
+                            {resaltarTexto(p.cliente.nombre, campo === "cliente" ? limpio : "")}
+                          </span>
+                        )}
+                        {p.cliente.telefono && (
+                          <span className="inline-flex items-center gap-1 font-mono">
+                            <Telefono className="size-3.5" />
+                            {p.cliente.telefono}
+                          </span>
+                        )}
+                        {p.cliente.direccion && (
+                          <span className="inline-flex min-w-0 items-center gap-1">
+                            <Pin className="size-3.5 shrink-0" />
+                            <span className="truncate">{resaltarTexto(p.cliente.direccion, campo === "direccion" ? limpio : "")}</span>
+                          </span>
+                        )}
+                      </span>
+                    )}
                   </Link>
                 </li>
               ))}
@@ -311,6 +382,22 @@ function resaltar(codigo: string, buscado: string): React.ReactNode {
         {codigo.slice(i, i + buscado.length)}
       </mark>
       {codigo.slice(i + buscado.length)}
+    </>
+  );
+}
+
+/** Lo buscado resaltado dentro de un texto, sin distinguir tildes ni mayúsculas. */
+function resaltarTexto(texto: string, buscado: string): React.ReactNode {
+  if (!buscado) return texto;
+  const sinTildes = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  // Quitar las tildes no cambia el largo de un texto ya compuesto (NFC → NFD → sin marcas).
+  const i = sinTildes(texto).indexOf(sinTildes(buscado));
+  if (i === -1 || sinTildes(texto).length !== texto.length) return texto;
+  return (
+    <>
+      {texto.slice(0, i)}
+      <mark className="rounded-sm bg-acento/25 px-0.5 text-inherit">{texto.slice(i, i + buscado.length)}</mark>
+      {texto.slice(i + buscado.length)}
     </>
   );
 }

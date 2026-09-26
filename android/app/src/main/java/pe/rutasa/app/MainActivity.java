@@ -8,6 +8,7 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         // Un plugin propio se registra antes de que arranque el puente.
         registerPlugin(LectorTextoPlugin.class);
+        registerPlugin(GeocodificadorPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

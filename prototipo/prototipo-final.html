@@ -1,0 +1,1925 @@
+<!doctype html>
+<html lang="es" data-skin="turbo">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rutas-A · Prototipo final</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=Bricolage+Grotesque:wght@600;700;800&family=DM+Sans:wght@400;500;700&family=Figtree:wght@400;500;600;700&family=Fredoka:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Nunito:wght@500;600;700;800&family=Unbounded:wght@500;700&display=swap">
+<style>
+/* ═══════════ La página (el escenario) ═══════════ */
+:root{--pg:#eceef3;--pg-card:#fff;--pg-ink:#14161d;--pg-mut:#586071;--pg-line:#d8dce6;--pg-chip:#e2e5ee;--pg-acc:#3a45c4;--pg-stage:#e4e7ef}
+@media (prefers-color-scheme:dark){:root{--pg:#111318;--pg-card:#191c23;--pg-ink:#eceef3;--pg-mut:#9aa2b2;--pg-line:#2b303b;--pg-chip:#242832;--pg-acc:#a5b4ff;--pg-stage:#171a21}}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--pg);color:var(--pg-ink);font:15px/1.55 "DM Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased;padding:0 clamp(16px,4vw,40px) 72px}
+.wrap{max-width:1240px;margin-inline:auto}
+h1,h2,h3,p,ul,figure{margin:0}
+.rot{font:500 11px/1 "JetBrains Mono",ui-monospace,monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--pg-mut)}
+.cab{padding-block:44px 22px;display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+.cab h1{font-size:clamp(32px,5.5vw,56px);line-height:1.03;letter-spacing:-.03em;font-weight:700;max-width:18ch;text-wrap:balance}
+.lead{max-width:66ch;color:var(--pg-mut);font-size:16.5px}
+.claves{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:8px}
+.clave{background:var(--pg-card);border:1px solid var(--pg-line);border-radius:14px;padding:14px 16px;display:grid;gap:4px;align-content:start}
+.clave b{font-size:14.5px}.clave span{color:var(--pg-mut);font-size:13.5px}
+.barra{position:sticky;top:0;z-index:50;margin-inline:calc(-1*clamp(16px,4vw,40px));padding:10px clamp(16px,4vw,40px);background:color-mix(in srgb,var(--pg) 90%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--pg-line)}
+.barra .wrap{display:flex;flex-wrap:wrap;gap:8px 22px;align-items:center;justify-content:space-between}
+.grupo{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.grupo .rot{margin-right:4px}
+.pg-btn{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:99px;background:var(--pg-chip);color:var(--pg-ink);text-decoration:none;font-weight:600;font-size:13.5px;border:0;cursor:pointer;font-family:inherit}
+.pg-btn[aria-pressed="true"]{background:var(--pg-ink);color:var(--pg)}
+.aviso-datos{margin-top:12px;color:var(--pg-mut);font-size:13px;max-width:80ch}
+.op{margin-top:60px;scroll-margin-top:74px;display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
+.op-cab{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+.letra{width:76px;height:76px;border-radius:22px;background:var(--pg-ink);color:var(--pg);display:grid;place-items:center;font-size:40px;font-weight:700;letter-spacing:-.03em}
+.op-cab h2{font-size:clamp(28px,4.4vw,42px);letter-spacing:-.025em;line-height:1.05}
+.pitch{color:var(--pg-mut);max-width:64ch;margin-top:6px}
+.pts{list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.pts li{background:var(--pg-card);border:1px solid var(--pg-line);border-radius:14px;padding:13px 16px;display:grid;gap:3px;align-content:start}
+.pts b{font-size:14px}.pts span{color:var(--pg-mut);font-size:13.5px}
+.stage{border-radius:28px;background:var(--pg-stage);padding:34px clamp(12px,2vw,26px) 22px}
+.phones{display:flex;gap:30px;overflow-x:auto;padding:14px 12px 24px;scroll-snap-type:x proximity;justify-content:safe center}
+.slot{flex:none;display:grid;gap:16px;justify-items:center;scroll-snap-align:center}
+.slot figcaption{font-size:13px;text-align:center;max-width:30ch;line-height:1.4;color:var(--pg-mut)}
+.slot figcaption b{display:block;color:var(--pg-ink);font-size:14px}
+.tip{text-align:center;color:var(--pg-mut);font-size:13px;max-width:78ch;margin:0 auto}
+.comp{margin-top:72px;display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+.comp h2{font-size:clamp(26px,4vw,38px);letter-spacing:-.025em}
+.tabla-p{overflow-x:auto;border:1px solid var(--pg-line);border-radius:16px;background:var(--pg-card)}
+.tabla-p table{border-collapse:collapse;width:100%;min-width:760px;font-size:13.5px}
+.tabla-p th,.tabla-p td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--pg-line);vertical-align:top}
+.tabla-p th{font:500 11px/1.3 "JetBrains Mono",ui-monospace,monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--pg-mut)}
+.tabla-p tr:last-child td{border-bottom:0}
+.tabla-p td:first-child{font-weight:700;white-space:nowrap}
+.voto{background:var(--pg-card);border:2px solid var(--pg-ink);border-radius:18px;padding:20px 22px;display:grid;gap:8px}
+.voto h3{font-size:20px}.voto p{color:var(--pg-mut);max-width:74ch}
+@media (max-width:640px){.op-cab{grid-template-columns:1fr}.letra{width:60px;height:60px;font-size:32px;border-radius:18px}}
+
+/* ═══════════ El teléfono: los tokens son los de la app (globals.css) ═══════════ */
+.ph{
+  /* base = «Mapa» (claro) */
+  --papel:#e6eef8;--sup:#fff;--sup-2:#d9e5f4;--tinta:#0a2260;--tinta-2:#3e5183;--tinta-3:#52658f;--linea:#c4d5ec;--linea-fuerte:#a9bfdf;
+  --acento:#1f5cff;--acento-tinta:#1244cc;--acento-suave:#dce6ff;--acento-texto:#fff;--acento-2:#ffc800;--acento-2-tinta:#0a2260;
+  --bien:#0b7a4d;--bien-suave:#d8f3e4;--aviso:#6f4e00;--aviso-suave:#fff0b8;--mal:#b3261e;--mal-suave:#ffe0db;--descanso:#ffc800;
+  --fd:"Unbounded","DM Sans",system-ui,sans-serif;--ft:"DM Sans",system-ui,sans-serif;--fm:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --zt:.8;--tt:none;--r-chip:999px;--r-btn:12px;--r-card:16px;--r-hoja:24px;--bw:0px;--pad:16px;--pt:700;--track:-.03em;
+  --sombra:0 1px 2px rgb(10 34 96/.06),0 14px 28px -20px rgb(10 34 96/.4);--sombra-alta:0 8px 20px -6px rgb(10 34 96/.2),0 30px 60px -30px rgb(10 34 96/.5);
+  --dia-r:22px;--dia-b:2px solid var(--tinta);--dia-s:3px 3px 0 var(--tinta);--pb:2px solid var(--tinta);--tab-s:0 1px 3px rgb(10 34 96/.28);
+  --nav-s:0 -10px 24px -16px rgb(10 34 96/.5);
+}
+html[data-skin="turbo"] .ph{
+  --papel:#f3efff;--sup:#fff;--sup-2:#ece6ff;--tinta:#1d1246;--tinta-2:#6b5e9c;--tinta-3:#9c8fc7;--linea:#dcd3fa;--linea-fuerte:#1d1246;
+  --acento:#6a4cf5;--acento-tinta:#5636d6;--acento-suave:#e4dbff;--acento-texto:#fff;--acento-2:#ffd23f;--acento-2-tinta:#1d1246;
+  --bien:#0b7a4d;--bien-suave:#d5f7e8;--aviso:#7a5000;--aviso-suave:#ffefc2;--mal:#b3261e;--mal-suave:#ffe1de;--descanso:#ffd23f;
+  --fd:"Fredoka","Nunito",system-ui,sans-serif;--ft:"Nunito",system-ui,sans-serif;--zt:.95;--tt:none;
+  --r-chip:999px;--r-btn:15px;--r-card:20px;--r-hoja:26px;--bw:2px;--pad:18px;--track:0em;
+  --sombra:3px 3px 0 var(--tinta);--sombra-alta:5px 5px 0 var(--tinta);--tab-s:0 0 0 2px var(--tinta);--nav-s:0 -10px 24px -16px rgb(29 18 70/.5);
+}
+html[data-skin="asfalto"] .ph{
+  --papel:#0e1116;--sup:#161b22;--sup-2:#1e252e;--tinta:#eef1f5;--tinta-2:#aab4c2;--tinta-3:#808b9b;--linea:#28303b;--linea-fuerte:#3a4452;
+  --acento:#ff9f1c;--acento-tinta:#ffb84d;--acento-suave:#3a2a0c;--acento-texto:#1a0f00;--acento-2:#5cc8ff;--acento-2-tinta:#0e1116;
+  --bien:#4bdb97;--bien-suave:#10301f;--aviso:#f2d24b;--aviso-suave:#2f2a0f;--mal:#ff7a7a;--mal-suave:#341717;--descanso:#5cc8ff;
+  --fd:"Barlow Condensed","Barlow",system-ui,sans-serif;--ft:"Barlow",system-ui,sans-serif;--zt:1.14;--tt:uppercase;
+  --r-chip:6px;--r-btn:8px;--r-card:10px;--r-hoja:14px;--bw:1px;--pad:14px;--track:.02em;
+  --sombra:none;--sombra-alta:0 8px 20px -6px rgb(0 0 0/.5),0 30px 60px -30px rgb(0 0 0/.9);
+  --dia-r:var(--r-card);--dia-b:0;--dia-s:none;--pb:0;--tab-s:0 0 0 1px var(--linea-fuerte);--nav-s:none;
+}
+.ph{width:360px;height:800px;flex:none;position:relative;display:flex;flex-direction:column;overflow:hidden;border-radius:40px;background:var(--papel);color:var(--tinta);
+  font-family:var(--ft);font-size:15px;line-height:1.45;box-shadow:0 0 0 8px #101216,0 30px 60px -24px rgb(0 0 0/.55);isolation:isolate}
+.ph *{box-sizing:border-box}
+:where(.ph) button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0;text-align:inherit;-webkit-tap-highlight-color:transparent}
+:where(.ph) :is(p,h1,h2,h3,ul,ol,dl,dd){margin:0}
+.ph :focus-visible{outline:2px solid var(--acento);outline-offset:2px}
+.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.fd{font-family:var(--fd);font-weight:var(--pt);letter-spacing:var(--track);text-transform:var(--tt)}
+.mono{font-family:var(--fm);font-variant-numeric:tabular-nums}
+
+/* marco del teléfono */
+.sbar{flex:none;display:flex;justify-content:space-between;align-items:center;padding:12px 26px 4px;font-size:12px;font-weight:700}
+.sbar i{font-style:normal;font-weight:600;opacity:.85}
+.hd{flex:none;display:flex;align-items:center;gap:10px;padding:6px 16px 10px;border-bottom:1px solid var(--linea)}
+.hd .auto{width:44px;flex:none}
+.hd h1{font-family:var(--fd);font-weight:var(--pt);font-size:calc(22px*var(--zt));letter-spacing:var(--track);text-transform:var(--tt);line-height:1.1}
+.scroll{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:14px 16px 24px;display:flex;flex-direction:column;gap:14px;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+.dyn{display:flex;flex-direction:column;gap:14px}
+.nav{flex:none;display:grid;grid-template-columns:repeat(5,1fr);align-items:end;background:var(--sup);border-top:1px solid var(--linea);border-radius:20px 20px 0 0;padding:8px 4px 14px;box-shadow:var(--nav-s);position:relative;z-index:5}
+.nv{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;min-height:52px;font-size:11px;font-weight:700;color:var(--tinta-2)}
+.nv .ic{width:24px;height:24px}
+.nv.on{color:var(--acento)}
+.boton-auto{--auto-fondo:var(--acento-2);display:grid;place-items:center;width:52px;height:36px;border-radius:var(--r-btn);background:var(--acento-2);color:var(--acento-2-tinta)}
+.boton-auto .auto{width:36px}
+html[data-skin="asfalto"] .boton-auto{--auto-fondo:var(--acento);background:var(--acento);color:var(--acento-texto)}
+
+/* el auto de la marca (globals.css) */
+.auto{overflow:visible;--a-cuerpo:var(--acento-2);--a-vidrio:#fff;--a-rueda:var(--tinta);--a-buje:var(--papel);--a-faro:#fff;--a-borde:var(--tinta);--a-estela:var(--acento)}
+.auto .c-oscuro{display:none}
+html[data-skin="asfalto"] .auto .c-claro{display:none}
+html[data-skin="asfalto"] .auto .c-oscuro{display:inline}
+html[data-skin="asfalto"] .auto{--a-cuerpo:var(--acento);--a-vidrio:var(--papel);--a-rueda:var(--linea-fuerte);--a-buje:var(--tinta);--a-faro:var(--tinta);--a-borde:transparent}
+.auto--sobre-acento{--a-estela:var(--acento-texto)}
+html[data-skin="asfalto"] .auto--sobre-acento{--a-cuerpo:var(--acento-texto);--a-vidrio:var(--acento);--a-rueda:var(--acento-texto);--a-buje:var(--acento);--a-faro:var(--acento)}
+.auto--mono,html[data-skin="asfalto"] .auto--mono{--a-cuerpo:currentColor;--a-rueda:currentColor;--a-estela:currentColor;--a-borde:transparent;--a-vidrio:var(--auto-fondo,transparent);--a-buje:var(--auto-fondo,transparent);--a-faro:var(--auto-fondo,transparent)}
+.auto--gris{--a-cuerpo:var(--linea);--a-estela:var(--linea-fuerte);--a-borde:var(--linea-fuerte);--a-rueda:var(--linea-fuerte);--a-vidrio:var(--sup)}
+html[data-skin="asfalto"] .auto--gris{--a-cuerpo:var(--linea-fuerte);--a-vidrio:var(--sup);--a-rueda:var(--linea)}
+.auto-cuerpo{fill:var(--a-cuerpo)}.auto-borde{stroke:var(--a-borde);stroke-width:2.6;stroke-linejoin:round;paint-order:stroke}
+.auto-vidrio{fill:var(--a-vidrio)}.auto-faro{fill:var(--a-faro)}.auto-rueda{fill:var(--a-rueda)}.auto-buje{fill:var(--a-buje)}
+.auto-estela path{fill:none;stroke:var(--a-estela)}
+
+/* ── La barra de semanas ── */
+.sh{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+.sh-t{min-width:0}
+.sh-t b{display:block;font-family:var(--fd);font-weight:var(--pt);font-size:calc(22px*var(--zt));line-height:1.12;letter-spacing:var(--track);text-transform:var(--tt);text-wrap:balance}
+.sh-t small{display:block;color:var(--tinta-3);font-size:12.5px;margin-top:3px}
+.sh-a{display:flex;align-items:center;gap:4px;flex:none}
+.hoy-p{font-size:12px;font-weight:800;color:var(--acento-tinta);text-decoration:underline;text-underline-offset:2px;padding:10px 6px;white-space:nowrap}
+.ibtn{position:relative;width:44px;height:44px;border-radius:var(--r-btn);border:1px solid var(--linea-fuerte);background:var(--sup);display:grid;place-items:center;flex:none}
+.ibtn input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.strip{position:relative;margin:10px 0 0;clip-path:inset(-4px 0);touch-action:pan-y;user-select:none;-webkit-user-select:none;cursor:grab}
+.strip.abierto{clip-path:inset(-4px -16px)}          /* mientras se arrastra, las semanas vecinas llegan desde el borde del teléfono */
+.strip:active{cursor:grabbing}
+.track{display:flex;gap:5px;width:max-content;transform:translateX(calc(-1*(var(--sw,328px) + 5px)));will-change:transform}
+.track.anim{transition:transform .32s cubic-bezier(.2,.8,.2,1)}
+.wk{width:var(--sw,328px);flex:none;display:grid;grid-template-columns:repeat(7,1fr);gap:5px;padding:2px 0 4px}
+.chip{min-height:66px;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;border-radius:var(--r-btn);border:1px solid var(--linea);background:var(--sup-2);color:var(--tinta-2);font-size:11.5px}
+.chip .cl{font-weight:700}
+.chip .cn{font-size:16px;font-weight:800;line-height:1.1;color:var(--tinta)}
+.chip .cs{height:14px;display:flex;align-items:center;justify-content:center;font:700 10px/1 var(--fm)}
+.chip.on{background:var(--acento);border-color:var(--acento);color:var(--acento-texto)}
+.chip.on .cn{color:var(--acento-texto)}
+.chip.hoy:not(.on){border-color:var(--acento);color:var(--acento-tinta)}
+.chip.fut{opacity:.42}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--acento);display:block}
+.chip.on .dot{background:var(--acento-texto)}
+.ring{width:7px;height:7px;border-radius:50%;border:1.6px solid var(--tinta-3);display:block}
+.chip.on .ring{border-color:var(--acento-texto)}
+.chip .lun{width:12px;height:12px;stroke-width:2.2;color:var(--tinta-2)}
+.chip.on .lun{color:var(--acento-texto)}
+
+/* ── Piezas ── */
+.dia{position:relative;overflow:hidden;border-radius:var(--dia-r);padding:16px 16px 14px;background:var(--acento);color:var(--acento-texto);border:var(--dia-b);box-shadow:var(--dia-s);min-height:152px}
+.dia .enc{font-size:13px;font-weight:700;opacity:.92}
+.dia .cif{font-family:var(--fd);font-weight:var(--pt);font-size:calc(54px*var(--zt));line-height:.98;letter-spacing:var(--track);font-variant-numeric:tabular-nums}
+.dia .pie{font-size:13px;font-weight:700;opacity:.92}
+.pastilla{display:inline-flex;margin-top:9px;padding:3px 12px;border-radius:99px;border:var(--pb);background:var(--acento-2);color:var(--acento-2-tinta);font:700 15px/1.5 var(--fm)}
+html[data-skin="asfalto"] .dia .pastilla{background:var(--acento-texto);color:var(--acento)}
+.dia .auto{position:absolute;right:-8px;bottom:12px;width:44%;max-width:170px;transform:rotate(-4deg);pointer-events:none}
+.card{background:var(--sup);border:var(--bw) solid var(--linea-fuerte);border-radius:var(--r-card);padding:var(--pad);box-shadow:var(--sombra)}
+.vacia{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:center}
+.vacia .auto{width:74px;grid-row:span 2}
+.vacia b{font-family:var(--fd);font-weight:var(--pt);font-size:calc(17px*var(--zt));letter-spacing:var(--track);text-transform:var(--tt)}
+.vacia p{color:var(--tinta-2);font-size:13.5px;grid-column:2}
+.vacia .btn-sec{grid-column:1/-1;margin-top:8px}
+.desc{display:flex;align-items:center;gap:12px}
+.desc .lu{width:44px;height:44px;border-radius:50%;background:var(--descanso);color:var(--acento-2-tinta);display:grid;place-items:center;flex:none}
+html[data-skin="asfalto"] .desc .lu{color:var(--papel)}
+.desc div{flex:1;min-width:0}.desc b{display:block}.desc p{color:var(--tinta-2);font-size:13.5px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:58px;padding:12px 16px;border-radius:var(--r-btn);background:var(--acento);color:var(--acento-texto);
+  font-family:var(--fd);font-weight:var(--pt);font-size:calc(21px*var(--zt));text-transform:var(--tt);letter-spacing:var(--track);box-shadow:0 10px 24px -14px var(--acento);justify-content:center;text-align:center}
+.btn.md{min-height:48px;font-size:calc(17px*var(--zt))}
+.btn:active,.btn-sec:active,.opt:active,.puerta:active,.mrow:active{transform:translateY(1px)}
+.btn .ic.lg{width:24px;height:24px;stroke-width:2.2}
+.btn-sec{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:8px 16px;border:1px solid var(--linea-fuerte);border-radius:var(--r-btn);background:var(--sup);font-weight:700;font-size:14.5px}
+.btn-sec.sm{min-height:40px;font-size:13.5px;padding:6px 14px}
+.hint{color:var(--tinta-3);font-size:12px;margin-top:8px;line-height:1.4}
+.lnk{display:inline-flex;align-items:center;gap:6px;min-height:44px;color:var(--acento-tinta);font-weight:800;font-size:14px}
+.lnk .ic{width:16px;height:16px;transition:transform .2s}.lnk .ic.up{transform:rotate(180deg)}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 9px 3px 7px;border-radius:var(--r-chip);font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.tag .ic{width:12px;height:12px;stroke-width:2.6}
+.tag.ok{background:var(--bien-suave);color:var(--bien)}.tag.warn{background:var(--aviso-suave);color:var(--aviso)}.tag.inf{background:var(--acento-suave);color:var(--acento-tinta)}
+
+/* acordeón */
+.acc{background:var(--sup);border:var(--bw) solid var(--linea-fuerte);border-radius:var(--r-card);box-shadow:var(--sombra);overflow:hidden}
+.acc-h{display:flex;align-items:center;gap:10px;width:100%;padding:12px var(--pad);min-height:62px}
+.acc-t{flex:1;min-width:0}
+.acc-t b{display:block;font-family:var(--fd);font-weight:var(--pt);font-size:calc(17px*var(--zt));letter-spacing:var(--track);text-transform:var(--tt);line-height:1.2}
+.acc-t small{display:block;color:var(--tinta-3);font-size:12.5px;line-height:1.35;margin-top:1px}
+.acc-t small.al{color:var(--aviso);font-weight:700}
+.acc-h>.ic{color:var(--tinta-3);transition:transform .22s;width:22px;height:22px}
+.acc.open .acc-h>.ic{transform:rotate(180deg)}
+.acc-b{display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s ease}
+.acc.open .acc-b{grid-template-rows:1fr}
+.acc-i{overflow:hidden;min-height:0;visibility:hidden;transition:visibility 0s .28s}
+.acc.open .acc-i{visibility:visible;transition-delay:0s}
+.acc-c{padding:14px var(--pad) var(--pad);border-top:1px solid var(--linea);display:flex;flex-direction:column;gap:14px}
+
+/* pestañas */
+.tabs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;padding:4px;background:var(--sup-2);border-radius:var(--r-btn)}
+.tab{min-height:42px;border-radius:calc(var(--r-btn) - 3px);font-weight:800;font-size:14px;color:var(--tinta-2);display:flex;align-items:center;justify-content:center;gap:6px}
+.tab.on{background:var(--sup);color:var(--tinta);box-shadow:var(--tab-s)}
+.tab .n{font:700 11px/1.5 var(--fm);background:var(--acento-suave);color:var(--acento-tinta);border-radius:99px;padding:0 7px}
+
+/* puertas (hoja inferior) */
+
+/* listas */
+.lista{border:1px solid var(--linea);border-radius:var(--r-card);background:var(--sup);overflow:hidden}
+.fila{display:flex;flex-direction:column;gap:6px;width:100%;padding:11px 14px;border-bottom:1px solid var(--linea)}
+.fila:last-child{border-bottom:0}
+.fila.pc{background:color-mix(in srgb,var(--aviso-suave) 55%,var(--sup))}
+.f1{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.cod{font:500 14px/1.3 var(--fm);letter-spacing:-.01em}
+.mo{font:500 12px/1 var(--fm);color:var(--tinta-3)}
+.pc-t{font-weight:800;font-size:14px;color:var(--aviso)}
+.f2{display:flex;flex-wrap:wrap;align-items:center;gap:5px 8px;font-size:12px}
+.p-ruta{display:inline-flex;gap:4px;padding:3px 10px;border-radius:var(--r-chip);background:var(--acento-suave);color:var(--acento-tinta);font-weight:700}
+.p-ruta i{font:500 11.5px/1.4 var(--fm);opacity:.85}
+.p-sin{padding:3px 10px;border-radius:var(--r-chip);background:var(--aviso-suave);color:var(--aviso);font-weight:700}
+.est{font-weight:600;color:var(--tinta-2)}.est.ok{color:var(--bien)}
+.tr{border:1px solid var(--linea-fuerte);border-radius:var(--r-chip);padding:0 8px;font:500 11.5px/1.6 var(--fm);color:var(--tinta-2)}
+.mut{color:var(--tinta-3)}
+.paradas{list-style:none;padding:0}
+.par{position:relative;display:grid;grid-template-columns:26px 1fr auto;gap:12px;align-items:center;padding:8px 0}
+.par::before{content:"";position:absolute;left:12px;top:0;bottom:0;border-left:2px dashed color-mix(in srgb,var(--acento) 40%,transparent)}
+.par.p1::before{top:50%}.par.pn::before{bottom:50%}
+.pin{position:relative;z-index:1;width:26px;height:26px;transform:rotate(-45deg);border-radius:50% 50% 50% 4px;background:var(--acento);color:var(--acento-texto);display:grid;place-items:center}
+.pin b{transform:rotate(45deg);font:700 11px/1 var(--fm)}
+.par b.t{display:block;font-size:14px}
+.par .h{font:500 12px/1.3 var(--fm);color:var(--tinta-3)}
+.par .np{border-radius:var(--r-chip);background:var(--sup-2);padding:2px 10px;font-size:11.5px;font-weight:700;color:var(--tinta-2);white-space:nowrap}
+.vacio{color:var(--tinta-3);font-size:14px;padding:4px 0}
+.mas-l{border:1px solid var(--linea);border-radius:var(--r-card);overflow:hidden;background:var(--sup)}
+.mrow{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:6px 14px;border-bottom:1px solid var(--linea);font-size:14px;font-weight:600}
+.mrow:last-child{border-bottom:0}
+.mrow span{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.mrow em{font:500 12.5px/1 var(--fm);font-style:normal;color:var(--tinta-3)}
+.mrow>.ic:last-child{width:16px;height:16px;color:var(--tinta-3)}
+.mrow.mal{color:var(--mal)}
+.rotulo{font:500 11px/1 var(--fm);letter-spacing:.08em;text-transform:uppercase;color:var(--tinta-3)}
+.grp{display:flex;flex-direction:column;gap:8px}
+
+/* opciones de «subir más» */
+.opt{display:flex;align-items:center;gap:12px;width:100%;min-height:58px;padding:9px 14px;border:1px solid var(--linea-fuerte);border-radius:var(--r-btn);background:var(--sup)}
+.opt .oi{width:36px;height:36px;border-radius:50%;background:var(--acento-suave);color:var(--acento-tinta);display:grid;place-items:center;flex:none}
+.opt b{display:block;font-size:14.5px;line-height:1.25}.opt small{display:block;color:var(--tinta-3);font-size:12.5px;line-height:1.3}
+.opt.on{border-color:var(--acento);background:var(--acento-suave)}
+.form{display:flex;flex-direction:column;gap:10px;padding:12px;margin-top:-2px;border:1px dashed var(--linea-fuerte);border-radius:var(--r-btn);background:var(--sup-2)}
+.form label{font-size:12.5px;font-weight:800;color:var(--tinta-2);display:block;margin-bottom:4px}
+.inp{display:block;width:100%;min-height:44px;border:1px solid var(--linea-fuerte);border-radius:var(--r-btn);background:var(--sup);color:var(--tinta);padding:0 12px;font:inherit;font-size:15px}
+.dos{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stepper{display:flex;align-items:center;justify-content:center;gap:14px}
+.stepper button{width:48px;height:48px;border-radius:50%;border:1px solid var(--linea-fuerte);background:var(--sup);display:grid;place-items:center}
+.stepper b{font-family:var(--fd);font-weight:var(--pt);font-size:calc(34px*var(--zt));min-width:56px;text-align:center;font-variant-numeric:tabular-nums}
+
+/* pagos */
+.hero{background:var(--sup);border:var(--bw) solid var(--linea-fuerte);border-radius:var(--r-card);box-shadow:var(--sombra);padding:var(--pad);display:grid;gap:6px}
+.hero-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.hero-top .rotulo{color:var(--tinta-2)}
+.hero-monto{font-family:var(--fd);font-weight:var(--pt);font-size:calc(44px*var(--zt));line-height:1.02;color:var(--acento);letter-spacing:var(--track);font-variant-numeric:tabular-nums}
+.hero-pie{color:var(--tinta-2);font-size:13.5px}
+.segs{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:6px}
+.segs i{height:5px;border-radius:9px;background:var(--linea)}
+.segs i.on{background:var(--acento)}.segs i.rs{background:var(--descanso)}
+.hero-pago{display:flex;align-items:center;gap:8px;color:var(--tinta-2);font-size:13.5px;padding-top:8px;margin-top:4px;border-top:1px solid var(--linea)}
+.hero-pago .ic{width:18px;height:18px}
+.dl>div{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:8px 0;border-bottom:1px solid var(--linea);font-size:14px}
+.dl>div:last-child{border-bottom:0}
+.dl dt{color:var(--tinta-2)}.dl dd{font:500 13.5px/1.3 var(--fm);text-align:right}
+.diar{border:1px solid var(--linea);border-radius:var(--r-card);background:var(--sup);overflow:hidden}
+.diar+.diar{margin-top:8px}
+.diar.on{border-color:var(--acento);box-shadow:0 0 0 1px var(--acento)}
+.dia-h{display:grid;grid-template-columns:38px 1fr auto;gap:8px;align-items:center;width:100%;min-height:56px;padding:8px 12px}
+.dia-h .dn{line-height:1.15}.dia-h .dn b{display:block;font-size:14px}.dia-h .dn span{font:600 12px/1 var(--fm);color:var(--tinta-3)}
+.dia-h .dm{font-size:12px;color:var(--tinta-2);line-height:1.3}
+.dia-h .dv{font:700 13px/1 var(--fm);text-align:right;display:flex;align-items:center;gap:2px;justify-content:flex-end}
+.dia-h.vac .dv,.dia-h.vac .dm{color:var(--tinta-3)}
+.dia-h .ic{width:16px;height:16px;color:var(--tinta-3);transition:transform .2s}
+.diar.exp .dia-h .ic{transform:rotate(180deg)}
+.dia-b{padding:4px 12px 14px;border-top:1px solid var(--linea)}
+.dd{display:flex;flex-direction:column;gap:12px;padding-top:10px}
+.dd-k{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.dd-k>div{background:var(--sup-2);border-radius:var(--r-btn);padding:8px 6px;text-align:center}
+.dd-k b{display:block;font-family:var(--fd);font-weight:var(--pt);font-size:calc(19px*var(--zt));line-height:1.1;letter-spacing:var(--track)}
+.dd-k span{font-size:11.5px;color:var(--tinta-2);font-weight:700}
+.duelo{display:flex;flex-direction:column;gap:8px}
+.d-r{display:grid;grid-template-columns:1fr auto;gap:5px 8px;align-items:center;font-size:12px}
+.d-r .bar{grid-column:1/-1;order:3}
+.d-r span{color:var(--tinta-2);font-weight:700;line-height:1.2}
+.d-r .bar{height:12px;border-radius:9px;background:var(--linea);overflow:hidden}
+.d-r .bar i{display:block;height:100%;width:var(--w);background:var(--tinta-3);border-radius:9px}
+.d-r.win .bar i{background:var(--acento)}
+.d-r em{font:700 12px/1 var(--fm);font-style:normal}
+.nota{color:var(--tinta-2);font-size:12.5px;line-height:1.45}
+.nota b{color:var(--tinta)}
+.falta{background:var(--aviso-suave);color:var(--aviso);border-radius:var(--r-card);padding:14px;display:flex;flex-direction:column;gap:10px}
+.falta .ft{display:flex;gap:10px;align-items:flex-start}
+.falta .ft .ic{margin-top:1px}
+.falta b{font-size:15px}
+.falta p{font-size:13.5px;line-height:1.4}
+.cfs{display:flex;flex-wrap:wrap;gap:7px}
+.cf{padding:8px 13px;border-radius:99px;border:1.5px solid var(--aviso);font-weight:800;font-size:13px;min-height:38px}
+.cf.on{background:var(--aviso);color:var(--aviso-suave)}
+.cfs.desc .cf{background:var(--sup);color:var(--tinta);border-color:var(--linea-fuerte);display:inline-flex;align-items:center;gap:6px;font-weight:700}
+.cfs.desc .cf .ic{width:14px;height:14px}
+.fila-in{display:grid;grid-template-columns:1fr auto;gap:8px}
+.fila-in .btn{width:auto;min-height:44px;padding:8px 14px;font-size:calc(16px*var(--zt))}
+.tabla{width:100%;border-collapse:collapse;font-size:13px}
+.tabla th{text-align:left;font:500 10.5px/1 var(--fm);letter-spacing:.07em;text-transform:uppercase;color:var(--tinta-3);padding:6px 8px;border-bottom:1px solid var(--linea-fuerte)}
+.tabla td{padding:9px 8px;border-bottom:1px solid var(--linea)}
+.tabla .num{text-align:right;font:500 13px/1 var(--fm)}
+.tabla tr:last-child td{border-bottom:0}
+.sem-r{display:flex;align-items:center;gap:10px;width:100%;padding:11px 14px;border-bottom:1px solid var(--linea);min-height:60px}
+.sem-r:last-child{border-bottom:0}
+.sem-r.on{background:var(--acento-suave)}
+.sem-r .a{flex:1;min-width:0}.sem-r .a b{display:block;font:500 13.5px/1.3 var(--fm)}.sem-r .a small{color:var(--tinta-3);font-size:12px}
+.sem-r .b{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.sem-r .b em{font:700 13.5px/1 var(--fm);font-style:normal}
+.dif{color:var(--mal);font-weight:800;font-size:13.5px}.dif.mas{color:var(--bien)}
+
+/* hoja inferior y aviso */
+.sheet-w{position:absolute;inset:0;z-index:40;pointer-events:none}
+.sheet-w .scrim{position:absolute;inset:0;background:rgb(0 0 0/.5);opacity:0;transition:opacity .28s}
+.sheet{position:absolute;left:0;right:0;bottom:0;max-height:86%;display:flex;flex-direction:column;background:var(--papel);border-radius:var(--r-hoja) var(--r-hoja) 0 0;transform:translateY(103%);transition:transform .34s cubic-bezier(.2,.8,.2,1);box-shadow:var(--sombra-alta);border-top:var(--bw) solid var(--linea-fuerte)}
+.sheet-w.open{pointer-events:auto}.sheet-w.open .scrim{opacity:1}.sheet-w.open .sheet{transform:none}
+.grab{width:42px;height:4px;border-radius:9px;background:var(--linea-fuerte);margin:9px auto 0;flex:none}
+.sh-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 16px 10px;flex:none}
+.sh-h b{font-family:var(--fd);font-weight:var(--pt);font-size:calc(20px*var(--zt));letter-spacing:var(--track);text-transform:var(--tt);line-height:1.15}
+.sh-h .x{width:44px;height:44px;border-radius:50%;background:var(--sup-2);display:grid;place-items:center;flex:none}
+.sh-b{overflow-y:auto;padding:0 16px 26px;display:flex;flex-direction:column;gap:14px;scrollbar-width:none;min-height:0}
+.sh-b::-webkit-scrollbar{display:none}
+.toast{position:absolute;left:18px;right:18px;bottom:92px;z-index:60;background:#14161d;color:#fff;border-radius:12px;padding:10px 14px;font-size:13px;line-height:1.35;opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none;text-align:center}
+.toast.show{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.track.anim,.acc-b,.sheet,.sheet-w .scrim{transition-duration:.01ms}}
+
+/* ═══════════ Final: piezas nuevas ═══════════ */
+html[data-skin="menta"] .ph{
+  --papel:#eef4f2;--sup:#fff;--sup-2:#e1ece9;--tinta:#0c1a18;--tinta-2:#566b67;--tinta-3:#7e938e;--linea:#d3e1de;--linea-fuerte:#b9ccc7;
+  --acento:#0b857b;--acento-tinta:#076158;--acento-suave:#dcefec;--acento-texto:#fff;--acento-2:#ff7a5c;--acento-2-tinta:#0c1a18;
+  --bien:#0b7a52;--bien-suave:#dcf2e8;--aviso:#8f5c08;--aviso-suave:#fcefd6;--mal:#b93228;--mal-suave:#fbe5e2;--descanso:#ff7a5c;
+  --fd:"Bricolage Grotesque","Figtree",system-ui,sans-serif;--ft:"Figtree",system-ui,sans-serif;--zt:1;--tt:none;
+  --r-chip:999px;--r-btn:14px;--r-card:20px;--r-hoja:24px;--bw:0px;--pad:20px;--track:-.02em;
+  --sombra:0 1px 2px rgb(12 26 24/.05),0 14px 30px -20px rgb(12 26 24/.35);--sombra-alta:0 8px 20px -6px rgb(12 26 24/.18),0 30px 60px -30px rgb(12 26 24/.5);
+  --dia-r:var(--r-card);--dia-b:0;--dia-s:var(--sombra-alta);--pb:0;--tab-s:0 1px 3px rgb(12 26 24/.25);--nav-s:0 -10px 24px -16px rgb(12 26 24/.4);
+}
+html[data-skin="menta"] .boton-auto{--auto-fondo:var(--acento);background:var(--acento);color:var(--acento-texto)}
+html[data-skin="menta"] .auto{--a-borde:transparent}
+
+.nuevo{display:inline-flex;align-items:center;margin-left:8px;padding:1px 7px;border-radius:99px;background:var(--acento-2);color:var(--acento-2-tinta);font:800 9.5px/1.7 var(--ft);letter-spacing:.06em;text-transform:uppercase;vertical-align:middle;white-space:nowrap}
+html[data-skin="asfalto"] .nuevo{color:var(--papel)}
+.mini{width:14px;height:14px;stroke-width:2.2;color:var(--tinta-3)}
+.f2 .km{font:500 11.5px/1 var(--fm);color:var(--tinta-2)}
+.f2 .marks{display:inline-flex;gap:6px;margin-left:auto;align-items:center}
+button.fila{text-align:left}
+.tabs.t4 .tab{font-size:13px;padding:0 2px}
+.tab .pt{width:6px;height:6px;border-radius:50%;background:var(--acento);display:inline-block}
+.campo{display:block;min-width:0}
+.campo>label{display:flex;align-items:center;flex-wrap:wrap;font-size:12.5px;font-weight:800;color:var(--tinta-2);margin-bottom:4px}
+.opc{font-weight:600;color:var(--tinta-3);margin-left:6px;font-size:11.5px}
+.inp.dud{border-color:var(--aviso);background:color-mix(in srgb,var(--aviso-suave) 55%,var(--sup))}
+.inp.no{border-color:var(--mal);background:color-mix(in srgb,var(--mal-suave) 55%,var(--sup))}
+.cnf{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:800;margin-left:6px;padding:1px 7px 1px 5px;border-radius:99px}
+.cnf .ic{width:11px;height:11px;stroke-width:2.8}
+.cnf.ok{background:var(--bien-suave);color:var(--bien)}.cnf.dud{background:var(--aviso-suave);color:var(--aviso)}.cnf.no{background:var(--mal-suave);color:var(--mal)}
+.sw-r{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--linea)}
+.sw-r:last-child{border-bottom:0}
+.sw-r>span{flex:1;min-width:0;line-height:1.3}
+.sw-r b{display:block;font-size:14.5px}.sw-r small{display:block;color:var(--tinta-3);font-size:12.5px;margin-top:1px}
+.sw{position:relative;width:48px;height:28px;flex:none}
+.sw input{position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;cursor:pointer;z-index:1}
+.sw i{position:absolute;inset:0;border-radius:99px;background:var(--tinta-3);transition:background .2s}
+.sw i::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--sup);transition:transform .2s}
+.sw input:checked+i{background:var(--acento)}.sw input:checked+i::after{transform:translateX(20px)}
+.sw input:focus-visible+i{outline:2px solid var(--acento);outline-offset:2px}
+.aviso{display:flex;gap:10px;border-radius:var(--r-btn);padding:10px 12px;font-size:13px;line-height:1.4}
+.aviso .ic{width:18px;height:18px;margin-top:1px}
+.aviso.ok{background:var(--bien-suave);color:var(--bien)}.aviso.warn{background:var(--aviso-suave);color:var(--aviso)}.aviso.mal{background:var(--mal-suave);color:var(--mal)}.aviso.inf{background:var(--acento-suave);color:var(--acento-tinta)}
+.aviso b{display:block}
+.priv{display:flex;gap:8px;color:var(--tinta-2);font-size:12.5px;line-height:1.4;padding-top:2px}
+.priv .ic{width:16px;height:16px;flex:none;margin-top:1px}
+.radios{display:flex;flex-direction:column;gap:8px}
+.tr-r{display:flex;align-items:center;gap:12px;min-height:52px;padding:8px 12px;border:1px solid var(--linea-fuerte);border-radius:var(--r-btn);background:var(--sup);width:100%}
+.tr-r .n{width:28px;height:28px;border-radius:99px;background:var(--sup-2);display:grid;place-items:center;font:600 12px/1 var(--fm);flex:none}
+.tr-r b{flex:1;font-size:14px}
+.tr-r .m{font:500 13px/1 var(--fm)}
+.tr-r.on{border-color:var(--acento);background:var(--acento-suave)}
+.tr-r.on .n{background:var(--acento);color:var(--acento-texto)}
+.danger{color:var(--mal);font-weight:800;min-height:44px;width:100%;text-align:center;font-size:14px}
+.conf-b{display:flex;flex-direction:column;gap:10px;background:var(--mal-suave);color:var(--mal);border-radius:var(--r-btn);padding:12px;font-size:13.5px}
+.conf-b .dos button{background:var(--mal);color:#fff;border-radius:var(--r-btn);min-height:44px;font-weight:800;text-align:center}
+
+/* mapa esquemático */
+.mapa{display:block;width:100%;height:auto;border-radius:var(--r-card);border:1px solid var(--linea-fuerte);touch-action:none;cursor:crosshair;user-select:none;-webkit-user-select:none}
+.m-bg{fill:var(--sup-2)}
+.m-parque{fill:var(--bien-suave)}
+.m-agua{fill:var(--acento-suave)}
+.m-via{stroke:var(--sup);stroke-width:5;fill:none;stroke-linecap:round}
+.m-via2{stroke:var(--sup);stroke-width:2.6;fill:none}
+.m-ring{fill:none;stroke:var(--acento);stroke-opacity:.6;stroke-width:1.4;stroke-dasharray:4 4}
+.m-ring.suave{stroke-opacity:.3}
+.m-t{fill:var(--acento-tinta);font:700 9px var(--fm);paint-order:stroke;stroke:var(--sup-2);stroke-width:3}
+.m-link{stroke:var(--tinta);stroke-width:1.8;stroke-dasharray:5 4;fill:none}
+.m-pin-t{fill:var(--acento-2);stroke:var(--tinta);stroke-width:1.6}
+.m-pin-c{fill:var(--acento);stroke:var(--sup);stroke-width:2}
+.m-pin-l{fill:var(--acento-2-tinta);font:800 10px var(--ft);text-anchor:middle}
+.m-pin-cl{fill:var(--acento-texto);font:800 10px var(--ft);text-anchor:middle}
+.m-lbl{font:700 10px var(--ft);fill:var(--tinta);paint-order:stroke;stroke:var(--sup-2);stroke-width:3.5}
+.map-cap{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--tinta-3);margin-top:6px;align-items:center}
+.km-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.km-grid>div{background:var(--sup-2);border-radius:var(--r-btn);padding:8px 6px;text-align:center}
+.km-grid b{display:block;font-family:var(--fd);font-weight:var(--pt);font-size:calc(18px*var(--zt));letter-spacing:var(--track);line-height:1.1}
+.km-grid span{font-size:11.5px;color:var(--tinta-2);font-weight:700}
+.km-grid .dest{background:var(--acento);color:var(--acento-texto)}.km-grid .dest span{color:var(--acento-texto);opacity:.9}
+.cands{display:flex;flex-direction:column;gap:6px}
+.cand{display:flex;gap:10px;align-items:center;min-height:46px;padding:6px 12px;border:1px solid var(--linea-fuerte);border-radius:var(--r-btn);background:var(--sup);text-align:left;width:100%;font-size:13.5px}
+.cand.on{border-color:var(--acento);background:var(--acento-suave)}
+.cand small{display:block;color:var(--tinta-3);font-size:12px}
+
+/* comanda (papel térmico: siempre claro) */
+.papel{background:#fbfaf5;color:#2a2a2a;font:11px/1.4 "JetBrains Mono",ui-monospace,monospace;padding:12px 14px;border-radius:4px;box-shadow:0 2px 8px rgb(0 0 0/.25);position:relative;overflow:hidden;width:100%;text-align:left}
+.papel .p-h{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dashed #9a9a92;padding-bottom:5px;margin-bottom:5px}
+.papel hr{border:0;border-top:1px dashed #9a9a92;margin:5px 0}
+.papel .dud{filter:blur(1px);opacity:.7}
+.papel .lb{color:#6a6a62}
+.papel.bor{filter:blur(2.6px) contrast(.75)}
+.papel.bor::after,.papel.rf::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgb(255 255 255/.75) 46%,transparent 60%)}
+.papel.giro{transform:rotate(-1.4deg)}
+.thumb{width:62px;height:78px;overflow:hidden;border-radius:6px;border:1px solid var(--linea-fuerte);flex:none;position:relative;background:#e8e6de}
+.thumb .papel{width:150px;transform:scale(.41);transform-origin:top left;box-shadow:none;border-radius:0;padding:10px 12px}
+.thumb.bx{height:112px;width:90px}.thumb.bx .papel{transform:scale(.6)}
+.q-l{display:flex;flex-direction:column;gap:8px}
+.qi{display:flex;gap:12px;align-items:center;padding:9px 10px;border:1px solid var(--linea-fuerte);border-radius:var(--r-card);background:var(--sup);width:100%;min-height:78px;text-align:left}
+.qi .t{flex:1;min-width:0;line-height:1.3}
+.qi .t b{display:block;font-size:14px}.qi .t small{display:block;color:var(--tinta-3);font-size:12px}
+.qi>.ic{width:16px;height:16px;color:var(--tinta-3)}
+.cmd-hero{display:grid;place-items:center;padding:6px 0 2px}
+.cmd-hero .papel{max-width:220px;transform:rotate(-2deg)}
+.tips{list-style:none;padding:0;display:grid;gap:8px}
+.tips li{display:flex;gap:10px;font-size:13.5px;color:var(--tinta-2);line-height:1.35}
+.tips .ic{width:18px;height:18px;color:var(--acento-tinta);margin-top:1px}
+.spin{width:18px;height:18px;border-radius:50%;border:2.5px solid var(--linea-fuerte);border-top-color:var(--acento);animation:gira .8s linear infinite;flex:none}
+@keyframes gira{to{transform:rotate(360deg)}}
+.sh-f{flex:none;padding:10px 16px 16px;border-top:1px solid var(--linea);display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px;background:var(--papel)}
+.sh-f .btn{min-height:48px}
+.sheet.alta{max-height:94%;height:94%}
+.sh-h small{display:block;color:var(--tinta-3);font-size:12.5px;font-family:var(--ft);font-weight:500;text-transform:none;letter-spacing:0;margin-top:1px}
+.sh-h>div{min-width:0}
+
+/* visor, modal, drawer */
+.visor-w{position:absolute;inset:0;z-index:70;background:rgb(10 10 14/.9);display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px}
+.visor-w.on{display:flex}
+.visor-w .papel{max-width:296px;font-size:12px;padding:16px 18px}
+.visor-w .x{position:absolute;top:18px;right:18px;width:44px;height:44px;border-radius:50%;background:rgb(255 255 255/.16);color:#fff;display:grid;place-items:center}
+.visor-w p{color:#fff;font-size:13px;opacity:.85;text-align:center}
+.modal-w{position:absolute;inset:0;z-index:55;display:none;place-items:center;background:rgb(0 0 0/.45);padding:24px}
+.modal-w.on{display:grid}
+.modal{background:var(--sup);border:var(--bw) solid var(--linea-fuerte);border-radius:var(--r-card);box-shadow:var(--sombra-alta);padding:20px;width:100%;display:grid;gap:12px;justify-items:center;text-align:center}
+.modal .auto{width:110px}
+.modal b{font-family:var(--fd);font-weight:var(--pt);font-size:calc(19px*var(--zt));letter-spacing:var(--track);text-transform:var(--tt)}
+.modal p{color:var(--tinta-2);font-size:13.5px}
+.prog{width:100%;height:8px;border-radius:99px;background:var(--linea);overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:var(--acento);border-radius:99px;transition:width .35s}
+.drawer-w{position:absolute;inset:0;z-index:45;pointer-events:none}
+.drawer-w .scrim{position:absolute;inset:0;background:rgb(0 0 0/.5);opacity:0;transition:opacity .25s}
+.drawer{position:absolute;left:0;top:0;bottom:0;width:min(268px,84%);background:var(--papel);transform:translateX(-102%);transition:transform .28s cubic-bezier(.2,.8,.2,1);padding:44px 12px 18px;display:flex;flex-direction:column;gap:4px;box-shadow:var(--sombra-alta)}
+.drawer-w.open{pointer-events:auto}.drawer-w.open .scrim{opacity:1}.drawer-w.open .drawer{transform:none}
+.dr-h{display:flex;align-items:center;gap:8px;padding:6px 10px 14px}
+.dr-h .auto{width:56px}
+.dr-h b{font-family:var(--fd);font-weight:var(--pt);font-size:calc(24px*var(--zt));letter-spacing:var(--track)}
+.dr-i{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 12px;border-radius:99px;font-weight:600;font-size:15px;color:var(--tinta-2);width:100%}
+.dr-i.on{background:var(--acento-suave);color:var(--acento-tinta);font-weight:800}
+.dr-i .ic{width:20px;height:20px}
+.dr-u{display:flex;align-items:center;gap:12px;background:var(--sup-2);border-radius:var(--r-btn);padding:10px;margin-top:6px}
+.dr-u .av{width:36px;height:36px;border-radius:50%;background:var(--acento);color:var(--acento-texto);display:grid;place-items:center;font-family:var(--fd);font-weight:800;font-size:18px}
+.dr-u b{display:block;font-size:14px}.dr-u small{color:var(--tinta-3);font-size:12px}
+
+/* estadísticas */
+.cifras{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cifras>div{background:var(--sup-2);border-radius:var(--r-card);padding:10px 14px 12px;display:flex;flex-direction:column;gap:1px}
+.cifras span{font-size:12px;font-weight:700;color:var(--tinta-3)}
+.cifras b{font-family:var(--fd);font-weight:var(--pt);font-size:calc(22px*var(--zt));line-height:1.15;font-variant-numeric:tabular-nums;letter-spacing:var(--track)}
+.cifras small{font:600 13px var(--ft);color:var(--tinta-2);margin-left:4px}
+.chart{display:flex;align-items:flex-end;gap:3px;height:132px;padding-top:4px}
+.chart .b{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;gap:2px}
+.chart .col{width:100%;max-width:26px;display:flex;flex-direction:column;justify-content:flex-end;border-radius:5px 5px 2px 2px;overflow:hidden;min-height:0}
+.chart .col i{display:block;background:var(--barra,var(--acento))}
+.chart .col i.x{background:color-mix(in srgb,var(--acento) 45%,var(--sup))}
+.chart .b.vac .col{height:5px!important;background:var(--linea);border-radius:99px}
+.chart .b.rs .col{height:5px!important;background:var(--descanso);border-radius:99px}
+.chart .n{font:700 10px var(--fm);color:var(--tinta-2);height:12px}
+.ch-x{display:flex;gap:3px;margin-top:5px}
+.ch-x span{flex:1;display:flex;justify-content:center;font:600 10px var(--fm);color:var(--tinta-3);min-width:0;white-space:nowrap}
+.ch-l{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--tinta-2);margin-top:8px}
+.ch-l i{display:inline-block;width:10px;height:10px;border-radius:3px;vertical-align:-1px;margin-right:5px}
+.hb{display:grid;grid-template-columns:36px 1fr auto;gap:10px;align-items:center;font-size:13px}
+.hb .bar{height:12px;border-radius:99px;background:var(--linea);overflow:hidden}.hb .bar i{display:block;height:100%;width:var(--w);background:var(--acento);border-radius:99px}
+.hb em{font:700 12px var(--fm);font-style:normal}
+.rec{display:flex;gap:12px;align-items:flex-start}
+.rec .ri{width:30px;height:30px;border-radius:99px;background:var(--acento-suave);color:var(--acento-tinta);display:grid;place-items:center;flex:none}
+.rec .ri .ic{width:16px;height:16px}
+.rec b{display:block;font-size:14px}.rec small{color:var(--tinta-3);font-size:12px}
+.chips-r{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.chips-r::-webkit-scrollbar{display:none}
+.chp{flex:none;min-height:38px;padding:0 14px;border-radius:99px;border:1px solid var(--linea-fuerte);background:var(--sup);font-size:13.5px;font-weight:700;color:var(--tinta-2);white-space:nowrap}
+.chp.on{background:var(--acento);border-color:var(--acento);color:var(--acento-texto)}
+.busca{display:flex;align-items:center;gap:8px;border:1px solid var(--linea-fuerte);border-radius:var(--r-btn);background:var(--sup);padding:0 12px}
+.busca .ic{color:var(--tinta-3)}
+.busca input{flex:1;min-width:0;min-height:48px;border:0;background:none;color:var(--tinta);font:inherit;font-size:15px;outline:0}
+.busca:focus-within{border-color:var(--acento);box-shadow:0 0 0 2px color-mix(in srgb,var(--acento) 30%,transparent)}
+.res-d{font:600 11px/1 var(--fm);letter-spacing:.06em;text-transform:uppercase;color:var(--tinta-3);padding:12px 2px 6px}
+.tiles4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:var(--sup-2);border-radius:var(--r-card);padding:10px 8px}
+.tiles4>div{text-align:center;min-width:0}
+.tiles4 span{display:block;font-size:11px;color:var(--tinta-3);font-weight:700}
+.tiles4 b{font-family:var(--fd);font-weight:var(--pt);font-size:calc(16px*var(--zt));letter-spacing:var(--track);white-space:nowrap}
+.dia-l{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:8px 12px;border-bottom:1px solid var(--linea);text-align:left;font-size:13.5px}
+.dia-l:last-child{border-bottom:0}
+.dia-l b{min-width:60px}.dia-l span{flex:1;color:var(--tinta-2);font-size:12.5px}.dia-l em{font:700 13px var(--fm);font-style:normal}
+.skins{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.skin{display:flex;flex-direction:column;gap:6px;padding:10px;border:2px solid var(--linea);border-radius:var(--r-btn);background:var(--sup);text-align:left}
+.skin.on{border-color:var(--acento);background:var(--acento-suave)}
+.skin .sw3{display:flex;gap:3px}.skin .sw3 i{width:22px;height:22px;border-radius:7px;border:1px solid rgb(0 0 0/.12)}
+.skin b{font-size:14px}.skin small{color:var(--tinta-2);font-size:12px;line-height:1.25}
+.seg3{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.seg3 i{height:8px;border-radius:99px;background:var(--linea)}.seg3 i.on{background:var(--acento)}
+.pre{background:var(--sup-2);border-radius:var(--r-btn);padding:10px 12px;font:12px/1.5 var(--fm);white-space:pre-wrap;max-height:160px;overflow:auto}
+.ver{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--sup);border:var(--bw) solid var(--linea-fuerte);border-radius:var(--r-card);box-shadow:var(--sombra);padding:12px var(--pad)}
+.ver b{font-family:var(--fd);font-weight:var(--pt);font-size:calc(17px*var(--zt));letter-spacing:var(--track);text-transform:var(--tt);display:block}
+.ver small{color:var(--tinta-2);font-size:13px}
+.ver span{background:var(--acento-suave);color:var(--acento-tinta);font:800 13px var(--fm);border-radius:99px;padding:3px 12px}
+.chip-b{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border:2px solid var(--linea);border-radius:99px;background:var(--sup);font-weight:800;font-size:13.5px;color:var(--tinta-2)}
+.chip-b.on{border-color:var(--acento);background:var(--acento-suave);color:var(--acento-tinta)}
+.chip-b.nue{border-style:dashed;border-color:var(--linea-fuerte)}
+.chips-w{display:flex;flex-wrap:wrap;gap:8px}
+.veh{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.veh button{display:flex;flex-direction:column;align-items:flex-start;gap:8px;border:2px solid var(--linea);border-radius:var(--r-btn);padding:10px;background:var(--sup);text-align:left}
+.veh button.on{border-color:var(--acento);background:var(--acento-suave)}
+.veh .auto{width:44px}.veh b{font-size:14px}
+.paso{display:flex;align-items:center;gap:8px;font:600 11px/1 var(--fm);letter-spacing:.07em;text-transform:uppercase;color:var(--tinta-3)}
+
+/* la página: secciones del final */
+.sec-t{display:grid;gap:6px;margin-bottom:6px}
+.sec-t h2{font-size:clamp(26px,4vw,38px);letter-spacing:-.025em;line-height:1.05}
+.notas{list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.notas li{background:var(--pg-card);border:1px solid var(--pg-line);border-radius:14px;padding:13px 16px;display:grid;gap:3px;align-content:start}
+.notas b{font-size:14px}.notas span{color:var(--pg-mut);font-size:13.5px}
+.notas .si{border-left:4px solid #1a9e6a}.notas .cond{border-left:4px solid #d9a100}.notas .ojo{border-left:4px solid #d6453d}
+.pg-tag{display:inline-block;padding:1px 8px;border-radius:99px;background:var(--pg-ink);color:var(--pg);font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-right:6px;vertical-align:1px}
+.pg-tag.n{background:#ffc800;color:#1a1a1a}
+.pg-code{font:12.5px/1.5 "JetBrains Mono",ui-monospace,monospace;background:var(--pg-card);border:1px solid var(--pg-line);border-radius:14px;padding:14px 16px;overflow-x:auto;white-space:pre;color:var(--pg-ink)}
+.leyenda{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;color:var(--pg-mut);font-size:13px;margin-top:10px}
+.slot figcaption .nuevo{margin-left:6px}
+
+.tag.mal{background:var(--mal-suave);color:var(--mal)}
+.capg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.capt{aspect-ratio:9/14;border-radius:8px;border:1px solid var(--linea-fuerte);background:var(--sup);padding:8px;display:flex;flex-direction:column;gap:5px;text-align:left}
+.capt i{display:block;height:6px;border-radius:9px;background:var(--linea)}
+.capt em{margin-top:auto;font:600 10.5px var(--fm);font-style:normal;color:var(--tinta-3)}
+.thumbcell{display:flex;flex-direction:column;align-items:center;gap:4px}
+.thumbcell em{font:600 10.5px var(--fm);font-style:normal;color:var(--tinta-3)}
+</style>
+</head>
+<body>
+
+<!-- Iconos: los trazos de src/components/iconos.tsx, más los que faltaban -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-casa" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></symbol>
+<symbol id="i-cartera" viewBox="0 0 24 24"><path d="M3 8.5A2.5 2.5 0 0 1 5.5 6H19a2 2 0 0 1 2 2v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17z"/><path d="M3 8.5V7a2 2 0 0 1 2-2h11"/><circle cx="16.5" cy="12.5" r="1.3"/></symbol>
+<symbol id="i-candado" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+<symbol id="i-mas" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></symbol>
+<symbol id="i-subir" viewBox="0 0 24 24"><path d="M12 17V4"/><path d="m6.5 9.5 5.5-5.5 5.5 5.5"/><path d="M4 18v2h16v-2"/></symbol>
+<symbol id="i-luna" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+<symbol id="i-reloj" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="i-alerta" viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+<symbol id="i-flecha" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+<symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+<symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 3v3M16 3v3"/></symbol>
+<symbol id="i-camara" viewBox="0 0 24 24"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13.5" r="3.2"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+<symbol id="i-lapiz" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
+<symbol id="i-hash" viewBox="0 0 24 24"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/></symbol>
+<symbol id="i-lista" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+<symbol id="i-barras" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol>
+<symbol id="i-trofeo" viewBox="0 0 24 24"><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 5H4v2a3 3 0 0 0 3 3M17 5h3v2a3 3 0 0 1-3 3"/><path d="M9 20h6M12 14v6"/></symbol>
+<symbol id="i-hoja" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.5v-1a5 5 0 0 1 5-5h5a5 5 0 0 1 5 5v1"/></symbol>
+<symbol id="i-ticket" viewBox="0 0 24 24"><path d="M5 3h14v18l-2.3-1.6L14.5 21l-2.5-1.6L9.5 21l-2.2-1.6L5 21z"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4"/></symbol>
+<symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s7-6.2 7-11.5a7 7 0 0 0-14 0C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+<symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+<symbol id="i-buscar" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></symbol>
+<symbol id="i-salir" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/></symbol>
+<symbol id="i-ojo" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-tel" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A15 15 0 0 1 3 6a2 2 0 0 1 2-2z"/></symbol>
+</defs></svg>
+
+<header class="cab wrap">
+  <span class="rot">Rutas-A · prototipo final antes de implementar</span>
+  <h1>Todas las pantallas, con la opción A</h1>
+  <p class="lead">Aquí está <b>toda la app</b> con la opción A aplicada —Inicio, Revisión, Pagos, Estadísticas, Historial, Buscar y Ajustes— más lo nuevo: <b>el pedido con pestañas</b>, <b>la evidencia por pedido</b>, <b>leer comandas una por una</b> (cliente, dirección, teléfono), <b>la tienda ubicada en un mapa</b> y <b>el tramo calculado con la distancia</b>. <b>Todos los acordeones nacen cerrados.</b> Cada teléfono funciona: toca, abre, arrastra la semana, mueve el pin.</p>
+  <div class="leyenda"><span><span class="nuevo" style="margin:0">Nuevo</span> = lo que no existe hoy en la app</span><span>Los teléfonos comparten los mismos datos: lo que anotes en uno se ve en los demás.</span></div>
+</header>
+
+<div class="barra">
+  <div class="wrap">
+    <div class="grupo" role="group" aria-label="Apariencia">
+      <span class="rot">Apariencia</span>
+      <button class="pg-btn" data-skin-btn="turbo" aria-pressed="true">Turbo · tu teléfono</button>
+      <button class="pg-btn" data-skin-btn="mapa" aria-pressed="false">Mapa</button>
+      <button class="pg-btn" data-skin-btn="asfalto" aria-pressed="false">Asfalto</button>
+      <button class="pg-btn" data-skin-btn="menta" aria-pressed="false">Menta</button>
+    </div>
+    <nav class="grupo" aria-label="Pantallas">
+      <a class="pg-btn" href="#inicio">Inicio</a><a class="pg-btn" href="#revision">Revisión</a><a class="pg-btn" href="#pedido">Pedido</a><a class="pg-btn" href="#comandas">Comandas</a>
+      <a class="pg-btn" href="#pagos">Pagos</a><a class="pg-btn" href="#stats">Estadísticas</a><a class="pg-btn" href="#mas">Más</a><a class="pg-btn" href="#ajustes">Ajustes</a><a class="pg-btn" href="#viabilidad">¿Se puede?</a>
+    </nav>
+  </div>
+</div>
+<div class="wrap"><p class="aviso-datos">Datos de ejemplo con tu calendario: hoy es <b>jueves 24/09/2026</b>. La semana <b>7–13</b> es la de tu captura (12 pedidos por cantidad, 6 días sin subir). Las tarifas son las reales de la app (T1 S/ 10.00 … T5 S/ 16.00). Los nombres, direcciones, teléfonos y la comanda son inventados, y el mapa es un dibujo esquemático (en la app sería Google Maps).</p></div>
+
+<!-- ═════ 1 · Inicio ═════ -->
+<section class="op wrap" id="inicio">
+  <div class="sec-t"><span class="rot">1 · Inicio</span><h2>Semana, auto, cargar, y dos acordeones cerrados</h2>
+    <p class="pitch">Solo lo que se usa cada día. El detalle (Pedidos | Rutas) y «Subir más» (Pedido | Ruta) están cerrados; los pedidos muestran con íconos cuáles tienen cliente <span style="white-space:nowrap">👤</span>, foto de comanda y kilómetros. En «Subir más › Pedido» aparece <b>Leer una comanda</b>.</p></div>
+  <div class="stage"><div class="phones">
+    <figure class="slot"><div class="ph" data-preset="i1"></div><figcaption><b>Todo cerrado</b>La pantalla limpia de todos los días.</figcaption></figure>
+    <figure class="slot"><div class="ph" data-preset="i2"></div><figcaption><b>Detalle abierto</b>Pedidos con sus íconos de cliente, foto y km.</figcaption></figure>
+    <figure class="slot"><div class="ph" data-preset="i3"></div><figcaption><b>Subir más abierto</b>Con la comanda como nueva forma de subir.</figcaption></figure>
+  </div><p class="tip">Prueba: arrastra la barra de fechas · toca el martes 22 (○) para ver un día sin cargar, que también nace cerrado · toca un pedido para abrir su hoja.</p></div>
+</section>
+
+<!-- ═════ 2 · Revisión ═════ -->
+<section class="op wrap" id="revision">
+  <div class="sec-t"><span class="rot">2 · Cargar capturas</span><h2>La lectura y la Revisión, sin cargar la pantalla</h2>
+    <p class="pitch">Al tocar «Cargar capturas» (o el auto de abajo) se leen las capturas y llega la Revisión: fecha, totales, y tres acordeones cerrados —Permanencia, Rutas y Pedidos— antes del botón «Confirmar y guardar».</p></div>
+  <div class="stage"><div class="phones">
+    <figure class="slot"><div class="ph" data-preset="r1"></div><figcaption><b>Revisión</b>Lo esencial arriba; el detalle, a demanda.</figcaption></figure>
+  </div><p class="tip">Toca «Cargar» (el auto de la barra de abajo) en cualquier teléfono para ver la lectura y llegar aquí.</p></div>
+</section>
+
+<!-- ═════ 3 · Pedido ═════ -->
+<section class="op wrap" id="pedido">
+  <div class="sec-t"><span class="rot">3 · Un pedido</span><h2>Cuatro pestañas para no cargar la hoja</h2>
+    <p class="pitch">Al tocar un pedido se abre su hoja, ahora con pestañas: <b>Pedido</b> (código, ruta, estado, tramo y monto: lo de hoy), <b>Cliente</b> (nombre, teléfono y dirección, todo opcional), <b>Distancia</b> (mapa, kilómetros en línea recta y tramo) y <b>Evidencia</b> (la foto de la comanda, que ya existe). Un punto en la pestaña avisa cuándo hay algo guardado.</p></div>
+  <div class="stage"><div class="phones">
+    <figure class="slot"><div class="ph" data-preset="p1"></div><figcaption><b>Cliente <span class="nuevo">Nuevo</span></b>Nombre, teléfono y dirección, siempre opcionales.</figcaption></figure>
+    <figure class="slot"><div class="ph" data-preset="p2"></div><figcaption><b>Distancia <span class="nuevo">Nuevo</span></b>Toca el mapa para mover el pin: el tramo se recalcula.</figcaption></figure>
+    <figure class="slot"><div class="ph" data-preset="p3"></div><figcaption><b>Evidencia</b>La foto de la comanda, con «Ver», «Reemplazar» y «Quitar».</figcaption></figure>
+  </div><p class="tip">Prueba: en «Distancia» toca distintos puntos del mapa y mira cómo cambia T1, T2, T3… · en «Pedido» elige un tramo a mano y vuelve a «Distancia» · en «Cliente» borra los datos.</p></div>
+</section>
+
+<!-- ═════ 4 · Comandas ═════ -->
+<section class="op wrap" id="comandas">
+  <div class="sec-t"><span class="rot">4 · Leer comandas</span><h2>Una comanda por foto, y tú confirmas cada una</h2>
+    <p class="pitch">Desde «Subir más › Pedido › Leer una comanda» eliges fotos (una por una o varias de la galería). Cada una se lee en el teléfono y queda <b>Lista</b>, para <b>Revisar</b> (con cada dato marcado como <i>Legible / Dudoso / No se leyó</i>) o <b>No se leyó</b>. Al guardar, si el pedido ya estaba cargado se le añaden cliente, distancia y foto; si no, se crea. Con la dirección ubicada, <b>el tramo sale de los kilómetros</b>.</p></div>
+  <div class="stage"><div class="phones">
+    <figure class="slot"><div class="ph" data-preset="c1"></div><figcaption><b>1 · Elegir</b>Foto o galería, y cómo tomarla bien.</figcaption></figure>
+    <figure class="slot"><div class="ph" data-preset="c2"></div><figcaption><b>2 · La cola</b>Cuatro comandas: lista, dudosa, borrosa y lejana.</figcaption></figure>
+    <figure class="slot"><div class="ph" data-preset="c3"></div><figcaption><b>3 · Revisar el cliente</b>Lo dudoso, marcado con texto e ícono.</figcaption></figure>
+    <figure class="slot"><div class="ph" data-preset="c4"></div><figcaption><b>4 · Entrega</b>Dos ubicaciones posibles: elige o pon el pin.</figcaption></figure>
+  </div><p class="tip">Prueba el flujo completo: en el primer teléfono toca «Tomar foto» → abre cada comanda → en la «Entrega» de la segunda elige una ubicación → «Guardar y siguiente». La cuarta cae a más de 12 km: pide el monto a mano. La tercera no se pudo leer: «Completar a mano» o descartar.</p></div>
+</section>
+
+<!-- ═════ 5 · Pagos ═════ -->
+<section class="op wrap" id="pagos">
+  <div class="sec-t"><span class="rot">5 · Pagos</span><h2>Lo acumulado vive aquí, con la misma barra de semanas</h2>
+    <p class="pitch">La barra de semanas muestra lo que cobras cada día. Debajo, el total de la semana y cuatro acordeones cerrados: Día por día, Cobro, Tarifa vigente y Otras semanas. Si faltan días por subir, un aviso lo dice sin abrir nada.</p></div>
+  <div class="stage"><div class="phones">
+    <figure class="slot"><div class="ph" data-preset="g1"></div><figcaption><b>Semana en curso</b>Todo cerrado; toca un día de la barra para abrir su detalle.</figcaption></figure>
+    <figure class="slot"><div class="ph" data-preset="g2"></div><figcaption><b>Semana 7–13</b>El aviso «Faltan 6 días» de tu captura, a un toque.</figcaption></figure>
+  </div><p class="tip">Prueba: toca el aviso amarillo · «No trabajé esos días» · desliza a la semana 14–20 y abre «Cobro» para registrar lo que te pagaron.</p></div>
+</section>
+
+<!-- ═════ 6 · Estadísticas ═════ -->
+<section class="op wrap" id="stats">
+  <div class="sec-t"><span class="rot">6 · Estadísticas</span><h2>Las cifras a la vista, el detalle plegado</h2>
+    <p class="pitch">Rango en pestañas (7 días | 30 días | Este mes), las cuatro cifras y el gráfico siempre visibles, y cinco acordeones cerrados con su resumen: Tiempos, Ingresos, <b>Por distancia</b> (nuevo: usa los tramos y, si hay comandas, los kilómetros), Récords y Exportar a PDF.</p></div>
+  <div class="stage"><div class="phones">
+    <figure class="slot"><div class="ph" data-preset="e1"></div><figcaption><b>Últimos 30 días</b>Cifras y gráfico; los acordeones muestran su dato clave.</figcaption></figure>
+    <figure class="slot"><div class="ph" data-preset="e2"></div><figcaption><b>Por distancia abierto <span class="nuevo">Nuevo</span></b>Pedidos por tramo y distancia media.</figcaption></figure>
+  </div><p class="tip">Cambia de «30 días» a «7 días»: el gráfico pasa a barras con los pedidos arriba y los soles debajo.</p></div>
+</section>
+
+<!-- ═════ 7 · Más ═════ -->
+<section class="op wrap" id="mas">
+  <div class="sec-t"><span class="rot">7 · Más</span><h2>Menú, Historial y Buscar</h2>
+    <p class="pitch">«Más» abre el menú lateral de siempre. Historial agrupa por semana en acordeones cerrados (con Por día | Pedidos en pestañas) y Buscar ahora tiene pestañas <b>Código | Cliente | Teléfono | Dirección</b>: encuentras un pedido por lo que la persona te dijo por teléfono, no solo por su código.</p></div>
+  <div class="stage"><div class="phones">
+    <figure class="slot"><div class="ph" data-preset="m1"></div><figcaption><b>Menú «Más»</b>Buscar, Historial y Estadísticas, como hoy.</figcaption></figure>
+    <figure class="slot"><div class="ph" data-preset="m2"></div><figcaption><b>Historial</b>Semanas plegadas; toca un día para abrirlo.</figcaption></figure>
+    <figure class="slot"><div class="ph" data-preset="m3"></div><figcaption><b>Buscar por cliente <span class="nuevo">Nuevo</span></b>Solo entre los pedidos con ese dato guardado.</figcaption></figure>
+  </div><p class="tip">En «Buscar» prueba la pestaña «Dirección» con «Rosales», o «Teléfono» con «210».</p></div>
+</section>
+
+<!-- ═════ 8 · Ajustes ═════ -->
+<section class="op wrap" id="ajustes">
+  <div class="sec-t"><span class="rot">8 · Ajustes</span><h2>Diez secciones, todas cerradas, con su resumen</h2>
+    <p class="pitch">Hoy Ajustes es una pila larga de tarjetas. Ahora cada una es un acordeón cerrado que dice su estado sin abrirse. <b>Tienda, modalidad y tarifa</b> gana la pestaña <b>Ubicación</b> (el punto de partida en el mapa: GPS, enlace de Google Maps o búsqueda) y el <b>ajuste de distancia</b>; y hay una sección nueva, <b>Comandas y datos del cliente</b>, para decidir qué se guarda.</p></div>
+  <div class="stage"><div class="phones">
+    <figure class="slot"><div class="ph" data-preset="a1"></div><figcaption><b>Todo cerrado</b>Cada sección dice su estado.</figcaption></figure>
+    <figure class="slot"><div class="ph" data-preset="a2"></div><figcaption><b>Tienda › Ubicación <span class="nuevo">Nuevo</span></b>Mueve el punto: los círculos son tus tramos.</figcaption></figure>
+    <figure class="slot"><div class="ph" data-preset="a3"></div><figcaption><b>Comandas y datos <span class="nuevo">Nuevo</span></b>Qué se guarda de cada comanda.</figcaption></figure>
+  </div><p class="tip">Prueba: en «Tienda › Tarifa» sube el «Ajuste por calles» a ×1.30 y mira cómo cambian los tramos calculados · activa «Confirmar siempre antes de guardar» y vuelve a la cola de comandas · cambia de apariencia.</p></div>
+</section>
+
+<!-- ═════ ¿Se puede? ═════ -->
+<section class="op wrap" id="viabilidad">
+  <div class="sec-t"><span class="rot">¿Se puede?</span><h2>Leer comandas y calcular el tramo: sí, con tres condiciones</h2>
+    <p class="pitch">Lo que ya tiene la app hace viable la mayor parte. Lo delicado no es técnico sino de datos: cómo son tus comandas, cómo mide la tienda los kilómetros, y que son datos de tus clientes.</p></div>
+  <ul class="notas">
+    <li class="si"><b><span class="pg-tag">Sí</span>Leer la foto en el teléfono</b><span>La app ya lee texto sin internet y el lector devuelve una confianza por línea. Con eso cada dato sale como Legible, Dudoso o No se leyó. Se lee una foto a la vez y siempre se revisa antes de guardar.</span></li>
+    <li class="si"><b><span class="pg-tag">Sí</span>Evidencia por pedido</b><span>Ya existe (una foto por pedido, de cámara o galería). Pasa a la pestaña «Evidencia» y la comanda leída se guarda ahí sola.</span></li>
+    <li class="si"><b><span class="pg-tag">Sí</span>Ubicar la tienda sin claves</b><span>«Estoy en la tienda» (GPS) y «Pegar enlace de Google Maps» no necesitan clave. Un mapa interactivo como el dibujo lleva el SDK de mapas con clave y lo dejaría para una segunda vuelta.</span></li>
+    <li class="cond"><b><span class="pg-tag">Condición</span>El formato real de tu comanda</b><span>Una comanda fotografiada es papel: ángulo, sombras, reflejos. Acierta menos que un pantallazo. Dónde va el cliente, la dirección y el teléfono depende de cómo imprime la tienda: necesito 5 a 10 fotos reales (puedes tapar los datos) para afinar el lector. Lo ilegible queda vacío, nunca inventado.</span></li>
+    <li class="cond"><b><span class="pg-tag">Condición</span>De dirección a kilómetros</b><span>Convertir una dirección en un punto del mapa necesita internet y un servicio de mapas: Google (más cobertura; clave y costo por consulta), el del propio Android (sin clave; a veces menos preciso) o el pin a mano. La distancia en línea recta entre dos puntos es una cuenta simple que funciona sin internet.</span></li>
+    <li class="ojo"><b><span class="pg-tag">Ojo</span>Línea recta no es calles</b><span>La línea recta suele ser más corta que el recorrido real, así que podría dejar un pedido en un tramo más bajo que el de la tienda. Por eso el tramo calculado es una sugerencia que puedes cambiar, hay «Ajuste por calles» y la comparación con tus tramos. Falta saber cómo mide la tienda.</span></li>
+    <li class="ojo"><b><span class="pg-tag">Ojo</span>Datos de tus clientes</b><span>Nombre, teléfono y dirección son datos personales de terceros. Por eso: todo opcional, teléfono apagado por defecto, solo en el teléfono con PIN, fuera del respaldo salvo que lo actives. Y buscar una dirección envía ese texto a un servicio de mapas: hoy la app promete que nada sale del teléfono, y esta sería la única excepción; hay que decirlo en pantalla.</span></li>
+  </ul>
+
+  <div class="sec-t" style="margin-top:22px"><h2 style="font-size:clamp(22px,3vw,30px)">Cómo lo haría, en tres entregas</h2></div>
+  <ul class="notas">
+    <li><b>Entrega 1 · La opción A en toda la app</b><span>Inicio, Revisión, Pagos, Estadísticas, Historial, Buscar y Ajustes con acordeones cerrados y pestañas. Sin dependencias nuevas y sin tocar la base: es lo que ya funciona, mejor ordenado.</span></li>
+    <li><b>Entrega 2 · Pedido con pestañas y comandas</b><span>Hoja del pedido (Pedido, Cliente, Distancia, Evidencia) y leer comandas una por una con revisión y foto de evidencia. La distancia se pone a mano o con el pin, todavía sin buscar direcciones.</span></li>
+    <li><b>Entrega 3 · Tienda en el mapa y tramo automático</b><span>Ubicación de la tienda (GPS o enlace), dirección → kilómetros → tramo sugerido, y el ajuste por calles. Depende de las decisiones de abajo.</span></li>
+  </ul>
+  <div class="pg-code">Cambios en la base (esquema v7, con COLUMNAS_ANADIDAS: no se pierde ningún dato)
+  tiendas   + lat, lng, factor_km
+  ordenes   + cliente_nombre, cliente_telefono, direccion, lat, lng, tramo_auto     (km ya existe)
+  ajustes   + comandas.guardar_nombre · _direccion · _telefono · _foto · _confirmar · _en_respaldo</div>
+
+  <div class="voto"><span class="rot">Lo que necesito de ti para la entrega 3</span><h3>Cinco decisiones</h3>
+    <p><b>1.</b> ¿La tienda mide los tramos en línea recta o por calles? Define el «Ajuste por calles». <b>2.</b> Fotos de 5 a 10 comandas reales para afinar el lector. <b>3.</b> Cómo buscar direcciones: Google (con clave y costo), el servicio de Android (sin clave) o solo el pin a mano. <b>4.</b> Datos del cliente: mi propuesta es dirección sí (hace falta para la distancia), nombre sí, teléfono no por defecto. <b>5.</b> ¿Una comanda puede crear un pedido nuevo, o solo completar los que ya vinieron en las capturas? Mi propuesta: las dos cosas, avisando cuál es cuál.</p></div>
+</section>
+
+<script>
+(() => {
+'use strict';
+
+/* ═══════════ Fechas ═══════════ */
+const TODAY = '2026-09-24';
+const toDate = iso => { const [y, m, d] = iso.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)); };
+const add = (iso, n) => { const d = toDate(iso); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+const dow = iso => (toDate(iso).getUTCDay() + 6) % 7;
+const monday = iso => add(iso, -dow(iso));
+const num = iso => +iso.slice(8);
+const pad = n => String(n).padStart(2, '0');
+const DIA3 = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+const DIAL = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+const MES3 = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const MESL = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const cap = s => s[0].toUpperCase() + s.slice(1);
+const fechaLarga = iso => `${DIAL[dow(iso)]} ${num(iso)} de ${MESL[+iso.slice(5, 7) - 1]}`;
+const dmy = iso => `${iso.slice(8)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
+const dm = iso => `${iso.slice(8)}/${iso.slice(5, 7)}`;
+const corto = iso => `${DIA3[dow(iso)]} ${num(iso)}`;
+const rango = (a, b) => { const o = []; for (let f = a; f <= b; f = add(f, 1)) o.push(f); return o; };
+const THIS_WEEK = monday(TODAY);
+const FIRST_WEEK = add(THIS_WEEK, -56);
+const payDay = mon => add(mon, 11);
+function semLabel(mon) {
+  const fin = add(mon, 6), m1 = +mon.slice(5, 7), m2 = +fin.slice(5, 7);
+  return m1 === m2 ? `Sem. ${num(mon)}–${num(fin)}` : `Sem. ${num(mon)} ${MES3[m1 - 1]}–${num(fin)} ${MES3[m2 - 1]}`;
+}
+
+/* ═══════════ Tarifa real de la app y distancia ═══════════ */
+const TARIFA = [
+  { id: 1, d: 0, h: 3, m: 1000 }, { id: 2, d: 3, h: 8, m: 1150 }, { id: 3, d: 8, h: 10, m: 1300 },
+  { id: 4, d: 10, h: 11, m: 1450 }, { id: 5, d: 11, h: 12, m: 1600 },
+];
+const MAS12 = 6;                                         // TRAMO_MAS_DE_12_KM de la app
+const money = c => 'S/ ' + (c / 100).toFixed(2);
+const toMin = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
+const hm = min => `${pad(Math.floor(min / 60))}:${pad(min % 60)}`;
+const dur = min => min >= 60 ? `${Math.floor(min / 60)} h ${pad(min % 60)} min` : `${min} min`;
+const hash = s => [...String(s)].reduce((h, c) => Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0, 2166136261);
+function rng(seed) {
+  let a = seed >>> 0;
+  return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+/* Igual que `tramoDeKm` de reglas.ts: km <= hasta; se pasa de la tabla → MAS12 */
+const tramoDeKm = km => { const t = TARIFA.find(x => km <= x.h + 1e-9); return t ? t.id : MAS12; };
+const montoTramo = t => (t >= 1 && t <= 5) ? TARIFA[t - 1].m : null;
+
+/* ═══════════ El estado de toda la app ═══════════ */
+const DB = {
+  dias: {}, sem: {},
+  tienda: { nombre: 'Wong - Aldabas', pos: { x: 0, y: 0 } },          // el mapa esquemático tiene la tienda en (0,0) km
+  aj: { factor: 1.0, auto: true, nombre: true, direccion: true, telefono: false, foto: true, confirmar: true, respaldoCli: false, modo: 'tramo', veh: 'auto', pin: true, huella: true },
+};
+const NOMBRES = ['Rosa Quispe', 'Luis Mendoza', 'Carmen Ríos', 'Jorge Palacios', 'Ana Torres', 'Miguel Ccori', 'Lucía Fernández', 'Pedro Salazar', 'Marta Villanueva', 'Diego Paredes', 'Elena Rojas', 'Raúl Cáceres'];
+const CALLES = ['Av. Los Rosales', 'Jr. Las Begonias', 'Calle Los Cipreses', 'Av. Primavera', 'Jr. San Martín', 'Av. Las Palmeras', 'Calle Los Laureles', 'Av. Los Álamos'];
+
+function genDia(iso, o = {}) {
+  const r = rng(hash(iso));
+  const n = o.n ?? 9 + Math.floor(r() * 11);
+  const k = o.k ?? 2 + Math.floor(r() * 3);
+  const rutas = [], ordenes = [];
+  let t = toMin('09:00') + 20 + Math.floor(r() * 20), seq = 1;
+  const orden = (ruta, hora) => {
+    const dist = .8 + Math.pow(r(), 1.7) * 10.4, ang = r() * Math.PI * 2, conCli = r() < (o.pcli || 0);
+    const tx = r(), y = r();
+    const nombre = NOMBRES[Math.floor(r() * NOMBRES.length)], calle = CALLES[Math.floor(r() * CALLES.length)], nro = 100 + Math.floor(r() * 800), tel = 100 + Math.floor(r() * 899);
+    const tramo = conCli ? tramoDeKm(dist) : (o.t1 ? 1 : tx < .55 ? 1 : tx < .8 ? 2 : tx < .92 ? 3 : tx < .97 ? 4 : 5);
+    return {
+      codigo: `v1225${1000 + Math.floor(r() * 9000)}wofp-${pad(seq++)}`, ruta, hora, tramo, monto: montoTramo(tramo),
+      estado: y < .9 ? 'Entregado' : y < .96 ? 'Entrega parcial' : 'No entregado', manual: r() < .04, pc: false,
+      cli: conCli ? { n: nombre, tel: '900 000 ' + tel, dir: `${calle} ${nro}`, x: +(dist * Math.cos(ang)).toFixed(2), y: +(dist * Math.sin(ang)).toFixed(2) } : null,
+      km: conCli ? +dist.toFixed(1) : null, tramoAuto: conCli, foto: conCli && r() < .6,
+    };
+  };
+  if (k === 0) {
+    for (let j = 0; j < n; j++) ordenes.push({ codigo: '', ruta: null, hora: null, tramo: 1, monto: 1000, estado: 'Entregado', manual: true, pc: true, cli: null, km: null, tramoAuto: false, foto: false });
+  } else {
+    for (let i = 0; i < k; i++) {
+      const cuantos = Math.floor(n / k) + (i < n % k ? 1 : 0), d = 70 + Math.floor(r() * 40);
+      rutas.push({ n: i + 1, ini: hm(t), fin: hm(t + d) });
+      for (let j = 0; j < cuantos; j++) ordenes.push(orden(i + 1, hm(t)));
+      t += d + 25 + Math.floor(r() * 30);
+    }
+  }
+  const entrada = o.sinHorario ? null : '09:0' + Math.floor(r() * 9);
+  const horas = o.h ?? 10 + Math.floor(r() * 3);
+  const salida = o.sinHorario ? null : hm(toMin(entrada) + horas * 60 + Math.floor(r() * 50));
+  return { ordenes, rutas, entrada, salida, capturas: k ? Math.ceil(n / 6) : 0 };
+}
+
+function cobroDia(d) {
+  const ped = d.ordenes.reduce((s, o) => s + o.monto, 0);
+  const horas = d.entrada && d.salida ? Math.floor((toMin(d.salida) - toMin(d.entrada)) / 60) : 0;
+  const perm = horas * 1000;
+  return { ped, horas, perm, cobra: Math.max(ped, perm), por: perm > ped ? 'permanencia' : 'pedidos', min: d.rutas.reduce((s, r) => s + toMin(r.fin) - toMin(r.ini), 0) };
+}
+
+function semana(mon) {
+  const dias = Array.from({ length: 7 }, (_, i) => add(mon, i));
+  const w = { mon, dias, pedidos: 0, rutas: 0, monto: 0, montoPed: 0, min: 0, garantia: 0, fuera: 0, cargados: 0, descansos: [], faltan: [] };
+  for (const f of dias) {
+    const d = DB.dias[f];
+    if (!d) { if (f < TODAY) w.faltan.push(f); continue; }
+    if (d.rest) { w.descansos.push(f); continue; }
+    const c = cobroDia(d);
+    w.cargados++; w.pedidos += d.ordenes.length; w.rutas += d.rutas.length; w.monto += c.cobra; w.montoPed += c.ped; w.min += c.min;
+    if (c.por === 'permanencia') w.garantia++;
+    w.fuera += d.ordenes.filter(o => o.tramo > 1).length;
+  }
+  const meta = DB.sem[mon] || {};
+  w.estado = meta.estado || (mon === THIS_WEEK ? 'abierta' : 'cerrada');
+  w.recibido = meta.recibido ?? null;
+  w.pago = payDay(mon);
+  return w;
+}
+
+(function sembrar() {
+  const patron = ['L-LL---', 'LLLLLRL', '----L--', 'LLLLLLR', 'LLLLLRR', 'LLLLLL-', 'LLLLLLR', 'LLL-LLR', 'LLLLLLR'];
+  const extra = {
+    '2026-09-15': { n: 9, t1: true, h: 12 },
+    '2026-09-20': { n: 21, k: 5 },
+    '2026-09-24': { n: 14, k: 3, pcli: .6 },
+    '2026-09-23': { pcli: .35 }, '2026-09-21': { pcli: .3 }, '2026-09-17': { pcli: .3 }, '2026-09-16': { pcli: .3 },
+    '2026-09-11': { n: 12, k: 0, sinHorario: true },
+  };
+  patron.forEach((p, b) => {
+    const mon = add(THIS_WEEK, -7 * b);
+    [...p].forEach((c, i) => {
+      const f = add(mon, i);
+      if (c === 'L') DB.dias[f] = genDia(f, extra[f]);
+      else if (c === 'R') DB.dias[f] = { rest: true, ordenes: [], rutas: [] };
+    });
+  });
+  /* Para la demo hace falta al menos un pedido de hoy con cliente y con foto */
+  const os = DB.dias[TODAY].ordenes;
+  if (!os.some(o => o.cli && o.foto)) {
+    const o = os[1]; o.cli = { n: 'Rosa Quispe', tel: '900 000 210', dir: 'Av. Los Rosales 245', x: 1.9, y: -1.8 };
+    o.km = 2.6; o.tramo = 1; o.monto = 1000; o.tramoAuto = true; o.foto = true;
+  }
+  DB.sem[add(THIS_WEEK, -7)] = { estado: 'cerrada' };
+  DB.sem[add(THIS_WEEK, -14)] = { estado: 'cerrada' };
+  for (let b = 3; b < patron.length; b++) {
+    const mon = add(THIS_WEEK, -7 * b), w = semana(mon);
+    DB.sem[mon] = { estado: 'pagada', recibido: b === 3 ? w.monto - 800 : w.monto };
+  }
+})();
+
+/* Distancia: línea recta desde el punto de partida de la tienda (en el prototipo, el mapa esquemático mide en km) */
+const kmDe = pos => (pos && pos.x != null) ? Math.hypot(pos.x - DB.tienda.pos.x, pos.y - DB.tienda.pos.y) : null;
+const kmUsado = km => km == null ? null : km * DB.aj.factor;
+
+/* ═══════════ Comandas de ejemplo (formato inventado: se ajusta con fotos reales) ═══════════ */
+const COMANDAS = [
+  { id: 'c1', calidad: 'lista', num: '4821', hora: '10:12', nombre: ['Rosa Quispe Huamán', .97], tel: ['900 000 101', .95], dir: ['Av. Los Rosales 245, Urb. Las Gardenias', .94], geo: 'ok', cand: [{ t: 'Av. Los Rosales 245', s: 'Dirección exacta', x: 1.9, y: -1.8 }] },
+  { id: 'c2', calidad: 'revisar', num: '4826', hora: '11:03', nombre: ['Luis Mendoza', .88], tel: ['9?0 000 1?2', .5], dir: ['Jr. Las Begonias 1?8, Urb. San Roque', .48], geo: 'multi', cand: [{ t: 'Jr. Las Begonias 118', s: 'Aproximada · San Roque', x: 3.3, y: 2.4 }, { t: 'Jr. Las Begonias 168', s: 'Aproximada · San Roque', x: 3.6, y: 2.3 }] },
+  { id: 'c3', calidad: 'ilegible', num: '4829', hora: '12:20', nombre: ['', .1], tel: ['', .1], dir: ['', .1], geo: 'no', cand: [] },
+  { id: 'c4', calidad: 'lejos', num: '4833', hora: '13:40', nombre: ['Carmen Ríos', .9], tel: ['900 000 104', .9], dir: ['Av. Circunvalación Km 13, Ate', .9], geo: 'ok', cand: [{ t: 'Av. Circunvalación 1300', s: 'Dirección exacta', x: 9.0, y: 9.1 }] },
+];
+const confCls = c => c >= .85 ? 'ok' : c >= .4 ? 'dud' : 'no';
+
+/* ═══════════ Piezas de vista compartidas ═══════════ */
+const ic = (n, c = '') => `<svg class="ic ${c}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const carroceria = techo => ({
+  cuerpo: `M14 44V37Q14 32 20 31L33 29Q39 ${techo + 2} 51 ${techo}H77Q86 ${techo + 1} 92 25L96 29Q110 31 112 38V44H101A11 11 0 0 0 79 44H45A11 11 0 0 0 23 44Z`,
+  vidrios: `M46 27Q49 ${techo + 4} 54 ${techo + 3}H63V27ZM67 ${techo + 3}H76Q81 ${techo + 4} 85 27H67Z`,
+});
+const CAR_C = carroceria(10), CAR_O = carroceria(17);
+const car = (cls = '') => `<svg class="auto ${cls}" viewBox="0 6 142 52" aria-hidden="true" focusable="false">
+<g class="auto-estela c-claro"><path d="M0 54C10 54 14 50 24 46" stroke-width="3.2" stroke-dasharray="0.1 6.5" stroke-linecap="round"/><path d="M4 36h16" stroke-width="3" stroke-linecap="round" opacity=".55"/></g>
+<g class="auto-estela c-oscuro"><path d="M0 30h21M7 38h14M0 46h21" stroke-width="3" stroke-dasharray="8 5"/></g>
+<g transform="translate(22 0)"><g class="c-claro"><path class="auto-cuerpo auto-borde" d="${CAR_C.cuerpo}"/><path class="auto-vidrio" d="${CAR_C.vidrios}"/></g>
+<g class="c-oscuro"><path class="auto-cuerpo" d="${CAR_O.cuerpo}"/><path class="auto-vidrio" d="${CAR_O.vidrios}"/></g>
+<rect class="auto-faro" x="107" y="34" width="6" height="4" rx="2"/><circle class="auto-rueda" cx="34" cy="44" r="8.5"/><circle class="auto-rueda" cx="90" cy="44" r="8.5"/>
+<circle class="auto-buje" cx="34" cy="44" r="3.4"/><circle class="auto-buje" cx="90" cy="44" r="3.4"/></g></svg>`;
+
+const nuevo = '<span class="nuevo">Nuevo</span>';
+const tabs = (g, items, cur, cls = '') => `<div class="tabs ${cls}" role="tablist">${items.map(t =>
+  `<button class="tab${t.v === cur ? ' on' : ''}" role="tab" aria-selected="${t.v === cur}" data-act="tab" data-g="${g}" data-v="${t.v}">${t.l}${t.n != null ? `<span class="n">${t.n}</span>` : ''}${t.pt ? '<i class="pt"></i>' : ''}</button>`).join('')}</div>`;
+
+/* Todos los acordeones nacen CERRADOS: solo se abren si la persona los abre */
+function acc(P, id, titulo, resumen, body, alerta = false, extra = '') {
+  const open = !!P.ui.open[id];
+  return `<section class="acc${open ? ' open' : ''}" data-acc="${id}"><button class="acc-h" data-act="toggle" data-id="${id}" aria-expanded="${open}">
+    <span class="acc-t"><b>${titulo}${extra}</b><small${alerta ? ' class="al"' : ''}>${resumen}</small></span>${ic('chev')}</button>
+    <div class="acc-b"><div class="acc-i"><div class="acc-c">${body}</div></div></div></section>`;
+}
+const confChip = c => c == null ? '' : `<span class="cnf ${confCls(c)}">${c >= .85 ? ic('check') + 'Legible' : c >= .4 ? ic('alerta') + 'Dudoso' : ic('x') + 'No se leyó'}</span>`;
+const sw = (attr, checked, titulo, sub) => `<div class="sw-r"><span><b>${titulo}</b>${sub ? `<small>${sub}</small>` : ''}</span><label class="sw"><input type="checkbox" ${attr}${checked ? ' checked' : ''} aria-label="${esc(titulo)}"><i></i></label></div>`;
+
+/* Comanda impresa: papel térmico dibujado (en la app real es la foto) */
+function papel(c, o = {}) {
+  const d = t => (c.dud && c.dud[t]) ? `<span class="dud">${esc(c[t])}</span>` : esc(c[t]);
+  return `<div class="papel${c.bor ? ' bor' : ''}${o.giro ? ' giro' : ''}${c.rf ? ' rf' : ''}"><div class="p-h"><b>WONG · ALDABAS</b><span>COMANDA ${esc(c.num)}</span></div>
+    <div>24/09/2026 ${esc(c.hora)}</div><div><span class="lb">PEDIDO</span> ${esc(c.code || '—')}</div><hr>
+    <div class="lb">CLIENTE</div><div>${d('n')}</div>
+    <div><span class="lb">TELF</span> ${d('tel')}</div>
+    <div><span class="lb">DIR</span> ${d('dir')}</div><hr>
+    <div>Bolsas: 3 · Refrigerado: sí</div><div>Total S/ 86.40</div></div>`;
+}
+const papelDe = (o, extra = {}) => papel({ num: String(4800 + (hash(o.codigo || 'x') % 90)), hora: o.hora || '10:12', code: o.codigo, n: o.cli?.n || 'Cliente', tel: o.cli?.tel || '—', dir: o.cli?.dir || '—', ...extra });
+const thumb = (html, cls = '') => `<span class="thumb ${cls}">${html}</span>`;
+
+/* Mapa esquemático. En la app sería Google Maps; aquí el dibujo mide 11 px por km. */
+const ESC = 11, MW = 328;
+function mapaSVG({ h = 260, cli = null, map, pinT = true, rings = true, lbl = true }) {
+  const cx = MW / 2, cy = h / 2, T = DB.tienda.pos;
+  const px = p => [cx + p.x * ESC, cy + p.y * ESC], [tx, ty] = px(T);
+  const ringsH = rings ? TARIFA.map((t, i) => `<circle class="m-ring${i > 2 ? ' suave' : ''}" cx="${tx}" cy="${ty}" r="${t.h * ESC}"/>${[3, 8, 12].includes(t.h) ? `<text class="m-t" x="${tx + t.h * ESC * .707 + 3}" y="${ty - t.h * ESC * .707 - 1}">${t.h} km</text>` : ''}`).join('') : '';
+  const via = `<path class="m-via" d="M-10 ${h * .3}C90 ${h * .34} 200 ${h * .22} 340 ${h * .3}"/><path class="m-via" d="M${MW * .26} -10C${MW * .3} ${h * .4} ${MW * .22} ${h * .7} ${MW * .3} ${h + 10}"/><path class="m-via" d="M-10 ${h * .78}L340 ${h * .62}"/><path class="m-via" d="M${MW * .72} -10L${MW * .66} ${h + 10}"/>
+    <path class="m-via2" d="M-10 ${h * .5}L340 ${h * .5}M${MW * .5} -10L${MW * .5} ${h + 10}M-10 ${h * .12}L340 ${h * .1}M${MW * .9} -10L${MW * .88} ${h + 10}M-10 ${h * .92}L340 ${h * .9}M${MW * .1} -10L${MW * .08} ${h + 10}"/>`;
+  const verde = `<ellipse class="m-parque" cx="${MW * .82}" cy="${h * .2}" rx="34" ry="22"/><ellipse class="m-parque" cx="${MW * .16}" cy="${h * .72}" rx="26" ry="18"/><ellipse class="m-agua" cx="${MW * .9}" cy="${h * .86}" rx="42" ry="14"/>`;
+  let cli_h = '';
+  if (cli && cli.x != null) {
+    const [x, y] = px(cli);
+    cli_h = `<path class="m-link" d="M${tx} ${ty}L${x} ${y}"/><g transform="translate(${x} ${y})"><path class="m-pin-c" d="M0 0C-9-9-12-13-12-18a12 12 0 0 1 24 0c0 5-3 9-12 18z" transform="translate(0 0)"/><circle cx="0" cy="-18" r="4.5" fill="#fff"/></g>`;
+  }
+  const tienda = pinT ? `<g transform="translate(${tx} ${ty})"><path class="m-pin-t" d="M0 0C-9-9-12-13-12-18a12 12 0 0 1 24 0c0 5-3 9-12 18z"/><text class="m-pin-l" x="0" y="-14">T</text></g>${lbl ? `<text class="m-lbl" x="${tx + 14}" y="${ty + 4}">Tienda</text>` : ''}` : '';
+  return `<svg class="mapa" viewBox="0 0 ${MW} ${h}" ${map ? `data-map="${map}" data-h="${h}"` : ''} role="img" aria-label="Mapa: tienda, cliente y círculos de tramo"><rect class="m-bg" width="${MW}" height="${h}"/>${verde}${via}${ringsH}${cli_h}${tienda}</svg>`;
+}
+/* Clic en el mapa → posición en km */
+function posDeClic(e, svg) {
+  const r = svg.getBoundingClientRect(), h = +svg.dataset.h;
+  const px = (e.clientX - r.left) * (MW / r.width), py = (e.clientY - r.top) * (h / r.height);
+  const cl = (v, m) => Math.max(-m, Math.min(m, v));
+  return { x: +cl((px - MW / 2) / ESC, 14.4).toFixed(2), y: +cl((py - h / 2) / ESC, h / 2 / ESC - .6).toFixed(2) };
+}
+
+/* ═══════════ Inicio ═══════════ */
+const cargarBtn = () => `<div><button class="btn" data-act="cargar">${ic('subir', 'lg')}Cargar capturas</button>
+  <p class="hint">También puedes compartir las capturas a Rutas-A desde la galería. Máximo 24 por carga.</p></div>`;
+
+function cardDia(P) {
+  const S = P.S(), iso = S.sel, d = DB.dias[iso];
+  if (d && !d.rest) {
+    const c = cobroDia(d), r = d.rutas.length;
+    return `<section class="dia" aria-label="${iso === TODAY ? 'Hoy' : 'Ese día'} cargaste ${d.ordenes.length} pedidos">
+      <p class="enc">${iso === TODAY ? 'Hoy cargaste' : `El ${DIAL[dow(iso)]} cargaste`}</p><p class="cif">${d.ordenes.length}</p>
+      <p class="pie">pedidos · ${r} ruta${r === 1 ? '' : 's'}</p><span class="pastilla">${money(c.cobra)}</span>${car('auto--sobre-acento')}</section>`;
+  }
+  if (d && d.rest) return `<section class="card desc"><span class="lu">${ic('luna')}</span><div><b>Día de descanso</b><p>Dijiste que no trabajaste este día.</p></div>
+    <button class="btn-sec sm" data-act="rest">Quitar</button></section>`;
+  if (iso > TODAY) return `<section class="card vacia">${car('auto--gris')}<b>Ese día todavía no llega</b><p>Cuando llegue, sube aquí sus capturas.</p></section>`;
+  return `<section class="card vacia">${car('auto--gris')}<b>${iso === TODAY ? 'Hoy' : 'Ese día'}: sin cargar</b>
+    <p>${iso === TODAY ? 'Todavía no has subido las capturas de hoy.' : 'Súbelo cuando quieras: manda la fecha de la captura, no la de hoy.'}</p>
+    <button class="btn-sec" data-act="rest">${ic('luna')}No trabajé este día</button></section>`;
+}
+
+function filaPedido(o, f, i) {
+  return `<button class="fila${o.pc ? ' pc' : ''}" data-act="ped" data-f="${f}" data-i="${i}">
+    <span class="f1">${o.pc ? '<span class="pc-t">Pedido sin código · toca para completar</span>' : `<span class="cod">${esc(o.codigo)}</span>`}<span class="mo">${money(o.monto)}</span></span>
+    <span class="f2">${o.ruta ? `<span class="p-ruta">Ruta ${o.ruta}<i>· ${o.hora}</i></span>` : '<span class="p-sin">Sin ruta · toca para asignar</span>'}
+    <span class="est${o.estado === 'Entregado' ? ' ok' : ''}">${o.estado === 'Entregado' ? '✓' : '·'} ${o.estado}</span>
+    ${o.tramo > 1 && o.tramo <= 5 ? `<span class="tr">T${o.tramo}</span>` : o.tramo === MAS12 ? '<span class="tr">+12 km</span>' : ''}
+    ${o.km != null ? `<span class="km">${o.km.toFixed(1)} km</span>` : ''}
+    <span class="marks">${o.cli ? ic('user', 'mini') : ''}${o.foto ? ic('camara', 'mini') : ''}</span></span></button>`;
+}
+function pedidosLista(P, f = P.S().sel) {
+  const all = DB.dias[f].ordenes, max = 5;
+  const lim = P.ui.showAll ? all.length : Math.min(all.length, max);
+  return `<div class="lista">${all.slice(0, lim).map((o, i) => filaPedido(o, f, i)).join('')}</div>` +
+    (all.length > max ? `<button class="lnk" data-act="showall">${P.ui.showAll ? 'Ver menos' : `Ver los ${all.length} pedidos`}${ic('chev', P.ui.showAll ? 'up' : '')}</button>` : '');
+}
+function rutasLista(P, f = P.S().sel) {
+  const d = DB.dias[f];
+  if (!d.rutas.length) return `<p class="vacio">Todavía no hay ninguna ruta este día.</p><button class="btn-sec" data-act="ir-add" data-v="ruta">${ic('plus')}Añadir una ruta</button>`;
+  const cuenta = n => d.ordenes.filter(o => o.ruta === n).length;
+  return `<ol class="paradas">${d.rutas.map((r, i) => `<li class="par${i === 0 ? ' p1' : ''}${i === d.rutas.length - 1 ? ' pn' : ''}"><span class="pin"><b>${r.n}</b></span>
+    <span><b class="t">Ruta ${r.n}</b><span class="h">${r.ini} – ${r.fin}</span></span><span class="np">${cuenta(r.n)} pedidos</span></li>`).join('')}</ol>`;
+}
+function pieDetalle(d, f) {
+  const nf = d.ordenes.filter(o => o.foto).length;
+  return `<div class="mas-l">
+    <button class="mrow" data-act="capturas" data-f="${f}"><span>${ic('camara')}Capturas y fotos del día</span><em>${d.capturas + nf}</em>${ic('flecha')}</button>
+    <button class="mrow" data-act="toast" data-msg="Abre entrada y salida (la permanencia en tienda)"><span>${ic('reloj')}Horario en tienda</span><em>${d.entrada ? `${d.entrada} – ${d.salida}` : 'sin horario'}</em>${ic('flecha')}</button>
+    <button class="mrow mal" data-act="toast" data-msg="Pide confirmar antes de borrar el día completo"><span>${ic('x')}Borrar este día</span>${ic('flecha')}</button></div>`;
+}
+function detalleTabs(P) {
+  const f = P.S().sel, d = DB.dias[f], tab = P.ui.tab.det ?? 'pedidos';
+  return tabs('det', [{ v: 'pedidos', l: 'Pedidos', n: d.ordenes.length }, { v: 'rutas', l: 'Rutas', n: d.rutas.length }], tab) +
+    (tab === 'pedidos' ? pedidosLista(P) : rutasLista(P)) + pieDetalle(d, f);
+}
+const resumenDia = d => { const c = cobroDia(d), n = d.ordenes.filter(o => o.cli).length; return `${d.ordenes.length} pedidos · ${d.rutas.length} rutas${c.min ? ` · ${dur(c.min)} en ruta` : ''}${n ? ` · ${n} con cliente` : ''}`; };
+
+/* Subir más */
+function opt(P, id, icono, t, s) {
+  const on = P.ui.form === id;
+  return `<button class="opt${on ? ' on' : ''}" data-act="form" data-id="${id}"><span class="oi">${ic(icono)}</span><span><b>${t}</b><small>${s}</small></span></button>${on ? formHTML(P, id) : ''}`;
+}
+function formHTML(P, id) {
+  const d = DB.dias[P.S().sel];
+  const rutas = (d?.rutas || []).map(r => `<option value="${r.n}">Ruta ${r.n}</option>`).join('');
+  if (id === 'manual') return `<div class="form"><div><label>Código del pedido</label><input class="inp mono" data-in="cod" placeholder="v12250012wofp-01" autocomplete="off"></div>
+    <div class="dos"><div><label>Ruta</label><select class="inp" data-in="ruta"><option value="">Sin ruta</option>${rutas}</select></div>
+    <div><label>Estado</label><select class="inp" data-in="est"><option>Entregado</option><option>Entrega parcial</option><option>No entregado</option></select></div></div>
+    <button class="btn md" data-act="save-manual">Guardar pedido</button></div>`;
+  if (id === 'cant') return `<div class="form"><label style="text-align:center;margin:0">¿Cuántos pedidos hiciste ese día?</label>
+    <div class="stepper"><button data-act="qty" data-d="-1" aria-label="Uno menos">${ic('minus')}</button><b>${P.ui.qty}</b><button data-act="qty" data-d="1" aria-label="Uno más">${ic('plus')}</button></div>
+    <p class="nota" style="text-align:center">Se guardan sin código; completas cada uno después.</p>
+    <button class="btn md" data-act="save-cant">Anotar ${P.ui.qty} pedido${P.ui.qty === 1 ? '' : 's'}</button></div>`;
+  if (id === 'ruta') return `<div class="form"><div class="dos"><div><label>Sale</label><input class="inp mono" type="time" data-in="ini" value="09:30"></div>
+    <div><label>Vuelve</label><input class="inp mono" type="time" data-in="fin" value="11:00"></div></div>
+    <button class="btn md" data-act="save-ruta">Guardar ruta ${(d?.rutas.length || 0) + 1}</button></div>`;
+  return '';
+}
+const optPedidos = P => opt(P, 'manual', 'lapiz', 'Añadir un pedido a mano', 'Código, ruta y estado') +
+  opt(P, 'cant', 'hash', 'Anotar cuántos pedidos hice', 'Solo la cantidad; los códigos, después') +
+  `<button class="opt" data-act="toast" data-msg="Abre la galería y lee los códigos de la captura de la app de reparto (igual que hoy)"><span class="oi">${ic('camara')}</span><span><b>Leer pedidos de una foto</b><small>De la captura de tus órdenes</small></span></button>` +
+  `<button class="opt" data-act="cmd-abrir"><span class="oi">${ic('ticket')}</span><span><b>Leer una comanda${nuevo}</b><small>Un pedido por foto: cliente, dirección y distancia</small></span></button>`;
+const optRutas = P => opt(P, 'ruta', 'plus', 'Añadir una ruta', 'Con su hora de salida y de vuelta') +
+  `<button class="opt" data-act="toast" data-msg="Abre la galería y lee las rutas de la captura (igual que hoy)"><span class="oi">${ic('camara')}</span><span><b>Leer rutas de una foto</b><small>De la captura de tus rutas</small></span></button>` +
+  ((DB.dias[P.S().sel]?.rutas.length || 0) > 1 ? `<button class="opt" data-act="toast" data-msg="Reordena las rutas por hora (igual que hoy)"><span class="oi">${ic('lista')}</span><span><b>Reordenar rutas</b><small>Por hora de salida</small></span></button>` : '');
+function addTabs(P) {
+  const tab = P.ui.tab.add ?? 'pedido';
+  return tabs('add', [{ v: 'pedido', l: 'Pedido' }, { v: 'ruta', l: 'Ruta' }], tab) + `<div class="grp">${tab === 'pedido' ? optPedidos(P) : optRutas(P)}</div>`;
+}
+
+function vInicio(P) {
+  const S = P.S(), d = DB.dias[S.sel], cargado = d && !d.rest, futuro = S.sel > TODAY;
+  let h = cardDia(P) + cargarBtn();
+  if (cargado) h += acc(P, 'det', 'Detalle de lo subido', resumenDia(d), detalleTabs(P));
+  if (!futuro) h += acc(P, 'add', 'Subir más', 'A mano, por cantidad, foto o comanda', addTabs(P));
+  return h;
+}
+
+/* ═══════════ Revisión (lo que sigue a «Cargar capturas») ═══════════ */
+function duelo(c) {
+  const mx = Math.max(c.ped, c.perm, 1);
+  return `<div class="duelo"><div class="d-r${c.por === 'pedidos' ? ' win' : ''}"><span>Pedidos</span><em>${money(c.ped)}</em><div class="bar"><i style="--w:${Math.round(c.ped / mx * 100)}%"></i></div></div>
+    <div class="d-r${c.por === 'permanencia' ? ' win' : ''}"><span>Permanencia · ${c.horas} h</span><em>${money(c.perm)}</em><div class="bar"><i style="--w:${Math.round(c.perm / mx * 100)}%"></i></div></div>
+    <p class="nota">Cada día se paga el mayor de los dos, no se suman: <b>cobras ${money(c.cobra)}</b>, por ${c.por}.</p></div>`;
+}
+function vRevision(P) {
+  const f = TODAY, d = DB.dias[f], c = cobroDia(d), fuera = d.ordenes.filter(o => o.tramo > 1).length;
+  return `<section class="card" style="display:grid;gap:12px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <div><span class="rotulo">Fecha de la jornada</span><b class="fd" style="display:block;font-size:calc(20px*var(--zt))">${cap(fechaLarga(f))}</b></div>
+      <button class="ibtn" data-act="toast" data-msg="Cambia la fecha si la captura vino recortada" aria-label="Cambiar la fecha">${ic('cal')}</button></div>
+    <div class="cifras"><div><span>Pedidos</span><b>${d.ordenes.length}</b></div><div><span>Rutas</span><b>${d.rutas.length}</b></div></div>
+    <div class="aviso ok">${ic('check')}<div><b>Los totales cuadran</b>La captura decía ${d.ordenes.length} pedidos y ${d.rutas.length} rutas, y eso es lo que se leyó.</div></div>
+    <p class="nota">${fuera} fuera del tramo 1 · toca un pedido para corregirlo. Con una comanda, el tramo se calcula solo.</p></section>` +
+    acc(P, 'r-perm', 'Permanencia en tienda', `${d.entrada} a ${d.salida} · ${c.horas} h`, `<div class="dos"><div class="campo"><label>Entrada</label><input class="inp mono" type="time" value="${d.entrada}"></div><div class="campo"><label>Salida</label><input class="inp mono" type="time" value="${d.salida}"></div></div>${duelo(c)}`) +
+    acc(P, 'r-rutas', 'Rutas del día', `${d.rutas.length} rutas`, rutasLista(P, f) + `<div class="grp"><button class="opt" data-act="toast" data-msg="Añade una ruta a mano"><span class="oi">${ic('plus')}</span><span><b>Añadir una ruta</b></span></button><button class="opt" data-act="toast" data-msg="Lee las rutas de una foto"><span class="oi">${ic('camara')}</span><span><b>Leer rutas de una foto</b></span></button></div>`) +
+    acc(P, 'r-ped', 'Pedidos', `${d.ordenes.length} pedidos · ${money(c.ped)}`, pedidosLista(P, f)) +
+    `<div style="display:grid;gap:8px"><button class="btn" data-act="rev-ok">Confirmar y guardar</button><button class="btn-sec" data-act="rev-no">Descartar esta carga</button></div>`;
+}
+
+/* ═══════════ Pagos ═══════════ */
+function chipEstado(w) {
+  if (w.estado === 'pagada') return `<span class="tag ok">${ic('check')}Pagada</span>`;
+  if (w.estado === 'abierta') return `<span class="tag inf">${ic('reloj')}En curso</span>`;
+  return `<span class="tag warn">${ic('reloj')}Por cobrar</span>`;
+}
+function textoPago(w) {
+  const p = w.pago;
+  if (w.estado === 'pagada') return `Pagada · viernes ${dmy(p)}`;
+  if (p === TODAY) return 'Se paga hoy';
+  if (p === add(TODAY, 1)) return `Se paga mañana · viernes ${dmy(p)}`;
+  if (p < TODAY) return `Se pagó el viernes ${dmy(p)} · falta anotar el cobro`;
+  return `Se paga el viernes ${dmy(p)}`;
+}
+function hero(P, w) {
+  const seg = w.dias.map(f => { const d = DB.dias[f]; return `<i class="${d ? (d.rest ? 'rs' : 'on') : ''}"></i>`; }).join('');
+  return `<section class="hero"><div class="hero-top"><span class="rotulo">${semLabel(w.mon)}</span>${chipEstado(w)}</div>
+    <div class="hero-monto">${money(w.monto)}</div><div class="hero-pie">${w.pedidos} pedidos · ${w.rutas} rutas${w.fuera ? ` · ${w.fuera} fuera del tramo 1` : ''}</div>
+    <div class="segs" aria-label="${w.cargados} de 7 días cargados">${seg}</div>
+    <div class="hero-pago">${ic('reloj')}<span>${textoPago(w)}</span></div></section>`;
+}
+function diaDetalle(iso) {
+  const d = DB.dias[iso];
+  if (d && d.rest) return `<div class="dd"><div class="desc"><span class="lu">${ic('luna')}</span><div><b>Día de descanso</b><p>Dijiste que no trabajaste.</p></div></div><button class="btn-sec sm" data-act="rest" data-d="${iso}">Quitar el descanso</button></div>`;
+  if (!d) return iso > TODAY ? `<div class="dd"><p class="nota">Ese día todavía no llega.</p></div>`
+    : `<div class="dd"><p class="nota">Este día no tiene nada guardado.</p><div class="dos"><button class="btn-sec sm" data-act="goto-inicio" data-d="${iso}">${ic('subir')}Subir</button><button class="btn-sec sm" data-act="rest" data-d="${iso}">${ic('luna')}No trabajé</button></div></div>`;
+  const c = cobroDia(d), km = d.ordenes.filter(o => o.km != null);
+  return `<div class="dd"><div class="dd-k"><div><b>${d.ordenes.length}</b><span>pedidos</span></div><div><b>${d.rutas.length}</b><span>rutas</span></div><div><b>${c.min ? dur(c.min).replace(' h ', 'h ').replace(' min', 'm') : '—'}</b><span>en ruta</span></div></div>
+    ${c.horas ? duelo(c) : `<dl class="dl"><div><dt>Por pedidos</dt><dd>${money(c.ped)}</dd></div><div><dt>Horario en tienda</dt><dd>sin horario</dd></div></dl>`}
+    ${km.length ? `<p class="nota">${km.length} pedido${km.length === 1 ? '' : 's'} con distancia calculada · media ${(km.reduce((s, o) => s + o.km, 0) / km.length).toFixed(1)} km.</p>` : ''}
+    <button class="btn-sec sm" data-act="goto-inicio" data-d="${iso}">Abrir este día en Inicio${ic('flecha')}</button></div>`;
+}
+function faltaPanel(P, w) {
+  if (!w.faltan.length) return '';
+  const el = w.faltan.filter(f => !P.ui.desmarc.has(f)), n = w.faltan.length;
+  const txt = el.length === n ? (n === 1 ? 'No trabajé ese día' : 'No trabajé esos días') : `No trabajé ${el.length} de ${n}`;
+  return `<div class="falta"><div class="ft">${ic('alerta')}<div><b>Falta${n === 1 ? '' : 'n'} ${n} día${n === 1 ? '' : 's'} por subir</b>
+    <p>¿Los trabajaste? Sube sus capturas con el botón del auto. ¿No trabajaste? Márcalos como descanso.</p></div></div>
+    <div class="cfs">${w.faltan.map(f => `<button class="cf${P.ui.desmarc.has(f) ? '' : ' on'}" data-act="falta-chip" data-d="${f}" aria-pressed="${!P.ui.desmarc.has(f)}">${corto(f)}</button>`).join('')}</div>
+    <button class="btn md" data-act="marcar-faltan"${el.length ? '' : ' disabled style="opacity:.5"'}>${ic('luna')}${txt}</button></div>`;
+}
+function pgDias(P, w) {
+  const rows = w.dias.map(f => {
+    const d = DB.dias[f], exp = P.ui.expDia === f;
+    let m, v = '—', vac = false, ch = true;
+    if (d && d.rest) { m = `${ic('luna')} Descanso`; vac = true; }
+    else if (d) { const c = cobroDia(d); m = `${d.ordenes.length} pedidos · ${d.rutas.length} rutas${c.por === 'permanencia' ? '<br>cubierto por permanencia' : ''}`; v = money(c.cobra); }
+    else if (f > TODAY) { m = 'Todavía no llega'; vac = true; ch = false; }
+    else { m = 'Sin cargar'; vac = true; }
+    return `<div class="diar${exp ? ' exp on' : ''}" data-row="${f}"><button class="dia-h${vac ? ' vac' : ''}" data-act="dia" data-d="${f}"${ch ? '' : ' disabled'}>
+      <span class="dn"><b>${DIA3[dow(f)]}</b><span>${f.slice(8)}</span></span><span class="dm">${m}</span><span class="dv">${v}${ch ? ic('chev') : ''}</span></button>
+      ${exp ? `<div class="dia-b">${diaDetalle(f)}</div>` : ''}</div>`;
+  }).join('');
+  const desc = w.descansos.length ? `<div class="grp"><span class="rotulo">Días de descanso</span><div class="cfs desc">${w.descansos.map(f =>
+    `<button class="cf" data-act="rest" data-d="${f}" aria-label="Quitar el descanso del ${DIAL[dow(f)]} ${num(f)}">${corto(f)}${ic('x')}</button>`).join('')}</div></div>` : '';
+  return faltaPanel(P, w) + `<div>${rows}</div>` + desc;
+}
+function pgCobro(P, w) {
+  const dl = `<dl class="dl"><div><dt>Se paga el</dt><dd>viernes ${dmy(w.pago)}</dd></div><div><dt>Tiempo en ruta</dt><dd>${dur(w.min)}</dd></div>
+    ${w.garantia ? `<div><dt>Solo por pedidos habría sido</dt><dd>${money(w.montoPed)}</dd></div><div><dt>Días cubiertos por la permanencia</dt><dd>${w.garantia}</dd></div>` : ''}</dl>`;
+  if (w.estado === 'pagada') {
+    const dif = w.recibido - w.monto;
+    return dl + `<p class="nota"><b>Anotaste ${money(w.recibido)}</b> como lo que te pagaron.</p>` +
+      (dif ? `<p class="dif${dif > 0 ? ' mas' : ''}">${dif < 0 ? 'Te pagaron de menos: ' : 'Te pagaron de más: '}${money(Math.abs(dif))}. El desglose por día y por ruta sirve de sustento.</p>` : '') +
+      `<button class="btn-sec" data-act="reabrir" data-mon="${w.mon}">Reabrir para corregir algo</button>`;
+  }
+  return dl + `<div><label class="rotulo" style="display:block;margin-bottom:6px;color:var(--tinta)">¿Cuánto te pagaron?</label>
+    <p class="nota" style="margin-bottom:10px">Anótalo el día que cobres. Hasta entonces la semana sigue abierta y puedes seguir corrigiendo cualquier día suyo.</p>
+    <div class="fila-in"><input class="inp mono" type="number" inputmode="decimal" step="0.5" min="0" placeholder="${(w.monto / 100).toFixed(2)}" data-in="recibido"><button class="btn" data-act="pagar" data-mon="${w.mon}">Registrar pago</button></div></div>`;
+}
+function pgTarifa() {
+  return `<table class="tabla"><thead><tr><th>Tramo</th><th>Distancia</th><th class="num">Por pedido</th></tr></thead><tbody>${TARIFA.map(t =>
+    `<tr><td>${t.id}</td><td>${t.d} a ${t.h} km</td><td class="num">${money(t.m)}</td></tr>`).join('')}</tbody></table>
+    <p class="nota">Se paga cada pedido, entregado o no: el recorrido se hizo igual. El estado solo cuenta para las estadísticas.</p>
+    <div class="grp"><span class="rotulo">Garantía por permanencia</span><p class="nota">La tienda paga <b>S/ 10.00 por hora</b> de permanencia. Cada día se paga <b>el mayor</b> de los dos: lo que sumen tus pedidos o lo que sume la permanencia. No se suman. Las horas se cuentan completas: salir a las 21:30 cuenta como 12 h, no 12.5.</p></div>`;
+}
+function pgSemanas(P) {
+  const filas = Array.from({ length: 9 }, (_, b) => {
+    const w = semana(add(THIS_WEEK, -7 * b)), dif = w.recibido != null ? w.recibido - w.monto : 0;
+    return `<button class="sem-r${w.mon === P.S().week ? ' on' : ''}" data-act="gosem" data-mon="${w.mon}"><span class="a"><b>${dm(w.mon)} – ${dm(add(w.mon, 6))}</b><small>${w.pedidos} pedidos · pago ${dm(w.pago)}</small></span>
+      <span class="b"><em>${money(w.monto)}</em>${dif ? `<span class="dif${dif > 0 ? ' mas' : ''}">${dif < 0 ? '−' : '+'}${(Math.abs(dif) / 100).toFixed(2)}</span>` : chipEstado(w)}</span></button>`;
+  }).join('');
+  return `<div class="lista">${filas}</div>`;
+}
+function vPagos(P) {
+  const w = semana(P.S().week), n = w.faltan.length;
+  const banner = n ? `<button class="aviso warn" data-act="abrir-acc" data-id="dias" style="width:100%;text-align:left;align-items:center">${ic('alerta')}<span style="flex:1"><b>Faltan ${n} día${n === 1 ? '' : 's'} por subir</b>Toca para subirlos o marcarlos como descanso</span>${ic('flecha')}</button>` : '';
+  const resDias = n ? `${w.cargados} de 7 días · <span>faltan ${n}</span>` : `${w.cargados} de 7 días`;
+  const resCobro = w.estado === 'pagada' ? `Pagada · anotaste ${money(w.recibido)}` : w.estado === 'abierta' ? 'Semana en curso' : 'Anota lo que te pagaron';
+  return hero(P, w) + banner +
+    acc(P, 'dias', 'Día por día', resDias, pgDias(P, w), n > 0) +
+    acc(P, 'cobro', 'Cobro', resCobro, pgCobro(P, w)) +
+    acc(P, 'tarifa', 'Tarifa vigente', 'Por tramo de distancia y garantía', pgTarifa()) +
+    acc(P, 'sems', 'Otras semanas', 'Toca una para verla', pgSemanas(P));
+}
+
+/* ═══════════ Estadísticas ═══════════ */
+function limitesRango(id) {
+  if (id === '7') return [add(TODAY, -6), TODAY];
+  if (id === 'mes') return [TODAY.slice(0, 8) + '01', TODAY];
+  if (id === 'anterior') { const y = +TODAY.slice(0, 4), m = +TODAY.slice(5, 7) - 1, p = m === 0 ? [y - 1, 12] : [y, m]; const a = `${p[0]}-${pad(p[1])}-01`; return [a, add(TODAY.slice(0, 8) + '01', -1)]; }
+  return [add(TODAY, -29), TODAY];
+}
+function datosRango(desde, hasta) {
+  const dias = rango(desde, hasta).map(f => {
+    const d = DB.dias[f], base = { f, cargado: false, rest: false, pedidos: 0, rutas: 0, min: 0, monto: 0, fuera: 0, d };
+    if (!d) return base;
+    if (d.rest) return { ...base, rest: true };
+    const c = cobroDia(d);
+    return { ...base, cargado: true, pedidos: d.ordenes.length, rutas: d.rutas.length, min: c.min, monto: c.cobra, fuera: d.ordenes.filter(o => o.tramo > 1).length };
+  });
+  const cg = dias.filter(x => x.cargado), sum = k => cg.reduce((s, x) => s + x[k], 0);
+  return { dias, cg, pedidos: sum('pedidos'), rutas: sum('rutas'), min: sum('min'), monto: sum('monto'), fuera: sum('fuera'), huecos: dias.filter(x => !x.cargado && !x.rest && x.f <= TODAY).length };
+}
+function chartHTML(dias) {
+  const max = Math.max(1, ...dias.map(d => d.pedidos)), corto7 = dias.length <= 8;
+  const cols = dias.map(d => {
+    if (d.rest) return `<div class="b rs" title="${corto(d.f)} · descanso"><span class="n"></span><div class="col"></div></div>`;
+    if (!d.cargado) return `<div class="b vac" title="${corto(d.f)} · sin carga"><span class="n"></span><div class="col"></div></div>`;
+    const h = Math.max(8, d.pedidos / max * 100), x = d.fuera / d.pedidos * 100;
+    return `<div class="b" title="${corto(d.f)} · ${d.pedidos} pedidos · ${money(d.monto)}"><span class="n">${corto7 ? d.pedidos : ''}</span><div class="col" style="height:${h * .82}%"><i class="x" style="height:${x}%"></i><i style="flex:1"></i></div></div>`;
+  }).join('');
+  const lab = dias.map(d => corto7 ? `<span>${d.cargado ? Math.round(d.monto / 100) : '·'}</span>` : `<span>${dow(d.f) === 0 ? num(d.f) : ''}</span>`).join('');
+  return `<div class="chart" role="img" aria-label="Pedidos por día">${cols}</div><div class="ch-x">${lab}</div>
+    <div class="ch-l"><span><i style="background:var(--acento)"></i>Pedidos del día</span><span><i style="background:color-mix(in srgb,var(--acento) 45%,var(--sup))"></i>Fuera del tramo 1</span><span><i style="background:var(--descanso)"></i>Descanso</span></div>
+    <p class="hint" style="margin-top:6px">${corto7 ? 'Debajo de cada barra, los soles del día.' : 'Debajo, el número del lunes de cada semana.'} Un hueco no es un día sin trabajo.</p>`;
+}
+function vStats(P) {
+  const id = P.ui.tab.st || '30', [desde, hasta] = limitesRango(id), R = datosRango(desde, hasta);
+  if (!R.cg.length) return `<p class="vacio" style="text-align:center;padding:30px 0">No hay jornadas cargadas en este rango.</p>`;
+  const durs = R.cg.flatMap(x => x.d.rutas.map(r => toMin(r.fin) - toMin(r.ini))), prom = durs.length ? Math.round(durs.reduce((a, b) => a + b, 0) / durs.length) : 0;
+  const mejorIng = [...R.cg].sort((a, b) => b.monto - a.monto)[0], mejorCarga = [...R.cg].sort((a, b) => b.pedidos - a.pedidos)[0];
+  let racha = 0; for (const x of [...R.cg].reverse()) { if (x.d.ordenes.length && x.d.ordenes.every(o => o.estado === 'Entregado')) racha++; else break; }
+  const todos = R.cg.flatMap(x => x.d.ordenes), porT = [1, 2, 3, 4, 5, MAS12].map(t => [t, todos.filter(o => o.tramo === t).length]).filter(([t, n]) => t <= 5 || n);
+  const conKm = todos.filter(o => o.km != null), kmMed = conKm.length ? conKm.reduce((s, o) => s + o.km, 0) / conKm.length : 0, kmMax = conKm.length ? Math.max(...conKm.map(o => o.km)) : 0;
+  const mx = Math.max(1, ...porT.map(x => x[1]));
+  const dl = rows => `<dl class="dl">${rows.map(([a, b]) => `<div><dt>${a}</dt><dd>${b}</dd></div>`).join('')}</dl>`;
+  return `<div class="paso" style="margin-top:-4px"><span>${dm(desde)} – ${dm(hasta)}</span></div>` +
+    tabs('st', [{ v: '7', l: '7 días' }, { v: '30', l: '30 días' }, { v: 'mes', l: 'Este mes' }], id) +
+    `<div class="cifras"><div><span>Pedidos</span><b>${R.pedidos}</b></div><div><span>Soles</span><b>${(R.monto / 100).toFixed(2)}</b></div>
+      <div><span>Días trabajados</span><b>${R.cg.length}</b></div><div><span>Promedio por día</span><b>${(R.pedidos / R.cg.length).toFixed(1)}<small>ped.</small></b></div></div>` +
+    `<section class="card" id="bloque-grafico">${chartHTML(R.dias)}</section>` +
+    (R.huecos ? `<div class="aviso warn">${ic('alerta')}<div><b>${R.huecos} día${R.huecos === 1 ? '' : 's'} sin carga en el rango</b>Súbelo y las cifras se recalculan; si no trabajaste, márcalo como descanso en Pagos.</div></div>` : '') +
+    acc(P, 's-tiempos', 'Tiempos', `${dur(R.min)} en ruta · ${prom} min por ruta`, dl([['Tiempo total en ruta', dur(R.min)], ['Duración media por ruta', `${prom} min`], ['Ruta más rápida / más lenta', `${Math.min(...durs)} / ${Math.max(...durs)} min`], ['Minutos por pedido', `${Math.round(R.min / R.pedidos)} min`], ['Pedidos por ruta', (R.pedidos / R.rutas).toFixed(1)]]) + '<p class="nota">Los minutos por pedido son una estimación: las capturas traen la hora de la ruta, no la de cada pedido.</p>') +
+    acc(P, 's-ing', 'Ingresos', `${money(Math.round(R.monto / R.cg.length))} por día · ${money(Math.round(R.monto / R.pedidos))} por pedido`, dl([['Promedio por día', money(Math.round(R.monto / R.cg.length))], ['Promedio por pedido', money(Math.round(R.monto / R.pedidos))], ['Promedio por hora en ruta', R.min ? money(Math.round(R.monto / (R.min / 60))) : '—'], ['Pedidos fuera del tramo 1', `${R.fuera} de ${R.pedidos}`]])) +
+    acc(P, 's-dist', 'Por distancia', `${R.fuera} de ${R.pedidos} fuera del tramo 1${conKm.length ? ` · media ${kmMed.toFixed(1)} km` : ''}`,
+      `<div class="grp">${porT.map(([t, n]) => `<div class="hb"><span class="mono">${t === MAS12 ? '+12' : 'T' + t}</span><div class="bar"><i style="--w:${Math.round(n / mx * 100)}%"></i></div><em>${n}</em></div>`).join('')}</div>` +
+      (conKm.length ? `<dl class="dl"><div><dt>Distancia media (línea recta)</dt><dd>${kmMed.toFixed(1)} km</dd></div><div><dt>El pedido más lejano</dt><dd>${kmMax.toFixed(1)} km</dd></div><div><dt>Pedidos con dirección</dt><dd>${conKm.length} de ${R.pedidos}</dd></div></dl>` : '') +
+      '<p class="nota">La distancia sale de las comandas que lees: cuantas más leas, más se ve de dónde vienen tus pedidos.</p>', false, nuevo) +
+    acc(P, 's-rec', 'Récords', `${money(mejorIng.monto)} · mejor día`, `<div class="rec"><span class="ri">${ic('trofeo')}</span><span><b>${money(mejorIng.monto)} · mejor día en ingresos</b><small>${DIAL[dow(mejorIng.f)]} ${dmy(mejorIng.f)}</small></span></div>
+      <div class="rec"><span class="ri">${ic('subir')}</span><span><b>${mejorCarga.pedidos} pedidos · día con más carga</b><small>${DIAL[dow(mejorCarga.f)]} ${dmy(mejorCarga.f)}, en ${mejorCarga.rutas} rutas</small></span></div>
+      <div class="rec"><span class="ri">${ic('reloj')}</span><span><b>${racha} día${racha === 1 ? '' : 's'} al 100 %</b><small>racha actual de jornadas con todo entregado</small></span></div>`) +
+    acc(P, 's-exp', 'Exportar', 'Estadísticas a PDF', `<button class="btn-sec" data-act="toast" data-msg="Compone el PDF con portada, cifras y gráficos (siempre en tema claro)">${ic('hoja')}Exportar estadísticas a PDF</button><p class="nota">Se genera en tu celular. Es el que se enseña cuando un pago no cuadra.</p>`);
+}
+
+/* ═══════════ Historial y Buscar ═══════════ */
+function ordenesDe(desde, hasta) {
+  const out = [];
+  for (let f = hasta; f >= desde; f = add(f, -1)) { const d = DB.dias[f]; if (d && !d.rest) d.ordenes.forEach((o, i) => out.push({ o, f, i })); }
+  return out;
+}
+function resultadosBusqueda(P, modo) {
+  const q = (P.ui.q || '').trim().toLowerCase(), rg = P.ui.tab.br || '30', dias = { 7: 7, 30: 30, 60: 60 }[rg] || 30;
+  if (q.length < 2) return `<p class="vacio" style="text-align:center;padding:18px 0">${modo === 'codigo' ? 'Escribe el código o parte de él.' : 'Escribe al menos 2 letras. Busca solo en los pedidos donde guardaste esos datos.'}</p>`;
+  const dq = q.replace(/\D/g, '');
+  const hit = ({ o }) => modo === 'codigo' ? o.codigo.toLowerCase().includes(q) :
+    modo === 'cliente' ? (o.cli?.n || '').toLowerCase().includes(q) :
+    modo === 'telefono' ? (dq.length >= 3 && (o.cli?.tel || '').replace(/\D/g, '').includes(dq)) : (o.cli?.dir || '').toLowerCase().includes(q);
+  const res = ordenesDe(add(TODAY, -(dias - 1)), TODAY).filter(hit);
+  if (!res.length) return `<p class="vacio" style="text-align:center;padding:18px 0">Ningún pedido coincide en los últimos ${dias} días.</p>`;
+  const g = {}; res.forEach(r => (g[r.f] = g[r.f] || []).push(r));
+  return `<p class="nota">${res.length} pedido${res.length === 1 ? '' : 's'} encontrado${res.length === 1 ? '' : 's'}</p>` + Object.keys(g).map(f => `<div><div class="res-d">${DIAL[dow(f)]} ${dmy(f)}</div><div class="lista">${g[f].map(({ o, i }) => filaBusca(o, f, i, modo)).join('')}</div></div>`).join('');
+}
+function filaBusca(o, f, i, modo) {
+  const extra = modo === 'cliente' && o.cli ? `<span class="p-ruta" style="background:var(--sup-2);color:var(--tinta)">${ic('user', 'mini')}${esc(o.cli.n)}</span>` : modo === 'telefono' && o.cli ? `<span class="p-ruta" style="background:var(--sup-2);color:var(--tinta)">${esc(o.cli.tel)}</span>` : modo === 'direccion' && o.cli ? `<span class="p-ruta" style="background:var(--sup-2);color:var(--tinta)">${ic('pin', 'mini')}${esc(o.cli.dir)}</span>` : '';
+  return `<button class="fila" data-act="ped" data-f="${f}" data-i="${i}"><span class="f1"><span class="cod">${esc(o.codigo || 'sin código')}</span><span class="mo">${money(o.monto)}</span></span>
+    <span class="f2">${extra}${o.ruta ? `<span class="p-ruta">Ruta ${o.ruta}<i>· ${o.hora}</i></span>` : ''}${o.tramo > 1 && o.tramo <= 5 ? `<span class="tr">T${o.tramo}</span>` : ''}${o.km != null ? `<span class="km">${o.km.toFixed(1)} km</span>` : ''}</span></button>`;
+}
+function vBuscar(P) {
+  const modo = P.ui.tab.bq || 'codigo', ph = { codigo: 'Código o parte de él', cliente: 'Nombre del cliente', telefono: 'Teléfono (o sus últimos dígitos)', direccion: 'Calle o urbanización' }[modo];
+  return `<div class="busca">${ic('buscar')}<input data-q value="${esc(P.ui.q || '')}" placeholder="${ph}" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Buscar"></div>` +
+    tabs('bq', [{ v: 'codigo', l: 'Código' }, { v: 'cliente', l: 'Cliente' }, { v: 'telefono', l: 'Teléfono' }, { v: 'direccion', l: 'Dirección' }], modo, 't4') +
+    `<div class="chips-r">${[['7', '7 días'], ['30', '30 días'], ['60', '60 días']].map(([v, l]) => `<button class="chp${(P.ui.tab.br || '30') === v ? ' on' : ''}" data-act="tab" data-g="br" data-v="${v}">${l}</button>`).join('')}</div>` +
+    `<p class="nota">${modo === 'codigo' ? 'Sirve para cuando la tienda pregunta por un pedido: dice en qué fecha fue, en qué ruta y con qué horario.' : `Busca solo en los pedidos donde guardaste ${modo === 'cliente' ? 'el nombre' : modo === 'telefono' ? 'el teléfono' : 'la dirección'} ${nuevo}`}</p>` +
+    `<div data-res style="display:flex;flex-direction:column;gap:6px">${resultadosBusqueda(P, modo)}</div>`;
+}
+function vHistorial(P) {
+  const vista = P.ui.tab.hv || 'dia', rg = P.ui.tab.hr || '30', [desde, hasta] = limitesRango(rg), R = datosRango(desde, hasta);
+  const q = (P.ui.q || '').trim().toLowerCase();
+  let h = tabs('hv', [{ v: 'dia', l: 'Por día' }, { v: 'pedidos', l: 'Pedidos' }], vista) +
+    `<div class="chips-r">${[['7', '7 días'], ['30', '30 días'], ['mes', 'Este mes'], ['anterior', 'Mes pasado']].map(([v, l]) => `<button class="chp${rg === v ? ' on' : ''}" data-act="tab" data-g="hr" data-v="${v}">${l}</button>`).join('')}</div>` +
+    `<div class="busca">${ic('buscar')}<input data-q value="${esc(P.ui.q || '')}" placeholder="Buscar un pedido por su código" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Buscar un pedido por su código"></div>`;
+  if (q.length >= 2) return h + `<div data-res style="display:flex;flex-direction:column;gap:6px">${resultadosBusqueda({ ...P, ui: { ...P.ui, tab: { ...P.ui.tab, br: '60' } } }, 'codigo')}</div>`;
+  h += `<div class="tiles4"><div><span>Pedidos</span><b>${R.pedidos}</b></div><div><span>Rutas</span><b>${R.rutas}</b></div><div><span>Días</span><b>${R.cg.length}</b></div><div><span>Monto</span><b>${Math.round(R.monto / 100)}</b></div></div>`;
+  if (R.huecos) h += `<div class="aviso warn">${ic('alerta')}<div><b>${R.huecos} día${R.huecos === 1 ? '' : 's'} sin carga en el rango</b>No se cuentan como días sin trabajo. Súbelos y los totales se recalculan.</div></div>`;
+  if (!R.cg.length) return h + `<p class="vacio" style="text-align:center;padding:20px 0">No hay pedidos en este rango.</p>`;
+  if (vista === 'pedidos') {
+    const todos = ordenesDe(desde, hasta), lim = P.ui.showAll ? todos.length : 8;
+    h += `<div class="lista">${todos.slice(0, lim).map(({ o, f, i }) => filaBusca(o, f, i, 'codigo')).join('')}</div>` +
+      (todos.length > 8 ? `<button class="lnk" data-act="showall">${P.ui.showAll ? 'Ver menos' : `Ver los ${todos.length} pedidos`}${ic('chev', P.ui.showAll ? 'up' : '')}</button>` : '');
+  } else {
+    const lunes = [...new Set(R.cg.map(x => monday(x.f)))].sort().reverse();
+    h += lunes.map(mon => { const w = semana(mon), ds = R.cg.filter(x => monday(x.f) === mon).reverse();
+      return acc(P, 'h-' + mon, semLabel(mon), `${ds.length} día${ds.length === 1 ? '' : 's'} · ${w.pedidos} pedidos · ${money(w.monto)}`,
+        `<div class="mas-l">${ds.map(x => `<button class="dia-l" data-act="goto-inicio" data-d="${x.f}"><b>${corto(x.f)}</b><span>${x.pedidos} pedidos · ${x.rutas} rutas</span><em>${money(x.monto)}</em></button>`).join('')}</div>`); }).join('');
+  }
+  return h + acc(P, 'h-exp', 'Exportar', 'Excel o PDF de lo que ves', `<div class="dos"><button class="btn-sec" data-act="toast" data-msg="Genera el Excel con todo el dato del rango">Excel</button><button class="btn-sec" data-act="toast" data-msg="Genera el PDF que se enseña cuando un pago no cuadra">PDF</button></div><p class="nota">Se genera en tu celular con lo que ves filtrado en pantalla.</p>`);
+}
+
+/* ═══════════ Ajustes ═══════════ */
+const SKINS = [['claro', 'Mapa', 'Claro', ['#e6eef8', '#1f5cff', '#ffc800']], ['oscuro', 'Asfalto', 'Oscuro', ['#0e1116', '#ff9f1c', '#5cc8ff']], ['turbo', 'Turbo', 'Violeta y bordes gruesos', ['#f3efff', '#6a4cf5', '#ffd23f']], ['menta', 'Menta', 'El verde de siempre', ['#eef4f2', '#0b857b', '#ff7a5c']]];
+const skinActual = () => { const s = document.documentElement.dataset.skin; return s === 'mapa' ? 'claro' : s === 'asfalto' ? 'oscuro' : s; };
+const seg = (act, items, cur) => `<div class="tabs" role="radiogroup">${items.map(t => `<button class="tab${t.v === cur ? ' on' : ''}" role="radio" aria-checked="${t.v === cur}" data-act="${act}" data-v="${t.v}">${t.l}</button>`).join('')}</div>`;
+function ubicHTML(P) {
+  const T = DB.tienda.pos, f = P.ui.ubic;
+  return `${mapaSVG({ h: 250, map: 'tienda', cli: null })}
+    <div class="map-cap"><span>Toca el mapa para mover el punto</span><span>Los círculos son tus tramos</span></div>
+    <div class="aviso inf">${ic('pin')}<div><b>Punto de partida: ${esc(DB.tienda.nombre)}</b>−12.0${(98 + T.y * 3).toFixed(0)}, −76.9${(88 + T.x * 3).toFixed(0)} · punto de ejemplo</div></div>
+    <div class="grp"><span class="rotulo">Elegir la ubicación</span>
+      <button class="opt${f === 'aqui' ? ' on' : ''}" data-act="ubic-aqui"><span class="oi">${ic('pin')}</span><span><b>Estoy en la tienda ahora</b><small>Usa el GPS del teléfono · lo más exacto</small></span></button>
+      <button class="opt${f === 'enlace' ? ' on' : ''}" data-act="ubic-form" data-id="enlace"><span class="oi">${ic('link')}</span><span><b>Pegar un enlace de Google Maps</b><small>Compartir el lugar desde Google Maps → copiar</small></span></button>
+      ${f === 'enlace' ? `<div class="form"><label>Enlace del lugar</label><input class="inp" data-in="enlace" placeholder="https://maps.app.goo.gl/…" autocomplete="off"><button class="btn md" data-act="ubic-enlace">Usar este enlace</button></div>` : ''}
+      <button class="opt${f === 'buscar' ? ' on' : ''}" data-act="ubic-form" data-id="buscar"><span class="oi">${ic('buscar')}</span><span><b>Buscar por nombre o dirección</b><small>Necesita internet</small></span></button>
+      ${f === 'buscar' ? `<div class="form"><label>Nombre o dirección de la tienda</label><input class="inp" data-in="busca" placeholder="Wong Aldabas" autocomplete="off"><button class="btn md" data-act="ubic-buscar">Buscar en el mapa</button></div>` : ''}</div>
+    <p class="priv">${ic('candado')}<span>Solo se necesita internet para elegir la ubicación y para buscar la dirección de una comanda. La tienda se guarda en este teléfono.</span></p>`;
+}
+function tiendaBody(P) {
+  const tab = P.ui.tab.tda || 'tienda';
+  let b = tabs('tda', [{ v: 'tienda', l: 'Tienda' }, { v: 'ubic', l: 'Ubicación' }, { v: 'tarifa', l: 'Tarifa' }], tab);
+  if (tab === 'tienda') b += `<div class="grp"><span class="rotulo">Tienda</span><div class="chips-w"><button class="chip-b on" aria-pressed="true">${esc(DB.tienda.nombre)}</button><button class="chip-b" data-act="toast" data-msg="Cambia la tienda de la carga de hoy">Wong - Gardenias</button><button class="chip-b nue" data-act="toast" data-msg="Escribe el nombre y luego ubícala en el mapa">+ Nueva tienda</button></div></div>
+    <div class="grp"><span class="rotulo">Modalidad</span><div class="veh" role="radiogroup"><button class="${DB.aj.veh === 'auto' ? 'on' : ''}" role="radio" aria-checked="${DB.aj.veh === 'auto'}" data-act="aj-veh" data-v="auto">${car('')}<b>Auto</b></button><button class="${DB.aj.veh === 'moto' ? 'on' : ''}" role="radio" aria-checked="${DB.aj.veh === 'moto'}" data-act="aj-veh" data-v="moto">${car('')}<b>Moto eléctrica</b></button></div></div>
+    <p class="nota">Un cambio no toca lo ya cargado: cada jornada guarda su propia tienda y su propio vehículo.</p>`;
+  else if (tab === 'ubic') b += ubicHTML(P);
+  else b += seg('aj-modo', [{ v: 'tramo', l: 'Por tramo' }, { v: 'unica', l: 'Única' }], DB.aj.modo) +
+    (DB.aj.modo === 'tramo' ? pgTarifa().replace(/<div class="grp"><span class="rotulo">Garantía[\s\S]*$/, '') + `<div class="grp"><span class="rotulo">Garantía por permanencia</span><div class="sw-r"><span><b>Pagar el mayor del día</b><small>S/ 10.00 por hora · horas completas hacia abajo</small></span><label class="sw"><input type="checkbox" checked disabled aria-label="Garantía"><i></i></label></div></div>` :
+      `<div class="fila-in"><input class="inp mono" value="8.50" aria-label="Monto por pedido"><button class="btn-sec" data-act="toast" data-msg="Guarda el monto único por pedido">Guardar</button></div><p class="nota">Hay tiendas que pagan lo mismo por pedido, sea cual sea el recorrido. Con tarifa única la distancia no cambia el pago.</p>`) +
+    `<div class="grp"><span class="rotulo">Distancia automática${nuevo}</span>` +
+    sw('data-set="auto"', DB.aj.auto, 'Calcular el tramo con la dirección', 'Al leer una comanda, el tramo sale de la distancia en línea recta desde tu tienda.') +
+    `<div class="sw-r"><span><b>Ajuste por calles</b><small>Línea recta × este número. Pon 1.00 si la tienda mide en línea recta; sube si mide por calles (suele quedar más larga).</small></span><div class="stepper" style="gap:6px"><button data-act="aj-factor" data-d="-0.05" aria-label="Menos" style="width:38px;height:38px">${ic('minus')}</button><b style="font-size:calc(16px*var(--zt));min-width:46px">×${DB.aj.factor.toFixed(2)}</b><button data-act="aj-factor" data-d="0.05" aria-label="Más" style="width:38px;height:38px">${ic('plus')}</button></div></div></div>` +
+    `<div class="aviso inf">${ic('barras')}<div><b>Comparar con tus tramos</b>De los 9 pedidos donde ya elegiste el tramo a mano y tienen dirección, la línea recta acertó el tramo en 6. Con ×1.30 acertaría 8.</div></div>`;
+  return b;
+}
+function comandasBody() {
+  const a = DB.aj;
+  return `<p class="nota">Qué guardar de cada comanda que leas. Todo es opcional y se queda en este teléfono.</p>` +
+    sw('data-set="nombre"', a.nombre, 'Nombre del cliente', 'Para buscar un pedido por su cliente') +
+    sw('data-set="direccion"', a.direccion, 'Dirección', 'Hace falta para calcular la distancia y el tramo. Si la apagas, solo se guarda la distancia') +
+    sw('data-set="telefono"', a.telefono, 'Teléfono', 'Apagado por defecto: lo guardas solo cuando lo necesitas') +
+    sw('data-set="foto"', a.foto, 'Foto de la comanda como evidencia', 'Respalda el pedido si la tienda lo discute') +
+    sw('data-set="confirmar"', a.confirmar, 'Confirmar siempre antes de guardar', 'Recomendado: la lectura puede equivocarse') +
+    sw('data-set="respaldoCli"', a.respaldoCli, 'Incluir datos de clientes en el respaldo', 'Si está apagado, el respaldo no lleva nombres, teléfonos ni direcciones') +
+    `<p class="priv">${ic('candado')}<span>Son datos de tus clientes, no tuyos: se guardan solo en este teléfono, protegidos por tu PIN, y puedes borrarlos pedido por pedido.</span></p>`;
+}
+function vAjustes(P) {
+  const a = DB.aj, sk = skinActual(), nom = (SKINS.find(s => s[0] === sk) || SKINS[2])[1];
+  const guard = [a.nombre && 'nombre', a.direccion && 'dirección', a.telefono && 'teléfono'].filter(Boolean);
+  return `<div class="ver"><div><b>Rutas-A</b><small>Versión 32 · prototipo final</small></div><span>v33</span></div>` +
+    acc(P, 'a-apar', 'Apariencia', `${nom} · elige la cara de la app`, `<div class="skins">${SKINS.map(([v, n, d, c]) => `<button class="skin${sk === v ? ' on' : ''}" data-act="aj-skin" data-v="${v}" aria-pressed="${sk === v}"><span class="sw3">${c.map(x => `<i style="background:${x}"></i>`).join('')}</span><b>${n}</b><small>${d}</small></button>`).join('')}</div>
+      <button class="opt" data-act="aj-skin" data-v="auto"><span class="oi">${ic('mas')}</span><span><b>Automático</b><small>Sigue al teléfono: Mapa de día, Asfalto de noche</small></span></button>`) +
+    acc(P, 'a-tienda', 'Tienda, modalidad y tarifa', `${esc(DB.tienda.nombre)} · ${a.veh === 'auto' ? 'Auto' : 'Moto eléctrica'} · ${a.modo === 'tramo' ? 'por tramo' : 'única'}`, tiendaBody(P), false, nuevo) +
+    acc(P, 'a-cmd', 'Comandas y datos del cliente', guard.length ? `Se guarda: ${guard.join(' · ')}` : 'No se guarda nada del cliente', comandasBody(), false, nuevo) +
+    acc(P, 'a-pin', 'Bloqueo del dispositivo', a.pin ? 'PIN activo' + (a.huella ? ' · huella' : '') : 'Sin bloqueo', a.pin ? `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="tag ok">${ic('check')}PIN activo</span><button class="btn-sec sm" data-act="aj-pin">Quitar bloqueo</button></div>` + sw('data-set="huella"', a.huella, 'Desbloquear también con huella', 'El PIN sigue funcionando como respaldo') : `<div class="dos"><div class="campo"><label>PIN nuevo</label><input class="inp" type="password" inputmode="numeric" maxlength="4" style="letter-spacing:.5em"></div><div class="campo"><label>Repítelo</label><input class="inp" type="password" inputmode="numeric" maxlength="4" style="letter-spacing:.5em"></div></div><button class="btn-sec" data-act="aj-pin">Activar el bloqueo</button>` + '<p class="nota">El PIN se guarda solo en este teléfono, cifrado, y no viaja a ningún lado.</p>') +
+    acc(P, 'a-lic', 'Tu licencia', 'Activa hasta el 30/10/2026', `<p class="nota">Te quedan 36 días. Puedes seguir cargando jornadas.</p><div class="seg3"><i class="on"></i><i class="on"></i><i></i></div><div class="fila-in"><input class="inp mono" placeholder="Código de licencia" aria-label="Código de licencia"><button class="btn-sec" data-act="toast" data-msg="Activa el código de licencia">Activar</button></div>`) +
+    acc(P, 'a-resp', 'Respaldo de tus datos', 'Último respaldo: hace 3 días', `<div class="dos"><button class="btn-sec" data-act="toast" data-msg="Crea el archivo y abre «Compartir»">Crear respaldo</button><button class="btn-sec" data-act="toast" data-msg="Elige un archivo de respaldo para restaurar">Restaurar</button></div>` + sw('data-set="respaldoCli"', a.respaldoCli, 'Incluir datos de clientes', a.respaldoCli ? 'El archivo llevará nombres, teléfonos y direcciones: guárdalo con cuidado' : 'El archivo no lleva nombres, teléfonos ni direcciones') + '<p class="nota">La base vive solo en este teléfono: un respaldo es tu única red de seguridad.</p>') +
+    acc(P, 'a-ev', 'Capturas y evidencias', '41 fotos · 18.6 MB en este teléfono', `<p class="nota">Las capturas y las fotos de comandas se guardan en el almacenamiento privado de Rutas-A: ninguna otra app las ve y no salen en la galería. Sirven de prueba si la tienda discute un pago.</p><dl class="dl"><div><dt>Capturas de jornadas</dt><dd>29</dd></div><div><dt>Fotos de comandas</dt><dd>12</dd></div></dl><button class="btn-sec" data-act="toast" data-msg="Pide confirmar y borra las de más de 90 días">Borrar las de más de 90 días</button>`) +
+    acc(P, 'a-ej', 'Datos de ejemplo', 'Para enseñar la aplicación', `<p class="nota">Llena tres semanas con jornadas inventadas. Borrar avisa antes, porque también borra las de verdad.</p><div class="dos"><button class="btn-sec" data-act="toast" data-msg="Carga tres semanas de ejemplo">Cargar ejemplo</button><button class="danger" data-act="toast" data-msg="Pide confirmar: borra TODAS tus jornadas">Borrar todo</button></div>`) +
+    acc(P, 'a-dg', 'Si una captura no se leyó bien', 'Ver el texto que sacó el lector', `<div class="pre">Resumen del 24/09/2026\nRutas 3   Órdenes 14\nv12253580wofp-01  Entregado\nv12257668wofp-02  Entregado\n…</div><button class="btn-sec sm" data-act="toast" data-msg="Copia el texto para mandarlo a soporte">Copiar</button>`);
+}
+
+/* ═══════════ Hojas: un pedido, con pestañas ═══════════ */
+function asegurarDia(f) {
+  let d = DB.dias[f];
+  if (!d || d.rest) d = DB.dias[f] = { ordenes: [], rutas: [], entrada: null, salida: null, capturas: 0 };
+  return d;
+}
+function pTabPedido(P, o, d) {
+  const B = P.ui.buf;
+  const rutas = d.rutas.map(r => `<option value="${r.n}"${o.ruta === r.n ? ' selected' : ''}>Ruta ${r.n} · ${r.ini}</option>`).join('');
+  const est = ['Entregado', 'Entrega parcial', 'No entregado'].map(e => `<option${o.estado === e ? ' selected' : ''}>${e}</option>`).join('');
+  return `<div class="campo"><label>Código del pedido</label><div class="fila-in"><input class="inp mono" data-f="cod" value="${esc(B.cod)}" autocapitalize="off" autocomplete="off" spellcheck="false"><button class="btn-sec" data-act="ped-cod">Cambiar</button></div></div>
+  <div class="dos"><div class="campo"><label>Ruta</label><select class="inp" data-apply="ruta"><option value="">Sin ruta</option>${rutas}</select></div><div class="campo"><label>Estado</label><select class="inp" data-apply="estado">${est}</select></div></div>
+  <div class="grp"><span class="rotulo">Tramo de distancia</span>
+    ${o.tramoAuto && o.km != null ? `<div class="aviso inf">${ic('pin')}<div><b>Calculado con la distancia</b>${o.km.toFixed(1)} km en línea recta${DB.aj.factor !== 1 ? ` × ${DB.aj.factor.toFixed(2)}` : ''}. Toca otro tramo para cambiarlo a mano.</div></div>` : ''}
+    <div class="radios">${TARIFA.map(t => `<button class="tr-r${o.tramo === t.id ? ' on' : ''}" data-act="ped-tramo" data-t="${t.id}"><span class="n">${t.id}</span><b>${t.d} a ${t.h} km</b><span class="m">${money(t.m)}</span></button>`).join('')}</div></div>
+  <div class="campo"><label>Más de 12 km${o.tramo === MAS12 ? ` · ahora ${money(o.monto)}` : ''}</label><div class="fila-in"><input class="inp" type="number" inputmode="decimal" step="0.5" min="0" placeholder="18.00" data-f="manual" value="${esc(B.manual || '')}"><button class="btn-sec" data-act="ped-manual">Aplicar</button></div></div>
+  ${P.ui.confBorrar ? `<div class="conf-b"><span>¿Borrar el pedido <b class="mono">${esc(o.codigo || 'sin código')}</b>? Dejará de contar para el pago de esta semana.</span><div class="dos"><button data-act="ped-borrar-si">Sí, borrarlo</button><button class="btn-sec" data-act="ped-borrar-no">No</button></div></div>` : `<button class="danger" data-act="ped-borrar">Borrar este pedido</button>`}`;
+}
+function pTabCliente(P, o) {
+  const B = P.ui.buf;
+  return `<div class="campo"><label>Nombre del cliente<span class="opc">opcional</span></label><input class="inp" data-f="n" value="${esc(B.n)}" placeholder="Nombre" autocomplete="off"></div>
+  <div class="campo"><label>Teléfono<span class="opc">opcional</span></label><input class="inp mono" inputmode="tel" data-f="tel" value="${esc(B.tel)}" placeholder="9xx xxx xxx" autocomplete="off"></div>
+  <div class="campo"><label>Dirección</label><input class="inp" data-f="dir" value="${esc(B.dir)}" placeholder="Calle y número, urbanización" autocomplete="off"><p class="nota" style="margin-top:4px">Con la dirección se calcula la distancia y el tramo.</p></div>
+  <button class="btn md" data-act="cli-guardar">Guardar datos del cliente</button>
+  ${o.cli && o.cli.tel ? `<div class="dos"><button class="btn-sec sm" data-act="toast" data-msg="Abre el marcador con este número">${ic('tel')}Llamar</button><button class="btn-sec sm" data-act="toast" data-msg="Abre WhatsApp con este número">WhatsApp</button></div>` : ''}
+  ${o.cli ? `<button class="danger" data-act="cli-borrar">Quitar los datos del cliente</button>` : ''}
+  <p class="priv">${ic('candado')}<span>Son datos de tu cliente: se guardan solo en este teléfono, protegidos por tu PIN. Nunca son obligatorios.</span></p>`;
+}
+function pTabDist(P, o) {
+  const c = o.cli, tiene = c && c.x != null;
+  const k0 = tiene ? kmDe(c) : null, k = kmUsado(k0), tr = k == null ? null : tramoDeKm(k);
+  let b = mapaSVG({ h: 250, map: 'ped', cli: tiene ? c : null }) +
+    `<div class="map-cap"><span>${tiene ? 'Toca el mapa para mover el pin del cliente' : 'Toca el mapa para poner el pin del cliente'}</span><span>Círculos = tus tramos</span></div>`;
+  if (tiene) {
+    b += `<div class="km-grid"><div><b>${k0.toFixed(1)} km</b><span>En línea recta</span></div><div><b>${k.toFixed(1)} km</b><span>${DB.aj.factor !== 1 ? `Con ×${DB.aj.factor.toFixed(2)}` : 'Distancia usada'}</span></div><div class="dest"><b>${tr === MAS12 ? '+12 km' : 'T' + tr}</b><span>${tr === MAS12 ? 'monto a mano' : money(montoTramo(tr))}</span></div></div>`;
+    if (DB.aj.modo === 'unica') b += `<div class="aviso inf">${ic('alerta')}<div><b>Tu tarifa es única</b>La distancia no cambia lo que cobras por este pedido.</div></div>`;
+    else if (tr !== o.tramo && tr !== MAS12) b += `<div class="aviso ${o.tramoAuto ? 'warn' : 'inf'}">${ic('alerta')}<div><b>${o.tramoAuto ? 'La ubicación cambió' : 'Tu tramo es a mano'}</b>Este pedido está en T${o.tramo} y la distancia sugiere T${tr}.</div></div><button class="btn md" data-act="ped-aplicar" data-t="${tr}">Aplicar T${tr} · ${money(montoTramo(tr))}</button>`;
+    else if (tr === MAS12) b += `<div class="aviso warn">${ic('alerta')}<div><b>Más de 12 km</b>Está fuera de la tabla: pon el monto a mano en la pestaña «Pedido».</div></div>`;
+    else b += `<div class="aviso ok">${ic('check')}<div><b>El tramo coincide con la distancia</b>${o.tramoAuto ? 'Calculado automáticamente.' : 'Lo elegiste a mano y la distancia lo confirma.'}</div></div>`;
+  } else b += `<div class="aviso warn">${ic('alerta')}<div><b>Este pedido no tiene ubicación</b>Escribe la dirección en «Cliente» y toca «Ubicar la dirección», o pon el pin a mano.</div></div>`;
+  return b + `<button class="btn-sec" data-act="geo-ubicar"${c && c.dir ? '' : ' disabled style="opacity:.55"'}>${ic('pin')}Ubicar la dirección${c && c.dir ? '' : ' (falta la dirección)'}</button>
+    <p class="priv">${ic('candado')}<span>Buscar la dirección necesita internet y consulta un servicio de mapas. Si no hay señal, pon el pin a mano.</span></p>`;
+}
+function pTabEvid(P, o, f, i) {
+  return `<div class="campo"><label>Foto de la comanda<span class="opc">opcional</span></label>` +
+    (o.foto ? `<div style="display:flex;gap:14px;align-items:flex-start">${thumb(papelDe(o), 'bx')}<div style="display:grid;gap:8px;flex:1"><button class="btn-sec sm" data-act="foto-ver">${ic('ojo')}Ver la foto</button><button class="btn-sec sm" data-act="foto-tomar">Reemplazar</button><button class="danger" style="min-height:40px" data-act="foto-quitar">Quitar foto</button></div></div>`
+      : `<div class="dos"><button class="btn-sec" data-act="foto-tomar">${ic('camara')}Tomar foto</button><button class="btn-sec" data-act="foto-tomar">${ic('subir')}Galería</button></div>`) + `</div>` +
+    (o.foto ? `<button class="btn-sec" data-act="foto-leer">${ic('ticket')}Leer esta comanda${nuevo}</button>` : '') +
+    `<div class="aviso inf">${ic('camara')}<div><b>Un pedido tiene como mucho una foto</b>Sirve de respaldo si la tienda discute ese pedido. Se guarda en el almacenamiento privado de Rutas-A: no sale en la galería.</div></div>` +
+    `<button class="mrow" style="border:1px solid var(--linea);border-radius:var(--r-btn);background:var(--sup)" data-act="capturas" data-f="${f}"><span>${ic('camara')}Capturas y fotos del día</span>${ic('flecha')}</button>`;
+}
+function hPedido(P) {
+  const h = P.ui.hoja, d = DB.dias[h.f], o = d && d.ordenes[h.i];
+  if (!o) return { t: 'Pedido', b: '<p class="vacio">Este pedido ya no existe.</p>' };
+  const tab = P.ui.tab.ped || 'pedido';
+  const t = o.pc ? 'Pedido sin código' : `<span class="mono" style="font-size:.8em;letter-spacing:0;text-transform:none">${esc(o.codigo)}</span>`;
+  const sub = `${cap(DIAL[dow(h.f)])} ${num(h.f)} · ${o.ruta ? `Ruta ${o.ruta}${o.hora ? ' · ' + o.hora : ''}` : 'Sin ruta'}`;
+  const b = tabs('ped', [{ v: 'pedido', l: 'Pedido' }, { v: 'cliente', l: 'Cliente', pt: !!o.cli }, { v: 'dist', l: 'Distancia', pt: o.km != null }, { v: 'evid', l: 'Evidencia', pt: !!o.foto }], tab, 't4') +
+    (tab === 'pedido' ? pTabPedido(P, o, d) : tab === 'cliente' ? pTabCliente(P, o) : tab === 'dist' ? pTabDist(P, o) : pTabEvid(P, o, h.f, h.i));
+  return { t, sub, b };
+}
+function hCapturas(P) {
+  const f = P.ui.hoja.f, d = DB.dias[f], con = d.ordenes.map((o, i) => ({ o, i })).filter(x => x.o.foto);
+  const caps = Array.from({ length: d.capturas }, (_, i) => `<button class="capt" data-act="toast" data-msg="Abre la captura ${i + 1}"><i></i><i style="width:60%"></i><i></i><i style="width:75%"></i><i style="width:50%"></i><em>Captura ${i + 1}</em></button>`).join('');
+  return { t: 'Capturas y fotos del día', sub: cap(fechaLarga(f)), b: `<div class="grp"><span class="rotulo">Capturas de la carga (${d.capturas})</span>${caps ? `<div class="capg">${caps}</div>` : '<p class="vacio">Este día se anotó a mano: no tiene capturas.</p>'}</div>
+    <div class="grp"><span class="rotulo">Comandas fotografiadas (${con.length})${nuevo}</span>${con.length ? `<div class="capg">${con.map(({ o, i }) => `<button class="thumbcell" data-act="foto-ver-ord" data-f="${f}" data-i="${i}">${thumb(papelDe(o), 'bx')}<em>${esc(o.codigo.slice(-9))}</em></button>`).join('')}</div>` : '<p class="vacio">Ningún pedido de este día tiene foto de comanda.</p>'}</div>
+    <p class="nota">Solo tú las ves. Son tu prueba si la tienda discute un pago.</p><button class="danger" data-act="toast" data-msg="Pide confirmar antes de borrar todas las capturas del día">Borrar todas las de este día</button>` };
+}
+
+/* ═══════════ Hoja: leer comandas una por una ═══════════ */
+const itKm = it => it.pos ? kmUsado(kmDe(it.pos)) : null;
+const itTr = it => { const k = itKm(it); return k == null ? null : tramoDeKm(k); };
+const cPapel = it => { const ile = it.calidad === 'ilegible'; return papel({ num: it.num, hora: it.hora, code: ile ? '▒▒▒▒▒▒▒▒▒▒▒▒' : it.code, n: ile ? '▒▒▒▒ ▒▒▒▒▒▒' : it.nombre[0], tel: ile ? '▒▒▒ ▒▒▒ ▒▒▒' : it.tel[0], dir: ile ? '▒▒▒▒▒▒ ▒▒▒▒▒▒▒▒' : it.dir[0], dud: { n: it.nombre[1] < .85, tel: it.tel[1] < .85, dir: it.dir[1] < .85 }, bor: ile, rf: ile }); };
+function tagCola(it) {
+  if (it.estado === 'leyendo') return `<span class="tag inf"><span class="spin" style="width:11px;height:11px;border-width:2px"></span>Leyendo</span>`;
+  if (it.guardada) return `<span class="tag ok">${ic('check')}Guardada</span>`;
+  return { lista: `<span class="tag ok">${ic('check')}Lista</span>`, revisar: `<span class="tag warn">${ic('alerta')}Revisar</span>`, lejos: `<span class="tag warn">${ic('alerta')}Más de 12 km</span>`, ilegible: `<span class="tag mal">${ic('x')}No se leyó</span>` }[it.calidad];
+}
+function colaItem(it, i) {
+  let l1, l2;
+  if (it.estado === 'leyendo') { l1 = 'Leyendo la foto…'; l2 = 'En tu teléfono, sin internet'; }
+  else if (it.calidad === 'ilegible' && !it.manual) { l1 = 'Foto borrosa'; l2 = 'Vuelve a tomarla o complétala a mano'; }
+  else { const k = itKm(it), tr = itTr(it); l1 = esc(it.vn || 'Sin nombre'); l2 = `${it.existe ? 'Ya cargado' : 'Pedido nuevo'} · ${k != null ? `${k.toFixed(1)} km · ${tr === MAS12 ? '+12 km' : 'T' + tr}` : 'sin ubicar'}`; }
+  return `<button class="qi" data-act="cmd-item" data-i="${i}"${it.estado === 'leyendo' ? ' disabled' : ''}>${thumb(cPapel(it))}<span class="t"><b>${l1}</b><small>${l2}</small><span style="display:block;margin-top:5px">${tagCola(it)}</span></span>${ic('flecha')}</button>`;
+}
+const cls = c => c >= .85 ? '' : c >= .4 ? 'dud' : 'no';
+function cmdEntrega(P, it) {
+  const k0 = it.pos ? kmDe(it.pos) : null, k = itKm(it), tr = itTr(it);
+  let b = mapaSVG({ h: 250, map: 'cmd', cli: it.pos }) + `<div class="map-cap"><span>Toca el mapa para mover el pin</span><span>Círculos = tus tramos</span></div>`;
+  if (it.geo === 'multi' && !it.pos) b += `<div class="aviso warn">${ic('alerta')}<div><b>Hay ${it.cand.length} ubicaciones posibles</b>La dirección no se leyó completa. Elige la correcta o pon el pin a mano.</div></div><div class="cands">${it.cand.map((c, j) => `<button class="cand" data-act="cmd-cand" data-j="${j}">${ic('pin')}<span><b>${esc(c.t)}</b><small>${esc(c.s)}</small></span></button>`).join('')}</div>`;
+  else if (it.pos) b += `<div class="aviso ${it.geo === 'ok' ? 'ok' : 'inf'}">${ic(it.geo === 'ok' ? 'check' : 'pin')}<div><b>${it.candSel ? esc(it.candSel.t) : 'Ubicación puesta a mano'}</b>${it.candSel ? esc(it.candSel.s) : 'Moviste el pin en el mapa.'}</div></div>`;
+  else b += `<div class="aviso mal">${ic('x')}<div><b>Sin ubicación</b>Toca el mapa para poner el pin, o escribe la dirección en «Cliente».</div></div>`;
+  if (it.pos) {
+    b += `<div class="km-grid"><div><b>${k0.toFixed(1)} km</b><span>En línea recta</span></div><div><b>${k.toFixed(1)} km</b><span>${DB.aj.factor !== 1 ? `Con ×${DB.aj.factor.toFixed(2)}` : 'Distancia usada'}</span></div><div class="dest"><b>${tr === MAS12 ? '+12 km' : 'T' + tr}</b><span>${tr === MAS12 ? 'a mano' : money(montoTramo(tr))}</span></div></div>`;
+    if (tr === MAS12) b += `<div class="campo"><label>Más de 12 km · monto a mano</label><input class="inp" type="number" inputmode="decimal" step="0.5" min="0" placeholder="18.00" data-f="montoManual" value="${esc(it.montoManual)}"></div>`;
+    if (DB.aj.modo === 'unica') b += `<p class="nota">Tu tarifa es única: la distancia se guarda, pero no cambia el pago.</p>`;
+    else if (!DB.aj.auto) b += `<p class="nota">El cálculo automático está apagado en Ajustes: se guarda la distancia y el tramo se queda como está.</p>`;
+  }
+  return b;
+}
+function hComanda(P) {
+  const c = P.ui.cmd, f = c.dia, sub = cap(fechaLarga(f));
+  if (c.paso === 'elegir') return { t: `Leer una comanda${nuevo}`, sub, b: `<div class="cmd-hero">${papel({ num: '4821', hora: '10:12', code: 'v12253580wofp-05', n: 'Rosa Quispe', tel: '900 000 101', dir: 'Av. Los Rosales 245' }, { giro: true })}</div>
+    <p style="text-align:center;color:var(--tinta-2);font-size:14px">Una foto por comanda. La app lee el pedido, el cliente y la dirección; tú confirmas.</p>
+    <div class="dos"><button class="btn md" data-act="cmd-cargar">${ic('camara')}Tomar foto</button><button class="btn-sec" data-act="cmd-cargar">${ic('subir')}Galería (varias)</button></div>
+    <ul class="tips"><li>${ic('check')}Con buena luz y sin reflejos sobre el papel.</li><li>${ic('check')}La comanda plana y completa, de arriba abajo.</li><li>${ic('check')}Una comanda por foto: se leen una por una.</li><li>${ic('alerta')}Lo que no se lea bien queda marcado para que lo revises; nada se guarda sin que lo veas.</li></ul>
+    <p class="priv">${ic('candado')}<span>La lectura ocurre en tu teléfono, sin internet. Solo buscar la dirección en el mapa necesita conexión.</span></p>` };
+  if (c.paso === 'cola') {
+    const leyendo = c.cola.some(x => x.estado === 'leyendo'), listas = c.cola.filter(x => x.estado === 'listo' && !x.guardada && x.calidad === 'lista').length, sig = c.cola.findIndex(x => x.estado === 'listo' && !x.guardada);
+    const b = `<p class="nota">${c.cola.length} comandas · ${leyendo ? 'leyendo…' : `${c.cola.filter(x => x.guardada).length} guardadas`}</p><div class="q-l">${c.cola.map(colaItem).join('')}</div>` +
+      (DB.aj.confirmar ? `<p class="priv">${ic('check')}<span>Ajustes te pide confirmar cada comanda antes de guardar.</span></p>` : '');
+    const f2 = DB.aj.confirmar ? `<button class="btn-sec" data-act="toast" data-msg="Elige otra foto de la galería">${ic('plus')}Otra foto</button><button class="btn" data-act="cmd-item" data-i="${sig}"${sig < 0 || leyendo ? ' disabled style="opacity:.5"' : ''}>Revisar la siguiente</button>`
+      : `<button class="btn-sec" data-act="toast" data-msg="Elige otra foto de la galería">${ic('plus')}Otra foto</button><button class="btn" data-act="cmd-listas"${listas && !leyendo ? '' : ' disabled style="opacity:.5"'}>Guardar ${listas} lista${listas === 1 ? '' : 's'}</button>`;
+    return { t: `Comandas leídas${nuevo}`, sub, b, f: f2 };
+  }
+  const it = c.cola[c.i], tab = P.ui.tab.cmdtab || 'pedido', nCola = c.cola.length;
+  if (it.calidad === 'ilegible' && !it.manual) return { t: `Comanda ${c.i + 1} de ${nCola}`, sub, b: `<div class="cmd-hero">${cPapel(it)}</div><div class="aviso mal">${ic('x')}<div><b>No se pudo leer esta comanda</b>La foto salió movida y con reflejo. Nada se guardó.</div></div>
+    <div class="dos"><button class="btn md" data-act="toast" data-msg="Abre la cámara para volver a tomarla">${ic('camara')}Volver a tomarla</button><button class="btn-sec" data-act="cmd-manual">Completar a mano</button></div><button class="danger" data-act="cmd-descartar">Descartar esta comanda</button>`, f: `<button class="btn-sec" data-act="cmd-lista">Volver a la lista</button>` };
+  const ult = c.cola.filter(x => !x.guardada && x !== it).length === 0;
+  const pedido = `${it.existe ? `<div class="aviso ok">${ic('check')}<div><b>Este pedido ya está cargado</b>Ruta ${it.rutaExist} · ${it.horaExist}. Se le añaden cliente, distancia y foto.</div></div>` : `<div class="aviso warn">${ic('alerta')}<div><b>Pedido nuevo</b>No estaba entre tus capturas de este día. Se añade como pedido leído de comanda.</div></div>`}
+    <div class="campo"><label>Código del pedido${confChip(it.cCode)}</label><input class="inp mono ${cls(it.cCode)}" data-f="code" value="${esc(it.code)}" autocapitalize="off" spellcheck="false"></div>
+    ${it.existe ? '' : `<div class="campo"><label>Ruta</label><select class="inp" data-f="ruta"><option value="">Sin ruta</option>${(DB.dias[f]?.rutas || []).map(r => `<option value="${r.n}"${String(it.ruta) === String(r.n) ? ' selected' : ''}>Ruta ${r.n} · ${r.ini}</option>`).join('')}</select></div>`}
+    ${sw('data-f="guardarFoto"', it.guardarFoto, 'Guardar la foto como evidencia', 'Queda en la pestaña «Evidencia» de este pedido')}`;
+  const cliente = `<div class="campo"><label>Nombre del cliente${confChip(it.nombre[1])}</label><input class="inp ${cls(it.nombre[1])}" data-f="vn" value="${esc(it.vn)}" autocomplete="off"></div>
+    <div class="campo"><label>Teléfono<span class="opc">opcional</span>${confChip(it.tel[1])}</label><input class="inp mono ${cls(it.tel[1])}" inputmode="tel" data-f="vt" value="${esc(it.vt)}" autocomplete="off"></div>
+    ${sw('data-f="guardarTel"', it.guardarTel, 'Guardar el teléfono', DB.aj.telefono ? 'Según Ajustes se guarda' : 'Según Ajustes no se guarda; actívalo aquí solo si lo necesitas')}
+    <div class="campo"><label>Dirección${confChip(it.dir[1])}</label><input class="inp ${cls(it.dir[1])}" data-f="vd" value="${esc(it.vd)}" autocomplete="off"></div>
+    <p class="nota">Se guardará: ${[DB.aj.nombre && 'nombre', DB.aj.direccion && 'dirección', it.guardarTel && 'teléfono'].filter(Boolean).join(' · ') || 'solo la distancia'} <span style="color:var(--tinta-3)">(según Ajustes)</span></p>`;
+  const b = `<div style="display:flex;gap:12px;align-items:center">${thumb(cPapel(it))}<div style="min-width:0"><div class="paso">Comanda ${c.i + 1} de ${nCola}</div><div style="margin:6px 0 4px">${tagCola(it)}</div><small style="color:var(--tinta-3);font-size:12.5px;line-height:1.3;display:block">${it.calidad === 'lista' ? 'Todo se leyó con claridad.' : it.calidad === 'lejos' ? 'Se leyó bien, pero queda fuera de la tabla.' : it.manual ? 'Completa lo que falte.' : 'Revisa lo marcado como dudoso.'}</small></div></div>` +
+    tabs('cmdtab', [{ v: 'pedido', l: 'Pedido' }, { v: 'cliente', l: 'Cliente', pt: it.nombre[1] < .85 || it.tel[1] < .85 || it.dir[1] < .85 }, { v: 'entrega', l: 'Entrega', pt: !it.pos }], tab) +
+    (tab === 'pedido' ? pedido : tab === 'cliente' ? cliente : cmdEntrega(P, it));
+  return { t: `Comanda ${c.i + 1} de ${nCola}`, sub, b, f: `<button class="btn-sec" data-act="cmd-lista">Volver a la lista</button><button class="btn" data-act="cmd-guardar">${ult ? 'Guardar' : 'Guardar y siguiente'}</button>` };
+}
+
+/* ═══════════ Capas: menú «Más», lectura de capturas, visor ═══════════ */
+function drawerHTML(P) {
+  const it = (s, ico, t) => `<button class="dr-i${P.screen === s ? ' on' : ''}" data-go="${s}">${ic(ico)}${t}</button>`;
+  return `<div class="scrim" data-act="drawer-x"></div><aside class="drawer" aria-label="Menú principal"><div class="dr-h">${car('')}<b>Rutas-A</b></div>
+    ${it('inicio', 'casa', 'Hoy')}${it('buscar', 'buscar', 'Buscar')}${it('historial', 'cal', 'Historial')}${it('pagos', 'cartera', 'Pagos')}${it('stats', 'barras', 'Estadísticas')}
+    <div style="margin-top:auto;display:flex;flex-direction:column;gap:4px">${it('ajustes', 'candado', 'Ajustes')}
+    <div class="dr-u"><span class="av">M</span><span><b>Marco</b><small>msmgxe@gmail.com</small></span></div>
+    <button class="dr-i" data-act="toast" data-msg="Echa el cerrojo: vuelve a pedir el PIN">${ic('salir')}Salir</button></div></aside>`;
+}
+function modalHTML(P) { const m = P.ui.modal; return m ? `<div class="modal" role="status">${car('')}<b>${m.t}</b><p>${m.s}</p><div class="prog"><i style="width:${m.p}%"></i></div></div>` : ''; }
+function visorHTML(P) { const v = P.ui.visor; return v ? `<button class="x" data-act="visor-x" aria-label="Cerrar">${ic('x')}</button>${v.html}<p>${v.cap}</p>` : ''; }
+
+/* ═══════════ La barra de semanas (deslizable, sin huecos) ═══════════ */
+function montarBarra(P) {
+  const slot = P.$('.strip-slot'), S = P.S(), mode = P.screen;
+  slot.innerHTML = '<div class="sh"></div><div class="strip"><div class="track"></div></div>';
+  const head = slot.children[0], strip = slot.children[1], track = strip.firstElementChild;
+  const puedeSig = () => add(S.week, 7) <= TODAY, puedeAnt = () => S.week > FIRST_WEEK;
+  let drag = null, pend = 0, timer = null;
+
+  const chip = iso => {
+    const d = DB.dias[iso], fut = iso > TODAY, on = iso === S.sel;
+    let st = '';
+    if (d && d.rest) st = ic('luna', 'lun');
+    else if (d) st = mode === 'inicio' ? '<i class="dot"></i>' : `<span>${Math.round(cobroDia(d).cobra / 100)}</span>`;
+    else if (!fut) st = mode === 'inicio' ? '<i class="ring"></i>' : '<span>–</span>';
+    return `<button class="chip${on ? ' on' : ''}${iso === TODAY ? ' hoy' : ''}${fut ? ' fut' : ''}" data-d="${iso}" aria-pressed="${on}" aria-label="${DIAL[dow(iso)]} ${num(iso)}${d ? (d.rest ? ', descanso' : ', cargado') : ''}">
+      <span class="cl">${DIA3[dow(iso)]}</span><b class="cn">${iso.slice(8)}</b><span class="cs">${st}</span></button>`;
+  };
+  const cabeza = () => {
+    const w = semana(S.week), fuera = S.week !== THIS_WEEK;
+    const t = mode === 'inicio' ? cap(fechaLarga(S.sel)) : semLabel(S.week);
+    const s = mode === 'inicio' ? `${semLabel(S.week)} · ${w.cargados} de 7 días` : `${dm(S.week)} – ${dm(add(S.week, 6))} · ${w.cargados} de 7 días`;
+    return `<div class="sh-t"><b>${t}</b><small>${s}</small></div><div class="sh-a">${fuera ? '<button class="hoy-p" data-hoy>Volver a hoy</button>' : ''}
+      <label class="ibtn" aria-label="Elegir otra fecha">${ic('cal')}<input type="date" value="${S.sel || S.week}" min="${FIRST_WEEK}" max="${TODAY}"></label></div>`;
+  };
+  const pintar = () => {
+    head.innerHTML = cabeza();
+    track.classList.remove('anim'); track.style.transform = ''; strip.classList.remove('abierto');
+    track.style.setProperty('--sw', strip.clientWidth + 'px');
+    track.innerHTML = [-7, 0, 7].map(o => `<div class="wk"${o ? ' inert' : ''}>${Array.from({ length: 7 }, (_, i) => chip(add(S.week, o + i))).join('')}</div>`).join('');
+  };
+  const x = dx => { track.style.transform = `translateX(calc(-1*(var(--sw) + 5px) + ${dx}px))`; };
+  const terminar = () => {
+    clearTimeout(timer);
+    if (!pend) { track.classList.remove('anim'); strip.classList.remove('abierto'); return; }
+    const dir = pend; pend = 0;
+    S.week = add(S.week, 7 * dir);
+    if (mode === 'inicio') { const s = add(S.sel, 7 * dir); S.sel = s > TODAY ? TODAY : s; } else S.sel = null;
+    P.alElegir();
+  };
+  strip.addEventListener('pointerdown', e => {
+    if ((e.pointerType === 'mouse' && e.button !== 0) || pend) return;
+    drag = { id: e.pointerId, x0: e.clientX, lx: e.clientX, lt: performance.now(), v: 0, moved: false, w: strip.clientWidth };
+    track.classList.remove('anim');
+  });
+  strip.addEventListener('pointermove', e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    let dx = e.clientX - drag.x0;
+    if (!drag.moved) { if (Math.abs(dx) < 6) return; drag.moved = true; strip.classList.add('abierto'); try { strip.setPointerCapture(e.pointerId); } catch (_) {} }
+    const now = performance.now();
+    drag.v = (e.clientX - drag.lx) / Math.max(1, now - drag.lt) * .6 + drag.v * .4; drag.lx = e.clientX; drag.lt = now;
+    if ((dx < 0 && !puedeSig()) || (dx > 0 && !puedeAnt())) dx /= 3;
+    x(dx);
+  });
+  const soltar = e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const d = drag; drag = null;
+    if (!d.moved) return;
+    const dx = e.clientX - d.x0, proy = dx + d.v * 150;
+    let dir = 0;
+    if (proy < -d.w * .28 && puedeSig()) dir = 1; else if (proy > d.w * .28 && puedeAnt()) dir = -1;
+    track.classList.add('anim'); pend = dir;
+    x(dir === 1 ? -(d.w + 5) : dir === -1 ? d.w + 5 : 0);
+    timer = setTimeout(terminar, 420);
+  };
+  strip.addEventListener('pointerup', soltar);
+  strip.addEventListener('pointercancel', soltar);
+  track.addEventListener('transitionend', e => { if (e.target === track && e.propertyName === 'transform') terminar(); });
+  strip.addEventListener('click', e => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    const iso = b.dataset.d;
+    S.sel = (mode === 'pagos' && S.sel === iso) ? null : iso;
+    P.alElegir();
+  });
+  head.addEventListener('click', e => {
+    if (e.target.closest('[data-hoy]')) { S.week = THIS_WEEK; S.sel = mode === 'inicio' ? TODAY : null; P.alElegir(); return; }
+    const inp = e.target.closest('input[type=date]'); if (inp) { try { inp.showPicker(); } catch (_) {} }
+  });
+  head.addEventListener('change', e => {
+    const v = e.target.value; if (!v) return;
+    const f = v > TODAY ? TODAY : v < FIRST_WEEK ? FIRST_WEEK : v;
+    S.week = monday(f); S.sel = f; P.alElegir();
+  });
+  return { pintar };
+}
+
+/* ═══════════ El teléfono ═══════════ */
+const VISTAS = { inicio: vInicio, pagos: vPagos, stats: vStats, ajustes: vAjustes, historial: vHistorial, buscar: vBuscar, revision: vRevision };
+const TITULOS = { inicio: 'Hoy', pagos: 'Pagos', stats: 'Estadísticas', ajustes: 'Ajustes', historial: 'Historial', buscar: 'Buscar', revision: 'Revisión' };
+const TELEFONOS = [];
+const notificar = () => TELEFONOS.forEach(p => p.refrescar());
+const aplicarSkin = s => {
+  document.documentElement.dataset.skin = s;
+  document.querySelectorAll('[data-skin-btn]').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.skinBtn === s)));
+  TELEFONOS.forEach(p => p.refrescar());
+};
+
+function fijarPosicion(o, pos) {
+  o.cli = o.cli || { n: '', tel: '', dir: '' };
+  const libre = o.tramoAuto || o.tramo === 1;
+  o.cli.x = pos.x; o.cli.y = pos.y; o.km = +kmDe(pos).toFixed(1);
+  if (DB.aj.auto && DB.aj.modo === 'tramo' && libre) {
+    const tr = tramoDeKm(kmUsado(o.km));
+    if (tr !== MAS12) { o.tramo = tr; o.monto = montoTramo(tr); o.tramoAuto = true; }
+    else o.tramoAuto = false;
+  }
+}
+function guardarItem(it, dia) {
+  const d = asegurarDia(dia), k = itKm(it), tr = itTr(it), a = DB.aj;
+  let o = d.ordenes.find(x => x.codigo === it.code.trim().toLowerCase());
+  if (!o) {
+    const r = it.ruta ? d.rutas.find(x => x.n === +it.ruta) : null;
+    o = { codigo: it.code.trim().toLowerCase(), ruta: r ? r.n : null, hora: r ? r.ini : null, tramo: 1, monto: 1000, estado: 'Entregado', manual: false, pc: false, cli: null, km: null, tramoAuto: false, foto: false };
+    d.ordenes.push(o);
+  }
+  o.cli = { n: a.nombre ? it.vn : '', tel: it.guardarTel ? it.vt : '', dir: a.direccion ? it.vd : '', x: it.pos ? it.pos.x : null, y: it.pos ? it.pos.y : null };
+  if (it.pos) {
+    o.km = +kmDe(it.pos).toFixed(1);
+    if (a.auto && a.modo === 'tramo') {
+      if (tr === MAS12) { o.tramo = MAS12; o.monto = Math.round(parseFloat(it.montoManual || 0) * 100) || o.monto; o.tramoAuto = false; }
+      else { o.tramo = tr; o.monto = montoTramo(tr); o.tramoAuto = true; }
+    }
+  }
+  o.foto = !!it.guardarFoto;
+  it.guardada = true;
+  return o;
+}
+
+class Telefono {
+  constructor(root, preset) {
+    this.root = root; this.screen = preset.screen || 'inicio'; this._tm = [];
+    this.st = { inicio: { week: THIS_WEEK, sel: TODAY, ...(preset.inicio || {}) }, pagos: { week: THIS_WEEK, sel: null, ...(preset.pagos || {}) } };
+    this.ui = { open: {}, tab: {}, showAll: false, form: null, hoja: null, buf: {}, desmarc: new Set(), qty: 2, expDia: null, cmd: null, visor: null, modal: null, q: '', ubic: null, confBorrar: false, ...(preset.ui || {}) };
+    root.innerHTML = `<div class="sbar"><span>10:18</span><i>▂▄▆ · 82%</i></div>
+      <header class="hd">${car()}<h1></h1></header>
+      <div class="scroll"><div class="strip-slot"></div><div class="dyn"></div></div>
+      <nav class="nav" aria-label="Navegación principal">
+        <button class="nv" data-nav="inicio">${ic('casa')}Inicio</button>
+        <button class="nv" data-nav="pagos">${ic('cartera')}Pagos</button>
+        <button class="nv" data-act="cargar" aria-label="Cargar capturas"><span class="boton-auto">${car('auto--mono')}</span>Cargar</button>
+        <button class="nv" data-nav="ajustes">${ic('candado')}Ajustes</button>
+        <button class="nv" data-act="drawer" aria-label="Más: buscar, historial y estadísticas">${ic('mas')}Más</button>
+      </nav><div class="sheet-w"></div><div class="drawer-w"></div><div class="modal-w"></div><div class="visor-w"></div><div class="toast" role="status"></div>`;
+    root.addEventListener('click', e => this.click(e));
+    root.addEventListener('input', e => this.entrada(e));
+    root.addEventListener('change', e => this.cambio(e));
+    this.montar();
+    if (preset.cmd) { this.abrirHoja({ t: 'comanda' }, false); this.iniciarCola(true); const c = this.ui.cmd; c.paso = preset.cmd.paso; c.i = preset.cmd.i || 0; this.ui.tab.cmdtab = preset.cmd.tab || 'pedido'; this.ui.buf = c.cola[c.i] || {}; this.pintarHoja(false); }
+    else if (preset.abrir) { if (preset.abrir.t === 'pedido') this.abrirPedido(preset.abrir.f, preset.abrir.i, preset.tab, false); else this.abrirHoja(preset.abrir, false); }
+    if (preset.drawer) this.abrirDrawer(false);
+    if (preset.ir) { const ir = () => this.irA(preset.ir, 8, false); requestAnimationFrame(() => requestAnimationFrame(ir)); setTimeout(ir, 700); }
+  }
+  $(s) { return this.root.querySelector(s); }
+  S() { return this.st[this.screen]; }
+  tieneBarra() { return this.screen === 'inicio' || this.screen === 'pagos'; }
+  montar() {
+    if (this.tieneBarra()) { this.barra = montarBarra(this); this.barra.pintar(); } else { this.barra = null; this.$('.strip-slot').innerHTML = ''; }
+    this.paint(); this.$('.scroll').scrollTop = 0;
+  }
+  refrescar() { if (this.barra) this.barra.pintar(); this.paint(); }
+  go(pantalla) {
+    if (pantalla === this.screen) { this.$('.scroll').scrollTo({ top: 0, behavior: 'smooth' }); return; }
+    this.screen = pantalla; this.ui.showAll = false; this.ui.form = null; this.ui.q = ''; this.ui.expDia = null;
+    this.cerrarHoja(true); this.montar();
+  }
+  alElegir() {
+    const u = this.ui, S = this.S();
+    u.showAll = false; u.form = null; u.desmarc = new Set();
+    if (this.screen === 'pagos') { u.expDia = S.sel; if (S.sel) u.open.dias = true; }
+    this.barra.pintar(); this.paint();
+    if (this.screen === 'pagos' && S.sel) requestAnimationFrame(() => this.mostrar(`[data-row="${S.sel}"]`));
+  }
+  paint() {
+    const sc = this.$('.scroll'), y = sc.scrollTop;
+    this.$('.dyn').innerHTML = VISTAS[this.screen](this);
+    sc.scrollTop = y;
+    this.$('h1').textContent = TITULOS[this.screen];
+    const puerta = { inicio: 'inicio', pagos: 'pagos', ajustes: 'ajustes', revision: '' }[this.screen] ?? 'mas';
+    this.root.querySelectorAll('[data-nav]').forEach(b => b.classList.toggle('on', b.dataset.nav === puerta));
+    this.$('[data-act="drawer"]').classList.toggle('on', puerta === 'mas');
+    if (this.ui.hoja) this.pintarHoja(false);
+    this.pintarCapas();
+  }
+  /* — hojas — */
+  abrirHoja(h, animar = true) {
+    this.ui.hoja = h;
+    if (h.t === 'comanda') this.ui.cmd = { paso: 'elegir', cola: [], i: 0, dia: this.st.inicio.sel };
+    this.pintarHoja(animar);
+  }
+  abrirPedido(f, i, tab, animar = true) {
+    const o = DB.dias[f].ordenes[i];
+    this.ui.buf = { cod: o.codigo, manual: '', n: o.cli?.n || '', tel: o.cli?.tel || '', dir: o.cli?.dir || '' };
+    this.ui.tab.ped = tab || 'pedido'; this.ui.confBorrar = false;
+    this.abrirHoja({ t: 'pedido', f, i }, animar);
+  }
+  cerrarHoja(ya = false) {
+    const w = this.$('.sheet-w'); this.ui.hoja = null; this.ui.cmd = null; this.ui.confBorrar = false; w.classList.remove('open');
+    if (ya) { w.innerHTML = ''; return; }
+    setTimeout(() => { if (!this.ui.hoja) w.innerHTML = ''; }, 380);
+  }
+  pintarHoja(animar) {
+    const h = this.ui.hoja, w = this.$('.sheet-w');
+    if (!h || (h.t === 'comanda' && !this.ui.cmd)) return;
+    const R = h.t === 'pedido' ? hPedido(this) : h.t === 'capturas' ? hCapturas(this) : hComanda(this);
+    const y = w.querySelector('.sh-b')?.scrollTop || 0;
+    w.innerHTML = `<div class="scrim" data-act="cerrar"></div><div class="sheet${h.t === 'comanda' ? ' alta' : ''}" role="dialog" aria-modal="true" aria-label="${h.t}"><div class="grab"></div>
+      <div class="sh-h"><div><b>${R.t}</b>${R.sub ? `<small>${R.sub}</small>` : ''}</div><button class="x" data-act="cerrar" aria-label="Cerrar">${ic('x')}</button></div><div class="sh-b">${R.b}</div>${R.f ? `<div class="sh-f">${R.f}</div>` : ''}</div>`;
+    const sb = w.querySelector('.sh-b'); if (!animar) sb.scrollTop = y;
+    if (animar) { w.classList.remove('open'); void w.offsetWidth; requestAnimationFrame(() => w.classList.add('open')); } else w.classList.add('open');
+  }
+  abrirDrawer(animar = true) {
+    const w = this.$('.drawer-w'); w.innerHTML = drawerHTML(this);
+    if (animar) { w.classList.remove('open'); void w.offsetWidth; requestAnimationFrame(() => w.classList.add('open')); } else w.classList.add('open');
+  }
+  cerrarDrawer() { const w = this.$('.drawer-w'); w.classList.remove('open'); setTimeout(() => { if (!w.classList.contains('open')) w.innerHTML = ''; }, 320); }
+  pintarCapas() {
+    const m = this.$('.modal-w'); m.classList.toggle('on', !!this.ui.modal); m.innerHTML = modalHTML(this);
+    const v = this.$('.visor-w'); v.classList.toggle('on', !!this.ui.visor); v.innerHTML = visorHTML(this);
+  }
+  aviso(msg) {
+    const t = this.$('.toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(this._t); this._t = setTimeout(() => t.classList.remove('show'), 2600);
+  }
+  leer(sel) { return this.root.querySelector(sel); }
+  /* Desplaza solo el contenido del teléfono, nunca la página */
+  irA(sel, off = 10, suave = true) {
+    const el = this.$(sel), sc = this.$('.scroll'); if (!el || !sc) return;
+    sc.scrollTo({ top: sc.scrollTop + el.getBoundingClientRect().top - sc.getBoundingClientRect().top - off, behavior: suave ? 'smooth' : 'instant' });
+  }
+  mostrar(sel) {
+    const el = this.$(sel), sc = this.$('.scroll'); if (!el) return;
+    const a = el.getBoundingClientRect(), b = sc.getBoundingClientRect();
+    if (a.bottom > b.bottom - 8) sc.scrollBy({ top: a.bottom - b.bottom + 16, behavior: 'smooth' });
+    else if (a.top < b.top) sc.scrollBy({ top: a.top - b.top - 8, behavior: 'smooth' });
+  }
+  /* — la comanda: cola de lecturas — */
+  iniciarCola(ya = false) {
+    const c = this.ui.cmd, f = c.dia, d = DB.dias[f], libres = (d && !d.rest ? d.ordenes : []).filter(o => !o.cli && !o.pc && o.codigo);
+    const ultimaRuta = d && d.rutas.length ? d.rutas[d.rutas.length - 1].n : null;
+    c.cola = COMANDAS.map((k, i) => {
+      const ex = i === 0 && libres[0];
+      return { ...k, code: ex ? libres[0].codigo : (k.calidad === 'ilegible' ? '' : `v1225${3900 + i * 17}wofp-${20 + i}`), existe: !!ex, rutaExist: ex ? libres[0].ruta : null, horaExist: ex ? libres[0].hora : null,
+        ruta: ex ? null : ultimaRuta, vn: k.nombre[0], vt: k.tel[0], vd: k.dir[0], pos: null, candSel: null, guardarTel: DB.aj.telefono, guardarFoto: DB.aj.foto, montoManual: '',
+        cCode: k.calidad === 'ilegible' ? .1 : .96, estado: 'leyendo', guardada: false, manual: false };
+    });
+    c.paso = 'cola';
+    const listo = it => { it.estado = 'listo'; if (it.geo === 'ok' && it.cand[0]) { it.pos = { x: it.cand[0].x, y: it.cand[0].y }; it.candSel = it.cand[0]; } };
+    c.cola.forEach((it, i) => {
+      if (ya) { listo(it); return; }
+      this._tm.push(setTimeout(() => { if (!this.ui.cmd || this.ui.cmd.cola[i] !== it) return; listo(it); if (this.ui.hoja?.t === 'comanda' && this.ui.cmd.paso === 'cola') this.pintarHoja(false); }, 700 + i * 650));
+    });
+    this.pintarHoja(false);
+  }
+  /* — eventos de campos — */
+  entrada(e) {
+    const t = e.target;
+    if (t.dataset.f !== undefined && t.type !== 'checkbox') this.ui.buf[t.dataset.f] = t.value;
+    if (t.dataset.q !== undefined) { this.ui.q = t.value; this.pintarBusqueda(); }
+  }
+  cambio(e) {
+    const t = e.target;
+    if (t.dataset.f !== undefined) this.ui.buf[t.dataset.f] = t.type === 'checkbox' ? t.checked : t.value;
+    if (t.dataset.apply) this.aplicar(t.dataset.apply, t.value);
+    if (t.dataset.set) { DB.aj[t.dataset.set] = t.checked; notificar(); }
+  }
+  pintarBusqueda() {
+    const q = (this.ui.q || '').trim();
+    if (this.screen === 'buscar') { this.$('[data-res]').innerHTML = resultadosBusqueda(this, this.ui.tab.bq || 'codigo'); return; }
+    if (this.screen === 'historial') {
+      const ahora = q.length >= 2, hay = !!this.$('[data-res]');
+      if (ahora !== hay) { this.paint(); const i = this.$('input[data-q]'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
+      else if (ahora) this.$('[data-res]').innerHTML = resultadosBusqueda({ ui: { ...this.ui, tab: { ...this.ui.tab, br: '60' } } }, 'codigo');
+    }
+  }
+  pedActual() { const h = this.ui.hoja; return h && h.t === 'pedido' ? DB.dias[h.f]?.ordenes[h.i] : null; }
+  aplicar(k, v) {
+    const o = this.pedActual(), h = this.ui.hoja; if (!o) return;
+    if (k === 'ruta') { const r = DB.dias[h.f].rutas.find(x => x.n === +v); o.ruta = v === '' ? null : +v; o.hora = r ? r.ini : null; }
+    else if (k === 'estado') o.estado = v;
+    this.aviso('Pedido actualizado'); notificar();
+  }
+  mapClick(e, el) {
+    const pos = posDeClic(e, el), k = el.dataset.map;
+    if (k === 'tienda') { DB.tienda.pos = pos; this.aviso('Punto de partida movido: vale para los pedidos nuevos'); notificar(); }
+    else if (k === 'ped') { const o = this.pedActual(); if (!o) return; fijarPosicion(o, pos); this.aviso(`Pin puesto · ${o.km.toFixed(1)} km en línea recta`); notificar(); }
+    else if (k === 'cmd') { const it = this.ui.cmd.cola[this.ui.cmd.i]; it.pos = pos; it.candSel = null; this.pintarHoja(false); }
+  }
+  click(e) {
+    const m = e.target.closest('[data-map]'); if (m && this.root.contains(m)) { this.mapClick(e, m); return; }
+    const go = e.target.closest('[data-go]'); if (go) { this.cerrarDrawer(); this.go(go.dataset.go); return; }
+    const nav = e.target.closest('[data-nav]'); if (nav) { this.go(nav.dataset.nav); return; }
+    const a = e.target.closest('[data-act]'); if (!a || !this.root.contains(a)) return;
+    this.act(a.dataset.act, a.dataset, a);
+  }
+  act(name, ds, el) {
+    const u = this.ui, S = this.S(), o = this.pedActual(), h = u.hoja;
+    switch (name) {
+      case 'toast': this.aviso(ds.msg); break;
+      case 'toggle': { const on = !u.open[ds.id]; u.open[ds.id] = on; el.closest('.acc').classList.toggle('open', on); el.setAttribute('aria-expanded', String(on)); break; }
+      case 'abrir-acc': u.open[ds.id] = true; this.paint(); requestAnimationFrame(() => this.irA(`[data-acc="${ds.id}"]`, 8)); break;
+      case 'tab': u.tab[ds.g] = ds.v; u.form = null; u.confBorrar = false; if (ds.g === 'bq') u.q = ''; if (ds.g === 'hv' || ds.g === 'hr') u.showAll = false; this.paint(); break;
+      case 'showall': u.showAll = !u.showAll; this.paint(); break;
+      case 'ir-add': u.tab.add = ds.v; u.open.add = true; this.paint(); break;
+      case 'cerrar': this.cerrarHoja(); break;
+      case 'drawer': this.abrirDrawer(); break;
+      case 'drawer-x': this.cerrarDrawer(); break;
+      case 'cargar': {
+        this._tm.forEach(clearTimeout); this._tm = [];
+        u.modal = { t: 'Leyendo tus capturas', s: '6 capturas · en tu teléfono, sin internet', p: 8 }; this.pintarCapas();
+        [[350, 42, 'Leyendo la captura 3 de 6'], [900, 76, 'Leyendo la captura 5 de 6'], [1400, 100, 'Ordenando rutas y pedidos']].forEach(([ms, p, s]) => this._tm.push(setTimeout(() => { if (!u.modal) return; u.modal.p = p; u.modal.s = s; this.pintarCapas(); }, ms)));
+        this._tm.push(setTimeout(() => { u.modal = null; this.pintarCapas(); this.go('revision'); }, 1800)); break;
+      }
+      case 'rev-ok': this.aviso('Jornada guardada'); this.st.inicio.week = THIS_WEEK; this.st.inicio.sel = TODAY; this.go('inicio'); break;
+      case 'rev-no': this.aviso('Carga descartada'); this.go('inicio'); break;
+      /* días, descansos, pagos */
+      case 'rest': { const f = ds.d || S.sel; if (DB.dias[f]?.rest) delete DB.dias[f]; else if (!DB.dias[f]) DB.dias[f] = { rest: true, ordenes: [], rutas: [] }; notificar(); break; }
+      case 'dia': u.expDia = u.expDia === ds.d ? null : ds.d; S.sel = u.expDia; this.barra.pintar(); this.paint(); break;
+      case 'goto-inicio': this.st.inicio.week = monday(ds.d); this.st.inicio.sel = ds.d; if (this.screen === 'inicio') { this.cerrarHoja(true); this.barra.pintar(); this.paint(); } else this.go('inicio'); break;
+      case 'gosem': S.week = ds.mon; S.sel = null; u.expDia = null; this.barra.pintar(); this.paint(); this.$('.scroll').scrollTo({ top: 0, behavior: 'smooth' }); break;
+      case 'falta-chip': u.desmarc.has(ds.d) ? u.desmarc.delete(ds.d) : u.desmarc.add(ds.d); this.paint(); break;
+      case 'marcar-faltan': { const w = semana(S.week), el2 = w.faltan.filter(f => !u.desmarc.has(f)); el2.forEach(f => { DB.dias[f] = { rest: true, ordenes: [], rutas: [] }; }); this.aviso(el2.length === 1 ? 'Marcaste 1 día como descanso.' : `Marcaste ${el2.length} días como descanso.`); u.desmarc = new Set(); notificar(); break; }
+      case 'pagar': { const v = parseFloat(this.leer('[data-in=recibido]').value), w = semana(ds.mon); DB.sem[ds.mon] = { estado: 'pagada', recibido: Number.isFinite(v) ? Math.round(v * 100) : w.monto }; this.aviso('Semana cerrada y pago anotado'); notificar(); break; }
+      case 'reabrir': DB.sem[ds.mon] = { estado: 'cerrada' }; this.aviso('Semana reabierta: puedes corregir cualquier día'); notificar(); break;
+      /* subir más */
+      case 'form': u.form = u.form === ds.id ? null : ds.id; this.paint(); break;
+      case 'qty': u.qty = Math.max(1, Math.min(30, u.qty + +ds.d)); this.paint(); break;
+      case 'save-cant': { const d = asegurarDia(S.sel); for (let i = 0; i < u.qty; i++) d.ordenes.push({ codigo: '', ruta: null, hora: null, tramo: 1, monto: 1000, estado: 'Entregado', manual: true, pc: true, cli: null, km: null, tramoAuto: false, foto: false }); this.aviso(`Anotaste ${u.qty} pedido${u.qty === 1 ? '' : 's'}: ${money(u.qty * 1000)}`); u.form = null; u.open.add = true; notificar(); break; }
+      case 'save-manual': {
+        const cod = this.leer('[data-in=cod]').value.trim();
+        if (!cod) { this.aviso('Escribe el código del pedido'); this.leer('[data-in=cod]').focus(); break; }
+        const d = asegurarDia(S.sel), r = +this.leer('[data-in=ruta]').value || null;
+        d.ordenes.push({ codigo: cod, ruta: r, hora: r ? d.rutas.find(x => x.n === r)?.ini : null, tramo: 1, monto: 1000, estado: this.leer('[data-in=est]').value, manual: true, pc: false, cli: null, km: null, tramoAuto: false, foto: false });
+        this.aviso('Pedido guardado'); u.form = null; u.open.add = true; notificar(); break;
+      }
+      case 'save-ruta': {
+        const ini = this.leer('[data-in=ini]').value, fin = this.leer('[data-in=fin]').value;
+        if (!ini || !fin || toMin(fin) <= toMin(ini)) { this.aviso('La hora de vuelta tiene que ser después de la de salida'); break; }
+        const d = asegurarDia(S.sel); d.rutas.push({ n: d.rutas.length + 1, ini, fin });
+        this.aviso(`Ruta ${d.rutas.length} guardada`); u.form = null; u.open.add = true; notificar(); break;
+      }
+      /* un pedido */
+      case 'ped': this.abrirPedido(ds.f, +ds.i); break;
+      case 'ped-cod': { const c = (u.buf.cod || '').trim().toLowerCase(); if (!c) { this.aviso('El código no puede quedar vacío'); break; } o.codigo = c; o.pc = false; this.aviso('Código cambiado'); notificar(); break; }
+      case 'ped-tramo': o.tramo = +ds.t; o.monto = montoTramo(o.tramo); o.tramoAuto = false; this.aviso(`Tramo ${o.tramo}: ${money(o.monto)}`); notificar(); break;
+      case 'ped-aplicar': o.tramo = +ds.t; o.monto = montoTramo(o.tramo); o.tramoAuto = true; this.aviso(`Aplicado T${o.tramo}: ${money(o.monto)}`); notificar(); break;
+      case 'ped-manual': { const v = parseFloat(u.buf.manual); if (!Number.isFinite(v) || v <= 0) { this.aviso('Escribe el monto de este pedido'); break; } o.tramo = MAS12; o.monto = Math.round(v * 100); o.tramoAuto = false; u.buf.manual = ''; this.aviso(`Más de 12 km: ${money(o.monto)}`); notificar(); break; }
+      case 'ped-borrar': u.confBorrar = true; this.paint(); break;
+      case 'ped-borrar-no': u.confBorrar = false; this.paint(); break;
+      case 'ped-borrar-si': DB.dias[h.f].ordenes.splice(h.i, 1); this.cerrarHoja(); this.aviso('Pedido borrado'); notificar(); break;
+      case 'cli-guardar': {
+        const B = u.buf; if (!(B.n || '').trim() && !(B.tel || '').trim() && !(B.dir || '').trim()) { this.aviso('Escribe al menos un dato'); break; }
+        o.cli = { ...(o.cli || {}), n: (B.n || '').trim(), tel: (B.tel || '').trim(), dir: (B.dir || '').trim(), x: o.cli?.x ?? null, y: o.cli?.y ?? null };
+        this.aviso(o.cli.dir && o.cli.x == null ? 'Guardado. Ubica la dirección en «Distancia»' : 'Datos del cliente guardados'); notificar(); break;
+      }
+      case 'cli-borrar': o.cli = null; o.km = null; o.tramoAuto = false; u.buf.n = u.buf.tel = u.buf.dir = ''; this.aviso('Datos del cliente quitados'); notificar(); break;
+      case 'geo-ubicar': {
+        const dir = o.cli?.dir; if (!dir) break;
+        const hh = hash(dir), dist = .8 + (hh % 1000) / 1000 * 8.5, ang = (hh % 628) / 100;
+        fijarPosicion(o, { x: +(DB.tienda.pos.x + dist * Math.cos(ang)).toFixed(2), y: +(DB.tienda.pos.y + dist * Math.sin(ang)).toFixed(2) });
+        this.aviso(`Dirección ubicada · ${o.km.toFixed(1)} km`); notificar(); break;
+      }
+      case 'foto-tomar': o.foto = true; this.aviso('Foto guardada como evidencia'); notificar(); break;
+      case 'foto-quitar': o.foto = false; this.aviso('Foto quitada'); notificar(); break;
+      case 'foto-ver': u.visor = { html: papelDe(o, { rf: false }), cap: 'Foto de la comanda · evidencia de este pedido' }; this.pintarCapas(); break;
+      case 'foto-ver-ord': { const oo = DB.dias[ds.f].ordenes[+ds.i]; u.visor = { html: papelDe(oo), cap: 'Foto de la comanda · evidencia del pedido' }; this.pintarCapas(); break; }
+      case 'foto-leer': u.buf.n = o.cli?.n || 'Rosa Quispe'; u.buf.tel = o.cli?.tel || '900 000 101'; u.buf.dir = o.cli?.dir || 'Av. Los Rosales 245'; u.tab.ped = 'cliente'; this.aviso('Comanda leída: revisa los datos en «Cliente»'); this.paint(); break;
+      case 'visor-x': u.visor = null; this.pintarCapas(); break;
+      case 'capturas': this.abrirHoja({ t: 'capturas', f: ds.f }, !u.hoja); break;
+      /* comandas */
+      case 'cmd-abrir': this.abrirHoja({ t: 'comanda' }, true); break;
+      case 'cmd-cargar': this.iniciarCola(false); break;
+      case 'cmd-item': { const i = +ds.i; if (i < 0) break; const c = u.cmd; c.i = i; c.paso = 'revisar'; u.buf = c.cola[i]; u.tab.cmdtab = 'pedido'; this.pintarHoja(false); this.$('.sh-b').scrollTop = 0; break; }
+      case 'cmd-lista': u.cmd.paso = 'cola'; this.pintarHoja(false); break;
+      case 'cmd-cand': { const it = u.cmd.cola[u.cmd.i], c = it.cand[+ds.j]; it.candSel = c; it.pos = { x: c.x, y: c.y }; this.pintarHoja(false); break; }
+      case 'cmd-manual': { const it = u.cmd.cola[u.cmd.i]; it.manual = true; this.pintarHoja(false); break; }
+      case 'cmd-descartar': { const c = u.cmd; c.cola.splice(c.i, 1); c.paso = 'cola'; this.aviso('Comanda descartada'); this.pintarHoja(false); break; }
+      case 'cmd-guardar': {
+        const c = u.cmd, it = c.cola[c.i];
+        if (!(it.code || '').trim()) { u.tab.cmdtab = 'pedido'; this.aviso('Falta el código del pedido'); this.pintarHoja(false); break; }
+        if (itTr(it) === MAS12 && DB.aj.modo === 'tramo' && DB.aj.auto && !parseFloat(it.montoManual)) { u.tab.cmdtab = 'entrega'; this.aviso('Más de 12 km: pon el monto a mano'); this.pintarHoja(false); break; }
+        const ord = guardarItem(it, c.dia);
+        this.aviso(`Guardada · ${money(ord.monto)}${ord.km != null ? ` · ${ord.km.toFixed(1)} km` : ''}`);
+        const sig = c.cola.findIndex((x, j) => j !== c.i && x.estado === 'listo' && !x.guardada);
+        if (sig >= 0) { c.i = sig; u.buf = c.cola[sig]; u.tab.cmdtab = 'pedido'; } else c.paso = 'cola';
+        u.open.det = u.open.det; notificar(); this.$('.sh-b') && (this.$('.sh-b').scrollTop = 0); break;
+      }
+      case 'cmd-listas': { const c = u.cmd; let n = 0; c.cola.forEach(it => { if (it.estado === 'listo' && !it.guardada && it.calidad === 'lista') { guardarItem(it, c.dia); n++; } }); this.aviso(`Guardadas ${n} comanda${n === 1 ? '' : 's'}`); notificar(); break; }
+      /* ajustes */
+      case 'aj-skin': aplicarSkin(ds.v === 'auto' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'asfalto' : 'mapa') : ({ claro: 'mapa', oscuro: 'asfalto' }[ds.v] || ds.v)); break;
+      case 'aj-veh': DB.aj.veh = ds.v; notificar(); break;
+      case 'aj-modo': DB.aj.modo = ds.v; notificar(); break;
+      case 'aj-factor': DB.aj.factor = Math.min(2, Math.max(.8, +(DB.aj.factor + +ds.d).toFixed(2))); notificar(); break;
+      case 'aj-pin': DB.aj.pin = !DB.aj.pin; notificar(); break;
+      case 'ubic-aqui': DB.tienda.pos = { x: .3, y: -.2 }; u.ubic = 'aqui'; this.aviso('Ubicación tomada del GPS (±12 m)'); notificar(); break;
+      case 'ubic-form': u.ubic = u.ubic === ds.id ? null : ds.id; this.paint(); break;
+      case 'ubic-enlace': { if (!this.leer('[data-in=enlace]').value.trim()) { this.aviso('Pega el enlace de Google Maps'); break; } DB.tienda.pos = { x: -1.2, y: .8 }; u.ubic = null; this.aviso('Ubicación tomada del enlace'); notificar(); break; }
+      case 'ubic-buscar': { if (!this.leer('[data-in=busca]').value.trim()) { this.aviso('Escribe el nombre o la dirección'); break; } DB.tienda.pos = { x: .6, y: 1.1 }; u.ubic = null; this.aviso('Ubicación encontrada en el mapa'); notificar(); break; }
+    }
+  }
+}
+
+/* ═══════════ Presets de cada teléfono ═══════════ */
+const iCli = Math.max(0, DB.dias[TODAY].ordenes.findIndex(o => o.cli && o.foto));
+const SEM2 = add(THIS_WEEK, -14);
+const PRESETS = {
+  i1: {}, i2: { ui: { open: { det: true } } }, i3: { ui: { open: { add: true } } },
+  r1: { screen: 'revision' },
+  p1: { abrir: { t: 'pedido', f: TODAY, i: iCli }, tab: 'cliente' }, p2: { abrir: { t: 'pedido', f: TODAY, i: iCli }, tab: 'dist' }, p3: { abrir: { t: 'pedido', f: TODAY, i: iCli }, tab: 'evid' },
+  c1: { abrir: { t: 'comanda' } }, c2: { cmd: { paso: 'cola' } }, c3: { cmd: { paso: 'revisar', i: 1, tab: 'cliente' } }, c4: { cmd: { paso: 'revisar', i: 1, tab: 'entrega' } },
+  g1: { screen: 'pagos' }, g2: { screen: 'pagos', pagos: { week: SEM2 } },
+  e1: { screen: 'stats' }, e2: { screen: 'stats', ui: { open: { 's-dist': true } }, ir: '[data-acc="s-dist"]' },
+  m1: { drawer: true }, m2: { screen: 'historial' }, m3: { screen: 'buscar', ui: { q: 'rosa', tab: { bq: 'cliente' } } },
+  a1: { screen: 'ajustes' }, a2: { screen: 'ajustes', ui: { open: { 'a-tienda': true }, tab: { tda: 'ubic' } }, ir: '[data-acc="a-tienda"]' }, a3: { screen: 'ajustes', ui: { open: { 'a-cmd': true } }, ir: '[data-acc="a-cmd"]' },
+};
+document.querySelectorAll('.ph').forEach(el => TELEFONOS.push(new Telefono(el, PRESETS[el.dataset.preset] || {})));
+document.querySelectorAll('[data-skin-btn]').forEach(b => b.addEventListener('click', () => aplicarSkin(b.dataset.skinBtn)));
+})();
+
+</script>
+</body>
+</html>

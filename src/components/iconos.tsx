@@ -182,3 +182,57 @@ export const Mas = (p: Props) => (
     <circle cx="8" cy="17" r="2" />
   </Base>
 );
+
+export const Usuario = (p: Props) => (
+  <Base {...p}>
+    <circle cx="12" cy="8" r="3.6" />
+    <path d="M4.5 20.5v-1a5 5 0 0 1 5-5h5a5 5 0 0 1 5 5v1" />
+  </Base>
+);
+
+/** La comanda: un papel de despacho, con su recorte abajo. */
+export const Ticket = (p: Props) => (
+  <Base {...p}>
+    <path d="M5 3h14v18l-2.3-1.6L14.5 21 12 19.4 9.5 21l-2.2-1.6L5 21z" />
+    <path d="M8.5 8h7M8.5 12h7M8.5 16h4" />
+  </Base>
+);
+
+export const Pin = (p: Props) => (
+  <Base {...p}>
+    <path d="M12 21s7-6.2 7-11.5a7 7 0 0 0-14 0C5 14.8 12 21 12 21z" />
+    <circle cx="12" cy="9.5" r="2.5" />
+  </Base>
+);
+
+export const Ojo = (p: Props) => (
+  <Base {...p}>
+    <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" />
+    <circle cx="12" cy="12" r="3" />
+  </Base>
+);
+
+export const Telefono = (p: Props) => (
+  <Base {...p}>
+    <path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A15 15 0 0 1 3 6a2 2 0 0 1 2-2z" />
+  </Base>
+);
+
+export const Enlace = (p: Props) => (
+  <Base {...p}>
+    <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" />
+    <path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />
+  </Base>
+);
+
+export const Lista = (p: Props) => (
+  <Base {...p}>
+    <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+  </Base>
+);
+
+export const Mas2 = (p: Props) => (
+  <Base strokeWidth={2} {...p}>
+    <path d="M12 5v14M5 12h14" />
+  </Base>
+);

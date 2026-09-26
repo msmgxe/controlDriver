@@ -52,6 +52,32 @@ export interface RutaFila {
   duracionMin: number | null;
 }
 
+/**
+ * Lo que se sabe del cliente de un pedido.
+ *
+ * Son datos de una tercera persona: todo es opcional y solo se guarda lo que
+ * la persona decide guardar (ver Ajustes › Comandas). Viven solo en el
+ * teléfono y no entran al respaldo salvo que se pida.
+ */
+export interface DatosDeCliente {
+  nombre: string | null;
+  telefono: string | null;
+  direccion: string | null;
+  /** Dónde está el cliente, si se pudo ubicar su dirección. */
+  lat: number | null;
+  lng: number | null;
+}
+
+/**
+ * De dónde salió la distancia de un pedido:
+ *
+ *   · `recta`    en línea recta desde la tienda;
+ *   · `ruta`     la pidió a un servicio de rutas, por calles;
+ *   · `estimado` por calles pero sin señal: la línea recta por el factor;
+ *   · `manual`   la escribió la persona, por ejemplo la que dice Waze o Maps.
+ */
+export type FuenteDeKm = "recta" | "ruta" | "estimado" | "manual";
+
 export interface OrdenFila {
   id: string;
   codigo: string;
@@ -61,9 +87,16 @@ export interface OrdenFila {
   ruta: number | null;
   tramo: number;
   km: number | null;
+  kmFuente: FuenteDeKm | null;
   montoCentimos: number | null;
   /** Añadido a mano, no leído de una captura. */
   manual: boolean;
+  /** null si no se guardó ningún dato del cliente. */
+  cliente: DatosDeCliente | null;
+  /** El tramo lo calculó la distancia; si la persona lo cambia, deja de serlo. */
+  tramoAuto: boolean;
+  /** Cuántas fotos de comanda tiene este pedido (una como mucho, hoy). */
+  fotos: number;
 }
 
 export interface JornadaCompleta {
@@ -85,8 +118,9 @@ export interface JornadaCompleta {
   ordenes: OrdenFila[];
 }
 
-/** Resultado de buscar un código de pedido (§10). */
+/** Resultado de buscar un pedido (§10). */
 export interface PedidoEncontrado {
+  ordenId: string;
   codigo: string;
   fecha: FechaISO;
   ruta: number | null;
@@ -94,8 +128,13 @@ export interface PedidoEncontrado {
   horaFin: string | null;
   estado: string;
   tramo: number;
+  km: number | null;
   montoCentimos: number | null;
+  cliente: DatosDeCliente | null;
 }
+
+/** En qué dato de un pedido se busca. */
+export type CampoDeBusqueda = "codigo" | "cliente" | "telefono" | "direccion";
 
 /* --- Escritura ----------------------------------------------------------- */
 
@@ -164,8 +203,18 @@ export interface Perfil {
   horaSalida: string | null;
 }
 
+/** Cómo mide una tienda la distancia de sus tramos. */
+export type MetodoDeDistancia = "recta" | "calles";
+
 export interface Tienda {
   id: string;
   nombre: string;
   activa: boolean;
+  /** El punto de partida de los repartos; null hasta que se elige en Ajustes. */
+  lat: number | null;
+  lng: number | null;
+  direccion: string | null;
+  metodoDistancia: MetodoDeDistancia;
+  /** Línea recta × este número = distancia por calles estimada, sin señal. */
+  factorCalles: number;
 }

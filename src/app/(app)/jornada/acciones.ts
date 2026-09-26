@@ -11,12 +11,14 @@ import {
   jornadaPorFecha,
   reglaVigente,
 } from "@/lib/db/sqlite/jornadas";
+import { guardarCliente, guardarDistancia, quitarCliente } from "@/lib/db/sqlite/clientes";
 import { estadoDeSemana } from "@/lib/db/sqlite/liquidaciones";
 import { reordenarRutasDelDia } from "@/lib/db/sqlite/rutas";
 import { ESTADOS_DE_PEDIDO, actualizarPedido } from "@/lib/db/sqlite/pedidos";
 import { perfilActual } from "@/lib/db/sqlite/perfil";
 import { esFechaISO, hoyEnLima, type FechaISO } from "@/lib/fechas";
 import { RE_CODIGO_PEDIDO } from "@/lib/extraccion/esquema";
+import { tramoPorDistancia } from "@/lib/geo/tramo";
 import { TRAMO_MAS_DE_12_KM, pagoDelTramo } from "@/lib/pagos/reglas";
 
 /**
@@ -58,13 +60,15 @@ const esquemaTramo = z.object({
   tramo: z.number().int().min(1).max(6),
   km: z.number().min(0).max(999).nullable(),
   montoManualCentimos: z.number().int().min(0).max(100_000).nullable(),
+  /** Deja intacta la distancia que el pedido ya tenía: el tramo se eligió a mano, pero los km siguen siendo un dato. */
+  conservarKm: z.boolean().optional(),
 });
 
 /** Cambia el tramo de un pedido y recalcula su monto (§13). */
 export async function cambiarTramoDePedido(datos: unknown): Promise<Resultado> {
   const parseado = esquemaTramo.safeParse(datos);
   if (!parseado.success) return { ok: false, error: "Datos no válidos." };
-  const { fecha, ordenId, tramo, km, montoManualCentimos } = parseado.data;
+  const { fecha, ordenId, tramo, km, montoManualCentimos, conservarKm } = parseado.data;
 
   const editable = await semanaEditable(fecha as FechaISO);
   if (!editable.ok) return { ok: false, error: editable.error };
@@ -86,7 +90,8 @@ export async function cambiarTramoDePedido(datos: unknown): Promise<Resultado> {
   }
 
   try {
-    await actualizarTramo(ordenId, tramo, montoCentimos, km);
+    // Elegido a mano: deja de ser «automático» aunque los km se conserven.
+    await actualizarTramo(ordenId, tramo, montoCentimos, km, { auto: false, conservarKm });
   } catch (error) {
     return {
       ok: false,
@@ -291,6 +296,131 @@ export async function agregarPedidosDeFoto(
     return {
       ok: false,
       error: error instanceof Error ? error.message : "No se pudieron añadir los pedidos.",
+    };
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * El cliente de un pedido y su distancia
+ * ------------------------------------------------------------------------- */
+
+const esquemaCliente = z.object({
+  nombre: z.string().max(80).nullable().optional(),
+  telefono: z.string().max(30).nullable().optional(),
+  direccion: z.string().max(200).nullable().optional(),
+  lat: z.number().min(-90).max(90).nullable().optional(),
+  lng: z.number().min(-180).max(180).nullable().optional(),
+});
+
+/**
+ * Guarda los datos del cliente de un pedido. Todo es opcional.
+ *
+ * Como el resto de ediciones, no toca una semana ya pagada. Solo cambia lo que
+ * llega: un dato que no viene se deja como estaba.
+ */
+export async function guardarClienteDePedido(
+  fecha: string,
+  ordenId: string,
+  datos: unknown,
+): Promise<Resultado> {
+  if (!esFechaISO(fecha)) return { ok: false, error: "Fecha no válida." };
+  const parseado = esquemaCliente.safeParse(datos);
+  if (!parseado.success) return { ok: false, error: "Los datos del cliente no son válidos." };
+
+  const editable = await semanaEditable(fecha);
+  if (!editable.ok) return { ok: false, error: editable.error };
+
+  try {
+    await guardarCliente(ordenId, parseado.data);
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "No se pudieron guardar los datos del cliente.",
+    };
+  }
+  return { ok: true, mensaje: "Datos del cliente guardados." };
+}
+
+/** Borra los datos del cliente y la distancia de un pedido. El tramo y el monto no cambian. */
+export async function quitarClienteDePedido(fecha: string, ordenId: string): Promise<Resultado> {
+  if (!esFechaISO(fecha)) return { ok: false, error: "Fecha no válida." };
+
+  const editable = await semanaEditable(fecha);
+  if (!editable.ok) return { ok: false, error: editable.error };
+
+  try {
+    await quitarCliente(ordenId);
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "No se pudieron quitar los datos del cliente.",
+    };
+  }
+  return { ok: true, mensaje: "Datos del cliente quitados." };
+}
+
+const esquemaDistancia = z.object({
+  km: z.number().min(0).max(999),
+  kmFuente: z.enum(["recta", "ruta", "estimado", "manual"]),
+  /** Dónde está el cliente, si esta distancia sale de ubicarlo. */
+  lat: z.number().min(-90).max(90).nullable().optional(),
+  lng: z.number().min(-180).max(180).nullable().optional(),
+  /** Que el tramo y el monto sigan a la distancia. Si no, solo se guardan los km. */
+  aplicarTramo: z.boolean(),
+  /** Para más de 12 km, que no tiene tarifa. */
+  montoManualCentimos: z.number().int().min(1).max(100_000).nullable().optional(),
+});
+
+/**
+ * Deja la distancia de un pedido y, si se pide, el tramo que le corresponde.
+ *
+ * El tramo y el monto **se calculan aquí**, con la tarifa de esa fecha, y no se
+ * aceptan de la pantalla: es dinero. Más de 12 km no tiene tarifa: sin un monto
+ * escrito, no se cambia el tramo.
+ */
+export async function fijarDistanciaDePedido(
+  fecha: string,
+  ordenId: string,
+  datos: unknown,
+): Promise<Resultado> {
+  if (!esFechaISO(fecha)) return { ok: false, error: "Fecha no válida." };
+  const parseado = esquemaDistancia.safeParse(datos);
+  if (!parseado.success) return { ok: false, error: "La distancia no es válida." };
+  const d = parseado.data;
+
+  const editable = await semanaEditable(fecha);
+  if (!editable.ok) return { ok: false, error: editable.error };
+
+  try {
+    if (d.lat != null && d.lng != null) await guardarCliente(ordenId, { lat: d.lat, lng: d.lng });
+
+    if (!d.aplicarTramo) {
+      await guardarDistancia(ordenId, { km: d.km, kmFuente: d.kmFuente });
+      return { ok: true, mensaje: "Distancia guardada." };
+    }
+
+    const perfil = await perfilActual();
+    const { regla } = await reglaVigente(fecha, perfil?.tiendaId ?? null, perfil?.vehiculo);
+    const calculado = tramoPorDistancia(regla, d.km);
+    const montoCentimos = calculado.montoCentimos ?? d.montoManualCentimos ?? null;
+    if (montoCentimos === null) {
+      return {
+        ok: false,
+        error: "Más de 12 km no tiene tarifa: escribe cuánto se cobra por este pedido.",
+      };
+    }
+    await guardarDistancia(ordenId, {
+      km: d.km,
+      kmFuente: d.kmFuente,
+      tramo: calculado.tramo,
+      montoCentimos,
+      tramoAuto: true,
+    });
+    return { ok: true, mensaje: "Distancia y tramo guardados." };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "No se pudo guardar la distancia.",
     };
   }
 }

@@ -1,0 +1,1167 @@
+<!doctype html>
+<html lang="es" data-skin="turbo">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rutas-A · Pantallas simples</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=DM+Sans:wght@400;500;700&family=Fredoka:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Nunito:wght@500;600;700;800&family=Unbounded:wght@500;700&display=swap">
+<style>
+/* ═══════════ La página (el escenario) ═══════════ */
+:root{--pg:#eceef3;--pg-card:#fff;--pg-ink:#14161d;--pg-mut:#586071;--pg-line:#d8dce6;--pg-chip:#e2e5ee;--pg-acc:#3a45c4;--pg-stage:#e4e7ef}
+@media (prefers-color-scheme:dark){:root{--pg:#111318;--pg-card:#191c23;--pg-ink:#eceef3;--pg-mut:#9aa2b2;--pg-line:#2b303b;--pg-chip:#242832;--pg-acc:#a5b4ff;--pg-stage:#171a21}}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--pg);color:var(--pg-ink);font:15px/1.55 "DM Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased;padding:0 clamp(16px,4vw,40px) 72px}
+.wrap{max-width:1240px;margin-inline:auto}
+h1,h2,h3,p,ul,figure{margin:0}
+.rot{font:500 11px/1 "JetBrains Mono",ui-monospace,monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--pg-mut)}
+.cab{padding-block:44px 22px;display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+.cab h1{font-size:clamp(32px,5.5vw,56px);line-height:1.03;letter-spacing:-.03em;font-weight:700;max-width:18ch;text-wrap:balance}
+.lead{max-width:66ch;color:var(--pg-mut);font-size:16.5px}
+.claves{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:8px}
+.clave{background:var(--pg-card);border:1px solid var(--pg-line);border-radius:14px;padding:14px 16px;display:grid;gap:4px;align-content:start}
+.clave b{font-size:14.5px}.clave span{color:var(--pg-mut);font-size:13.5px}
+.barra{position:sticky;top:0;z-index:50;margin-inline:calc(-1*clamp(16px,4vw,40px));padding:10px clamp(16px,4vw,40px);background:color-mix(in srgb,var(--pg) 90%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--pg-line)}
+.barra .wrap{display:flex;flex-wrap:wrap;gap:8px 22px;align-items:center;justify-content:space-between}
+.grupo{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.grupo .rot{margin-right:4px}
+.pg-btn{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:99px;background:var(--pg-chip);color:var(--pg-ink);text-decoration:none;font-weight:600;font-size:13.5px;border:0;cursor:pointer;font-family:inherit}
+.pg-btn[aria-pressed="true"]{background:var(--pg-ink);color:var(--pg)}
+.aviso-datos{margin-top:12px;color:var(--pg-mut);font-size:13px;max-width:80ch}
+.op{margin-top:60px;scroll-margin-top:74px;display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
+.op-cab{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+.letra{width:76px;height:76px;border-radius:22px;background:var(--pg-ink);color:var(--pg);display:grid;place-items:center;font-size:40px;font-weight:700;letter-spacing:-.03em}
+.op-cab h2{font-size:clamp(28px,4.4vw,42px);letter-spacing:-.025em;line-height:1.05}
+.pitch{color:var(--pg-mut);max-width:64ch;margin-top:6px}
+.pts{list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.pts li{background:var(--pg-card);border:1px solid var(--pg-line);border-radius:14px;padding:13px 16px;display:grid;gap:3px;align-content:start}
+.pts b{font-size:14px}.pts span{color:var(--pg-mut);font-size:13.5px}
+.stage{border-radius:28px;background:var(--pg-stage);padding:34px clamp(12px,2vw,26px) 22px}
+.phones{display:flex;gap:30px;overflow-x:auto;padding:14px 12px 24px;scroll-snap-type:x proximity;justify-content:safe center}
+.slot{flex:none;display:grid;gap:16px;justify-items:center;scroll-snap-align:center}
+.slot figcaption{font-size:13px;text-align:center;max-width:30ch;line-height:1.4;color:var(--pg-mut)}
+.slot figcaption b{display:block;color:var(--pg-ink);font-size:14px}
+.tip{text-align:center;color:var(--pg-mut);font-size:13px;max-width:78ch;margin:0 auto}
+.comp{margin-top:72px;display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+.comp h2{font-size:clamp(26px,4vw,38px);letter-spacing:-.025em}
+.tabla-p{overflow-x:auto;border:1px solid var(--pg-line);border-radius:16px;background:var(--pg-card)}
+.tabla-p table{border-collapse:collapse;width:100%;min-width:760px;font-size:13.5px}
+.tabla-p th,.tabla-p td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--pg-line);vertical-align:top}
+.tabla-p th{font:500 11px/1.3 "JetBrains Mono",ui-monospace,monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--pg-mut)}
+.tabla-p tr:last-child td{border-bottom:0}
+.tabla-p td:first-child{font-weight:700;white-space:nowrap}
+.voto{background:var(--pg-card);border:2px solid var(--pg-ink);border-radius:18px;padding:20px 22px;display:grid;gap:8px}
+.voto h3{font-size:20px}.voto p{color:var(--pg-mut);max-width:74ch}
+@media (max-width:640px){.op-cab{grid-template-columns:1fr}.letra{width:60px;height:60px;font-size:32px;border-radius:18px}}
+
+/* ═══════════ El teléfono: los tokens son los de la app (globals.css) ═══════════ */
+.ph{
+  /* base = «Mapa» (claro) */
+  --papel:#e6eef8;--sup:#fff;--sup-2:#d9e5f4;--tinta:#0a2260;--tinta-2:#3e5183;--tinta-3:#52658f;--linea:#c4d5ec;--linea-fuerte:#a9bfdf;
+  --acento:#1f5cff;--acento-tinta:#1244cc;--acento-suave:#dce6ff;--acento-texto:#fff;--acento-2:#ffc800;--acento-2-tinta:#0a2260;
+  --bien:#0b7a4d;--bien-suave:#d8f3e4;--aviso:#6f4e00;--aviso-suave:#fff0b8;--mal:#b3261e;--mal-suave:#ffe0db;--descanso:#ffc800;
+  --fd:"Unbounded","DM Sans",system-ui,sans-serif;--ft:"DM Sans",system-ui,sans-serif;--fm:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --zt:.8;--tt:none;--r-chip:999px;--r-btn:12px;--r-card:16px;--r-hoja:24px;--bw:0px;--pad:16px;--pt:700;--track:-.03em;
+  --sombra:0 1px 2px rgb(10 34 96/.06),0 14px 28px -20px rgb(10 34 96/.4);--sombra-alta:0 8px 20px -6px rgb(10 34 96/.2),0 30px 60px -30px rgb(10 34 96/.5);
+  --dia-r:22px;--dia-b:2px solid var(--tinta);--dia-s:3px 3px 0 var(--tinta);--pb:2px solid var(--tinta);--tab-s:0 1px 3px rgb(10 34 96/.28);
+  --nav-s:0 -10px 24px -16px rgb(10 34 96/.5);
+}
+html[data-skin="turbo"] .ph{
+  --papel:#f3efff;--sup:#fff;--sup-2:#ece6ff;--tinta:#1d1246;--tinta-2:#6b5e9c;--tinta-3:#9c8fc7;--linea:#dcd3fa;--linea-fuerte:#1d1246;
+  --acento:#6a4cf5;--acento-tinta:#5636d6;--acento-suave:#e4dbff;--acento-texto:#fff;--acento-2:#ffd23f;--acento-2-tinta:#1d1246;
+  --bien:#0b7a4d;--bien-suave:#d5f7e8;--aviso:#7a5000;--aviso-suave:#ffefc2;--mal:#b3261e;--mal-suave:#ffe1de;--descanso:#ffd23f;
+  --fd:"Fredoka","Nunito",system-ui,sans-serif;--ft:"Nunito",system-ui,sans-serif;--zt:.95;--tt:none;
+  --r-chip:999px;--r-btn:15px;--r-card:20px;--r-hoja:26px;--bw:2px;--pad:18px;--track:0em;
+  --sombra:3px 3px 0 var(--tinta);--sombra-alta:5px 5px 0 var(--tinta);--tab-s:0 0 0 2px var(--tinta);--nav-s:0 -10px 24px -16px rgb(29 18 70/.5);
+}
+html[data-skin="asfalto"] .ph{
+  --papel:#0e1116;--sup:#161b22;--sup-2:#1e252e;--tinta:#eef1f5;--tinta-2:#aab4c2;--tinta-3:#808b9b;--linea:#28303b;--linea-fuerte:#3a4452;
+  --acento:#ff9f1c;--acento-tinta:#ffb84d;--acento-suave:#3a2a0c;--acento-texto:#1a0f00;--acento-2:#5cc8ff;--acento-2-tinta:#0e1116;
+  --bien:#4bdb97;--bien-suave:#10301f;--aviso:#f2d24b;--aviso-suave:#2f2a0f;--mal:#ff7a7a;--mal-suave:#341717;--descanso:#5cc8ff;
+  --fd:"Barlow Condensed","Barlow",system-ui,sans-serif;--ft:"Barlow",system-ui,sans-serif;--zt:1.14;--tt:uppercase;
+  --r-chip:6px;--r-btn:8px;--r-card:10px;--r-hoja:14px;--bw:1px;--pad:14px;--track:.02em;
+  --sombra:none;--sombra-alta:0 8px 20px -6px rgb(0 0 0/.5),0 30px 60px -30px rgb(0 0 0/.9);
+  --dia-r:var(--r-card);--dia-b:0;--dia-s:none;--pb:0;--tab-s:0 0 0 1px var(--linea-fuerte);--nav-s:none;
+}
+.ph{width:360px;height:800px;flex:none;position:relative;display:flex;flex-direction:column;overflow:hidden;border-radius:40px;background:var(--papel);color:var(--tinta);
+  font-family:var(--ft);font-size:15px;line-height:1.45;box-shadow:0 0 0 8px #101216,0 30px 60px -24px rgb(0 0 0/.55);isolation:isolate}
+.ph *{box-sizing:border-box}
+:where(.ph) button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0;text-align:inherit;-webkit-tap-highlight-color:transparent}
+:where(.ph) :is(p,h1,h2,h3,ul,ol,dl,dd){margin:0}
+.ph :focus-visible{outline:2px solid var(--acento);outline-offset:2px}
+.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.fd{font-family:var(--fd);font-weight:var(--pt);letter-spacing:var(--track);text-transform:var(--tt)}
+.mono{font-family:var(--fm);font-variant-numeric:tabular-nums}
+
+/* marco del teléfono */
+.sbar{flex:none;display:flex;justify-content:space-between;align-items:center;padding:12px 26px 4px;font-size:12px;font-weight:700}
+.sbar i{font-style:normal;font-weight:600;opacity:.85}
+.hd{flex:none;display:flex;align-items:center;gap:10px;padding:6px 16px 10px;border-bottom:1px solid var(--linea)}
+.hd .auto{width:44px;flex:none}
+.hd h1{font-family:var(--fd);font-weight:var(--pt);font-size:calc(22px*var(--zt));letter-spacing:var(--track);text-transform:var(--tt);line-height:1.1}
+.scroll{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:14px 16px 24px;display:flex;flex-direction:column;gap:14px;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+.dyn{display:flex;flex-direction:column;gap:14px}
+.nav{flex:none;display:grid;grid-template-columns:repeat(5,1fr);align-items:end;background:var(--sup);border-top:1px solid var(--linea);border-radius:20px 20px 0 0;padding:8px 4px 14px;box-shadow:var(--nav-s);position:relative;z-index:5}
+.nv{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;min-height:52px;font-size:11px;font-weight:700;color:var(--tinta-2)}
+.nv .ic{width:24px;height:24px}
+.nv.on{color:var(--acento)}
+.boton-auto{--auto-fondo:var(--acento-2);display:grid;place-items:center;width:52px;height:36px;border-radius:var(--r-btn);background:var(--acento-2);color:var(--acento-2-tinta)}
+.boton-auto .auto{width:36px}
+html[data-skin="asfalto"] .boton-auto{--auto-fondo:var(--acento);background:var(--acento);color:var(--acento-texto)}
+
+/* el auto de la marca (globals.css) */
+.auto{overflow:visible;--a-cuerpo:var(--acento-2);--a-vidrio:#fff;--a-rueda:var(--tinta);--a-buje:var(--papel);--a-faro:#fff;--a-borde:var(--tinta);--a-estela:var(--acento)}
+.auto .c-oscuro{display:none}
+html[data-skin="asfalto"] .auto .c-claro{display:none}
+html[data-skin="asfalto"] .auto .c-oscuro{display:inline}
+html[data-skin="asfalto"] .auto{--a-cuerpo:var(--acento);--a-vidrio:var(--papel);--a-rueda:var(--linea-fuerte);--a-buje:var(--tinta);--a-faro:var(--tinta);--a-borde:transparent}
+.auto--sobre-acento{--a-estela:var(--acento-texto)}
+html[data-skin="asfalto"] .auto--sobre-acento{--a-cuerpo:var(--acento-texto);--a-vidrio:var(--acento);--a-rueda:var(--acento-texto);--a-buje:var(--acento);--a-faro:var(--acento)}
+.auto--mono,html[data-skin="asfalto"] .auto--mono{--a-cuerpo:currentColor;--a-rueda:currentColor;--a-estela:currentColor;--a-borde:transparent;--a-vidrio:var(--auto-fondo,transparent);--a-buje:var(--auto-fondo,transparent);--a-faro:var(--auto-fondo,transparent)}
+.auto--gris{--a-cuerpo:var(--linea);--a-estela:var(--linea-fuerte);--a-borde:var(--linea-fuerte);--a-rueda:var(--linea-fuerte);--a-vidrio:var(--sup)}
+html[data-skin="asfalto"] .auto--gris{--a-cuerpo:var(--linea-fuerte);--a-vidrio:var(--sup);--a-rueda:var(--linea)}
+.auto-cuerpo{fill:var(--a-cuerpo)}.auto-borde{stroke:var(--a-borde);stroke-width:2.6;stroke-linejoin:round;paint-order:stroke}
+.auto-vidrio{fill:var(--a-vidrio)}.auto-faro{fill:var(--a-faro)}.auto-rueda{fill:var(--a-rueda)}.auto-buje{fill:var(--a-buje)}
+.auto-estela path{fill:none;stroke:var(--a-estela)}
+
+/* ── La barra de semanas ── */
+.sh{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+.sh-t{min-width:0}
+.sh-t b{display:block;font-family:var(--fd);font-weight:var(--pt);font-size:calc(22px*var(--zt));line-height:1.12;letter-spacing:var(--track);text-transform:var(--tt);text-wrap:balance}
+.sh-t small{display:block;color:var(--tinta-3);font-size:12.5px;margin-top:3px}
+.sh-a{display:flex;align-items:center;gap:4px;flex:none}
+.hoy-p{font-size:12px;font-weight:800;color:var(--acento-tinta);text-decoration:underline;text-underline-offset:2px;padding:10px 6px;white-space:nowrap}
+.ibtn{position:relative;width:44px;height:44px;border-radius:var(--r-btn);border:1px solid var(--linea-fuerte);background:var(--sup);display:grid;place-items:center;flex:none}
+.ibtn input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.strip{position:relative;margin:10px 0 0;clip-path:inset(-4px 0);touch-action:pan-y;user-select:none;-webkit-user-select:none;cursor:grab}
+.strip.abierto{clip-path:inset(-4px -16px)}          /* mientras se arrastra, las semanas vecinas llegan desde el borde del teléfono */
+.strip:active{cursor:grabbing}
+.track{display:flex;gap:5px;width:max-content;transform:translateX(calc(-1*(var(--sw,328px) + 5px)));will-change:transform}
+.track.anim{transition:transform .32s cubic-bezier(.2,.8,.2,1)}
+.wk{width:var(--sw,328px);flex:none;display:grid;grid-template-columns:repeat(7,1fr);gap:5px;padding:2px 0 4px}
+.chip{min-height:66px;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;border-radius:var(--r-btn);border:1px solid var(--linea);background:var(--sup-2);color:var(--tinta-2);font-size:11.5px}
+.chip .cl{font-weight:700}
+.chip .cn{font-size:16px;font-weight:800;line-height:1.1;color:var(--tinta)}
+.chip .cs{height:14px;display:flex;align-items:center;justify-content:center;font:700 10px/1 var(--fm)}
+.chip.on{background:var(--acento);border-color:var(--acento);color:var(--acento-texto)}
+.chip.on .cn{color:var(--acento-texto)}
+.chip.hoy:not(.on){border-color:var(--acento);color:var(--acento-tinta)}
+.chip.fut{opacity:.42}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--acento);display:block}
+.chip.on .dot{background:var(--acento-texto)}
+.ring{width:7px;height:7px;border-radius:50%;border:1.6px solid var(--tinta-3);display:block}
+.chip.on .ring{border-color:var(--acento-texto)}
+.chip .lun{width:12px;height:12px;stroke-width:2.2;color:var(--tinta-2)}
+.chip.on .lun{color:var(--acento-texto)}
+
+/* ── Piezas ── */
+.dia{position:relative;overflow:hidden;border-radius:var(--dia-r);padding:16px 16px 14px;background:var(--acento);color:var(--acento-texto);border:var(--dia-b);box-shadow:var(--dia-s);min-height:152px}
+.dia .enc{font-size:13px;font-weight:700;opacity:.92}
+.dia .cif{font-family:var(--fd);font-weight:var(--pt);font-size:calc(54px*var(--zt));line-height:.98;letter-spacing:var(--track);font-variant-numeric:tabular-nums}
+.dia .pie{font-size:13px;font-weight:700;opacity:.92}
+.pastilla{display:inline-flex;margin-top:9px;padding:3px 12px;border-radius:99px;border:var(--pb);background:var(--acento-2);color:var(--acento-2-tinta);font:700 15px/1.5 var(--fm)}
+html[data-skin="asfalto"] .dia .pastilla{background:var(--acento-texto);color:var(--acento)}
+.dia .auto{position:absolute;right:-8px;bottom:12px;width:44%;max-width:170px;transform:rotate(-4deg);pointer-events:none}
+.card{background:var(--sup);border:var(--bw) solid var(--linea-fuerte);border-radius:var(--r-card);padding:var(--pad);box-shadow:var(--sombra)}
+.vacia{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:center}
+.vacia .auto{width:74px;grid-row:span 2}
+.vacia b{font-family:var(--fd);font-weight:var(--pt);font-size:calc(17px*var(--zt));letter-spacing:var(--track);text-transform:var(--tt)}
+.vacia p{color:var(--tinta-2);font-size:13.5px;grid-column:2}
+.vacia .btn-sec{grid-column:1/-1;margin-top:8px}
+.desc{display:flex;align-items:center;gap:12px}
+.desc .lu{width:44px;height:44px;border-radius:50%;background:var(--descanso);color:var(--acento-2-tinta);display:grid;place-items:center;flex:none}
+html[data-skin="asfalto"] .desc .lu{color:var(--papel)}
+.desc div{flex:1;min-width:0}.desc b{display:block}.desc p{color:var(--tinta-2);font-size:13.5px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:58px;padding:12px 16px;border-radius:var(--r-btn);background:var(--acento);color:var(--acento-texto);
+  font-family:var(--fd);font-weight:var(--pt);font-size:calc(21px*var(--zt));text-transform:var(--tt);letter-spacing:var(--track);box-shadow:0 10px 24px -14px var(--acento);justify-content:center;text-align:center}
+.btn.md{min-height:48px;font-size:calc(17px*var(--zt))}
+.btn:active,.btn-sec:active,.opt:active,.puerta:active,.mrow:active{transform:translateY(1px)}
+.btn .ic.lg{width:24px;height:24px;stroke-width:2.2}
+.btn-sec{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:8px 16px;border:1px solid var(--linea-fuerte);border-radius:var(--r-btn);background:var(--sup);font-weight:700;font-size:14.5px}
+.btn-sec.sm{min-height:40px;font-size:13.5px;padding:6px 14px}
+.hint{color:var(--tinta-3);font-size:12px;margin-top:8px;line-height:1.4}
+.lnk{display:inline-flex;align-items:center;gap:6px;min-height:44px;color:var(--acento-tinta);font-weight:800;font-size:14px}
+.lnk .ic{width:16px;height:16px;transition:transform .2s}.lnk .ic.up{transform:rotate(180deg)}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 9px 3px 7px;border-radius:var(--r-chip);font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.tag .ic{width:12px;height:12px;stroke-width:2.6}
+.tag.ok{background:var(--bien-suave);color:var(--bien)}.tag.warn{background:var(--aviso-suave);color:var(--aviso)}.tag.acc{background:var(--acento-suave);color:var(--acento-tinta)}
+
+/* acordeón */
+.acc{background:var(--sup);border:var(--bw) solid var(--linea-fuerte);border-radius:var(--r-card);box-shadow:var(--sombra);overflow:hidden}
+.acc-h{display:flex;align-items:center;gap:10px;width:100%;padding:12px var(--pad);min-height:62px}
+.acc-t{flex:1;min-width:0}
+.acc-t b{display:block;font-family:var(--fd);font-weight:var(--pt);font-size:calc(17px*var(--zt));letter-spacing:var(--track);text-transform:var(--tt);line-height:1.2}
+.acc-t small{display:block;color:var(--tinta-3);font-size:12.5px;line-height:1.35;margin-top:1px}
+.acc-t small.al{color:var(--aviso);font-weight:700}
+.acc-h>.ic{color:var(--tinta-3);transition:transform .22s;width:22px;height:22px}
+.acc.open .acc-h>.ic{transform:rotate(180deg)}
+.acc-b{display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s ease}
+.acc.open .acc-b{grid-template-rows:1fr}
+.acc-i{overflow:hidden;min-height:0;visibility:hidden;transition:visibility 0s .28s}
+.acc.open .acc-i{visibility:visible;transition-delay:0s}
+.acc-c{padding:14px var(--pad) var(--pad);border-top:1px solid var(--linea);display:flex;flex-direction:column;gap:14px}
+
+/* pestañas */
+.tabs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;padding:4px;background:var(--sup-2);border-radius:var(--r-btn)}
+.tab{min-height:42px;border-radius:calc(var(--r-btn) - 3px);font-weight:800;font-size:14px;color:var(--tinta-2);display:flex;align-items:center;justify-content:center;gap:6px}
+.tab.on{background:var(--sup);color:var(--tinta);box-shadow:var(--tab-s)}
+.tab .n{font:700 11px/1.5 var(--fm);background:var(--acento-suave);color:var(--acento-tinta);border-radius:99px;padding:0 7px}
+.stiles{display:grid;gap:8px}
+.st{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-height:68px;padding:8px 4px;border-radius:var(--r-btn);border:1px solid var(--linea-fuerte);background:var(--sup);color:var(--tinta-2);text-align:center}
+.st b{font-family:var(--fd);font-weight:var(--pt);font-size:calc(24px*var(--zt));line-height:1.05;color:var(--tinta);letter-spacing:var(--track)}
+.st.sm b{font-size:calc(17px*var(--zt))}
+.st span{font-size:12px;font-weight:700}
+.st.on{background:var(--acento);border-color:var(--acento);color:var(--acento-texto)}
+.st.on b{color:var(--acento-texto)}
+.st.add{border-style:dashed}
+.st.add.on{border-style:solid}
+.panel{background:var(--sup);border:var(--bw) solid var(--linea-fuerte);border-radius:var(--r-card);padding:14px var(--pad) var(--pad);box-shadow:var(--sombra);display:flex;flex-direction:column;gap:14px;position:relative}
+.panel::before{content:"";position:absolute;top:-7px;left:var(--nx,50%);width:12px;height:12px;background:var(--sup);border-left:var(--bw) solid var(--linea-fuerte);border-top:var(--bw) solid var(--linea-fuerte);transform:translateX(-50%) rotate(45deg);border-radius:3px 0 0 0}
+
+/* puertas (hoja inferior) */
+.puertas{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.puertas.uno{grid-template-columns:1fr}
+.puerta{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:12px var(--pad) 12px;background:var(--sup);border:var(--bw) solid var(--linea-fuerte);border-radius:var(--r-card);box-shadow:var(--sombra);min-height:96px;text-align:left;position:relative}
+.puerta .pi{width:34px;height:34px;border-radius:50%;background:var(--acento-suave);color:var(--acento-tinta);display:grid;place-items:center}
+.puerta .pi.y{background:var(--acento-2);color:var(--acento-2-tinta)}
+.puerta b{display:block;font-family:var(--fd);font-weight:var(--pt);font-size:calc(16px*var(--zt));letter-spacing:var(--track);text-transform:var(--tt);line-height:1.15}
+.puerta small{display:block;color:var(--tinta-3);font-size:12.5px;line-height:1.3}
+.puerta small.al{color:var(--aviso);font-weight:700}
+.puerta>.ic{position:absolute;right:12px;top:14px;color:var(--tinta-3);width:18px;height:18px}
+.puerta.dest{border-color:var(--acento)}
+
+/* listas */
+.lista{border:1px solid var(--linea);border-radius:var(--r-card);background:var(--sup);overflow:hidden}
+.fila{display:flex;flex-direction:column;gap:6px;width:100%;padding:11px 14px;border-bottom:1px solid var(--linea)}
+.fila:last-child{border-bottom:0}
+.fila.pc{background:color-mix(in srgb,var(--aviso-suave) 55%,var(--sup))}
+.f1{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.cod{font:500 14px/1.3 var(--fm);letter-spacing:-.01em}
+.mo{font:500 12px/1 var(--fm);color:var(--tinta-3)}
+.pc-t{font-weight:800;font-size:14px;color:var(--aviso)}
+.f2{display:flex;flex-wrap:wrap;align-items:center;gap:5px 8px;font-size:12px}
+.p-ruta{display:inline-flex;gap:4px;padding:3px 10px;border-radius:var(--r-chip);background:var(--acento-suave);color:var(--acento-tinta);font-weight:700}
+.p-ruta i{font:500 11.5px/1.4 var(--fm);opacity:.85}
+.p-sin{padding:3px 10px;border-radius:var(--r-chip);background:var(--aviso-suave);color:var(--aviso);font-weight:700}
+.est{font-weight:600;color:var(--tinta-2)}.est.ok{color:var(--bien)}
+.tr{border:1px solid var(--linea-fuerte);border-radius:var(--r-chip);padding:0 8px;font:500 11.5px/1.6 var(--fm);color:var(--tinta-2)}
+.mut{color:var(--tinta-3)}
+.paradas{list-style:none;padding:0}
+.par{position:relative;display:grid;grid-template-columns:26px 1fr auto;gap:12px;align-items:center;padding:8px 0}
+.par::before{content:"";position:absolute;left:12px;top:0;bottom:0;border-left:2px dashed color-mix(in srgb,var(--acento) 40%,transparent)}
+.par.p1::before{top:50%}.par.pn::before{bottom:50%}
+.pin{position:relative;z-index:1;width:26px;height:26px;transform:rotate(-45deg);border-radius:50% 50% 50% 4px;background:var(--acento);color:var(--acento-texto);display:grid;place-items:center}
+.pin b{transform:rotate(45deg);font:700 11px/1 var(--fm)}
+.par b.t{display:block;font-size:14px}
+.par .h{font:500 12px/1.3 var(--fm);color:var(--tinta-3)}
+.par .np{border-radius:var(--r-chip);background:var(--sup-2);padding:2px 10px;font-size:11.5px;font-weight:700;color:var(--tinta-2);white-space:nowrap}
+.vacio{color:var(--tinta-3);font-size:14px;padding:4px 0}
+.mas-l{border:1px solid var(--linea);border-radius:var(--r-card);overflow:hidden;background:var(--sup)}
+.mrow{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:6px 14px;border-bottom:1px solid var(--linea);font-size:14px;font-weight:600}
+.mrow:last-child{border-bottom:0}
+.mrow span{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.mrow em{font:500 12.5px/1 var(--fm);font-style:normal;color:var(--tinta-3)}
+.mrow>.ic:last-child{width:16px;height:16px;color:var(--tinta-3)}
+.mrow.mal{color:var(--mal)}
+.rotulo{font:500 11px/1 var(--fm);letter-spacing:.08em;text-transform:uppercase;color:var(--tinta-3)}
+.grp{display:flex;flex-direction:column;gap:8px}
+
+/* opciones de «subir más» */
+.opt{display:flex;align-items:center;gap:12px;width:100%;min-height:58px;padding:9px 14px;border:1px solid var(--linea-fuerte);border-radius:var(--r-btn);background:var(--sup)}
+.opt .oi{width:36px;height:36px;border-radius:50%;background:var(--acento-suave);color:var(--acento-tinta);display:grid;place-items:center;flex:none}
+.opt b{display:block;font-size:14.5px;line-height:1.25}.opt small{display:block;color:var(--tinta-3);font-size:12.5px;line-height:1.3}
+.opt.on{border-color:var(--acento);background:var(--acento-suave)}
+.form{display:flex;flex-direction:column;gap:10px;padding:12px;margin-top:-2px;border:1px dashed var(--linea-fuerte);border-radius:var(--r-btn);background:var(--sup-2)}
+.form label{font-size:12.5px;font-weight:800;color:var(--tinta-2);display:block;margin-bottom:4px}
+.inp{display:block;width:100%;min-height:44px;border:1px solid var(--linea-fuerte);border-radius:var(--r-btn);background:var(--sup);color:var(--tinta);padding:0 12px;font:inherit;font-size:15px}
+.dos{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stepper{display:flex;align-items:center;justify-content:center;gap:14px}
+.stepper button{width:48px;height:48px;border-radius:50%;border:1px solid var(--linea-fuerte);background:var(--sup);display:grid;place-items:center}
+.stepper b{font-family:var(--fd);font-weight:var(--pt);font-size:calc(34px*var(--zt));min-width:56px;text-align:center;font-variant-numeric:tabular-nums}
+
+/* pagos */
+.hero{background:var(--sup);border:var(--bw) solid var(--linea-fuerte);border-radius:var(--r-card);box-shadow:var(--sombra);padding:var(--pad);display:grid;gap:6px}
+.hero-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.hero-top .rotulo{color:var(--tinta-2)}
+.hero-monto{font-family:var(--fd);font-weight:var(--pt);font-size:calc(44px*var(--zt));line-height:1.02;color:var(--acento);letter-spacing:var(--track);font-variant-numeric:tabular-nums}
+.hero-pie{color:var(--tinta-2);font-size:13.5px}
+.segs{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:6px}
+.segs i{height:5px;border-radius:9px;background:var(--linea)}
+.segs i.on{background:var(--acento)}.segs i.rs{background:var(--descanso)}
+.hero-pago{display:flex;align-items:center;gap:8px;color:var(--tinta-2);font-size:13.5px;padding-top:8px;margin-top:4px;border-top:1px solid var(--linea)}
+.hero-pago .ic{width:18px;height:18px}
+.dl>div{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:8px 0;border-bottom:1px solid var(--linea);font-size:14px}
+.dl>div:last-child{border-bottom:0}
+.dl dt{color:var(--tinta-2)}.dl dd{font:500 13.5px/1.3 var(--fm);text-align:right}
+.diar{border:1px solid var(--linea);border-radius:var(--r-card);background:var(--sup);overflow:hidden}
+.diar+.diar{margin-top:8px}
+.diar.on{border-color:var(--acento);box-shadow:0 0 0 1px var(--acento)}
+.dia-h{display:grid;grid-template-columns:38px 1fr auto;gap:8px;align-items:center;width:100%;min-height:56px;padding:8px 12px}
+.dia-h .dn{line-height:1.15}.dia-h .dn b{display:block;font-size:14px}.dia-h .dn span{font:600 12px/1 var(--fm);color:var(--tinta-3)}
+.dia-h .dm{font-size:12px;color:var(--tinta-2);line-height:1.3}
+.dia-h .dv{font:700 13px/1 var(--fm);text-align:right;display:flex;align-items:center;gap:2px;justify-content:flex-end}
+.dia-h.vac .dv,.dia-h.vac .dm{color:var(--tinta-3)}
+.dia-h .ic{width:16px;height:16px;color:var(--tinta-3);transition:transform .2s}
+.diar.exp .dia-h .ic{transform:rotate(180deg)}
+.dia-b{padding:4px 12px 14px;border-top:1px solid var(--linea)}
+.dd{display:flex;flex-direction:column;gap:12px;padding-top:10px}
+.dd-k{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.dd-k>div{background:var(--sup-2);border-radius:var(--r-btn);padding:8px 6px;text-align:center}
+.dd-k b{display:block;font-family:var(--fd);font-weight:var(--pt);font-size:calc(19px*var(--zt));line-height:1.1;letter-spacing:var(--track)}
+.dd-k span{font-size:11.5px;color:var(--tinta-2);font-weight:700}
+.duelo{display:flex;flex-direction:column;gap:8px}
+.d-r{display:grid;grid-template-columns:1fr auto;gap:5px 8px;align-items:center;font-size:12px}
+.d-r .bar{grid-column:1/-1;order:3}
+.d-r span{color:var(--tinta-2);font-weight:700;line-height:1.2}
+.d-r .bar{height:12px;border-radius:9px;background:var(--linea);overflow:hidden}
+.d-r .bar i{display:block;height:100%;width:var(--w);background:var(--tinta-3);border-radius:9px}
+.d-r.win .bar i{background:var(--acento)}
+.d-r em{font:700 12px/1 var(--fm);font-style:normal}
+.nota{color:var(--tinta-2);font-size:12.5px;line-height:1.45}
+.nota b{color:var(--tinta)}
+.falta{background:var(--aviso-suave);color:var(--aviso);border-radius:var(--r-card);padding:14px;display:flex;flex-direction:column;gap:10px}
+.falta .ft{display:flex;gap:10px;align-items:flex-start}
+.falta .ft .ic{margin-top:1px}
+.falta b{font-size:15px}
+.falta p{font-size:13.5px;line-height:1.4}
+.cfs{display:flex;flex-wrap:wrap;gap:7px}
+.cf{padding:8px 13px;border-radius:99px;border:1.5px solid var(--aviso);font-weight:800;font-size:13px;min-height:38px}
+.cf.on{background:var(--aviso);color:var(--aviso-suave)}
+.cfs.desc .cf{background:var(--sup);color:var(--tinta);border-color:var(--linea-fuerte);display:inline-flex;align-items:center;gap:6px;font-weight:700}
+.cfs.desc .cf .ic{width:14px;height:14px}
+.fila-in{display:grid;grid-template-columns:1fr auto;gap:8px}
+.fila-in .btn{width:auto;min-height:44px;padding:8px 14px;font-size:calc(16px*var(--zt))}
+.tabla{width:100%;border-collapse:collapse;font-size:13px}
+.tabla th{text-align:left;font:500 10.5px/1 var(--fm);letter-spacing:.07em;text-transform:uppercase;color:var(--tinta-3);padding:6px 8px;border-bottom:1px solid var(--linea-fuerte)}
+.tabla td{padding:9px 8px;border-bottom:1px solid var(--linea)}
+.tabla .num{text-align:right;font:500 13px/1 var(--fm)}
+.tabla tr:last-child td{border-bottom:0}
+.sem-r{display:flex;align-items:center;gap:10px;width:100%;padding:11px 14px;border-bottom:1px solid var(--linea);min-height:60px}
+.sem-r:last-child{border-bottom:0}
+.sem-r.on{background:var(--acento-suave)}
+.sem-r .a{flex:1;min-width:0}.sem-r .a b{display:block;font:500 13.5px/1.3 var(--fm)}.sem-r .a small{color:var(--tinta-3);font-size:12px}
+.sem-r .b{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.sem-r .b em{font:700 13.5px/1 var(--fm);font-style:normal}
+.dif{color:var(--mal);font-weight:800;font-size:13.5px}.dif.mas{color:var(--bien)}
+
+/* hoja inferior y aviso */
+.sheet-w{position:absolute;inset:0;z-index:40;pointer-events:none}
+.sheet-w .scrim{position:absolute;inset:0;background:rgb(0 0 0/.5);opacity:0;transition:opacity .28s}
+.sheet{position:absolute;left:0;right:0;bottom:0;max-height:86%;display:flex;flex-direction:column;background:var(--papel);border-radius:var(--r-hoja) var(--r-hoja) 0 0;transform:translateY(103%);transition:transform .34s cubic-bezier(.2,.8,.2,1);box-shadow:var(--sombra-alta);border-top:var(--bw) solid var(--linea-fuerte)}
+.sheet-w.open{pointer-events:auto}.sheet-w.open .scrim{opacity:1}.sheet-w.open .sheet{transform:none}
+.grab{width:42px;height:4px;border-radius:9px;background:var(--linea-fuerte);margin:9px auto 0;flex:none}
+.sh-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 16px 10px;flex:none}
+.sh-h b{font-family:var(--fd);font-weight:var(--pt);font-size:calc(20px*var(--zt));letter-spacing:var(--track);text-transform:var(--tt);line-height:1.15}
+.sh-h .x{width:44px;height:44px;border-radius:50%;background:var(--sup-2);display:grid;place-items:center;flex:none}
+.sh-b{overflow-y:auto;padding:0 16px 26px;display:flex;flex-direction:column;gap:14px;scrollbar-width:none;min-height:0}
+.sh-b::-webkit-scrollbar{display:none}
+.toast{position:absolute;left:18px;right:18px;bottom:92px;z-index:60;background:#14161d;color:#fff;border-radius:12px;padding:10px 14px;font-size:13px;line-height:1.35;opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none;text-align:center}
+.toast.show{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.track.anim,.acc-b,.sheet,.sheet-w .scrim{transition-duration:.01ms}}
+</style>
+</head>
+<body>
+
+<!-- Iconos: los mismos trazos de src/components/iconos.tsx, más los que faltaban -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-casa" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></symbol>
+<symbol id="i-cartera" viewBox="0 0 24 24"><path d="M3 8.5A2.5 2.5 0 0 1 5.5 6H19a2 2 0 0 1 2 2v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17z"/><path d="M3 8.5V7a2 2 0 0 1 2-2h11"/><circle cx="16.5" cy="12.5" r="1.3"/></symbol>
+<symbol id="i-candado" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+<symbol id="i-mas" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></symbol>
+<symbol id="i-subir" viewBox="0 0 24 24"><path d="M12 17V4"/><path d="m6.5 9.5 5.5-5.5 5.5 5.5"/><path d="M4 18v2h16v-2"/></symbol>
+<symbol id="i-luna" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+<symbol id="i-reloj" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="i-alerta" viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+<symbol id="i-flecha" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+<symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+<symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 3v3M16 3v3"/></symbol>
+<symbol id="i-camara" viewBox="0 0 24 24"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13.5" r="3.2"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+<symbol id="i-lapiz" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
+<symbol id="i-hash" viewBox="0 0 24 24"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/></symbol>
+<symbol id="i-lista" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+<symbol id="i-barras" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol>
+<symbol id="i-tarifa" viewBox="0 0 24 24"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><path d="M7.5 7.5h.01"/></symbol>
+<symbol id="i-ruta" viewBox="0 0 24 24"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h7a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h7"/></symbol>
+</defs></svg>
+
+<header class="cab wrap">
+  <span class="rot">Rutas-A · propuesta de pantallas</span>
+  <h1>Inicio y Pagos, más simples</h1>
+  <p class="lead">Con lo que dijeron los drivers: menos cosas a la vista y cada función a un toque cuando la necesitas. Son tres formas de lograrlo. <b>Cada teléfono funciona de verdad</b>: arrastra la semana, toca un día, abre, cambia de pestaña, añade un pedido.</p>
+  <div class="claves">
+    <div class="clave"><b>1 · Una barra de semanas que se siente</b><span>Arrastras y las fechas corren con el dedo. La semana vecina ya va pegada, así que nunca queda un hueco; al soltar, termina de llegar sola. No pasa de la semana actual.</span></div>
+    <div class="clave"><b>2 · Inicio: solo lo que se usa</b><span>Semana → tarjeta del día con el auto → «Cargar capturas» → detalle de lo subido → subir más. Nada más. Lo acumulado se va a Pagos.</span></div>
+    <div class="clave"><b>3 · Pagos recibe lo acumulado</b><span>La misma barra de semanas, con lo que cobras cada día. Debajo, el total de la semana y el detalle por día. El calendario salta a cualquier fecha.</span></div>
+    <div class="clave"><b>4 · Nada se pierde</b><span>Cada función de hoy sigue existiendo, en un lugar más claro. La tabla del final dice dónde quedó cada cosa.</span></div>
+  </div>
+</header>
+
+<div class="barra">
+  <div class="wrap">
+    <div class="grupo" role="group" aria-label="Apariencia">
+      <span class="rot">Apariencia</span>
+      <button class="pg-btn" data-skin-btn="turbo" aria-pressed="true">Turbo · la de tu teléfono</button>
+      <button class="pg-btn" data-skin-btn="mapa" aria-pressed="false">Mapa · claro</button>
+      <button class="pg-btn" data-skin-btn="asfalto" aria-pressed="false">Asfalto · oscuro</button>
+    </div>
+    <nav class="grupo" aria-label="Propuestas">
+      <a class="pg-btn" href="#a">A · Acordeones</a>
+      <a class="pg-btn" href="#b">B · Hoja inferior</a>
+      <a class="pg-btn" href="#c">C · Pestañas de cifras</a>
+      <a class="pg-btn" href="#comparar">Comparar</a>
+    </nav>
+  </div>
+</div>
+<div class="wrap"><p class="aviso-datos">Los datos son de ejemplo, con el mismo calendario de tus capturas: hoy es <b>jueves 24/09/2026</b>. La semana <b>7–13</b> es la de tu captura (12 pedidos por cantidad, 0 rutas, 6 días sin subir); la del <b>14–20</b> es una semana completa con su cobro pendiente. Tarifas: las reales de la app (T1 S/ 10.00 … T5 S/ 16.00; permanencia S/ 10.00 por hora).</p></div>
+
+<!-- ═════════════ A ═════════════ -->
+<section class="op wrap" id="a">
+  <div class="op-cab"><span class="letra">A</span><div>
+    <h2>Acordeones</h2>
+    <p class="pitch">Lo más cercano a lo que ya usas y a lo que pediste. Una sola columna: cada cosa dentro de un acordeón cerrado, y las pestañas viven dentro del acordeón.</p></div></div>
+  <ul class="pts">
+    <li><b>Inicio</b><span>Semana · tarjeta del auto · Cargar capturas · «Detalle de lo subido» (pestañas Pedidos | Rutas) · «Subir más» (pestañas Pedido | Ruta).</span></li>
+    <li><b>Pagos</b><span>Semana · monto acumulado · acordeones: Día por día, Cobro, Tarifa vigente y Otras semanas. Tocar un día de la barra abre su detalle.</span></li>
+    <li><b>Lo bueno</b><span>Cuesta poco (la app ya tiene el componente Acordeón) y puedes tener detalle y «subir más» abiertos a la vez.</span></li>
+  </ul>
+  <div class="stage"><div class="phones">
+    <figure class="slot"><div class="ph" data-opt="A" data-preset="a1"></div><figcaption><b>Inicio · limpio</b>Todo cerrado. Lo justo para cargar.</figcaption></figure>
+    <figure class="slot"><div class="ph" data-opt="A" data-preset="a2"></div><figcaption><b>Inicio · detalle abierto</b>Pestañas Pedidos | Rutas dentro del acordeón.</figcaption></figure>
+    <figure class="slot"><div class="ph" data-opt="A" data-preset="a3"></div><figcaption><b>Pagos · una semana</b>Barra de semanas + día por día desplegado.</figcaption></figure>
+  </div><p class="tip">Prueba: arrastra la barra de fechas · toca el martes 22 (○) para ver un día sin cargar · en Pagos desliza hacia atrás hasta la semana 7–13 · toca «Pagos» o «Inicio» abajo para cambiar de pantalla.</p></div>
+</section>
+
+<!-- ═════════════ B ═════════════ -->
+<section class="op wrap" id="b">
+  <div class="op-cab"><span class="letra">B</span><div>
+    <h2>Hoja inferior</h2>
+    <p class="pitch">Inicio nunca crece: cabe en una sola pantalla. El detalle y «subir más» son dos puertas que abren una hoja desde abajo, con las mismas pestañas.</p></div></div>
+  <ul class="pts">
+    <li><b>Inicio</b><span>Semana · tarjeta del auto · Cargar capturas · dos puertas: «Detalle» y «Subir más». No hay scroll: todo cabe siempre.</span></li>
+    <li><b>Pagos</b><span>Semana · monto · cuatro puertas (Día por día, Cobro, Tarifa, Semanas). Tocar un día abre su detalle acumulado en una hoja.</span></li>
+    <li><b>Lo bueno / lo delicado</b><span>Pantalla siempre igual y muy limpia. Pero el detalle queda detrás de una capa, y corregir un pedido sería una hoja sobre otra hoja.</span></li>
+  </ul>
+  <div class="stage"><div class="phones">
+    <figure class="slot"><div class="ph" data-opt="B" data-preset="b1"></div><figcaption><b>Inicio</b>La pantalla completa. Sin nada que desplazar.</figcaption></figure>
+    <figure class="slot"><div class="ph" data-opt="B" data-preset="b2"></div><figcaption><b>Inicio · hoja de detalle</b>Sube desde abajo, con Pedidos | Rutas.</figcaption></figure>
+    <figure class="slot"><div class="ph" data-opt="B" data-preset="b3"></div><figcaption><b>Pagos · hoja del día</b>El día tocado en la barra, con su cobro.</figcaption></figure>
+  </div><p class="tip">Toca «Detalle» o «Subir más» · en Pagos toca cualquier día de la barra · toca fuera de la hoja o la ✕ para cerrarla.</p></div>
+</section>
+
+<!-- ═════════════ C ═════════════ -->
+<section class="op wrap" id="c">
+  <div class="op-cab"><span class="letra">C</span><div>
+    <h2>Pestañas de cifras</h2>
+    <p class="pitch">Las cifras son las pestañas: tocas «12 Pedidos», «3 Rutas» o «＋ Añadir» y el contenido cambia en el mismo sitio. Un solo panel, sin acordeones.</p></div></div>
+  <ul class="pts">
+    <li><b>Inicio</b><span>Semana · tarjeta del auto · Cargar capturas · tres cifras-pestaña (Pedidos, Rutas, ＋ Añadir) con su panel debajo.</span></li>
+    <li><b>Pagos</b><span>Semana · monto · cuatro cifras-pestaña (Días, Cobro, Tarifa, Semanas). Tocar un día de la barra te lleva a Días con ese día abierto.</span></li>
+    <li><b>Lo bueno / lo delicado</b><span>Las cifras dan información precisa a primera vista y cambiar de vista cuesta un toque. Solo se ve una vista a la vez.</span></li>
+  </ul>
+  <div class="stage"><div class="phones">
+    <figure class="slot"><div class="ph" data-opt="C" data-preset="c1"></div><figcaption><b>Inicio · Pedidos</b>La cifra es la pestaña.</figcaption></figure>
+    <figure class="slot"><div class="ph" data-opt="C" data-preset="c2"></div><figcaption><b>Inicio · ＋ Añadir</b>Pedidos y rutas, todas las formas de subir.</figcaption></figure>
+    <figure class="slot"><div class="ph" data-opt="C" data-preset="c3"></div><figcaption><b>Pagos · Días</b>Cuatro pestañas para cuatro preguntas.</figcaption></figure>
+  </div><p class="tip">Toca las cifras para cambiar de panel · en «＋ Añadir» prueba «Anotar cuántos pedidos hice» · en Pagos, «Cobro» permite registrar lo que te pagaron.</p></div>
+</section>
+
+<!-- ═════════════ Comparar ═════════════ -->
+<section class="comp wrap" id="comparar">
+  <span class="rot">Comparar</span>
+  <h2>Las tres, lado a lado</h2>
+  <div class="tabla-p"><table>
+    <thead><tr><th></th><th>A · Acordeones</th><th>B · Hoja inferior</th><th>C · Pestañas de cifras</th></tr></thead>
+    <tbody>
+      <tr><td>Inicio, sin abrir nada</td><td>Semana, tarjeta, botón y dos filas cerradas. Un poco de scroll si abres ambas.</td><td>Cabe en una pantalla, sin scroll.</td><td>Semana, tarjeta, botón, tres cifras y una lista corta.</td></tr>
+      <tr><td>Detalle y «subir más» a la vez</td><td>Sí: se abren los dos.</td><td>No: una hoja a la vez.</td><td>No: una pestaña a la vez.</td></tr>
+      <tr><td>De Pedidos a Rutas</td><td>1 toque (pestaña).</td><td>1 toque (pestaña).</td><td>1 toque (la cifra).</td></tr>
+      <tr><td>Corregir un pedido</td><td>Tocas la fila → hoja «Corregir» (como hoy).</td><td>Hoja sobre hoja: hay que cuidar el botón Atrás.</td><td>Tocas la fila → hoja «Corregir» (como hoy).</td></tr>
+      <tr><td>Pagos</td><td>Cuatro acordeones en una columna larga.</td><td>Cuatro puertas → hojas.</td><td>Cuatro pestañas: se ve una a la vez.</td></tr>
+      <tr><td>Costo de construirla</td><td>Bajo: ya existe el componente Acordeón.</td><td>Medio: hoja con gesto y botón Atrás (ya existe <code>useCapa</code>).</td><td>Medio: barra de pestañas nueva.</td></tr>
+      <tr><td>Riesgo</td><td>Con los dos abiertos la pantalla se alarga.</td><td>Esconde datos detrás de una capa: menos «a la vista».</td><td>Lo que no está en la pestaña activa no se ve.</td></tr>
+    </tbody></table></div>
+
+  <div class="voto">
+    <span class="rot">Mi recomendación</span>
+    <h3>A en Inicio, C en Pagos (o A en las dos, si prefieres una sola idea)</h3>
+    <p>Inicio es «mirar y cargar»: los acordeones lo dejan limpio, son lo que pediste, cuestan menos y ya los conoces de la pantalla de Jornada. Pagos son cuatro vistas hermanas (Días, Cobro, Tarifa, Semanas): en pestañas se comparan de un toque, y en acordeones quedaría una columna larga. B es la más limpia de las tres, pero esconde el detalle tras una capa y complica la corrección de un pedido; yo la dejaría de lado.</p>
+  </div>
+
+  <span class="rot" style="margin-top:22px">Dónde quedó cada cosa de hoy</span>
+  <h2>Nada se pierde</h2>
+  <div class="tabla-p"><table>
+    <thead><tr><th>Hoy</th><th>En las propuestas</th></tr></thead>
+    <tbody>
+      <tr><td>Fecha larga + calendario + tira de la semana</td><td>La barra de semanas (arriba en Inicio y en Pagos): la fecha larga es su título; el calendario ▦ sigue ahí para saltar a cualquier fecha; «Volver a hoy» aparece al alejarte.</td></tr>
+      <tr><td>«Hoy cargaste 12» con el auto</td><td>Se queda igual, justo debajo de la barra.</td></tr>
+      <tr><td>Cargar capturas + auto de la barra de abajo</td><td>Se queda: botón grande y el auto del centro, sin cambios.</td></tr>
+      <tr><td>Recorrido del día (paradas por ruta)</td><td>Detalle de lo subido › pestaña <b>Rutas</b>.</td></tr>
+      <tr><td>Lista de pedidos del día y «Corregir el pedido»</td><td>Detalle de lo subido › pestaña <b>Pedidos</b>; tocar una fila abre la hoja de corregir, como hoy.</td></tr>
+      <tr><td>Añadir una ruta · Leer rutas de una foto · Reordenar</td><td>Subir más › <b>Ruta</b>.</td></tr>
+      <tr><td>Añadir a mano · Anotar cuántos hice · Leer de una foto</td><td>Subir más › <b>Pedido</b>.</td></tr>
+      <tr><td>«No trabajé este día» / «Quitar» (descanso de un día)</td><td>En la tarjeta del día, cuando ese día no tiene carga.</td></tr>
+      <tr><td>Capturas de este día (tu respaldo) · Horario en tienda · Borrar jornada</td><td>Pie del detalle de lo subido: tres filas.</td></tr>
+      <tr><td>La tarjeta de la semana (monto, «1 de 7 días», «Se paga el viernes…»)</td><td>Se muda a <b>Pagos</b>, arriba, con el estado (En curso · Por cobrar · Pagada).</td></tr>
+      <tr><td>«Faltan 6 días» y «No trabajé esos días»</td><td>Pagos › <b>Día por día</b>, arriba. Los días sin subir se ven como ○ en la barra de Inicio.</td></tr>
+      <tr><td>Semanas anteriores</td><td>Deslizar la barra hacia atrás, o Pagos › <b>Otras semanas</b> para saltar directo.</td></tr>
+      <tr><td>Tabla de días con permanencia («Cobras»)</td><td>Pagos › Día por día › tocar un día: barras «Pedidos vs Permanencia».</td></tr>
+      <tr><td>¿Cuánto te pagaron? · Registrar pago · Reabrir · diferencia</td><td>Pagos › <b>Cobro</b>.</td></tr>
+      <tr><td>Tarifa vigente y garantía por permanencia</td><td>Pagos › <b>Tarifa</b>.</td></tr>
+      <tr><td>Aviso de respaldo · aviso de licencia</td><td>Siguen como una franja fina arriba, <b>solo cuando toca</b>.</td></tr>
+      <tr><td>«Rutas-A · versión 32» al pie</td><td>Sale de Inicio; ya está en Ajustes.</td></tr>
+    </tbody></table></div>
+</section>
+
+<script>
+(() => {
+'use strict';
+
+/* ═══════════ Fechas ═══════════ */
+const TODAY = '2026-09-24';
+const toDate = iso => { const [y, m, d] = iso.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)); };
+const add = (iso, n) => { const d = toDate(iso); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+const dow = iso => (toDate(iso).getUTCDay() + 6) % 7;
+const monday = iso => add(iso, -dow(iso));
+const num = iso => +iso.slice(8);
+const pad = n => String(n).padStart(2, '0');
+const DIA3 = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+const DIAL = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+const MES3 = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const MESL = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const cap = s => s[0].toUpperCase() + s.slice(1);
+const fechaLarga = iso => `${DIAL[dow(iso)]} ${num(iso)} de ${MESL[+iso.slice(5, 7) - 1]}`;
+const dmy = iso => `${iso.slice(8)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
+const dm = iso => `${iso.slice(8)}/${iso.slice(5, 7)}`;
+const corto = iso => `${DIA3[dow(iso)]} ${num(iso)}`;
+const THIS_WEEK = monday(TODAY);
+const FIRST_WEEK = add(THIS_WEEK, -56);
+const payDay = mon => add(mon, 11);
+function semLabel(mon) {
+  const fin = add(mon, 6), m1 = +mon.slice(5, 7), m2 = +fin.slice(5, 7);
+  return m1 === m2 ? `Sem. ${num(mon)}–${num(fin)}` : `Sem. ${num(mon)} ${MES3[m1 - 1]}–${num(fin)} ${MES3[m2 - 1]}`;
+}
+
+/* ═══════════ Datos de ejemplo ═══════════ */
+const TARIFA = [
+  { id: 1, d: 0, h: 3, m: 1000 }, { id: 2, d: 3, h: 8, m: 1150 }, { id: 3, d: 8, h: 10, m: 1300 },
+  { id: 4, d: 10, h: 11, m: 1450 }, { id: 5, d: 11, h: 12, m: 1600 },
+];
+const money = c => 'S/ ' + (c / 100).toFixed(2);
+const toMin = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
+const hm = min => `${pad(Math.floor(min / 60))}:${pad(min % 60)}`;
+const dur = min => min >= 60 ? `${Math.floor(min / 60)} h ${pad(min % 60)} min` : `${min} min`;
+const hash = s => [...s].reduce((h, c) => Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0, 2166136261);
+function rng(seed) {
+  let a = seed >>> 0;
+  return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+
+const DB = { dias: {}, sem: {} };
+
+function genDia(iso, o = {}) {
+  const r = rng(hash(iso));
+  const n = o.n ?? 9 + Math.floor(r() * 11);
+  const k = o.k ?? 2 + Math.floor(r() * 3);
+  const rutas = [], ordenes = [];
+  let t = toMin('09:00') + 20 + Math.floor(r() * 20), seq = 1;
+  const orden = (ruta, hora) => {
+    const x = r(), tramo = o.t1 ? 1 : x < .55 ? 1 : x < .8 ? 2 : x < .92 ? 3 : x < .97 ? 4 : 5, y = r();
+    return { codigo: `v1225${1000 + Math.floor(r() * 9000)}wofp-${pad(seq++)}`, ruta, hora, tramo, monto: TARIFA[tramo - 1].m,
+      estado: y < .9 ? 'Entregado' : y < .96 ? 'Entrega parcial' : 'No entregado', manual: r() < .04, pc: false };
+  };
+  if (k === 0) {
+    for (let j = 0; j < n; j++) ordenes.push({ codigo: '', ruta: null, hora: null, tramo: 1, monto: 1000, estado: 'Entregado', manual: true, pc: true });
+  } else {
+    for (let i = 0; i < k; i++) {
+      const cuantos = Math.floor(n / k) + (i < n % k ? 1 : 0), d = 70 + Math.floor(r() * 40);
+      rutas.push({ n: i + 1, ini: hm(t), fin: hm(t + d) });
+      for (let j = 0; j < cuantos; j++) ordenes.push(orden(i + 1, hm(t)));
+      t += d + 25 + Math.floor(r() * 30);
+    }
+  }
+  const entrada = o.sinHorario ? null : '09:0' + Math.floor(r() * 9);
+  const horas = o.h ?? 10 + Math.floor(r() * 3);
+  const salida = o.sinHorario ? null : hm(toMin(entrada) + horas * 60 + Math.floor(r() * 50));
+  return { ordenes, rutas, entrada, salida, capturas: k ? Math.ceil(n / 6) : 0 };
+}
+
+(function sembrar() {
+  const patron = ['L-LL---', 'LLLLLRL', '----L--', 'LLLLLLR', 'LLLLLRR', 'LLLLLL-', 'LLLLLLR', 'LLL-LLR', 'LLLLLLR'];
+  const extra = {
+    '2026-09-15': { n: 9, t1: true, h: 12 },
+    '2026-09-20': { n: 21, k: 5 },
+    '2026-09-24': { n: 14, k: 3 },
+    '2026-09-11': { n: 12, k: 0, sinHorario: true },
+  };
+  patron.forEach((p, b) => {
+    const mon = add(THIS_WEEK, -7 * b);
+    [...p].forEach((c, i) => {
+      const f = add(mon, i);
+      if (c === 'L') DB.dias[f] = genDia(f, extra[f]);
+      else if (c === 'R') DB.dias[f] = { rest: true, ordenes: [], rutas: [] };
+    });
+  });
+  DB.sem[add(THIS_WEEK, -7)] = { estado: 'cerrada' };
+  DB.sem[add(THIS_WEEK, -14)] = { estado: 'cerrada' };
+  for (let b = 3; b < patron.length; b++) {
+    const mon = add(THIS_WEEK, -7 * b), w = semana(mon);
+    DB.sem[mon] = { estado: 'pagada', recibido: b === 3 ? w.monto - 800 : w.monto };
+  }
+})();
+
+function cobroDia(d) {
+  const ped = d.ordenes.reduce((s, o) => s + o.monto, 0);
+  const horas = d.entrada && d.salida ? Math.floor((toMin(d.salida) - toMin(d.entrada)) / 60) : 0;
+  const perm = horas * 1000;
+  return { ped, horas, perm, cobra: Math.max(ped, perm), por: perm > ped ? 'permanencia' : 'pedidos', min: d.rutas.reduce((s, r) => s + toMin(r.fin) - toMin(r.ini), 0) };
+}
+
+function semana(mon) {
+  const dias = Array.from({ length: 7 }, (_, i) => add(mon, i));
+  const w = { mon, dias, pedidos: 0, rutas: 0, monto: 0, montoPed: 0, min: 0, garantia: 0, fuera: 0, cargados: 0, descansos: [], faltan: [] };
+  for (const f of dias) {
+    const d = DB.dias[f];
+    if (!d) { if (f < TODAY) w.faltan.push(f); continue; }
+    if (d.rest) { w.descansos.push(f); continue; }
+    const c = cobroDia(d);
+    w.cargados++; w.pedidos += d.ordenes.length; w.rutas += d.rutas.length; w.monto += c.cobra; w.montoPed += c.ped; w.min += c.min;
+    if (c.por === 'permanencia') w.garantia++;
+    w.fuera += d.ordenes.filter(o => o.tramo > 1).length;
+  }
+  const meta = DB.sem[mon] || {};
+  w.estado = meta.estado || (mon === THIS_WEEK ? 'abierta' : 'cerrada');
+  w.recibido = meta.recibido ?? null;
+  w.pago = payDay(mon);
+  return w;
+}
+
+/* ═══════════ Piezas de vista ═══════════ */
+const ic = (n, c = '') => `<svg class="ic ${c}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const carroceria = techo => ({
+  cuerpo: `M14 44V37Q14 32 20 31L33 29Q39 ${techo + 2} 51 ${techo}H77Q86 ${techo + 1} 92 25L96 29Q110 31 112 38V44H101A11 11 0 0 0 79 44H45A11 11 0 0 0 23 44Z`,
+  vidrios: `M46 27Q49 ${techo + 4} 54 ${techo + 3}H63V27ZM67 ${techo + 3}H76Q81 ${techo + 4} 85 27H67Z`,
+});
+const CAR_C = carroceria(10), CAR_O = carroceria(17);
+const car = (cls = '') => `<svg class="auto ${cls}" viewBox="0 6 142 52" aria-hidden="true" focusable="false">
+<g class="auto-estela c-claro"><path d="M0 54C10 54 14 50 24 46" stroke-width="3.2" stroke-dasharray="0.1 6.5" stroke-linecap="round"/><path d="M4 36h16" stroke-width="3" stroke-linecap="round" opacity=".55"/></g>
+<g class="auto-estela c-oscuro"><path d="M0 30h21M7 38h14M0 46h21" stroke-width="3" stroke-dasharray="8 5"/></g>
+<g transform="translate(22 0)"><g class="c-claro"><path class="auto-cuerpo auto-borde" d="${CAR_C.cuerpo}"/><path class="auto-vidrio" d="${CAR_C.vidrios}"/></g>
+<g class="c-oscuro"><path class="auto-cuerpo" d="${CAR_O.cuerpo}"/><path class="auto-vidrio" d="${CAR_O.vidrios}"/></g>
+<rect class="auto-faro" x="107" y="34" width="6" height="4" rx="2"/><circle class="auto-rueda" cx="34" cy="44" r="8.5"/><circle class="auto-rueda" cx="90" cy="44" r="8.5"/>
+<circle class="auto-buje" cx="34" cy="44" r="3.4"/><circle class="auto-buje" cx="90" cy="44" r="3.4"/></g></svg>`;
+
+const tabs = (g, items, cur) => `<div class="tabs" role="tablist">${items.map(t =>
+  `<button class="tab${t.v === cur ? ' on' : ''}" role="tab" aria-selected="${t.v === cur}" data-act="tab" data-g="${g}" data-v="${t.v}">${t.l}${t.n != null ? `<span class="n">${t.n}</span>` : ''}</button>`).join('')}</div>`;
+
+function acc(P, id, titulo, resumen, body, def = false, alerta = false) {
+  const open = P.ui.open[id] === undefined ? def : P.ui.open[id];
+  return `<section class="acc${open ? ' open' : ''}"><button class="acc-h" data-act="toggle" data-id="${id}" data-def="${def ? 1 : 0}" aria-expanded="${open}">
+    <span class="acc-t"><b>${titulo}</b><small${alerta ? ' class="al"' : ''}>${resumen}</small></span>${ic('chev')}</button>
+    <div class="acc-b"><div class="acc-i"><div class="acc-c">${body}</div></div></div></section>`;
+}
+
+const cargarBtn = () => `<div><button class="btn" data-act="toast" data-msg="Abre el selector de capturas (hasta 24 por carga)">${ic('subir', 'lg')}Cargar capturas</button>
+  <p class="hint">También puedes compartir las capturas a Rutas-A desde la galería. Máximo 24 por carga.</p></div>`;
+
+function chipEstado(w) {
+  if (w.estado === 'pagada') return `<span class="tag ok">${ic('check')}Pagada</span>`;
+  if (w.estado === 'abierta') return `<span class="tag acc">${ic('reloj')}En curso</span>`;
+  return `<span class="tag warn">${ic('reloj')}Por cobrar</span>`;
+}
+function textoPago(w) {
+  const p = w.pago;
+  if (w.estado === 'pagada') return `Pagada · viernes ${dmy(p)}`;
+  if (p === TODAY) return 'Se paga hoy';
+  if (p === add(TODAY, 1)) return `Se paga mañana · viernes ${dmy(p)}`;
+  if (p < TODAY) return `Se pagó el viernes ${dmy(p)} · falta anotar el cobro`;
+  return `Se paga el viernes ${dmy(p)}`;
+}
+
+/* La tarjeta del día: cargado (con el auto), descanso, sin cargar o futuro */
+function cardDia(P) {
+  const S = P.S(), iso = S.sel, d = DB.dias[iso];
+  if (d && !d.rest) {
+    const c = cobroDia(d), r = d.rutas.length;
+    return `<section class="dia" aria-label="${iso === TODAY ? 'Hoy' : 'Ese día'} cargaste ${d.ordenes.length} pedidos">
+      <p class="enc">${iso === TODAY ? 'Hoy cargaste' : `El ${DIAL[dow(iso)]} cargaste`}</p><p class="cif">${d.ordenes.length}</p>
+      <p class="pie">pedidos · ${r} ruta${r === 1 ? '' : 's'}</p><span class="pastilla">${money(c.cobra)}</span>${car('auto--sobre-acento')}</section>`;
+  }
+  if (d && d.rest) return `<section class="card desc"><span class="lu">${ic('luna')}</span><div><b>Día de descanso</b><p>Dijiste que no trabajaste este día.</p></div>
+    <button class="btn-sec sm" data-act="rest">Quitar</button></section>`;
+  if (iso > TODAY) return `<section class="card vacia">${car('auto--gris')}<b>Ese día todavía no llega</b><p>Cuando llegue, sube aquí sus capturas.</p></section>`;
+  return `<section class="card vacia">${car('auto--gris')}<b>${iso === TODAY ? 'Hoy' : 'Ese día'}: sin cargar</b>
+    <p>${iso === TODAY ? 'Todavía no has subido las capturas de hoy.' : 'Súbelo cuando quieras: manda la fecha de la captura, no la de hoy.'}</p>
+    <button class="btn-sec" data-act="rest">${ic('luna')}No trabajé este día</button></section>`;
+}
+
+/* Detalle de lo subido: pestañas Pedidos | Rutas */
+function filaPedido(o) {
+  return `<button class="fila${o.pc ? ' pc' : ''}" data-act="toast" data-msg="Abre «Corregir el pedido» (la hoja de hoy, sin cambios)">
+    <span class="f1">${o.pc ? '<span class="pc-t">Pedido sin código · toca para completar</span>' : `<span class="cod">${o.codigo}</span>`}<span class="mo">${money(o.monto)}</span></span>
+    <span class="f2">${o.ruta ? `<span class="p-ruta">Ruta ${o.ruta}<i>· ${o.hora}</i></span>` : '<span class="p-sin">Sin ruta · toca para asignar</span>'}
+    <span class="est${o.estado === 'Entregado' ? ' ok' : ''}">${o.estado === 'Entregado' ? '✓' : '·'} ${o.estado}</span>
+    ${o.tramo > 1 ? `<span class="tr">T${o.tramo}</span>` : ''}${o.manual && !o.pc ? '<span class="mut">· a mano</span>' : ''}</span></button>`;
+}
+function pedidosLista(P) {
+  const all = DB.dias[P.S().sel].ordenes, max = P.opt === 'B' ? 999 : P.opt === 'C' ? 4 : 5;
+  const lim = P.ui.showAll ? all.length : Math.min(all.length, max);
+  return `<div class="lista">${all.slice(0, lim).map(filaPedido).join('')}</div>` +
+    (all.length > max ? `<button class="lnk" data-act="showall">${P.ui.showAll ? 'Ver menos' : `Ver los ${all.length} pedidos`}${ic('chev', P.ui.showAll ? 'up' : '')}</button>` : '');
+}
+function rutasLista(P) {
+  const d = DB.dias[P.S().sel];
+  if (!d.rutas.length) return `<p class="vacio">Todavía no hay ninguna ruta este día.</p><button class="btn-sec" data-act="ir-add" data-v="ruta">${ic('plus')}Añadir una ruta</button>`;
+  const cuenta = n => d.ordenes.filter(o => o.ruta === n).length;
+  return `<ol class="paradas">${d.rutas.map((r, i) => `<li class="par${i === 0 ? ' p1' : ''}${i === d.rutas.length - 1 ? ' pn' : ''}"><span class="pin"><b>${r.n}</b></span>
+    <span><b class="t">Ruta ${r.n}</b><span class="h">${r.ini} – ${r.fin}</span></span><span class="np">${cuenta(r.n)} pedidos</span></li>`).join('')}</ol>`;
+}
+function pieDetalle(d) {
+  return `<div class="mas-l">
+    <button class="mrow" data-act="toast" data-msg="Abre las capturas de ese día: tu respaldo si hay que reclamar"><span>${ic('camara')}Capturas del día</span><em>${d.capturas}</em>${ic('flecha')}</button>
+    <button class="mrow" data-act="toast" data-msg="Abre entrada y salida (la permanencia en tienda)"><span>${ic('reloj')}Horario en tienda</span><em>${d.entrada ? `${d.entrada} – ${d.salida}` : 'sin horario'}</em>${ic('flecha')}</button>
+    <button class="mrow mal" data-act="toast" data-msg="Pide confirmar antes de borrar el día completo"><span>${ic('x')}Borrar este día</span>${ic('flecha')}</button></div>`;
+}
+function detalleTabs(P) {
+  const d = DB.dias[P.S().sel], tab = P.ui.tab.det ?? 'pedidos';
+  return tabs('det', [{ v: 'pedidos', l: 'Pedidos', n: d.ordenes.length }, { v: 'rutas', l: 'Rutas', n: d.rutas.length }], tab) +
+    (tab === 'pedidos' ? pedidosLista(P) : rutasLista(P)) + pieDetalle(d);
+}
+const resumenDia = d => { const m = cobroDia(d).min; return `${d.ordenes.length} pedidos · ${d.rutas.length} rutas${m ? ` · ${dur(m)} en ruta` : ''}`; };
+
+/* Subir más */
+function opt(P, id, icono, t, s) {
+  const on = P.ui.form === id;
+  return `<button class="opt${on ? ' on' : ''}" data-act="form" data-id="${id}"><span class="oi">${ic(icono)}</span><span><b>${t}</b><small>${s}</small></span></button>${on ? formHTML(P, id) : ''}`;
+}
+function formHTML(P, id) {
+  const d = DB.dias[P.S().sel];
+  const rutas = (d?.rutas || []).map(r => `<option value="${r.n}">Ruta ${r.n}</option>`).join('');
+  if (id === 'manual') return `<div class="form"><div><label>Código del pedido</label><input class="inp mono" data-in="cod" placeholder="v12250012wofp-01" autocomplete="off"></div>
+    <div class="dos"><div><label>Ruta</label><select class="inp" data-in="ruta"><option value="">Sin ruta</option>${rutas}</select></div>
+    <div><label>Estado</label><select class="inp" data-in="est"><option>Entregado</option><option>Entrega parcial</option><option>No entregado</option></select></div></div>
+    <button class="btn md" data-act="save-manual">Guardar pedido</button></div>`;
+  if (id === 'cant') return `<div class="form"><label style="text-align:center;margin:0">¿Cuántos pedidos hiciste ese día?</label>
+    <div class="stepper"><button data-act="qty" data-d="-1" aria-label="Uno menos">${ic('minus')}</button><b>${P.ui.qty}</b><button data-act="qty" data-d="1" aria-label="Uno más">${ic('plus')}</button></div>
+    <p class="nota" style="text-align:center">Se guardan sin código; completas cada uno después.</p>
+    <button class="btn md" data-act="save-cant">Anotar ${P.ui.qty} pedido${P.ui.qty === 1 ? '' : 's'}</button></div>`;
+  if (id === 'ruta') return `<div class="form"><div class="dos"><div><label>Sale</label><input class="inp mono" type="time" data-in="ini" value="09:30"></div>
+    <div><label>Vuelve</label><input class="inp mono" type="time" data-in="fin" value="11:00"></div></div>
+    <button class="btn md" data-act="save-ruta">Guardar ruta ${(d?.rutas.length || 0) + 1}</button></div>`;
+  return '';
+}
+const optPedidos = P => opt(P, 'manual', 'lapiz', 'Añadir un pedido a mano', 'Código, ruta y estado') +
+  opt(P, 'cant', 'hash', 'Anotar cuántos pedidos hice', 'Solo la cantidad; los códigos, después') +
+  `<button class="opt" data-act="toast" data-msg="Abre la galería y lee los códigos de la captura (igual que hoy)"><span class="oi">${ic('camara')}</span><span><b>Leer pedidos de una foto</b><small>De la captura de tus órdenes</small></span></button>`;
+const optRutas = P => opt(P, 'ruta', 'plus', 'Añadir una ruta', 'Con su hora de salida y de vuelta') +
+  `<button class="opt" data-act="toast" data-msg="Abre la galería y lee las rutas de la captura (igual que hoy)"><span class="oi">${ic('camara')}</span><span><b>Leer rutas de una foto</b><small>De la captura de tus rutas</small></span></button>` +
+  ((DB.dias[P.S().sel]?.rutas.length || 0) > 1 ? `<button class="opt" data-act="toast" data-msg="Reordena las rutas por hora (igual que hoy)"><span class="oi">${ic('lista')}</span><span><b>Reordenar rutas</b><small>Por hora de salida</small></span></button>` : '');
+function addTabs(P) {
+  const tab = P.ui.tab.add ?? 'pedido';
+  return tabs('add', [{ v: 'pedido', l: 'Pedido' }, { v: 'ruta', l: 'Ruta' }], tab) + `<div class="grp">${tab === 'pedido' ? optPedidos(P) : optRutas(P)}</div>`;
+}
+
+/* Pagos: bloques reutilizables */
+function hero(P, w) {
+  const seg = w.dias.map(f => { const d = DB.dias[f]; return `<i class="${d ? (d.rest ? 'rs' : 'on') : ''}"></i>`; }).join('');
+  return `<section class="hero"><div class="hero-top"><span class="rotulo">${semLabel(w.mon)}</span>${chipEstado(w)}</div>
+    <div class="hero-monto">${money(w.monto)}</div><div class="hero-pie">${w.pedidos} pedidos · ${w.rutas} rutas${w.fuera ? ` · ${w.fuera} fuera del tramo 1` : ''}</div>
+    <div class="segs" aria-label="${w.cargados} de 7 días cargados">${seg}</div>
+    <div class="hero-pago">${ic('reloj')}<span>${textoPago(w)}</span></div></section>`;
+}
+function duelo(c) {
+  const mx = Math.max(c.ped, c.perm, 1);
+  return `<div class="duelo"><div class="d-r${c.por === 'pedidos' ? ' win' : ''}"><span>Pedidos</span><div class="bar"><i style="--w:${Math.round(c.ped / mx * 100)}%"></i></div><em>${money(c.ped)}</em></div>
+    <div class="d-r${c.por === 'permanencia' ? ' win' : ''}"><span>Permanencia · ${c.horas} h</span><div class="bar"><i style="--w:${Math.round(c.perm / mx * 100)}%"></i></div><em>${money(c.perm)}</em></div>
+    <p class="nota">Cada día se paga el mayor de los dos, no se suman: <b>cobras ${money(c.cobra)}</b>, por ${c.por}.</p></div>`;
+}
+function diaDetalle(iso) {
+  const d = DB.dias[iso];
+  if (d && d.rest) return `<div class="dd"><div class="desc"><span class="lu">${ic('luna')}</span><div><b>Día de descanso</b><p>Dijiste que no trabajaste.</p></div></div><button class="btn-sec sm" data-act="rest" data-d="${iso}">Quitar el descanso</button></div>`;
+  if (!d) return iso > TODAY ? `<div class="dd"><p class="nota">Ese día todavía no llega.</p></div>`
+    : `<div class="dd"><p class="nota">Este día no tiene nada guardado.</p><div class="dos"><button class="btn-sec sm" data-act="goto-inicio" data-d="${iso}">${ic('subir')}Subir</button><button class="btn-sec sm" data-act="rest" data-d="${iso}">${ic('luna')}No trabajé</button></div></div>`;
+  const c = cobroDia(d);
+  return `<div class="dd"><div class="dd-k"><div><b>${d.ordenes.length}</b><span>pedidos</span></div><div><b>${d.rutas.length}</b><span>rutas</span></div><div><b>${c.min ? dur(c.min).replace(' h ', 'h ').replace(' min', 'm') : '—'}</b><span>en ruta</span></div></div>
+    ${c.horas ? duelo(c) : `<dl class="dl"><div><dt>Por pedidos</dt><dd>${money(c.ped)}</dd></div><div><dt>Horario en tienda</dt><dd>sin horario</dd></div></dl>`}
+    <button class="btn-sec sm" data-act="goto-inicio" data-d="${iso}">Abrir este día en Inicio${ic('flecha')}</button></div>`;
+}
+function faltaPanel(P, w) {
+  if (!w.faltan.length) return '';
+  const el = w.faltan.filter(f => !P.ui.desmarc.has(f)), n = w.faltan.length;
+  const txt = el.length === n ? (n === 1 ? 'No trabajé ese día' : 'No trabajé esos días') : `No trabajé ${el.length} de ${n}`;
+  return `<div class="falta"><div class="ft">${ic('alerta')}<div><b>Falta${n === 1 ? '' : 'n'} ${n} día${n === 1 ? '' : 's'} por subir</b>
+    <p>¿Los trabajaste? Sube sus capturas con el botón del auto. ¿No trabajaste? Márcalos como descanso.</p></div></div>
+    <div class="cfs">${w.faltan.map(f => `<button class="cf${P.ui.desmarc.has(f) ? '' : ' on'}" data-act="falta-chip" data-d="${f}" aria-pressed="${!P.ui.desmarc.has(f)}">${corto(f)}</button>`).join('')}</div>
+    <button class="btn md" data-act="marcar-faltan"${el.length ? '' : ' disabled style="opacity:.5"'}>${ic('luna')}${txt}</button></div>`;
+}
+function pgDias(P, w) {
+  const rows = w.dias.map(f => {
+    const d = DB.dias[f], exp = P.ui.expDia === f;
+    let m, v = '—', vac = false, ch = true;
+    if (d && d.rest) { m = `${ic('luna')} Descanso`; vac = true; }
+    else if (d) { const c = cobroDia(d); m = `${d.ordenes.length} pedidos · ${d.rutas.length} rutas${c.por === 'permanencia' ? '<br>cubierto por permanencia' : ''}`; v = money(c.cobra); }
+    else if (f > TODAY) { m = 'Todavía no llega'; vac = true; ch = false; }
+    else { m = 'Sin cargar'; vac = true; }
+    return `<div class="diar${exp ? ' exp on' : ''}" data-row="${f}"><button class="dia-h${vac ? ' vac' : ''}" data-act="dia" data-d="${f}"${ch ? '' : ' disabled'}>
+      <span class="dn"><b>${DIA3[dow(f)]}</b><span>${f.slice(8)}</span></span><span class="dm">${m}</span><span class="dv">${v}${ch ? ic('chev') : ''}</span></button>
+      ${exp ? `<div class="dia-b">${diaDetalle(f)}</div>` : ''}</div>`;
+  }).join('');
+  const desc = w.descansos.length ? `<div class="grp"><span class="rotulo">Días de descanso</span><div class="cfs desc">${w.descansos.map(f =>
+    `<button class="cf" data-act="rest" data-d="${f}" aria-label="Quitar el descanso del ${DIAL[dow(f)]} ${num(f)}">${corto(f)}${ic('x')}</button>`).join('')}</div></div>` : '';
+  return faltaPanel(P, w) + `<div>${rows}</div>` + desc;
+}
+function pgCobro(P, w) {
+  const dl = `<dl class="dl"><div><dt>Se paga el</dt><dd>viernes ${dmy(w.pago)}</dd></div><div><dt>Tiempo en ruta</dt><dd>${dur(w.min)}</dd></div>
+    ${w.garantia ? `<div><dt>Solo por pedidos habría sido</dt><dd>${money(w.montoPed)}</dd></div><div><dt>Días cubiertos por la permanencia</dt><dd>${w.garantia}</dd></div>` : ''}</dl>`;
+  if (w.estado === 'pagada') {
+    const dif = w.recibido - w.monto;
+    return dl + `<p class="nota"><b>Anotaste ${money(w.recibido)}</b> como lo que te pagaron.</p>` +
+      (dif ? `<p class="dif${dif > 0 ? ' mas' : ''}">${dif < 0 ? 'Te pagaron de menos: ' : 'Te pagaron de más: '}${money(Math.abs(dif))}. El desglose por día y por ruta sirve de sustento.</p>` : '') +
+      `<button class="btn-sec" data-act="reabrir" data-mon="${w.mon}">Reabrir para corregir algo</button>`;
+  }
+  return dl + `<div><label class="rotulo" style="display:block;margin-bottom:6px;color:var(--tinta)">¿Cuánto te pagaron?</label>
+    <p class="nota" style="margin-bottom:10px">Anótalo el día que cobres. Hasta entonces la semana sigue abierta y puedes seguir corrigiendo cualquier día suyo.</p>
+    <div class="fila-in"><input class="inp mono" type="number" inputmode="decimal" step="0.5" min="0" placeholder="${(w.monto / 100).toFixed(2)}" data-in="recibido"><button class="btn" data-act="pagar" data-mon="${w.mon}">Registrar pago</button></div></div>`;
+}
+function pgTarifa() {
+  return `<table class="tabla"><thead><tr><th>Tramo</th><th>Distancia</th><th class="num">Por pedido</th></tr></thead><tbody>${TARIFA.map(t =>
+    `<tr><td>${t.id}</td><td>${t.d} a ${t.h} km</td><td class="num">${money(t.m)}</td></tr>`).join('')}</tbody></table>
+    <p class="nota">Se paga cada pedido, entregado o no: el recorrido se hizo igual. El estado solo cuenta para las estadísticas.</p>
+    <div class="grp"><span class="rotulo">Garantía por permanencia</span><p class="nota">La tienda paga <b>S/ 10.00 por hora</b> de permanencia. Cada día se paga <b>el mayor</b> de los dos: lo que sumen tus pedidos o lo que sume la permanencia. No se suman. Las horas se cuentan completas: salir a las 21:30 cuenta como 12 h, no 12.5.</p></div>`;
+}
+function pgSemanas(P) {
+  const filas = Array.from({ length: 9 }, (_, b) => {
+    const w = semana(add(THIS_WEEK, -7 * b)), dif = w.recibido != null ? w.recibido - w.monto : 0;
+    return `<button class="sem-r${w.mon === P.S().week ? ' on' : ''}" data-act="gosem" data-mon="${w.mon}"><span class="a"><b>${dm(w.mon)} – ${dm(add(w.mon, 6))}</b><small>${w.pedidos} pedidos · pago ${dm(w.pago)}</small></span>
+      <span class="b"><em>${money(w.monto)}</em>${dif ? `<span class="dif${dif > 0 ? ' mas' : ''}">${dif < 0 ? '−' : '+'}${(Math.abs(dif) / 100).toFixed(2)}</span>` : chipEstado(w)}</span></button>`;
+  }).join('');
+  return `<div class="lista">${filas}</div>`;
+}
+const resumenDias = w => w.faltan.length ? `${w.cargados} de 7 días · <span>faltan ${w.faltan.length}</span>` : `${w.cargados} de 7 días`;
+const resumenCobro = w => w.estado === 'pagada' ? `Pagada · anotaste ${money(w.recibido)}` : w.estado === 'abierta' ? 'Semana en curso' : 'Anota lo que te pagaron';
+
+/* ═══════════ Las tres propuestas ═══════════ */
+function inicioA(P) {
+  const S = P.S(), d = DB.dias[S.sel], cargado = d && !d.rest, futuro = S.sel > TODAY;
+  let h = cardDia(P) + cargarBtn();
+  if (cargado) h += acc(P, 'det', 'Detalle de lo subido', resumenDia(d), detalleTabs(P));
+  if (!futuro) h += acc(P, 'add', 'Subir más', 'A mano, por cantidad o desde una foto', addTabs(P), !cargado);
+  return h;
+}
+function inicioB(P) {
+  const S = P.S(), d = DB.dias[S.sel], cargado = d && !d.rest, futuro = S.sel > TODAY;
+  let h = cardDia(P) + cargarBtn();
+  if (!futuro) h += `<div class="puertas${cargado ? '' : ' uno'}">${cargado ? `<button class="puerta" data-act="sheet" data-id="det"><span class="pi">${ic('lista')}</span><span><b>Detalle</b><small>${d.ordenes.length} pedidos · ${d.rutas.length} rutas</small></span>${ic('flecha')}</button>` : ''}
+    <button class="puerta${cargado ? '' : ' dest'}" data-act="sheet" data-id="add"><span class="pi y">${ic('plus')}</span><span><b>Subir más</b><small>A mano, por cantidad o foto</small></span>${ic('flecha')}</button></div>`;
+  return h;
+}
+function inicioC(P) {
+  const S = P.S(), d = DB.dias[S.sel], cargado = d && !d.rest, futuro = S.sel > TODAY;
+  let h = cardDia(P) + cargarBtn();
+  if (futuro) return h;
+  const tab = P.ui.tab.main ?? (cargado ? 'pedidos' : 'add');
+  const items = cargado ? [['pedidos', d.ordenes.length, 'Pedidos'], ['rutas', d.rutas.length, 'Rutas']] : [];
+  const cols = items.length + 1, idx = items.findIndex(i => i[0] === tab), nx = tab === 'add' ? (items.length + .5) / cols : (idx + .5) / cols;
+  h += `<div class="stiles" style="grid-template-columns:repeat(${cols},1fr)" role="tablist">${items.map(([v, n, l]) =>
+    `<button class="st${tab === v ? ' on' : ''}" role="tab" aria-selected="${tab === v}" data-act="tab" data-g="main" data-v="${v}"><b>${n}</b><span>${l}</span></button>`).join('')}
+    <button class="st add${tab === 'add' ? ' on' : ''}" role="tab" aria-selected="${tab === 'add'}" data-act="tab" data-g="main" data-v="add"><b>＋</b><span>Añadir</span></button></div>`;
+  let body;
+  if (tab === 'pedidos') body = pedidosLista(P) + pieDetalle(d);
+  else if (tab === 'rutas') body = rutasLista(P) + pieDetalle(d);
+  else body = `<div class="grp"><span class="rotulo">Pedidos</span>${optPedidos(P)}</div><div class="grp"><span class="rotulo">Rutas</span>${optRutas(P)}</div>`;
+  return h + `<section class="panel" style="--nx:${(nx * 100).toFixed(1)}%">${body}</section>`;
+}
+
+function pagosA(P) {
+  const w = semana(P.S().week);
+  return hero(P, w) +
+    acc(P, 'dias', 'Día por día', resumenDias(w), pgDias(P, w), true, w.faltan.length > 0) +
+    acc(P, 'cobro', 'Cobro', resumenCobro(w), pgCobro(P, w)) +
+    acc(P, 'tarifa', 'Tarifa vigente', 'Por tramo de distancia y garantía', pgTarifa()) +
+    acc(P, 'sems', 'Otras semanas', 'Toca una para verla', pgSemanas(P));
+}
+function pagosB(P) {
+  const w = semana(P.S().week);
+  const p = (id, icono, t, s, al) => `<button class="puerta" data-act="sheet" data-id="${id}"><span class="pi">${ic(icono)}</span><span><b>${t}</b><small${al ? ' class="al"' : ''}>${s}</small></span>${ic('flecha')}</button>`;
+  return hero(P, w) + `<div class="puertas">${p('dias', 'cal', 'Día por día', w.faltan.length ? `Faltan ${w.faltan.length}` : `${w.cargados} de 7 días`, w.faltan.length > 0)}
+    ${p('cobro', 'cartera', 'Cobro', w.estado === 'pagada' ? 'Pagada' : w.estado === 'abierta' ? 'En curso' : 'Por anotar')}
+    ${p('tarifa', 'tarifa', 'Tarifa', 'T1 a T5 · garantía')}${p('sems', 'barras', 'Semanas', 'Las últimas 9')}</div>`;
+}
+function pagosC(P) {
+  const w = semana(P.S().week), tab = P.ui.tab.pg ?? 'dias';
+  const T = [['dias', w.faltan.length ? `${w.cargados}/7` : `${w.cargados}/7`, 'Días'], ['cobro', w.estado === 'pagada' ? 'Pagada' : w.estado === 'abierta' ? 'En curso' : 'Anotar', 'Cobro'], ['tarifa', 'T1–T5', 'Tarifa'], ['sems', '9', 'Semanas']];
+  const idx = T.findIndex(t => t[0] === tab);
+  const body = { dias: () => pgDias(P, w), cobro: () => pgCobro(P, w), tarifa: pgTarifa, sems: () => pgSemanas(P) }[tab]();
+  return hero(P, w) + `<div class="stiles" style="grid-template-columns:repeat(4,1fr)" role="tablist">${T.map(([v, val, l]) =>
+    `<button class="st sm${tab === v ? ' on' : ''}" role="tab" aria-selected="${tab === v}" data-act="tab" data-g="pg" data-v="${v}"><b>${val}</b><span>${l}</span></button>`).join('')}</div>
+    <section class="panel" style="--nx:${((idx + .5) / 4 * 100).toFixed(1)}%">${body}</section>`;
+}
+const VISTAS = { A: { inicio: inicioA, pagos: pagosA }, B: { inicio: inicioB, pagos: pagosB }, C: { inicio: inicioC, pagos: pagosC } };
+
+/* ═══════════ La barra de semanas (deslizable, sin huecos) ═══════════ */
+function montarBarra(P) {
+  const slot = P.$('.strip-slot'), S = P.S(), mode = P.screen;
+  slot.innerHTML = '<div class="sh"></div><div class="strip"><div class="track"></div></div>';
+  const head = slot.children[0], strip = slot.children[1], track = strip.firstElementChild;
+  const puedeSig = () => add(S.week, 7) <= TODAY, puedeAnt = () => S.week > FIRST_WEEK;
+  let drag = null, pend = 0, timer = null;
+
+  const chip = iso => {
+    const d = DB.dias[iso], fut = iso > TODAY, on = iso === S.sel;
+    let st = '';
+    if (d && d.rest) st = ic('luna', 'lun');
+    else if (d) st = mode === 'inicio' ? '<i class="dot"></i>' : `<span>${Math.round(cobroDia(d).cobra / 100)}</span>`;
+    else if (!fut) st = mode === 'inicio' ? '<i class="ring"></i>' : '<span>–</span>';
+    return `<button class="chip${on ? ' on' : ''}${iso === TODAY ? ' hoy' : ''}${fut ? ' fut' : ''}" data-d="${iso}" aria-pressed="${on}" aria-label="${DIAL[dow(iso)]} ${num(iso)}${d ? (d.rest ? ', descanso' : ', cargado') : ''}">
+      <span class="cl">${DIA3[dow(iso)]}</span><b class="cn">${iso.slice(8)}</b><span class="cs">${st}</span></button>`;
+  };
+  const cabeza = () => {
+    const w = semana(S.week), fuera = S.week !== THIS_WEEK;
+    const t = mode === 'inicio' ? cap(fechaLarga(S.sel)) : semLabel(S.week);
+    const s = mode === 'inicio' ? `${semLabel(S.week)} · ${w.cargados} de 7 días` : `${dm(S.week)} – ${dm(add(S.week, 6))} · ${w.cargados} de 7 días`;
+    return `<div class="sh-t"><b>${t}</b><small>${s}</small></div><div class="sh-a">${fuera ? '<button class="hoy-p" data-hoy>Volver a hoy</button>' : ''}
+      <label class="ibtn" aria-label="Elegir otra fecha">${ic('cal')}<input type="date" value="${S.sel || S.week}" min="${FIRST_WEEK}" max="${TODAY}"></label></div>`;
+  };
+  const pintar = () => {
+    head.innerHTML = cabeza();
+    track.classList.remove('anim'); track.style.transform = ''; strip.classList.remove('abierto');
+    track.style.setProperty('--sw', strip.clientWidth + 'px');
+    track.innerHTML = [-7, 0, 7].map(o => `<div class="wk"${o ? ' inert' : ''}>${Array.from({ length: 7 }, (_, i) => chip(add(S.week, o + i))).join('')}</div>`).join('');
+  };
+  const x = dx => { track.style.transform = `translateX(calc(-1*(var(--sw) + 5px) + ${dx}px))`; };
+  const terminar = () => {
+    clearTimeout(timer);
+    if (!pend) { track.classList.remove('anim'); strip.classList.remove('abierto'); return; }
+    const dir = pend; pend = 0;
+    S.week = add(S.week, 7 * dir);
+    if (mode === 'inicio') { const s = add(S.sel, 7 * dir); S.sel = s > TODAY ? TODAY : s; } else S.sel = null;
+    P.alElegir();
+  };
+
+  strip.addEventListener('pointerdown', e => {
+    if ((e.pointerType === 'mouse' && e.button !== 0) || pend) return;
+    drag = { id: e.pointerId, x0: e.clientX, lx: e.clientX, lt: performance.now(), v: 0, moved: false, w: strip.clientWidth };
+    track.classList.remove('anim');
+  });
+  strip.addEventListener('pointermove', e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    let dx = e.clientX - drag.x0;
+    if (!drag.moved) { if (Math.abs(dx) < 6) return; drag.moved = true; strip.classList.add('abierto'); try { strip.setPointerCapture(e.pointerId); } catch (_) {} }
+    const now = performance.now();
+    drag.v = (e.clientX - drag.lx) / Math.max(1, now - drag.lt) * .6 + drag.v * .4; drag.lx = e.clientX; drag.lt = now;
+    if ((dx < 0 && !puedeSig()) || (dx > 0 && !puedeAnt())) dx /= 3;      // goma en el borde
+    x(dx);
+  });
+  const soltar = e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const d = drag; drag = null;
+    if (!d.moved) return;
+    const dx = e.clientX - d.x0, proy = dx + d.v * 150;                    // hacia dónde iba el dedo
+    let dir = 0;
+    if (proy < -d.w * .28 && puedeSig()) dir = 1; else if (proy > d.w * .28 && puedeAnt()) dir = -1;
+    track.classList.add('anim'); pend = dir;
+    x(dir === 1 ? -(d.w + 5) : dir === -1 ? d.w + 5 : 0);
+    timer = setTimeout(terminar, 420);                                    // por si no llega transitionend
+  };
+  strip.addEventListener('pointerup', soltar);
+  strip.addEventListener('pointercancel', soltar);
+  track.addEventListener('transitionend', e => { if (e.target === track && e.propertyName === 'transform') terminar(); });
+  strip.addEventListener('click', e => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    const iso = b.dataset.d;
+    S.sel = (mode === 'pagos' && S.sel === iso) ? null : iso;
+    P.alElegir();
+  });
+  head.addEventListener('click', e => {
+    if (e.target.closest('[data-hoy]')) { S.week = THIS_WEEK; S.sel = mode === 'inicio' ? TODAY : null; P.alElegir(); return; }
+    const inp = e.target.closest('input[type=date]'); if (inp) { try { inp.showPicker(); } catch (_) {} }
+  });
+  head.addEventListener('change', e => {
+    const v = e.target.value; if (!v) return;
+    const f = v > TODAY ? TODAY : v < FIRST_WEEK ? FIRST_WEEK : v;
+    S.week = monday(f); S.sel = f; P.alElegir();
+  });
+  return { pintar };
+}
+
+/* ═══════════ El teléfono ═══════════ */
+const TELEFONOS = [];
+const notificar = () => TELEFONOS.forEach(p => p.refrescar());
+
+class Telefono {
+  constructor(root, opt, preset) {
+    this.root = root; this.opt = opt; this.screen = preset.screen || 'inicio';
+    this.st = { inicio: { week: THIS_WEEK, sel: TODAY, ...(preset.inicio || {}) }, pagos: { week: THIS_WEEK, sel: null, ...(preset.pagos || {}) } };
+    this.ui = { open: {}, tab: {}, showAll: false, form: null, sheet: null, desmarc: new Set(), qty: 2, expDia: null, ...(preset.ui || {}) };
+    root.innerHTML = `<div class="sbar"><span>10:18</span><i>▂▄▆ · 82%</i></div>
+      <header class="hd">${car()}<h1></h1></header>
+      <div class="scroll"><div class="strip-slot"></div><div class="dyn"></div></div>
+      <nav class="nav" aria-label="Navegación principal">
+        <button class="nv" data-nav="inicio">${ic('casa')}Inicio</button>
+        <button class="nv" data-nav="pagos">${ic('cartera')}Pagos</button>
+        <button class="nv" data-act="toast" data-msg="Abre el selector de capturas"><span class="boton-auto">${car('auto--mono')}</span>Cargar</button>
+        <button class="nv" data-act="toast" data-msg="Ajustes: sin cambios">${ic('candado')}Ajustes</button>
+        <button class="nv" data-act="toast" data-msg="Más: Buscar, Historial y Estadísticas (sin cambios)">${ic('mas')}Más</button>
+      </nav><div class="sheet-w"></div><div class="toast" role="status"></div>`;
+    root.addEventListener('click', e => this.click(e));
+    this.montar();
+    if (preset.abrir) this.abrirHoja(preset.abrir, false);
+  }
+  $(s) { return this.root.querySelector(s); }
+  S() { return this.st[this.screen]; }
+  montar() { this.barra = montarBarra(this); this.barra.pintar(); this.paint(); this.$('.scroll').scrollTop = 0; }
+  refrescar() { this.barra.pintar(); this.paint(); }
+  go(pantalla) {
+    if (pantalla === this.screen) { this.$('.scroll').scrollTo({ top: 0, behavior: 'smooth' }); return; }
+    this.screen = pantalla; this.ui.sheet = null; this.ui.form = null; this.ui.showAll = false;
+    this.$('.sheet-w').classList.remove('open'); this.montar();
+  }
+  alElegir() {
+    const u = this.ui, S = this.S();
+    u.showAll = false; u.form = null; u.desmarc = new Set();
+    if (this.screen === 'inicio') { u.open.add = undefined; u.tab.main = undefined; u.tab.det = u.tab.det; }
+    else {
+      u.expDia = S.sel;
+      if (S.sel && this.opt === 'A') u.open.dias = true;
+      if (S.sel && this.opt === 'C') u.tab.pg = 'dias';
+    }
+    this.barra.pintar(); this.paint();
+    if (this.opt === 'B' && this.screen === 'pagos') { if (S.sel) this.abrirHoja('dia', true); else this.cerrarHoja(); }
+    if (this.opt !== 'B' && this.screen === 'pagos' && S.sel) requestAnimationFrame(() => this.$(`[data-row="${S.sel}"]`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }));
+  }
+  paint() {
+    const sc = this.$('.scroll'), y = sc.scrollTop;
+    this.$('.dyn').innerHTML = VISTAS[this.opt][this.screen](this);
+    sc.scrollTop = y;
+    this.$('h1').textContent = this.screen === 'inicio' ? 'Hoy' : 'Pagos';
+    this.root.querySelectorAll('[data-nav]').forEach(b => b.classList.toggle('on', b.dataset.nav === this.screen));
+    if (this.ui.sheet) this.pintarHoja(false);
+  }
+  /* — hoja inferior (propuesta B) — */
+  abrirHoja(id, animar = true) { this.ui.sheet = id; this.pintarHoja(animar); }
+  cerrarHoja() {
+    const w = this.$('.sheet-w'); this.ui.sheet = null; w.classList.remove('open');
+    setTimeout(() => { if (!this.ui.sheet) w.innerHTML = ''; }, 380);
+  }
+  pintarHoja(animar) {
+    const id = this.ui.sheet, w = this.$('.sheet-w'), S = this.S();
+    if (!id) return;
+    const T = { det: 'Detalle de lo subido', add: 'Subir más', dias: 'Día por día', dia: S.sel ? cap(fechaLarga(S.sel)) : '', cobro: 'Cobro', tarifa: 'Tarifa vigente', sems: 'Otras semanas' };
+    const sem = semana(S.week);
+    const B = { det: () => detalleTabs(this), add: () => addTabs(this), dias: () => pgDias(this, sem), dia: () => diaDetalle(S.sel), cobro: () => pgCobro(this, sem), tarifa: pgTarifa, sems: () => pgSemanas(this) };
+    const y = w.querySelector('.sh-b')?.scrollTop || 0;
+    w.innerHTML = `<div class="scrim" data-act="cerrar"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="${T[id]}"><div class="grab"></div>
+      <div class="sh-h"><b>${T[id]}</b><button class="x" data-act="cerrar" aria-label="Cerrar">${ic('x')}</button></div><div class="sh-b">${B[id]()}</div></div>`;
+    const sb = w.querySelector('.sh-b'); if (!animar) sb.scrollTop = y;
+    if (animar) { w.classList.remove('open'); void w.offsetWidth; requestAnimationFrame(() => w.classList.add('open')); } else w.classList.add('open');
+  }
+  aviso(msg) {
+    const t = this.$('.toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(this._t); this._t = setTimeout(() => t.classList.remove('show'), 2400);
+  }
+  leer(sel) { return this.root.querySelector(sel); }
+  asegurarDia(iso) {
+    let d = DB.dias[iso];
+    if (!d || d.rest) d = DB.dias[iso] = { ordenes: [], rutas: [], entrada: null, salida: null, capturas: 0 };
+    return d;
+  }
+  click(e) {
+    const nav = e.target.closest('[data-nav]');
+    if (nav) { this.go(nav.dataset.nav); return; }
+    const a = e.target.closest('[data-act]'); if (!a || !this.root.contains(a)) return;
+    const ds = a.dataset, u = this.ui, S = this.S();
+    switch (ds.act) {
+      case 'toast': this.aviso(ds.msg); break;
+      case 'toggle': {
+        const cur = u.open[ds.id] === undefined ? ds.def === '1' : u.open[ds.id];
+        u.open[ds.id] = !cur;
+        const sec = a.closest('.acc'); sec.classList.toggle('open', !cur); a.setAttribute('aria-expanded', String(!cur));
+        break;
+      }
+      case 'tab': u.tab[ds.g] = ds.v; u.form = null; this.paint(); break;
+      case 'ir-add': if (this.opt === 'B') { u.tab.add = ds.v; this.abrirHoja('add', true); } else if (this.opt === 'C') { u.tab.main = 'add'; this.paint(); } else { u.tab.add = ds.v; u.open.add = true; this.paint(); } break;
+      case 'showall': u.showAll = !u.showAll; this.paint(); break;
+      case 'form': u.form = u.form === ds.id ? null : ds.id; this.paint(); break;
+      case 'qty': u.qty = Math.max(1, Math.min(30, u.qty + +ds.d)); this.paint(); break;
+      case 'sheet': this.abrirHoja(ds.id, true); break;
+      case 'cerrar': this.cerrarHoja(); break;
+      case 'rest': {
+        const f = ds.d || S.sel;
+        if (DB.dias[f]?.rest) delete DB.dias[f]; else if (!DB.dias[f]) DB.dias[f] = { rest: true, ordenes: [], rutas: [] };
+        notificar(); break;
+      }
+      case 'save-cant': {
+        const d = this.asegurarDia(S.sel);
+        for (let i = 0; i < u.qty; i++) d.ordenes.push({ codigo: '', ruta: null, hora: null, tramo: 1, monto: 1000, estado: 'Entregado', manual: true, pc: true });
+        this.aviso(`Anotaste ${u.qty} pedido${u.qty === 1 ? '' : 's'}: ${money(u.qty * 1000)}`);
+        u.form = null; u.open.add = true; u.tab.main = 'add'; notificar(); break;
+      }
+      case 'save-manual': {
+        const cod = this.leer('[data-in=cod]').value.trim();
+        if (!cod) { this.aviso('Escribe el código del pedido'); this.leer('[data-in=cod]').focus(); break; }
+        const d = this.asegurarDia(S.sel), r = +this.leer('[data-in=ruta]').value || null;
+        d.ordenes.push({ codigo: cod, ruta: r, hora: r ? d.rutas.find(x => x.n === r)?.ini : null, tramo: 1, monto: 1000, estado: this.leer('[data-in=est]').value, manual: true, pc: false });
+        this.aviso('Pedido guardado'); u.form = null; u.open.add = true; u.tab.main = 'add'; notificar(); break;
+      }
+      case 'save-ruta': {
+        const ini = this.leer('[data-in=ini]').value, fin = this.leer('[data-in=fin]').value;
+        if (!ini || !fin || toMin(fin) <= toMin(ini)) { this.aviso('La hora de vuelta tiene que ser después de la de salida'); break; }
+        const d = this.asegurarDia(S.sel); d.rutas.push({ n: d.rutas.length + 1, ini, fin });
+        this.aviso(`Ruta ${d.rutas.length} guardada`); u.form = null; u.open.add = true; u.tab.main = 'add'; notificar(); break;
+      }
+      case 'dia': {
+        u.expDia = u.expDia === ds.d ? null : ds.d; S.sel = u.expDia;
+        this.barra.pintar(); this.paint();
+        if (this.opt === 'B' && S.sel) { this.cerrarHoja(); }
+        break;
+      }
+      case 'goto-inicio': this.st.inicio.week = monday(ds.d); this.st.inicio.sel = ds.d; u.open.add = undefined; u.tab.main = undefined; this.ui.sheet = null; this.$('.sheet-w').classList.remove('open'); this.go('inicio'); break;
+      case 'gosem': S.week = ds.mon; S.sel = null; u.expDia = null; this.ui.sheet = null; this.$('.sheet-w').classList.remove('open'); this.barra.pintar(); this.paint(); this.$('.scroll').scrollTo({ top: 0, behavior: 'smooth' }); break;
+      case 'falta-chip': u.desmarc.has(ds.d) ? u.desmarc.delete(ds.d) : u.desmarc.add(ds.d); this.paint(); break;
+      case 'marcar-faltan': {
+        const w = semana(S.week), el = w.faltan.filter(f => !u.desmarc.has(f));
+        el.forEach(f => { DB.dias[f] = { rest: true, ordenes: [], rutas: [] }; });
+        this.aviso(el.length === 1 ? 'Marcaste 1 día como descanso.' : `Marcaste ${el.length} días como descanso.`); u.desmarc = new Set(); notificar(); break;
+      }
+      case 'pagar': {
+        const v = parseFloat(this.leer('[data-in=recibido]').value), w = semana(ds.mon);
+        const monto = Number.isFinite(v) ? Math.round(v * 100) : w.monto;
+        DB.sem[ds.mon] = { estado: 'pagada', recibido: monto };
+        this.aviso('Semana cerrada y pago anotado'); notificar(); break;
+      }
+      case 'reabrir': DB.sem[ds.mon] = { estado: 'cerrada' }; this.aviso('Semana reabierta: puedes corregir cualquier día'); notificar(); break;
+    }
+  }
+}
+
+/* ═══════════ Presets de cada teléfono ═══════════ */
+const MAR22 = add(THIS_WEEK, 1), SEM_ANT = add(THIS_WEEK, -7), MAR15 = add(SEM_ANT, 1);
+const PRESETS = {
+  a1: {},
+  a2: { ui: { open: { det: true } } },
+  a3: { screen: 'pagos', pagos: { week: SEM_ANT, sel: MAR15 }, ui: { expDia: MAR15, open: { dias: true } } },
+  b1: {},
+  b2: { abrir: 'det' },
+  b3: { screen: 'pagos', pagos: { week: SEM_ANT, sel: MAR15 }, abrir: 'dia' },
+  c1: {},
+  c2: { ui: { tab: { main: 'add' } } },
+  c3: { screen: 'pagos', pagos: { week: SEM_ANT, sel: MAR15 }, ui: { expDia: MAR15, tab: { pg: 'dias' } } },
+};
+document.querySelectorAll('.ph').forEach(el => TELEFONOS.push(new Telefono(el, el.dataset.opt, PRESETS[el.dataset.preset] || {})));
+
+/* ═══════════ Apariencia de la página ═══════════ */
+document.querySelectorAll('[data-skin-btn]').forEach(b => b.addEventListener('click', () => {
+  document.documentElement.dataset.skin = b.dataset.skinBtn;
+  document.querySelectorAll('[data-skin-btn]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+}));
+})();
+</script>
+</body>
+</html>

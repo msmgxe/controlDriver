@@ -32,6 +32,17 @@ export interface OpcionesDatos {
    * pantallas cuentan con ese reinicio para cerrar sus formularios.
    */
   conservar?: boolean;
+  /**
+   * También al **cambiar de dependencias**: seguir enseñando lo de antes hasta
+   * que lleguen los datos nuevos.
+   *
+   * Para pantallas donde vaciarse un instante sería peor que enseñar lo viejo
+   * ese instante: la barra de semanas, que si se desmonta a mitad de un
+   * arrastre pierde el gesto. Requiere `conservar`. Quien lo use tiene que
+   * aceptar que, durante un momento muy breve, lo que ve corresponde a la
+   * consulta anterior.
+   */
+  entreCambios?: boolean;
 }
 
 export interface Datos<T> {
@@ -105,7 +116,10 @@ export function useDatos<T>(
 
   // Una recarga con las mismas dependencias: los datos de antes siguen valiendo
   // mientras llegan los nuevos (solo si se pidió conservarlos).
-  const seConserva = Boolean(opciones.conservar) && !alDia && resultado.deps === deps;
+  const seConserva =
+    Boolean(opciones.conservar) &&
+    !alDia &&
+    (resultado.deps === deps || (Boolean(opciones.entreCambios) && resultado.datos !== null));
   if (seConserva) {
     return { datos: resultado.datos, cargando: false, error: resultado.error, recargar };
   }

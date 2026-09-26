@@ -1,17 +1,21 @@
 "use client";
 
-import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import Link from "next/link";
 
+import { Acordeon } from "@/components/Acordeon";
 import { BotonesExportar } from "@/components/BotonesExportar";
-import { Aviso, ChipTramo, EstadoPedido, Vacio } from "@/components/ui";
+import { FilaPedidoSimple } from "@/components/FilaPedidoSimple";
+import { Pestanas } from "@/components/Pestanas";
+import { Aviso, EstadoPedido, Vacio } from "@/components/ui";
 import { useDatos } from "@/hooks/useDatos";
-import { buscarPedidos, jornadasPorRango, reglaVigente } from "@/lib/db/sqlite/jornadas";
+import { buscarPedidos, esCodigoPendiente, jornadasPorRango, reglaVigente } from "@/lib/db/sqlite/jornadas";
 import { listarTiendas, perfilActual } from "@/lib/db/sqlite/perfil";
 import { horasDePermanencia } from "@/lib/pagos/reglas";
 import { montoDelDia } from "@/lib/pagos/calcular-liquidacion";
+import type { JornadaCompleta } from "@/lib/db/tipos";
 import type { DatosExportacion } from "@/lib/exportar/datos";
 import {
   diasEntre,
@@ -26,14 +30,18 @@ import {
 } from "@/lib/fechas";
 import { formatearSoles } from "@/lib/pagos/reglas";
 
-
 /**
  * Historial (§11).
  *
- * Presentación elegida tras comparar tres alternativas en el prototipo: la
- * **tabla**. Todas las columnas de §11 siempre visibles, cabecera fija,
- * subtotal por día y total del rango. En celular se desplaza de lado dentro de
- * su propio contenedor; la página nunca se mueve en horizontal.
+ * Dos vistas en pestañas, una a la vez:
+ *
+ *   · **Por día** — las semanas del rango como acordeones cerrados; cada uno
+ *     dice cuántos pedidos y cuánto sumó sin abrirlo, y dentro van sus días.
+ *   · **Pedidos** — cada pedido como una fila, agrupados por día.
+ *
+ * El rango, la vista y el código buscado viven en la URL: al volver de un día
+ * se está donde se estaba. Exportar va en un acordeón al final: lo que se baja
+ * es exactamente lo filtrado en pantalla.
  */
 
 const RANGOS = [
@@ -69,8 +77,10 @@ export default function PaginaHistorial() {
 function Contenido() {
   const params = useSearchParams();
   const rango = (RANGOS.find((r) => r.id === params.get("rango"))?.id ?? "semana") as IdRango;
-  const vista = params.get("vista") === "dia" ? "dia" : "pedidos";
+  const vista = params.get("vista") === "pedidos" ? "pedidos" : "dia";
   const buscado = (params.get("buscar") ?? "").trim();
+  const router = useRouter();
+  const irA = (r: IdRango, v: "dia" | "pedidos") => router.replace(`/historial?rango=${r}&vista=${v}`);
 
   const hoy = hoyEnLima();
   const [desde, hasta] = limites(rango, hoy);
@@ -156,42 +166,35 @@ function Contenido() {
     { pedidos: 0, rutas: 0, centimos: 0 },
   );
 
-  // La numeración corrida se calcula antes de pintar: mutar un contador dentro
-  // del JSX rompe si React vuelve a ejecutar el render.
-  const numeroDeOrden = new Map<string, number>();
-  let contador = 0;
-  for (const j of jornadas) {
-    for (const o of j.ordenes) {
-      contador += 1;
-      numeroDeOrden.set(o.id, contador);
-    }
+  // Los días del rango agrupados por semana (lunes a domingo), en orden.
+  const semanas: Array<{ lunes: FechaISO; dias: FechaISO[] }> = [];
+  for (const f of todosLosDias) {
+    const lunes = lunesDeLaSemana(f);
+    const ultima = semanas[semanas.length - 1];
+    if (ultima?.lunes === lunes) ultima.dias.push(f);
+    else semanas.push({ lunes, dias: [f] });
   }
 
   return (
-    <div className="mx-auto flex max-w-[1180px] flex-col gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <h2 className="text-[30px] leading-tight">Historial</h2>
-        <div className="inline-grid grid-flow-col gap-[3px] rounded-btn bg-sup-2 p-[3px]">
-          {(["dia", "pedidos"] as const).map((v) => (
-            <Link
-              key={v}
-              href={`/historial?rango=${rango}&vista=${v}`}
-              aria-selected={vista === v}
-              className={`flex min-h-[38px] items-center justify-center rounded-[11px] px-4 text-sm ${
-                vista === v ? "bg-sup font-bold" : "font-medium text-tinta-2"
-              }`}
-            >
-              {v === "dia" ? "Por día" : "Pedidos"}
-            </Link>
-          ))}
-        </div>
-      </div>
+    <div className="mx-auto flex max-w-[880px] flex-col gap-4">
+      <h2 className="text-[30px] leading-tight">Historial</h2>
 
-      <div className="flex gap-2 overflow-x-auto pb-0.5">
+      <Pestanas
+        etiqueta="Vista del historial"
+        actual={vista}
+        alCambiar={(id) => irA(rango, id === "pedidos" ? "pedidos" : "dia")}
+        items={[
+          { id: "dia", etiqueta: "Por día" },
+          { id: "pedidos", etiqueta: "Pedidos", cuenta: totales.pedidos },
+        ]}
+      />
+
+      <div className="flex gap-2 overflow-x-auto pb-0.5" role="group" aria-label="Rango">
         {RANGOS.map((r) => (
-          <Link
+          <button
             key={r.id}
-            href={`/historial?rango=${r.id}&vista=${vista}`}
+            type="button"
+            onClick={() => irA(r.id, vista)}
             aria-pressed={rango === r.id}
             className={`inline-flex min-h-9 shrink-0 items-center rounded-chip px-3 text-sm whitespace-nowrap ${
               rango === r.id
@@ -200,12 +203,13 @@ function Contenido() {
             }`}
           >
             {r.etiqueta}
-          </Link>
+          </button>
         ))}
       </div>
 
       {/* §10, utilidades — la consulta de "la tienda me pregunta por este
-          pedido": dice en qué fecha fue, en qué ruta y con qué horario. */}
+          pedido": dice en qué fecha fue, en qué ruta y con qué horario. Para
+          buscar por cliente, teléfono o dirección está la pantalla Buscar. */}
       <form method="get" action="/historial" className="flex flex-wrap gap-2">
         <input type="hidden" name="rango" value={rango} />
         <input type="hidden" name="vista" value={vista} />
@@ -247,138 +251,168 @@ function Contenido() {
 
       {jornadas.length === 0 ? (
         <Vacio>No hay pedidos en este rango.</Vacio>
-      ) : vista === "pedidos" ? (
-        <div className="overflow-x-auto rounded-card bg-sup">
-          <table className="tabla min-w-[700px]">
-            <thead>
-              <tr>
-                <th className="num">N°</th>
-                <th>Fecha</th>
-                <th>Código de pedido</th>
-                <th className="num">Ruta</th>
-                <th>Horario de ruta</th>
-                <th>Estado</th>
-                <th>Tramo</th>
-                <th className="num">Monto</th>
-              </tr>
-            </thead>
-            <tbody>
-              {jornadas.map((j) => {
-                const horarios = new Map(
-                  j.rutas.map((r) => [r.numero, `${r.horaInicio ?? "--:--"}–${r.horaFin ?? "--:--"}`]),
-                );
-                const cobroDia = cobroDe(j);
-                const montoDia = cobroDia.pagadoCentimos;
-                return [
-                  ...j.ordenes.map((o) => {
-                    return (
-                      <tr key={o.id}>
-                        <td className="num">{numeroDeOrden.get(o.id)}</td>
-                        <td className="whitespace-nowrap">{formatearFecha(j.fecha)}</td>
-                        <td>
-                          <span className="codigo">{o.codigo}</span>
-                        </td>
-                        <td className="num">{o.ruta ?? "—"}</td>
-                        <td>
-                          <span className="codigo whitespace-nowrap">
-                            {o.ruta !== null ? (horarios.get(o.ruta) ?? "—") : "—"}
-                          </span>
-                        </td>
-                        <td>
-                          <EstadoPedido estado={o.estado} />
-                        </td>
-                        <td>
-                          <ChipTramo tramo={o.tramo} />
-                        </td>
-                        <td className="num">{formatearSoles(o.montoCentimos ?? 0)}</td>
-                      </tr>
-                    );
-                  }),
-                  <tr key={`sub-${j.id}`} className="subtotal">
-                    <td colSpan={7}>
-                      <Link href={`/jornada?fecha=${j.fecha}`} className="hover:text-acento">
-                        Subtotal {nombreDelDia(j.fecha)} {formatearFecha(j.fecha)} ·{" "}
-                        {j.ordenes.length} pedidos · {j.rutas.length} rutas
-                      </Link>
-                    </td>
-                    <td className="num">
-                      {formatearSoles(montoDia)}
-                      {cobroDia.pagaPor === "permanencia" && (
-                        <span className="block text-[10px] font-normal text-tinta-3">
-                          piso por permanencia
-                        </span>
-                      )}
-                    </td>
-                  </tr>,
-                ];
-              })}
-            </tbody>
-            <tfoot>
-              <tr>
-                <td colSpan={7}>Total del rango · {totales.pedidos} pedidos</td>
-                <td className="num">{formatearSoles(totales.centimos)}</td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {todosLosDias.map((fecha) => {
-            const j = porFecha.get(fecha);
-            if (!j) {
-              return (
-                <div
-                  key={fecha}
-                  className="flex items-center gap-3 rounded-card border border-dashed border-linea px-4 py-3"
-                >
-                  <span className="flex w-[86px] shrink-0 flex-col">
-                    <b className="text-sm font-bold capitalize">{nombreDelDia(fecha).slice(0, 3)}</b>
-                    <span className="font-mono text-xs text-tinta-3">{formatearFecha(fecha)}</span>
-                  </span>
-                  <span className="text-xs text-tinta-3">
-                    {diasEntre(hoy, fecha) > 0 ? "Aún no ocurre" : "Sin carga"}
-                  </span>
-                </div>
-              );
-            }
-            const minutos = j.rutas.reduce((s, r) => s + (r.duracionMin ?? 0), 0);
-            const monto = cobroDe(j).pagadoCentimos;
+      ) : vista === "dia" ? (
+        <div className="flex flex-col gap-3">
+          {semanas.map((sem) => {
+            const delaSemana = sem.dias.map((f) => porFecha.get(f)).filter((j) => j !== undefined);
+            const pedidos = delaSemana.reduce((s, j) => s + j.ordenes.length, 0);
+            const monto = delaSemana.reduce((s, j) => s + cobroDe(j).pagadoCentimos, 0);
+            const fin = sem.dias[sem.dias.length - 1];
             return (
-              <Link
-                key={fecha}
-                href={`/jornada?fecha=${fecha}`}
-                className="flex items-center gap-3 rounded-card border border-linea bg-sup px-4 py-3 hover:bg-sup-2"
+              <Acordeon
+                key={sem.lunes}
+                titulo={`${formatearFecha(sem.dias[0]).slice(0, 5)} – ${formatearFecha(fin).slice(0, 5)}`}
+                resumen={
+                  pedidos === 0
+                    ? "Sin carga"
+                    : `${pedidos} pedidos · ${delaSemana.length} día${delaSemana.length === 1 ? "" : "s"} · ${formatearSoles(monto)}`
+                }
               >
-                <span className="flex w-[86px] shrink-0 flex-col">
-                  <b className="text-sm font-bold capitalize">{nombreDelDia(fecha).slice(0, 3)}</b>
-                  <span className="font-mono text-xs text-tinta-3">{formatearFecha(fecha)}</span>
-                </span>
-                <span className="flex min-w-0 flex-1 flex-wrap gap-4 text-xs text-tinta-2">
-                  <span>
-                    <i className="font-mono font-medium text-tinta not-italic">
-                      {j.ordenes.length}
-                    </i>{" "}
-                    pedidos
-                  </span>
-                  <span>
-                    <i className="font-mono font-medium text-tinta not-italic">{j.rutas.length}</i>{" "}
-                    rutas
-                  </span>
-                  <span>
-                    <i className="font-mono font-medium text-tinta not-italic">
-                      {formatearDuracion(minutos)}
-                    </i>{" "}
-                    en ruta
-                  </span>
-                </span>
-                <span className="monto text-sm">{formatearSoles(monto)}</span>
-              </Link>
+                <div className="-my-4 flex flex-col">
+                  {sem.dias.map((fecha) => {
+                    const j = porFecha.get(fecha);
+                    return j ? (
+                      <FilaDeDia key={fecha} fecha={fecha} j={j} monto={cobroDe(j).pagadoCentimos} />
+                    ) : (
+                      <FilaDeDiaVacio key={fecha} fecha={fecha} futuro={diasEntre(hoy, fecha) > 0} />
+                    );
+                  })}
+                </div>
+              </Acordeon>
             );
           })}
         </div>
+      ) : (
+        <ListaDePedidos
+          jornadas={jornadas}
+          horarioDe={(j, ruta) => {
+            const r = j.rutas.find((x) => x.numero === ruta);
+            return r?.horaInicio ?? null;
+          }}
+          montoDe={(j) => cobroDe(j).pagadoCentimos}
+          alAbrir={(fecha) => router.push(`/?dia=${fecha}`)}
+        />
       )}
 
-      <BotonesExportar datos={datosExportacion} />
+      <Acordeon
+        titulo="Exportar"
+        resumen={`Excel o PDF de ${formatearFecha(desde).slice(0, 5)} a ${formatearFecha(hasta).slice(0, 5)}`}
+      >
+        <BotonesExportar datos={datosExportacion} />
+      </Acordeon>
+    </div>
+  );
+}
+
+type Jornadas = JornadaCompleta[];
+
+/** Un día con carga: qué se hizo y cuánto rindió. Lleva al detalle de ese día. */
+function FilaDeDia({ fecha, j, monto }: { fecha: FechaISO; j: Jornadas[number]; monto: number }) {
+  const minutos = j.rutas.reduce((s, r) => s + (r.duracionMin ?? 0), 0);
+  return (
+    <Link
+      href={`/?dia=${fecha}`}
+      className="flex items-center gap-3 border-b border-linea py-3 last:border-b-0 hover:bg-sup-2"
+    >
+      <span className="flex w-[70px] shrink-0 flex-col">
+        <b className="text-sm font-bold capitalize">{nombreDelDia(fecha).slice(0, 3)}</b>
+        <span className="font-mono text-xs text-tinta-3">{formatearFecha(fecha).slice(0, 5)}</span>
+      </span>
+      <span className="flex min-w-0 flex-1 flex-wrap gap-x-3 gap-y-0.5 text-xs text-tinta-2">
+        <span>
+          <i className="font-mono font-medium text-tinta not-italic">{j.ordenes.length}</i> pedidos
+        </span>
+        <span>
+          <i className="font-mono font-medium text-tinta not-italic">{j.rutas.length}</i> rutas
+        </span>
+        <span>
+          <i className="font-mono font-medium text-tinta not-italic">{formatearDuracion(minutos)}</i> en ruta
+        </span>
+      </span>
+      <span className="monto text-sm">{formatearSoles(monto)}</span>
+    </Link>
+  );
+}
+
+function FilaDeDiaVacio({ fecha, futuro }: { fecha: FechaISO; futuro: boolean }) {
+  return (
+    <div className="flex items-center gap-3 border-b border-linea py-3 last:border-b-0">
+      <span className="flex w-[70px] shrink-0 flex-col">
+        <b className="text-sm font-bold capitalize">{nombreDelDia(fecha).slice(0, 3)}</b>
+        <span className="font-mono text-xs text-tinta-3">{formatearFecha(fecha).slice(0, 5)}</span>
+      </span>
+      <span className="text-xs text-tinta-3">{futuro ? "Aún no ocurre" : "Sin carga"}</span>
+    </div>
+  );
+}
+
+const PEDIDOS_POR_PAGINA = 40;
+
+/**
+ * Cada pedido del rango como una fila, agrupado por día. Tocar uno lleva a su
+ * día, donde se puede corregir. Son muchos, así que se enseñan por tandas.
+ */
+function ListaDePedidos({
+  jornadas,
+  horarioDe,
+  montoDe,
+  alAbrir,
+}: {
+  jornadas: Jornadas;
+  horarioDe: (j: Jornadas[number], ruta: number) => string | null;
+  montoDe: (j: Jornadas[number]) => number;
+  alAbrir: (fecha: FechaISO) => void;
+}) {
+  const [visibles, setVisibles] = useState(PEDIDOS_POR_PAGINA);
+  const total = jornadas.reduce((s, j) => s + j.ordenes.length, 0);
+
+  // Cuántos pedidos de cada día caben en lo que se ve: se calcula antes de pintar.
+  const cortes: number[] = [];
+  let restantes = visibles;
+  for (const j of jornadas) {
+    const ver = Math.min(j.ordenes.length, restantes);
+    cortes.push(ver);
+    restantes -= ver;
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      {jornadas.map((j, i) =>
+        cortes[i] === 0 ? null : (
+          <section key={j.id} className="flex flex-col gap-1.5">
+            <div className="flex items-baseline justify-between gap-3 px-1">
+              <span className="rotulo">
+                {nombreDelDia(j.fecha).slice(0, 3)} {formatearFecha(j.fecha).slice(0, 5)} · {j.ordenes.length} pedidos
+              </span>
+              <span className="monto text-xs text-tinta-2">{formatearSoles(montoDe(j))}</span>
+            </div>
+            <div className="overflow-hidden rounded-card border border-linea bg-sup">
+              {j.ordenes.slice(0, cortes[i]).map((o) => (
+                <FilaPedidoSimple
+                  key={o.id}
+                  codigo={o.codigo}
+                  ruta={o.ruta}
+                  hora={o.ruta !== null ? horarioDe(j, o.ruta) : null}
+                  estado={o.estado}
+                  tramo={o.tramo}
+                  monto={formatearSoles(o.montoCentimos ?? 0)}
+                  manual={o.manual}
+                  porCompletar={esCodigoPendiente(o.codigo)}
+                  km={o.km}
+                  cliente={o.cliente?.nombre ?? null}
+                  conFoto={o.fotos > 0}
+                  onClick={() => alAbrir(j.fecha)}
+                />
+              ))}
+            </div>
+          </section>
+        ),
+      )}
+      {total > visibles && (
+        <button type="button" className="boton-sec self-center" onClick={() => setVisibles((v) => v + PEDIDOS_POR_PAGINA)}>
+          Ver más ({total - visibles} restantes)
+        </button>
+      )}
     </div>
   );
 }
@@ -411,43 +445,31 @@ function ResultadosBusqueda({ texto }: { texto: string }) {
       <span className="rotulo">
         {encontrados.length} pedido{encontrados.length === 1 ? "" : "s"} con «{texto}»
       </span>
-      <div className="overflow-x-auto rounded-card bg-sup">
-        <table className="tabla min-w-[560px]">
-          <thead>
-            <tr>
-              <th>Código</th>
-              <th>Fecha</th>
-              <th className="num">Ruta</th>
-              <th>Horario de ruta</th>
-              <th>Estado</th>
-              <th className="num">Monto</th>
-            </tr>
-          </thead>
-          <tbody>
-            {encontrados.map((p) => (
-              <tr key={`${p.fecha}-${p.codigo}`}>
-                <td>
-                  <span className="codigo">{p.codigo}</span>
-                </td>
-                <td className="whitespace-nowrap">
-                  <Link href={`/jornada?fecha=${p.fecha}`} className="hover:text-acento">
-                    {nombreDelDia(p.fecha).slice(0, 3)} {formatearFecha(p.fecha)}
-                  </Link>
-                </td>
-                <td className="num">{p.ruta ?? "—"}</td>
-                <td>
-                  <span className="codigo whitespace-nowrap">
-                    {p.horaInicio && p.horaFin ? `${p.horaInicio}–${p.horaFin}` : "—"}
-                  </span>
-                </td>
-                <td>
-                  <EstadoPedido estado={p.estado} />
-                </td>
-                <td className="num">{formatearSoles(p.montoCentimos ?? 0)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="overflow-hidden rounded-card border border-linea bg-sup">
+        {encontrados.map((p) => (
+          <Link
+            key={`${p.fecha}-${p.codigo}`}
+            href={`/?dia=${p.fecha}`}
+            className="flex flex-col gap-1 border-b border-linea px-4 py-3 last:border-b-0 hover:bg-sup-2"
+          >
+            <span className="flex items-baseline justify-between gap-3">
+              <span className="font-mono text-[15px] font-medium tracking-tight">{p.codigo}</span>
+              <span className="monto text-xs text-tinta-2">{formatearSoles(p.montoCentimos ?? 0)}</span>
+            </span>
+            <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-tinta-2">
+              <span>
+                {nombreDelDia(p.fecha).slice(0, 3)} {formatearFecha(p.fecha)}
+              </span>
+              <span>{p.ruta === null ? "Sin ruta" : `Ruta ${p.ruta}`}</span>
+              {p.horaInicio && p.horaFin && (
+                <span className="font-mono">
+                  {p.horaInicio}–{p.horaFin}
+                </span>
+              )}
+              <EstadoPedido estado={p.estado} />
+            </span>
+          </Link>
+        ))}
       </div>
     </section>
   );

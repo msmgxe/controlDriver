@@ -1,13 +1,12 @@
 "use client";
 
-import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 
-import Link from "next/link";
-
+import { Acordeon } from "@/components/Acordeon";
 import { ExportarEstadisticas } from "@/components/ExportarEstadisticas";
 import { GraficoDias, type DiaGrafico } from "@/components/GraficoDias";
 import { Reloj, Subir, Trofeo } from "@/components/iconos";
+import { Pestanas } from "@/components/Pestanas";
 import { Aviso, Cifras, Vacio } from "@/components/ui";
 import { useDatos } from "@/hooks/useDatos";
 import { descansosPorRango } from "@/lib/db/sqlite/descansos";
@@ -23,8 +22,7 @@ import {
   sumarDias,
   type FechaISO,
 } from "@/lib/fechas";
-import { formatearSoles } from "@/lib/pagos/reglas";
-
+import { TRAMO_MAS_DE_12_KM, formatearSoles } from "@/lib/pagos/reglas";
 
 const RANGOS = [
   { id: "7", etiqueta: "7 días" },
@@ -40,38 +38,59 @@ function limites(id: IdRango, hoy: FechaISO): [FechaISO, FechaISO] {
   return [sumarDias(hoy, -29), hoy];
 }
 
+/**
+ * Estadísticas (§10).
+ *
+ * Lo que se mira de un vistazo —el rango, las cuatro cifras y el gráfico de los
+ * días— está siempre a la vista. El detalle va en acordeones cerrados que dicen
+ * su dato clave sin abrirse: Tiempos, Ingresos, Por distancia, Récords y
+ * Exportar.
+ */
 export default function PaginaEstadisticas() {
-  return (
-    <Suspense fallback={<Esqueleto />}>
-      <Contenido />
-    </Suspense>
-  );
-}
-
-function Contenido() {
-  const params = useSearchParams();
-  const rango = (RANGOS.find((r) => r.id === params.get("rango"))?.id ?? "30") as IdRango;
+  const [rango, setRango] = useState<IdRango>("30");
 
   const hoy = hoyEnLima();
   const [desde, hasta] = limites(rango, hoy);
 
-  const { datos } = useDatos(async () => {
-    const [jornadas, perfil, descansos] = await Promise.all([
-      jornadasPorRango(desde, hasta),
-      perfilActual(),
-      descansosPorRango(desde, hasta),
-    ]);
-    const { regla } = await reglaVigente(hasta, perfil?.tiendaId ?? null, perfil?.vehiculo);
-    return { jornadas, perfil, regla, descansos: new Set<FechaISO>(descansos) };
-  }, [desde, hasta]);
+  const { datos } = useDatos(
+    async () => {
+      const [jornadas, perfil, descansos] = await Promise.all([
+        jornadasPorRango(desde, hasta),
+        perfilActual(),
+        descansosPorRango(desde, hasta),
+      ]);
+      const { regla } = await reglaVigente(hasta, perfil?.tiendaId ?? null, perfil?.vehiculo);
+      return { jornadas, perfil, regla, descansos: new Set<FechaISO>(descansos) };
+    },
+    [desde, hasta],
+    // Cambiar de rango no debe vaciar la pantalla: se ve lo de antes un instante.
+    { conservar: true, entreCambios: true },
+  );
 
   if (!datos) return <Esqueleto />;
   const { jornadas, perfil, regla, descansos } = datos;
 
+  const cabecera = (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h2 className="text-[26px] leading-tight">Estadísticas</h2>
+        <span className="rotulo">
+          {formatearFecha(desde)} – {formatearFecha(hasta)}
+        </span>
+      </div>
+      <Pestanas
+        etiqueta="Rango de días"
+        actual={rango}
+        alCambiar={(id) => setRango(id as IdRango)}
+        items={RANGOS.map((r) => ({ id: r.id, etiqueta: r.etiqueta }))}
+      />
+    </div>
+  );
+
   if (jornadas.length === 0) {
     return (
       <div className="mx-auto flex max-w-[1180px] flex-col gap-4">
-        <h2 className="text-[30px] leading-tight">Estadísticas</h2>
+        {cabecera}
         <Vacio>No hay jornadas cargadas en este rango.</Vacio>
       </div>
     );
@@ -81,16 +100,7 @@ function Contenido() {
   const dias: DiaGrafico[] = rangoDeFechas(desde, hasta).map((fecha) => {
     const j = porFecha.get(fecha);
     if (!j) {
-      return {
-        fecha,
-        cargado: false,
-        descanso: descansos.has(fecha),
-        pedidos: 0,
-        rutas: 0,
-        minutos: 0,
-        centimos: 0,
-        fueraTramo1: 0,
-      };
+      return { fecha, cargado: false, descanso: descansos.has(fecha), pedidos: 0, rutas: 0, minutos: 0, centimos: 0, fueraTramo1: 0 };
     }
     return {
       fecha,
@@ -121,9 +131,7 @@ function Contenido() {
   const duraciones = jornadas.flatMap((j) =>
     j.rutas.map((r) => r.duracionMin).filter((d): d is number => d !== null && d > 0),
   );
-  const durProm = duraciones.length
-    ? Math.round(duraciones.reduce((a, b) => a + b, 0) / duraciones.length)
-    : 0;
+  const durProm = duraciones.length ? Math.round(duraciones.reduce((a, b) => a + b, 0) / duraciones.length) : 0;
   const rutaRapida = duraciones.length ? Math.min(...duraciones) : 0;
   const rutaLenta = duraciones.length ? Math.max(...duraciones) : 0;
 
@@ -137,170 +145,201 @@ function Contenido() {
     else break;
   }
 
+  /* Por distancia: en qué tramos cayeron los pedidos y, de los que se ubicaron
+     con su comanda, qué tan lejos. */
+  const ordenes = jornadas.flatMap((j) => j.ordenes);
+  const porTramo = [...regla.tramos.map((t) => t.id), TRAMO_MAS_DE_12_KM]
+    .map((id) => ({ id, cuantos: ordenes.filter((o) => o.tramo === id).length }))
+    .filter((t) => t.id !== TRAMO_MAS_DE_12_KM || t.cuantos > 0);
+  const masCuantos = Math.max(1, ...porTramo.map((t) => t.cuantos));
+  const conKm = ordenes.filter((o) => o.km !== null);
+  const kmMedio = conKm.length ? conKm.reduce((s, o) => s + (o.km ?? 0), 0) / conKm.length : 0;
+  const kmMaximo = conKm.length ? Math.max(...conKm.map((o) => o.km ?? 0)) : 0;
+
+  const promedioDia = cargados.length ? totalPedidos / cargados.length : 0;
+  const centimosPorDia = cargados.length ? Math.round(totalCentimos / cargados.length) : 0;
+  const centimosPorPedido = totalPedidos ? Math.round(totalCentimos / totalPedidos) : 0;
+
+  const bloqueTiempos = (
+    <dl className="flex flex-col">
+      <Dato etiqueta="Tiempo total en ruta" valor={formatearDuracion(totalMinutos)} />
+      <Dato etiqueta="Duración media por ruta" valor={`${durProm} min`} />
+      <Dato etiqueta="Ruta más rápida / más lenta" valor={`${rutaRapida} / ${rutaLenta} min`} />
+      <Dato etiqueta="Minutos por pedido" valor={totalPedidos ? `${Math.round(totalMinutos / totalPedidos)} min` : "—"} />
+      <Dato etiqueta="Pedidos por ruta" valor={totalRutas ? (totalPedidos / totalRutas).toFixed(1) : "—"} />
+    </dl>
+  );
+  const bloqueIngresos = (
+    <dl className="flex flex-col">
+      <Dato etiqueta="Promedio por día" valor={formatearSoles(centimosPorDia)} />
+      <Dato etiqueta="Promedio por pedido" valor={totalPedidos ? formatearSoles(centimosPorPedido) : "—"} />
+      <Dato
+        etiqueta="Promedio por hora en ruta"
+        valor={totalMinutos ? formatearSoles(Math.round(totalCentimos / (totalMinutos / 60))) : "—"}
+      />
+      <Dato etiqueta="Pedidos fuera del tramo 1" valor={`${totalFuera} de ${totalPedidos}`} />
+    </dl>
+  );
+  const bloqueRecords = (
+    <div className="flex flex-col gap-3">
+      <Record
+        Icono={Trofeo}
+        titulo={`${formatearSoles(mejorIngreso.centimos)} · mejor día en ingresos`}
+        detalle={`${nombreDelDia(mejorIngreso.fecha)} ${formatearFecha(mejorIngreso.fecha)}`}
+      />
+      <Record
+        Icono={Subir}
+        titulo={`${mejorDia.pedidos} pedidos · día con más carga`}
+        detalle={`${nombreDelDia(mejorDia.fecha)} ${formatearFecha(mejorDia.fecha)}, en ${mejorDia.rutas} rutas`}
+      />
+      <Record
+        Icono={Reloj}
+        titulo={`${racha} día${racha === 1 ? "" : "s"} al 100 %`}
+        detalle="racha actual de jornadas con todo entregado"
+      />
+    </div>
+  );
+  const bloqueCifras = (id?: string) => (
+    <div id={id}>
+      <Cifras
+        datos={[
+          { etiqueta: "Pedidos", valor: String(totalPedidos) },
+          { etiqueta: "Soles", valor: (totalCentimos / 100).toFixed(2) },
+          { etiqueta: "Días trabajados", valor: String(cargados.length) },
+          { etiqueta: "Promedio por día", valor: promedioDia.toFixed(1), pie: "ped." },
+        ]}
+      />
+    </div>
+  );
+
   return (
     <div className="mx-auto flex max-w-[1180px] flex-col gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <h2 className="text-[30px] leading-tight">Estadísticas</h2>
-        <span className="rotulo">
-          {formatearFecha(desde)} – {formatearFecha(hasta)}
-        </span>
-      </div>
+      {cabecera}
 
-      <div className="flex gap-2 overflow-x-auto pb-0.5">
-        {RANGOS.map((r) => (
-          <Link
-            key={r.id}
-            href={`/estadisticas?rango=${r.id}`}
-            aria-pressed={rango === r.id}
-            className={`inline-flex min-h-9 shrink-0 items-center rounded-chip px-3 text-sm whitespace-nowrap ${
-              rango === r.id
-                ? "bg-acento font-semibold text-acento-texto"
-                : "border border-linea-fuerte bg-sup text-tinta-2"
-            }`}
-          >
-            {r.etiqueta}
-          </Link>
-        ))}
-      </div>
+      {bloqueCifras()}
 
-      <div className="tarjeta" id="bloque-grafico">
+      <div className="tarjeta">
         <GraficoDias dias={dias} />
       </div>
 
       {huecos > 0 && (
         <Aviso tono="atento" titulo={`${huecos} día${huecos === 1 ? "" : "s"} sin carga en el rango`}>
-          <p>Un hueco no es un día sin trabajo. Súbelo y las cifras se recalculan; si no trabajaste, márcalo como descanso en Pagos.</p>
+          <p>
+            Un hueco no es un día sin trabajo. Súbelo y las cifras se recalculan; si no trabajaste, márcalo como
+            descanso en Pagos.
+          </p>
         </Aviso>
       )}
 
-      <div id="bloque-cifras">
-        <Cifras
-        datos={[
-          { etiqueta: "Pedidos", valor: String(totalPedidos) },
-          { etiqueta: "Soles", valor: (totalCentimos / 100).toFixed(2) },
-          { etiqueta: "Días trabajados", valor: String(cargados.length) },
-          {
-            etiqueta: "Promedio por día",
-            valor: (totalPedidos / cargados.length).toFixed(1),
-            pie: "ped.",
-          },
-        ]}
-        />
-      </div>
+      <Acordeon
+        titulo="Tiempos"
+        resumen={`${formatearDuracion(totalMinutos)} en ruta · ${durProm} min por ruta`}
+      >
+        {bloqueTiempos}
+        <p className="text-xs text-tinta-3">
+          Los minutos por pedido son una estimación: las capturas traen la hora de la ruta, no la de cada pedido.
+        </p>
+      </Acordeon>
 
-      <div className="grid gap-4 md:grid-cols-2 md:items-start" id="bloque-detalle">
-        <section className="tarjeta">
-          <span className="rotulo">Tiempos</span>
-          <dl className="mt-2 flex flex-col">
-            <Dato etiqueta="Tiempo total en ruta" valor={formatearDuracion(totalMinutos)} />
-            <Dato etiqueta="Duración media por ruta" valor={`${durProm} min`} />
-            <Dato
-              etiqueta="Ruta más rápida / más lenta"
-              valor={`${rutaRapida} / ${rutaLenta} min`}
-            />
-            <Dato
-              etiqueta="Minutos por pedido"
-              valor={totalPedidos ? `${Math.round(totalMinutos / totalPedidos)} min` : "—"}
-            />
-            <Dato
-              etiqueta="Pedidos por ruta"
-              valor={totalRutas ? (totalPedidos / totalRutas).toFixed(1) : "—"}
-            />
-          </dl>
-          <p className="mt-3 text-xs text-tinta-3">
-            Los minutos por pedido son una estimación: las capturas traen la hora de la ruta, no la
-            de cada pedido.
-          </p>
-        </section>
+      <Acordeon
+        titulo="Ingresos"
+        resumen={`${formatearSoles(centimosPorDia)} por día${totalPedidos ? ` · ${formatearSoles(centimosPorPedido)} por pedido` : ""}`}
+      >
+        {bloqueIngresos}
+      </Acordeon>
 
-        <section className="tarjeta">
-          <span className="rotulo">Ingresos</span>
-          <dl className="mt-2 flex flex-col">
-            <Dato
-              etiqueta="Promedio por día"
-              valor={formatearSoles(Math.round(totalCentimos / cargados.length))}
-            />
-            <Dato
-              etiqueta="Promedio por pedido"
-              valor={totalPedidos ? formatearSoles(Math.round(totalCentimos / totalPedidos)) : "—"}
-            />
-            <Dato
-              etiqueta="Promedio por hora en ruta"
-              valor={
-                totalMinutos
-                  ? formatearSoles(Math.round(totalCentimos / (totalMinutos / 60)))
-                  : "—"
-              }
-            />
-            <Dato etiqueta="Pedidos fuera del tramo 1" valor={`${totalFuera} de ${totalPedidos}`} />
-          </dl>
-        </section>
-      </div>
-
-      <section className="tarjeta" id="bloque-records">
-        <span className="rotulo">Récords</span>
-        <div className="mt-3 flex flex-col gap-3">
-          <Record
-            Icono={Trofeo}
-            titulo={`${formatearSoles(mejorIngreso.centimos)} · mejor día en ingresos`}
-            detalle={`${nombreDelDia(mejorIngreso.fecha)} ${formatearFecha(mejorIngreso.fecha)}`}
-          />
-          <Record
-            Icono={Subir}
-            titulo={`${mejorDia.pedidos} pedidos · día con más carga`}
-            detalle={`${nombreDelDia(mejorDia.fecha)} ${formatearFecha(mejorDia.fecha)}, en ${mejorDia.rutas} rutas`}
-          />
-          <Record
-            Icono={Reloj}
-            titulo={`${racha} día${racha === 1 ? "" : "s"} al 100 %`}
-            detalle="racha actual de jornadas con todo entregado"
-          />
+      <Acordeon
+        titulo="Por distancia"
+        resumen={`${totalFuera} de ${totalPedidos} pedidos fuera del tramo 1${
+          conKm.length > 0 ? ` · media ${kmMedio.toFixed(1)} km` : ""
+        }`}
+      >
+        <div className="flex flex-col gap-2.5">
+          {porTramo.map((t) => (
+            <div key={t.id} className="grid grid-cols-[42px_1fr_auto] items-center gap-2.5 text-sm">
+              <span className="font-mono text-xs">{t.id === TRAMO_MAS_DE_12_KM ? "+12 km" : `T${t.id}`}</span>
+              <div className="h-3 overflow-hidden rounded-full bg-linea">
+                <div className="h-full rounded-full bg-acento" style={{ width: `${(t.cuantos / masCuantos) * 100}%` }} />
+              </div>
+              <b className="font-mono text-xs">{t.cuantos}</b>
+            </div>
+          ))}
         </div>
-      </section>
+        {conKm.length > 0 ? (
+          <dl className="flex flex-col">
+            <Dato etiqueta="Distancia media" valor={`${kmMedio.toFixed(1)} km`} />
+            <Dato etiqueta="El pedido más lejano" valor={`${kmMaximo.toFixed(1)} km`} />
+            <Dato etiqueta="Pedidos con distancia" valor={`${conKm.length} de ${totalPedidos}`} />
+          </dl>
+        ) : (
+          <p className="text-xs text-tinta-3">
+            Todavía ningún pedido tiene distancia. Al leer las comandas se guarda de dónde vino cada pedido y aquí
+            verás qué tan lejos reparte.
+          </p>
+        )}
+      </Acordeon>
 
-      <ExportarEstadisticas
-        driver={perfil?.nombre ?? ""}
-        desde={desde}
-        hasta={hasta}
-        cifras={[
-          { etiqueta: "Pedidos", valor: String(totalPedidos) },
-          { etiqueta: "Soles", valor: formatearSoles(totalCentimos) },
-          { etiqueta: "Días trabajados", valor: String(cargados.length) },
-          {
-            etiqueta: "Promedio por día",
-            valor: `${(totalPedidos / cargados.length).toFixed(1)} pedidos`,
-          },
-          { etiqueta: "Tiempo en ruta", valor: formatearDuracion(totalMinutos) },
-          {
-            etiqueta: "Por pedido",
-            valor: totalPedidos ? formatearSoles(Math.round(totalCentimos / totalPedidos)) : "—",
-          },
-        ]}
-        bloques={[
-          {
-            id: "bloque-grafico",
-            titulo: "Pedidos y soles por día",
-            lectura:
-              "La altura de cada barra son los pedidos del día y la etiqueta de abajo, los soles. El segmento superior en otro tono son los pedidos que pasaron de 3 km. Los huecos con marca tenue son días sin carga, no días sin trabajo.",
-          },
-          {
-            id: "bloque-cifras",
-            titulo: "Totales del rango",
-            lectura: "Lo que suma el periodo consultado.",
-          },
-          {
-            id: "bloque-detalle",
-            titulo: "Tiempos e ingresos",
-            lectura:
-              "Los minutos por pedido son una estimación: las capturas traen la hora de la ruta, no la de cada pedido.",
-          },
-          {
-            id: "bloque-records",
-            titulo: "Récords",
-            lectura: "Lo mejor del periodo consultado.",
-          },
-        ]}
-      />
+      <Acordeon
+        titulo="Récords"
+        resumen={`${formatearSoles(mejorIngreso.centimos)} · mejor día`}
+      >
+        {bloqueRecords}
+      </Acordeon>
+
+      <Acordeon titulo="Exportar" resumen="Estadísticas a PDF">
+        <ExportarEstadisticas
+          driver={perfil?.nombre ?? ""}
+          desde={desde}
+          hasta={hasta}
+          cifras={[
+            { etiqueta: "Pedidos", valor: String(totalPedidos) },
+            { etiqueta: "Soles", valor: formatearSoles(totalCentimos) },
+            { etiqueta: "Días trabajados", valor: String(cargados.length) },
+            { etiqueta: "Promedio por día", valor: `${promedioDia.toFixed(1)} pedidos` },
+            { etiqueta: "Tiempo en ruta", valor: formatearDuracion(totalMinutos) },
+            { etiqueta: "Por pedido", valor: totalPedidos ? formatearSoles(centimosPorPedido) : "—" },
+          ]}
+          bloques={[
+            {
+              id: "bloque-grafico",
+              titulo: "Pedidos y soles por día",
+              lectura:
+                "La altura de cada barra son los pedidos del día y la etiqueta de abajo, los soles. El segmento superior en otro tono son los pedidos que pasaron de 3 km. Los huecos con marca tenue son días sin carga, no días sin trabajo.",
+            },
+            { id: "bloque-cifras", titulo: "Totales del rango", lectura: "Lo que suma el periodo consultado." },
+            {
+              id: "bloque-detalle",
+              titulo: "Tiempos e ingresos",
+              lectura: "Los minutos por pedido son una estimación: las capturas traen la hora de la ruta, no la de cada pedido.",
+            },
+            { id: "bloque-records", titulo: "Récords", lectura: "Lo mejor del periodo consultado." },
+          ]}
+        />
+      </Acordeon>
+
+      {/* El PDF se compone de estos bloques, y con los acordeones cerrados no se
+          verían: su contenido está plegado. Por eso van aquí, fuera de la
+          pantalla y siempre desplegados, con los ids que busca la exportación. */}
+      <div aria-hidden className="pointer-events-none fixed top-0 -left-[9999px] flex w-[560px] flex-col gap-4">
+        <div id="bloque-grafico" className="tarjeta">
+          <GraficoDias dias={dias} />
+        </div>
+        {bloqueCifras("bloque-cifras")}
+        <div id="bloque-detalle" className="grid gap-4">
+          <section className="tarjeta">
+            <span className="rotulo">Tiempos</span>
+            <div className="mt-2">{bloqueTiempos}</div>
+          </section>
+          <section className="tarjeta">
+            <span className="rotulo">Ingresos</span>
+            <div className="mt-2">{bloqueIngresos}</div>
+          </section>
+        </div>
+        <section id="bloque-records" className="tarjeta">
+          <span className="rotulo">Récords</span>
+          <div className="mt-3">{bloqueRecords}</div>
+        </section>
+      </div>
     </div>
   );
 }

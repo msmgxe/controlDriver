@@ -1,5 +1,6 @@
 "use client";
 
+import { Acordeon } from "@/components/Acordeon";
 import { useApariencia } from "@/components/Apariencia";
 import { Check } from "@/components/iconos";
 import type { Preferencia } from "@/lib/apariencia";
@@ -71,18 +72,20 @@ export function SeccionApariencia() {
   const { preferencia, cambiar } = useApariencia();
 
   return (
-    <section className="tarjeta flex flex-col gap-4" aria-labelledby="titulo-apariencia">
-      <div>
-        <h3 id="titulo-apariencia" className="text-lg">
-          Apariencia
-        </h3>
-        <p className="text-sm text-tinta-2">
-          Cuatro caras para elegir la que más te guste. Mapa y Asfalto son pareja de día y de
-          noche; Turbo y Menta se quedan fijas hasta que elijas otra.
-        </p>
-      </div>
+    <Acordeon
+      titulo="Apariencia"
+      resumen={
+        preferencia === "auto"
+          ? "Automático · Mapa de día, Asfalto de noche"
+          : (TEMAS.find((t) => t.valor === preferencia)?.nombre ?? "Mapa")
+      }
+    >
+      <p className="text-sm text-tinta-2">
+        Cuatro caras para elegir la que más te guste. Mapa y Asfalto son pareja de día y de noche;
+        Turbo y Menta se quedan fijas hasta que elijas otra.
+      </p>
 
-      <div role="radiogroup" aria-labelledby="titulo-apariencia" className="flex flex-col gap-2">
+      <div role="radiogroup" aria-label="Cara de la app" className="flex flex-col gap-2">
         {/* Automático, aparte y ancho: no es una quinta cara, es "que decida el
             teléfono entre Mapa y Asfalto", y merece leerse distinto. */}
         <button
@@ -136,6 +139,6 @@ export function SeccionApariencia() {
           })}
         </div>
       </div>
-    </section>
+    </Acordeon>
   );
 }

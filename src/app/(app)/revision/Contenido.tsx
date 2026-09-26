@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { CLAVE_REVISION } from "@/lib/carga";
+import { Acordeon } from "@/components/Acordeon";
 import { Alerta, Check } from "@/components/iconos";
 import { Aviso } from "@/components/ui";
 import { confirmarJornada } from "./acciones";
@@ -402,14 +403,22 @@ export function Contenido({ alSiguiente }: { alSiguiente?: () => void } = {}) {
           Las horas no vienen de las capturas: se proponen desde el horario del
           perfil y se corrigen aquí el día que se entre tarde o se salga antes. */}
       {pagaPermanencia && (
-        <section className="flex flex-col gap-3 rounded-card bg-sup-2 p-4">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <span className="rotulo">Permanencia en tienda</span>
-            <span className="text-xs text-tinta-3">
-              {formatearSoles(Math.round((regla.garantiaPermanencia?.solesPorHora ?? 0) * 100))} por
-              hora
-            </span>
-          </div>
+        <Acordeon
+          titulo="Permanencia en tienda"
+          resumen={
+            horasEnTienda > 0
+              ? `${horaEntrada}–${horaSalida} · ${horasEnTienda} h → ${formatearSoles(montoPermanencia)}${
+                  ganaPermanencia ? " · te cubre el piso" : ""
+                }`
+              : "Pon tu horario para que cuente"
+          }
+          aviso={horasEnTienda === 0}
+        >
+          <p className="text-xs text-tinta-3">
+            La tienda paga{" "}
+            {formatearSoles(Math.round((regla.garantiaPermanencia?.solesPorHora ?? 0) * 100))} por
+            hora de presencia.
+          </p>
 
           <div className="flex flex-wrap items-end gap-3">
             <div className="flex flex-col gap-1.5">
@@ -470,20 +479,18 @@ export function Contenido({ alSiguiente }: { alSiguiente?: () => void } = {}) {
               </p>
             )
           )}
-        </section>
+        </Acordeon>
       )}
 
       {/* Las rutas del día. Sin esto no hay dónde asignar la ruta de un
           pedido: si una captura de Rutas salió cortada, o si el día se está
           escribiendo entero a mano, la lista de rutas está vacía y el
           selector de cada pedido no tiene nada que ofrecer. */}
-      <section className="flex flex-col gap-3 rounded-card bg-sup-2 p-4">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <span className="rotulo">Rutas del día</span>
-          <span className="text-xs text-tinta-3">
-            {rutas.length} {rutas.length === 1 ? "ruta" : "rutas"}
-          </span>
-        </div>
+      <Acordeon
+        titulo="Rutas del día"
+        resumen={`${rutas.length} ${rutas.length === 1 ? "ruta" : "rutas"}`}
+        aviso={rutas.length === 0}
+      >
         <ListaDeRutas
           rutas={rutas.map((r) => ({ numero: r.numero, horaInicio: r.hora_inicio, horaFin: r.hora_fin }))}
           onBorrar={(numero) => {
@@ -544,37 +551,46 @@ export function Contenido({ alSiguiente }: { alSiguiente?: () => void } = {}) {
             }}
           />
         )}
-      </section>
-
-      <p className="text-sm text-tinta-2">
-        Todos los pedidos entran en el tramo 1 (0 a 3 km). Toca solo los que pasaron de 3 km.
-      </p>
+      </Acordeon>
 
       {/* Un pedido por fila: el código, y al lado su ruta con la hora y el
           estado. En el orden en que se hicieron —por la hora de su ruta— y los
           que no tienen ruta al final, donde se ven y se tocan para asignarla. */}
-      <div className="overflow-hidden rounded-card border border-linea bg-sup">
-        {pedidosEnOrden.length === 0 ? (
-          <p className="px-4 py-6 text-sm text-tinta-3">No se leyó ningún pedido.</p>
-        ) : (
-          pedidosEnOrden.map((p) => (
-            <FilaPedidoSimple
-              key={p.codigo}
-              codigo={p.codigo}
-              ruta={p.ruta}
-              hora={p.ruta !== null ? (horaDeRuta.get(p.ruta) ?? null) : null}
-              estado={p.estado}
-              tramo={p.tramo}
-              monto={
-                p.tramo === TRAMO_MAS_DE_12_KM && p.montoManualCentimos === null
-                  ? "falta monto"
-                  : formatearSoles(montoDe(p))
-              }
-              onClick={() => setEditando(pedidos.indexOf(p))}
-            />
-          ))
-        )}
-      </div>
+      <Acordeon
+        titulo="Pedidos"
+        resumen={
+          sinTarifar.length > 0
+            ? `Falta el monto de ${sinTarifar.length} de más de 12 km`
+            : `${pedidos.length} pedidos · ${fueraTramo1} fuera del tramo 1`
+        }
+        aviso={sinTarifar.length > 0}
+      >
+        <p className="text-sm text-tinta-2">
+          Todos los pedidos entran en el tramo 1 (0 a 3 km). Toca solo los que pasaron de 3 km.
+        </p>
+        <div className="-mx-[var(--pad-card)] -mb-4 overflow-hidden border-t border-linea">
+          {pedidosEnOrden.length === 0 ? (
+            <p className="px-4 py-6 text-sm text-tinta-3">No se leyó ningún pedido.</p>
+          ) : (
+            pedidosEnOrden.map((p) => (
+              <FilaPedidoSimple
+                key={p.codigo}
+                codigo={p.codigo}
+                ruta={p.ruta}
+                hora={p.ruta !== null ? (horaDeRuta.get(p.ruta) ?? null) : null}
+                estado={p.estado}
+                tramo={p.tramo}
+                monto={
+                  p.tramo === TRAMO_MAS_DE_12_KM && p.montoManualCentimos === null
+                    ? "falta monto"
+                    : formatearSoles(montoDe(p))
+                }
+                onClick={() => setEditando(pedidos.indexOf(p))}
+              />
+            ))
+          )}
+        </div>
+      </Acordeon>
 
       {error && <Aviso tono="mal" titulo="No se pudo guardar">{error}</Aviso>}
 

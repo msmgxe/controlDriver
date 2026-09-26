@@ -107,8 +107,10 @@ function ArmazonInterno({
     return () => document.removeEventListener("keydown", alPulsar);
   }, []);
 
+  // Ajustes solo vive en la barra de abajo, pero su título tiene que salir arriba
+  // igual: sin esto la cabecera decía «Hoy» estando en Ajustes.
   const actual =
-    [...DESTINOS, ...DESTINOS_ADMIN].find((d) =>
+    [...DESTINOS, ...DESTINOS_ADMIN, ...PUERTAS.filter((p) => p.href === "/ajustes")].find((d) =>
       d.href === "/" ? ruta === "/" : ruta.startsWith(d.href),
     ) ?? DESTINOS[0];
 
@@ -235,7 +237,10 @@ function ArmazonInterno({
             <h1 className="min-w-0 flex-1 truncate text-[22px]">{actual.nombre}</h1>
           </header>
 
-          <main className="flex-1 px-4 pt-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] lg:pb-16">
+          {/* `overflow-x-clip` y no `hidden`: la tira de semanas asoma la vecina al
+              arrastrar y no debe crear una barra de desplazamiento, pero `hidden`
+              haría de esto un contenedor de scroll y rompería los `sticky`. */}
+          <main className="flex-1 overflow-x-clip px-4 pt-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] lg:pb-16">
             {children}
           </main>
         </div>
