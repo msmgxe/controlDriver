@@ -3,130 +3,282 @@
 import { useState } from "react";
 
 import { Acordeon } from "@/components/Acordeon";
+import { ComparacionDeSemanas } from "@/components/ComparacionDeSemanas";
 import { ExportarEstadisticas } from "@/components/ExportarEstadisticas";
-import { GraficoDias, type DiaGrafico } from "@/components/GraficoDias";
-import { Reloj, Subir, Trofeo } from "@/components/iconos";
+import { GraficoDias } from "@/components/GraficoDias";
+import { GraficoSemanas } from "@/components/GraficoSemanas";
+import { Flecha, Reloj, Subir, Trofeo } from "@/components/iconos";
 import { Pestanas } from "@/components/Pestanas";
+import { SelectorDeMes } from "@/components/SelectorDeMes";
+import { SelectorDeSemana } from "@/components/SelectorDeSemana";
 import { Aviso, Cifras, Vacio } from "@/components/ui";
 import { useDatos } from "@/hooks/useDatos";
 import { descansosPorRango } from "@/lib/db/sqlite/descansos";
-import { jornadasPorRango, reglaVigente } from "@/lib/db/sqlite/jornadas";
-import { montoDelDia } from "@/lib/pagos/calcular-liquidacion";
+import { jornadasPorRango, resumenPorRango, reglaVigente } from "@/lib/db/sqlite/jornadas";
 import { perfilActual } from "@/lib/db/sqlite/perfil";
+import type { JornadaCompleta } from "@/lib/db/tipos";
+import {
+  diasDelRango,
+  lunesDeLasUltimas,
+  semanasDe,
+  totalesDe,
+  type DiaGrafico,
+} from "@/lib/estadisticas";
 import {
   formatearDuracion,
   formatearFecha,
   hoyEnLima,
+  lunesDeLaSemana,
   nombreDelDia,
-  rangoDeFechas,
+  nombreDelMes,
+  primerDiaDelMes,
   sumarDias,
+  ultimoDiaDelMes,
   type FechaISO,
 } from "@/lib/fechas";
-import { TRAMO_MAS_DE_12_KM, formatearSoles } from "@/lib/pagos/reglas";
+import { TRAMO_MAS_DE_12_KM, formatearSoles, type ReglaPago } from "@/lib/pagos/reglas";
 
-const RANGOS = [
-  { id: "7", etiqueta: "7 días" },
-  { id: "30", etiqueta: "30 días" },
-  { id: "mes", etiqueta: "Este mes" },
-] as const;
+type Vista = "semana" | "comparar" | "mes";
 
-type IdRango = (typeof RANGOS)[number]["id"];
-
-function limites(id: IdRango, hoy: FechaISO): [FechaISO, FechaISO] {
-  if (id === "7") return [sumarDias(hoy, -6), hoy];
-  if (id === "mes") return [`${hoy.slice(0, 8)}01`, hoy];
-  return [sumarDias(hoy, -29), hoy];
-}
+/** Cuántas semanas enseña «Semana a semana». */
+const SEMANAS_A_LA_VISTA = 8;
+/** Hasta cuántas semanas atrás se puede comparar. */
+const MAX_SEMANAS_ATRAS = 52;
 
 /**
  * Estadísticas (§10).
  *
- * Lo que se mira de un vistazo —el rango, las cuatro cifras y el gráfico de los
- * días— está siempre a la vista. El detalle va en acordeones cerrados que dicen
- * su dato clave sin abrirse: Tiempos, Ingresos, Por distancia, Récords y
- * Exportar.
+ * Tres vistas, en pestañas, y **siempre se elige qué semana o qué mes**:
+ *
+ *   · **Semana** — la barra de días de arriba elige cualquier semana; el gráfico
+ *     enseña sus siete días, y debajo, las últimas ocho semanas para ver cómo va
+ *     frente a las anteriores;
+ *   · **Comparar** — la semana elegida frente a otra, día por día y en cifras;
+ *   · **Mes** — el mes elegido semana a semana; tocar una semana la abre.
+ *
+ * Antes eran «7 días / 30 días / Este mes»: treinta barras de un día que
+ * empezaban por las más viejas y dejaban fuera la semana pasada y la de ahora,
+ * sin forma de elegir otra ni de compararlas.
+ *
+ * El detalle —Tiempos, Ingresos, Por distancia, Récords y Exportar— va en
+ * acordeones cerrados que dicen su dato clave sin abrirse.
  */
 export default function PaginaEstadisticas() {
-  const [rango, setRango] = useState<IdRango>("30");
-
   const hoy = hoyEnLima();
-  const [desde, hasta] = limites(rango, hoy);
+  const [vista, setVista] = useState<Vista>("semana");
+  const [semana, setSemana] = useState<FechaISO>(lunesDeLaSemana(hoy));
+  const [mes, setMes] = useState<FechaISO>(primerDiaDelMes(hoy));
+  // Con cuántas semanas atrás se compara (1 = la anterior).
+  const [atras, setAtras] = useState(1);
+
+  const finSemana = sumarDias(semana, 6);
+  const lunesB = sumarDias(semana, -7 * atras);
+  const finMes = ultimoDiaDelMes(mes);
+
+  /* Lo que hace falta según la vista: el rango del detalle y el del resumen por
+     día, que en «Semana» abarca las ocho semanas y en «Comparar» las dos. */
+  const detalleDesde = vista === "mes" ? mes : semana;
+  const detalleHasta = vista === "mes" ? finMes : finSemana;
+  const resumenDesde =
+    vista === "semana" ? lunesDeLasUltimas(semana, SEMANAS_A_LA_VISTA)[0] : vista === "comparar" ? lunesB : mes;
 
   const { datos } = useDatos(
     async () => {
-      const [jornadas, perfil, descansos] = await Promise.all([
-        jornadasPorRango(desde, hasta),
+      const [filas, jornadas, perfil, descansos] = await Promise.all([
+        resumenPorRango(resumenDesde, detalleHasta),
+        vista === "comparar" ? Promise.resolve([] as JornadaCompleta[]) : jornadasPorRango(detalleDesde, detalleHasta),
         perfilActual(),
-        descansosPorRango(desde, hasta),
+        descansosPorRango(resumenDesde, detalleHasta),
       ]);
-      const { regla } = await reglaVigente(hasta, perfil?.tiendaId ?? null, perfil?.vehiculo);
-      return { jornadas, perfil, regla, descansos: new Set<FechaISO>(descansos) };
+      const { regla } = await reglaVigente(detalleHasta, perfil?.tiendaId ?? null, perfil?.vehiculo);
+      return { filas, jornadas, perfil, regla, descansos: new Set<FechaISO>(descansos) };
     },
-    [desde, hasta],
-    // Cambiar de rango no debe vaciar la pantalla: se ve lo de antes un instante.
+    [vista, resumenDesde, detalleDesde, detalleHasta],
+    // Cambiar de semana no debe vaciar la pantalla: se ve lo de antes un instante.
     { conservar: true, entreCambios: true },
   );
 
   if (!datos) return <Esqueleto />;
-  const { jornadas, perfil, regla, descansos } = datos;
+  const { filas, jornadas, perfil, regla, descansos } = datos;
 
-  const cabecera = (
+  const encabezado = (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <h2 className="text-[26px] leading-tight">Estadísticas</h2>
-        <span className="rotulo">
-          {formatearFecha(desde)} – {formatearFecha(hasta)}
-        </span>
-      </div>
+      <h2 className="text-[26px] leading-tight">Estadísticas</h2>
       <Pestanas
-        etiqueta="Rango de días"
-        actual={rango}
-        alCambiar={(id) => setRango(id as IdRango)}
-        items={RANGOS.map((r) => ({ id: r.id, etiqueta: r.etiqueta }))}
+        etiqueta="Qué mirar"
+        actual={vista}
+        alCambiar={(id) => setVista(id as Vista)}
+        items={[
+          { id: "semana", etiqueta: "Semana" },
+          { id: "comparar", etiqueta: "Comparar" },
+          { id: "mes", etiqueta: "Mes" },
+        ]}
       />
     </div>
   );
 
-  if (jornadas.length === 0) {
+  /* ------------------------------ Comparar ------------------------------ */
+  if (vista === "comparar") {
+    const diasA = diasDelRango(semana, finSemana, filas, descansos, hoy);
+    const diasB = diasDelRango(lunesB, sumarDias(lunesB, 6), filas, descansos, hoy);
+    const rotulo = (lunes: FechaISO) => `${Number(lunes.slice(8, 10))}–${Number(sumarDias(lunes, 6).slice(8, 10))}`;
+
     return (
-      <div className="mx-auto flex max-w-[1180px] flex-col gap-4">
-        {cabecera}
-        <Vacio>No hay jornadas cargadas en este rango.</Vacio>
+      <div className="mx-auto flex max-w-[880px] flex-col gap-4">
+        {encabezado}
+        <SelectorDeSemana semana={semana} alCambiar={setSemana} etiqueta="Semana que miras" />
+
+        <div className="flex items-center justify-between gap-2 rounded-btn border border-linea-fuerte bg-sup p-1">
+          <button
+            type="button"
+            aria-label="Comparar con una semana más antigua"
+            disabled={atras >= MAX_SEMANAS_ATRAS}
+            onClick={() => setAtras((n) => n + 1)}
+            className="grid size-11 place-items-center rounded-btn hover:bg-sup-2 disabled:opacity-30"
+          >
+            <Flecha className="size-5 rotate-180" />
+          </button>
+          <div className="flex min-w-0 flex-col items-center text-center">
+            <span className="rotulo">Compararla con</span>
+            <b className="text-[17px] leading-tight">Sem. {rotulo(lunesB)}</b>
+            <span className="text-xs text-tinta-3">
+              {atras === 1 ? "la semana anterior" : `hace ${atras} semanas`}
+            </span>
+          </div>
+          <button
+            type="button"
+            aria-label="Comparar con una semana más reciente"
+            disabled={atras <= 1}
+            onClick={() => setAtras((n) => n - 1)}
+            className="grid size-11 place-items-center rounded-btn hover:bg-sup-2 disabled:opacity-30"
+          >
+            <Flecha className="size-5" />
+          </button>
+        </div>
+
+        {!diasA.some((d) => d.cargado) && !diasB.some((d) => d.cargado) ? (
+          <Vacio>No hay jornadas cargadas en ninguna de las dos semanas.</Vacio>
+        ) : (
+          <ComparacionDeSemanas
+            a={{ lunes: semana, rotulo: rotulo(semana), dias: diasA, totales: totalesDe(diasA) }}
+            b={{ lunes: lunesB, rotulo: rotulo(lunesB), dias: diasB, totales: totalesDe(diasB) }}
+          />
+        )}
       </div>
     );
   }
 
-  const porFecha = new Map(jornadas.map((j) => [j.fecha, j]));
-  const dias: DiaGrafico[] = rangoDeFechas(desde, hasta).map((fecha) => {
-    const j = porFecha.get(fecha);
-    if (!j) {
-      return { fecha, cargado: false, descanso: descansos.has(fecha), pedidos: 0, rutas: 0, minutos: 0, centimos: 0, fueraTramo1: 0 };
-    }
-    return {
-      fecha,
-      cargado: true,
-      pedidos: j.ordenes.length,
-      rutas: j.rutas.length,
-      minutos: j.rutas.reduce((s, r) => s + (r.duracionMin ?? 0), 0),
-      // Lo que se cobró ese día, piso de permanencia incluido.
-      centimos: montoDelDia(
-        j.ordenes.reduce((s, o) => s + (o.montoCentimos ?? 0), 0),
-        regla,
-        j.horaEntrada,
-        j.horaSalida,
-      ).pagadoCentimos,
-      fueraTramo1: j.ordenes.filter((o) => o.tramo > 1).length,
-    };
-  });
-
-  const cargados = dias.filter((d) => d.cargado);
-  const totalPedidos = cargados.reduce((s, d) => s + d.pedidos, 0);
-  const totalRutas = cargados.reduce((s, d) => s + d.rutas, 0);
-  const totalMinutos = cargados.reduce((s, d) => s + d.minutos, 0);
-  const totalCentimos = cargados.reduce((s, d) => s + d.centimos, 0);
-  const totalFuera = cargados.reduce((s, d) => s + d.fueraTramo1, 0);
+  /* ---------------------------- Semana y Mes ---------------------------- */
+  const dias = diasDelRango(detalleDesde, detalleHasta, filas, descansos, hoy);
+  const t = totalesDe(dias);
+  const hayDatos = t.diasTrabajados > 0;
   // Un día de descanso no es un hueco: no falta nada por subir.
   const huecos = dias.filter((d) => !d.cargado && !d.descanso && d.fecha <= hoy).length;
+
+  // Las semanas del gráfico: en «Semana», las últimas ocho hasta la elegida; en «Mes», las del mes.
+  const semanas =
+    vista === "semana"
+      ? semanasDe(
+          diasDelRango(lunesDeLasUltimas(semana, SEMANAS_A_LA_VISTA)[0], finSemana, filas, descansos, hoy),
+          lunesDeLaSemana,
+        )
+      : semanasDe(dias, lunesDeLaSemana);
+
+  return (
+    <div className="mx-auto flex max-w-[880px] flex-col gap-4">
+      {encabezado}
+
+      {vista === "semana" ? (
+        <SelectorDeSemana semana={semana} alCambiar={setSemana} />
+      ) : (
+        <SelectorDeMes mes={mes} alCambiar={setMes} />
+      )}
+
+      <Cifras
+        datos={[
+          { etiqueta: "Pedidos", valor: String(t.pedidos) },
+          { etiqueta: "Soles", valor: (t.centimos / 100).toFixed(2) },
+          { etiqueta: "Días trabajados", valor: String(t.diasTrabajados) },
+          { etiqueta: "Promedio por día", valor: t.promedioPorDia.toFixed(1), pie: "ped." },
+        ]}
+      />
+
+      {vista === "semana" && (
+        <div className="tarjeta">
+          <GraficoDias dias={dias} />
+        </div>
+      )}
+
+      <div className="tarjeta">
+        <GraficoSemanas
+          semanas={semanas}
+          elegida={vista === "semana" ? semana : undefined}
+          titulo={vista === "semana" ? "Semana a semana" : `Semanas de ${nombreDelMes(mes)}`}
+          alElegir={(lunes) => {
+            setSemana(lunes);
+            setVista("semana");
+          }}
+        />
+      </div>
+
+      {huecos > 0 && (
+        <Aviso tono="atento" titulo={`${huecos} día${huecos === 1 ? "" : "s"} sin carga en el rango`}>
+          <p>
+            Un hueco no es un día sin trabajo. Súbelo y las cifras se recalculan; si no trabajaste, márcalo como
+            descanso en Pagos.
+          </p>
+        </Aviso>
+      )}
+
+      {!hayDatos ? (
+        <Vacio>No hay jornadas cargadas en este rango.</Vacio>
+      ) : (
+        <>
+          {vista === "mes" && (
+            <Acordeon titulo="Día por día" resumen={`${t.diasTrabajados} días con carga`}>
+              <GraficoDias dias={dias} />
+            </Acordeon>
+          )}
+          <DetalleDelRango
+            jornadas={jornadas}
+            dias={dias}
+            regla={regla}
+            driver={perfil?.nombre ?? ""}
+            desde={detalleDesde}
+            hasta={detalleHasta}
+          />
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * El detalle de un rango de días —una semana o un mes—: Tiempos, Ingresos, Por
+ * distancia, Récords y Exportar, en acordeones cerrados que dicen su dato clave.
+ */
+function DetalleDelRango({
+  jornadas,
+  dias,
+  regla,
+  driver,
+  desde,
+  hasta,
+}: {
+  jornadas: JornadaCompleta[];
+  dias: DiaGrafico[];
+  regla: ReglaPago;
+  driver: string;
+  desde: FechaISO;
+  hasta: FechaISO;
+}) {
+  const cargados = dias.filter((d) => d.cargado);
+  const t = totalesDe(dias);
+  const { pedidos: totalPedidos, rutas: totalRutas, minutos: totalMinutos, centimos: totalCentimos } = t;
+  const totalFuera = t.fueraTramo1;
+  const promedioDia = t.promedioPorDia;
+  const centimosPorDia = t.centimosPorDia;
+  const centimosPorPedido = t.centimosPorPedido;
 
   const duraciones = jornadas.flatMap((j) =>
     j.rutas.map((r) => r.duracionMin).filter((d): d is number => d !== null && d > 0),
@@ -148,17 +300,13 @@ export default function PaginaEstadisticas() {
   /* Por distancia: en qué tramos cayeron los pedidos y, de los que se ubicaron
      con su comanda, qué tan lejos. */
   const ordenes = jornadas.flatMap((j) => j.ordenes);
-  const porTramo = [...regla.tramos.map((t) => t.id), TRAMO_MAS_DE_12_KM]
+  const porTramo = [...regla.tramos.map((tr) => tr.id), TRAMO_MAS_DE_12_KM]
     .map((id) => ({ id, cuantos: ordenes.filter((o) => o.tramo === id).length }))
-    .filter((t) => t.id !== TRAMO_MAS_DE_12_KM || t.cuantos > 0);
-  const masCuantos = Math.max(1, ...porTramo.map((t) => t.cuantos));
+    .filter((tr) => tr.id !== TRAMO_MAS_DE_12_KM || tr.cuantos > 0);
+  const masCuantos = Math.max(1, ...porTramo.map((tr) => tr.cuantos));
   const conKm = ordenes.filter((o) => o.km !== null);
   const kmMedio = conKm.length ? conKm.reduce((s, o) => s + (o.km ?? 0), 0) / conKm.length : 0;
   const kmMaximo = conKm.length ? Math.max(...conKm.map((o) => o.km ?? 0)) : 0;
-
-  const promedioDia = cargados.length ? totalPedidos / cargados.length : 0;
-  const centimosPorDia = cargados.length ? Math.round(totalCentimos / cargados.length) : 0;
-  const centimosPorPedido = totalPedidos ? Math.round(totalCentimos / totalPedidos) : 0;
 
   const bloqueTiempos = (
     <dl className="flex flex-col">
@@ -213,24 +361,7 @@ export default function PaginaEstadisticas() {
   );
 
   return (
-    <div className="mx-auto flex max-w-[1180px] flex-col gap-4">
-      {cabecera}
-
-      {bloqueCifras()}
-
-      <div className="tarjeta">
-        <GraficoDias dias={dias} />
-      </div>
-
-      {huecos > 0 && (
-        <Aviso tono="atento" titulo={`${huecos} día${huecos === 1 ? "" : "s"} sin carga en el rango`}>
-          <p>
-            Un hueco no es un día sin trabajo. Súbelo y las cifras se recalculan; si no trabajaste, márcalo como
-            descanso en Pagos.
-          </p>
-        </Aviso>
-      )}
-
+    <>
       <Acordeon
         titulo="Tiempos"
         resumen={`${formatearDuracion(totalMinutos)} en ruta · ${durProm} min por ruta`}
@@ -255,13 +386,13 @@ export default function PaginaEstadisticas() {
         }`}
       >
         <div className="flex flex-col gap-2.5">
-          {porTramo.map((t) => (
-            <div key={t.id} className="grid grid-cols-[42px_1fr_auto] items-center gap-2.5 text-sm">
-              <span className="font-mono text-xs">{t.id === TRAMO_MAS_DE_12_KM ? "+12 km" : `T${t.id}`}</span>
+          {porTramo.map((tr) => (
+            <div key={tr.id} className="grid grid-cols-[42px_1fr_auto] items-center gap-2.5 text-sm">
+              <span className="font-mono text-xs">{tr.id === TRAMO_MAS_DE_12_KM ? "+12 km" : `T${tr.id}`}</span>
               <div className="h-3 overflow-hidden rounded-full bg-linea">
-                <div className="h-full rounded-full bg-acento" style={{ width: `${(t.cuantos / masCuantos) * 100}%` }} />
+                <div className="h-full rounded-full bg-acento" style={{ width: `${(tr.cuantos / masCuantos) * 100}%` }} />
               </div>
-              <b className="font-mono text-xs">{t.cuantos}</b>
+              <b className="font-mono text-xs">{tr.cuantos}</b>
             </div>
           ))}
         </div>
@@ -288,7 +419,7 @@ export default function PaginaEstadisticas() {
 
       <Acordeon titulo="Exportar" resumen="Estadísticas a PDF">
         <ExportarEstadisticas
-          driver={perfil?.nombre ?? ""}
+          driver={driver}
           desde={desde}
           hasta={hasta}
           cifras={[
@@ -340,7 +471,7 @@ export default function PaginaEstadisticas() {
           <div className="mt-3">{bloqueRecords}</div>
         </section>
       </div>
-    </div>
+    </>
   );
 }
 

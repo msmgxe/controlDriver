@@ -1,9 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Luna } from "@/components/iconos";
-import { formatearDuracion, formatearFecha, nombreDelDia, type FechaISO } from "@/lib/fechas";
+import type { DiaGrafico } from "@/lib/estadisticas";
+import { formatearDuracion, formatearFecha, nombreDelDia } from "@/lib/fechas";
 import { formatearSoles } from "@/lib/pagos/reglas";
 
 /**
@@ -23,29 +24,35 @@ import { formatearSoles } from "@/lib/pagos/reglas";
  * entre pasos y contraste del extremo claro contra la superficie.
  */
 
-export interface DiaGrafico {
-  fecha: FechaISO;
-  cargado: boolean;
-  /** No se trabajó, dicho por el repartidor: no es lo mismo que «sin subir». */
-  descanso?: boolean;
-  pedidos: number;
-  rutas: number;
-  minutos: number;
-  centimos: number;
-  fueraTramo1: number;
-}
+export type { DiaGrafico };
 
 const ALTO = 176;
+
+/** Hasta cuántos días caben en el ancho del celular, repartidos en partes iguales. */
+const MAX_SIN_DESLIZAR = 8;
 
 export function GraficoDias({ dias }: { dias: DiaGrafico[] }) {
   const [metrica, setMetrica] = useState<"pedidos" | "soles">("pedidos");
   const [activo, setActivo] = useState<number | null>(null);
   const contenedor = useRef<HTMLDivElement>(null);
 
+  /* Un rango largo no cabe y se desliza de lado, y tiene que **abrirse por lo
+     más reciente**: empezar por los días más viejos dejaba la semana pasada y
+     la de ahora fuera de la vista, justo lo que se quiere mirar. */
+  const cuantos = dias.length;
+  useEffect(() => {
+    const el = contenedor.current;
+    if (el && cuantos > MAX_SIN_DESLIZAR) el.scrollLeft = el.scrollWidth;
+  }, [cuantos]);
+
   const conDatos = dias.filter((d) => d.cargado);
   if (conDatos.length === 0) {
     return <p className="py-10 text-center text-sm text-tinta-3">Todavía no hay días cargados.</p>;
   }
+
+  // Con pocos días las columnas se reparten el ancho; con muchos, miden lo mismo y se desliza.
+  const columna =
+    dias.length <= MAX_SIN_DESLIZAR ? "min-w-0 flex-1" : "w-[54px] shrink-0";
 
   const valorDe = (d: DiaGrafico) => (metrica === "pedidos" ? d.pedidos : d.centimos / 100);
   const max = Math.max(...conDatos.map(valorDe));
@@ -104,9 +111,9 @@ export function GraficoDias({ dias }: { dias: DiaGrafico[] }) {
               return (
                 <div
                   key={d.fecha}
-                  className="relative flex h-full w-[54px] shrink-0 flex-col items-center justify-end rounded-chip pb-[22px]"
+                  className={`relative flex h-full ${columna} flex-col items-center justify-end rounded-chip pb-[22px]`}
                 >
-                  {d.descanso ? (
+                  {d.futuro ? null : d.descanso ? (
                     <>
                       <Luna aria-label="Descanso" className="mb-1.5 size-4 text-tinta-2" />
                       <span className="h-3.5 w-[26px] rounded-chip bg-descanso" />
@@ -141,7 +148,7 @@ export function GraficoDias({ dias }: { dias: DiaGrafico[] }) {
                 onClick={() => setActivo(i)}
                 onMouseLeave={() => setActivo(null)}
                 onBlur={() => setActivo(null)}
-                className={`relative flex h-full w-[54px] shrink-0 flex-col items-center justify-end rounded-chip pb-[22px] ${
+                className={`relative flex h-full ${columna} flex-col items-center justify-end rounded-chip pb-[22px] ${
                   activo === i ? "bg-sup-2" : "hover:bg-sup-2"
                 }`}
               >

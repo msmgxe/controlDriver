@@ -3,14 +3,14 @@ import { describe, expect, it } from "vitest";
 import { PUERTAS, puertaDe, tituloDe } from "./navegacion";
 
 describe("el orden de la barra de abajo", () => {
-  it("Inicio, Cargar, Pagos, Historial, Buscar, Estadísticas y Ajustes", () => {
+  it("Inicio, Cargar, Pagos, Estadísticas, Buscar, Historial y Ajustes", () => {
     expect(PUERTAS.map((p) => p.id)).toEqual([
       "inicio",
       "cargar",
       "pagos",
-      "historial",
-      "buscar",
       "estadisticas",
+      "buscar",
+      "historial",
       "ajustes",
     ]);
   });

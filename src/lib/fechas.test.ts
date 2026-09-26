@@ -7,9 +7,13 @@ import {
   formatearFecha,
   hoyEnLima,
   lunesDeLaSemana,
+  nombreDelMes,
+  primerDiaDelMes,
   rangoDeFechas,
   semanaDe,
   sumarDias,
+  sumarMeses,
+  ultimoDiaDelMes,
 } from "./fechas";
 
 /* §15 pide pruebas de los límites de semana: domingo 23:59 frente a lunes
@@ -97,5 +101,30 @@ describe("formato (§9)", () => {
   it("escribe las duraciones en horas y minutos", () => {
     expect(formatearDuracion(182)).toBe("3 h 02 min");
     expect(formatearDuracion(45)).toBe("45 min");
+  });
+});
+
+describe("meses", () => {
+  it("el primer y el último día del mes", () => {
+    expect(primerDiaDelMes("2026-09-16")).toBe("2026-09-01");
+    expect(ultimoDiaDelMes("2026-09-16")).toBe("2026-09-30");
+    expect(ultimoDiaDelMes("2026-10-01")).toBe("2026-10-31");
+  });
+
+  it("febrero, con año bisiesto y sin él", () => {
+    expect(ultimoDiaDelMes("2028-02-10")).toBe("2028-02-29");
+    expect(ultimoDiaDelMes("2027-02-10")).toBe("2027-02-28");
+  });
+
+  it("sumar meses cae siempre en el día 1, también al cambiar de año", () => {
+    expect(sumarMeses("2026-09-30", 1)).toBe("2026-10-01");
+    expect(sumarMeses("2026-09-30", -1)).toBe("2026-08-01");
+    expect(sumarMeses("2026-12-15", 1)).toBe("2027-01-01");
+    expect(sumarMeses("2026-01-31", -1)).toBe("2025-12-01");
+  });
+
+  it("el nombre del mes, con su año", () => {
+    expect(nombreDelMes("2026-09-16")).toBe("septiembre 2026");
+    expect(nombreDelMes("2027-01-01")).toBe("enero 2027");
   });
 });

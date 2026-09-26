@@ -132,6 +132,35 @@ export function nombreDelDia(f: FechaISO): string {
   return DIAS[diaDeLaSemana(f)];
 }
 
+/* ---------------------------------------------------------------------------
+ * Meses
+ * ------------------------------------------------------------------------- */
+
+/** El primer día del mes de esa fecha: `2026-09-16` → `2026-09-01`. */
+export function primerDiaDelMes(f: FechaISO): FechaISO {
+  return `${f.slice(0, 8)}01`;
+}
+
+/** El último día del mes de esa fecha: `2026-09-16` → `2026-09-30`. */
+export function ultimoDiaDelMes(f: FechaISO): FechaISO {
+  const d = aDate(primerDiaDelMes(f));
+  d.setUTCMonth(d.getUTCMonth() + 1, 0);
+  return aISO(d);
+}
+
+/** El primer día del mes que queda `n` meses después (o antes, con `n` negativo). */
+export function sumarMeses(f: FechaISO, n: number): FechaISO {
+  const d = aDate(primerDiaDelMes(f));
+  d.setUTCMonth(d.getUTCMonth() + n, 1);
+  return aISO(d);
+}
+
+/** "septiembre 2026" */
+export function nombreDelMes(f: FechaISO): string {
+  const d = aDate(f);
+  return `${MESES[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
+
 /** "miércoles 16 de septiembre de 2026" */
 export function formatearFechaLarga(f: FechaISO): string {
   const d = aDate(f);

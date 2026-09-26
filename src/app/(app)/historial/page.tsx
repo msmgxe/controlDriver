@@ -9,6 +9,8 @@ import { Acordeon } from "@/components/Acordeon";
 import { BotonesExportar } from "@/components/BotonesExportar";
 import { FilaPedidoSimple } from "@/components/FilaPedidoSimple";
 import { Pestanas } from "@/components/Pestanas";
+import { SelectorDeMes } from "@/components/SelectorDeMes";
+import { SelectorDeSemana } from "@/components/SelectorDeSemana";
 import { Aviso, EstadoPedido, Vacio } from "@/components/ui";
 import { useDatos } from "@/hooks/useDatos";
 import { buscarPedidos, esCodigoPendiente, jornadasPorRango, reglaVigente } from "@/lib/db/sqlite/jornadas";
@@ -19,13 +21,16 @@ import type { JornadaCompleta } from "@/lib/db/tipos";
 import type { DatosExportacion } from "@/lib/exportar/datos";
 import {
   diasEntre,
+  esFechaISO,
   formatearDuracion,
   formatearFecha,
   hoyEnLima,
   lunesDeLaSemana,
   nombreDelDia,
+  primerDiaDelMes,
   rangoDeFechas,
   sumarDias,
+  ultimoDiaDelMes,
   type FechaISO,
 } from "@/lib/fechas";
 import { formatearSoles } from "@/lib/pagos/reglas";
@@ -44,23 +49,16 @@ import { formatearSoles } from "@/lib/pagos/reglas";
  * es exactamente lo filtrado en pantalla.
  */
 
-const RANGOS = [
-  { id: "semana", etiqueta: "Esta sem." },
-  { id: "pasada", etiqueta: "Sem. pasada" },
-  { id: "mes", etiqueta: "Este mes" },
-  { id: "anterior", etiqueta: "Mes pasado" },
-] as const;
+type Tipo = "semana" | "mes";
 
-type IdRango = (typeof RANGOS)[number]["id"];
-
-function limites(id: IdRango, hoy: FechaISO): [FechaISO, FechaISO] {
-  const lunes = lunesDeLaSemana(hoy);
-  if (id === "pasada") return [sumarDias(lunes, -7), sumarDias(lunes, -1)];
-  if (id === "mes") return [`${hoy.slice(0, 8)}01`, hoy];
-  if (id === "anterior") {
-    const finAnterior = sumarDias(`${hoy.slice(0, 8)}01`, -1);
-    return [`${finAnterior.slice(0, 8)}01`, finAnterior];
-  }
+/**
+ * De qué días es el historial: la semana (de lunes a domingo) o el mes de una
+ * fecha. Antes eran cuatro rangos fijos —esta semana, la pasada, este mes, el
+ * pasado— y no había cómo ir a ninguna otra.
+ */
+function limites(tipo: Tipo, f: FechaISO): [FechaISO, FechaISO] {
+  if (tipo === "mes") return [primerDiaDelMes(f), ultimoDiaDelMes(f)];
+  const lunes = lunesDeLaSemana(f);
   return [lunes, sumarDias(lunes, 6)];
 }
 
@@ -76,14 +74,19 @@ export default function PaginaHistorial() {
 
 function Contenido() {
   const params = useSearchParams();
-  const rango = (RANGOS.find((r) => r.id === params.get("rango"))?.id ?? "semana") as IdRango;
+  const hoy = hoyEnLima();
+  const tipo: Tipo = params.get("tipo") === "mes" ? "mes" : "semana";
+  // Cualquier fecha del período elegido; sin ninguna, el de hoy.
+  const pedida = params.get("f");
+  const f: FechaISO = esFechaISO(pedida) && pedida <= hoy ? pedida : hoy;
   const vista = params.get("vista") === "pedidos" ? "pedidos" : "dia";
   const buscado = (params.get("buscar") ?? "").trim();
   const router = useRouter();
-  const irA = (r: IdRango, v: "dia" | "pedidos") => router.replace(`/historial?rango=${r}&vista=${v}`);
-
-  const hoy = hoyEnLima();
-  const [desde, hasta] = limites(rango, hoy);
+  const irA = (cambios: { tipo?: Tipo; f?: FechaISO; vista?: "dia" | "pedidos" }) =>
+    router.replace(
+      `/historial?tipo=${cambios.tipo ?? tipo}&f=${cambios.f ?? f}&vista=${cambios.vista ?? vista}`,
+    );
+  const [desde, hasta] = limites(tipo, f);
 
   const { datos } = useDatos(async () => {
     const [jornadas, perfil, tiendas] = await Promise.all([
@@ -182,36 +185,37 @@ function Contenido() {
       <Pestanas
         etiqueta="Vista del historial"
         actual={vista}
-        alCambiar={(id) => irA(rango, id === "pedidos" ? "pedidos" : "dia")}
+        alCambiar={(id) => irA({ vista: id === "pedidos" ? "pedidos" : "dia" })}
         items={[
           { id: "dia", etiqueta: "Por día" },
           { id: "pedidos", etiqueta: "Pedidos", cuenta: totales.pedidos },
         ]}
       />
 
-      <div className="flex gap-2 overflow-x-auto pb-0.5" role="group" aria-label="Rango">
-        {RANGOS.map((r) => (
-          <button
-            key={r.id}
-            type="button"
-            onClick={() => irA(r.id, vista)}
-            aria-pressed={rango === r.id}
-            className={`inline-flex min-h-9 shrink-0 items-center rounded-chip px-3 text-sm whitespace-nowrap ${
-              rango === r.id
-                ? "bg-acento font-semibold text-acento-texto"
-                : "border border-linea-fuerte bg-sup text-tinta-2"
-            }`}
-          >
-            {r.etiqueta}
-          </button>
-        ))}
-      </div>
+      {/* De qué días: una semana o un mes, y cuál. Se elige con la barra de
+          días —que se arrastra— o con las flechas del mes. */}
+      <Pestanas
+        etiqueta="Período"
+        actual={tipo}
+        alCambiar={(id) => irA({ tipo: id === "mes" ? "mes" : "semana" })}
+        items={[
+          { id: "semana", etiqueta: "Semana" },
+          { id: "mes", etiqueta: "Mes" },
+        ]}
+      />
+
+      {tipo === "semana" ? (
+        <SelectorDeSemana semana={lunesDeLaSemana(f)} alCambiar={(lunes) => irA({ f: lunes })} />
+      ) : (
+        <SelectorDeMes mes={primerDiaDelMes(f)} alCambiar={(mes) => irA({ f: mes })} />
+      )}
 
       {/* §10, utilidades — la consulta de "la tienda me pregunta por este
           pedido": dice en qué fecha fue, en qué ruta y con qué horario. Para
           buscar por cliente, teléfono o dirección está la pantalla Buscar. */}
       <form method="get" action="/historial" className="flex flex-wrap gap-2">
-        <input type="hidden" name="rango" value={rango} />
+        <input type="hidden" name="tipo" value={tipo} />
+        <input type="hidden" name="f" value={f} />
         <input type="hidden" name="vista" value={vista} />
         <input
           type="search"
@@ -225,7 +229,7 @@ function Contenido() {
           Buscar
         </button>
         {buscado !== "" && (
-          <Link href={`/historial?rango=${rango}&vista=${vista}`} className="boton-sec">
+          <Link href={`/historial?tipo=${tipo}&f=${f}&vista=${vista}`} className="boton-sec">
             Limpiar
           </Link>
         )}
@@ -251,6 +255,18 @@ function Contenido() {
 
       {jornadas.length === 0 ? (
         <Vacio>No hay pedidos en este rango.</Vacio>
+      ) : vista === "dia" && tipo === "semana" ? (
+        // Una sola semana: sus días a la vista, sin esconderlos detrás de un acordeón.
+        <div className="tarjeta flex flex-col !py-1">
+          {todosLosDias.map((fecha) => {
+            const j = porFecha.get(fecha);
+            return j ? (
+              <FilaDeDia key={fecha} fecha={fecha} j={j} monto={cobroDe(j).pagadoCentimos} />
+            ) : (
+              <FilaDeDiaVacio key={fecha} fecha={fecha} futuro={diasEntre(hoy, fecha) > 0} />
+            );
+          })}
+        </div>
       ) : vista === "dia" ? (
         <div className="flex flex-col gap-3">
           {semanas.map((sem) => {

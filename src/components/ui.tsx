@@ -79,8 +79,12 @@ export function Cifras({ datos }: { datos: { etiqueta: string; valor: string; pi
           <span className="text-xs font-medium text-tinta-3">{d.etiqueta}</span>
           <span className="font-display text-[22px] leading-tight font-bold tabular-nums">
             {d.valor}
-            {d.pie && <small className="ml-1 font-sans text-sm font-medium text-tinta-2">{d.pie}</small>}
+            {/* Un pie corto («ped.») va al lado de la cifra; uno largo —«▲ +7 vs sem. 14–20»— debajo, para no partirse. */}
+            {d.pie && d.pie.length <= 6 && (
+              <small className="ml-1 font-sans text-sm font-medium text-tinta-2">{d.pie}</small>
+            )}
           </span>
+          {d.pie && d.pie.length > 6 && <span className="text-xs leading-tight text-tinta-2">{d.pie}</span>}
         </div>
       ))}
     </div>

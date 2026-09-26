@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 
+import { ArchivoGenerado } from "@/components/ArchivoGenerado";
 import { Alerta, Hoja } from "@/components/iconos";
 import { nombreArchivo, type DatosExportacion } from "@/lib/exportar/datos";
+import { prepararArchivo, type ArchivoListo } from "@/lib/exportar/entregar";
 
 /**
  * Exportar el rango a Excel o PDF (§11).
@@ -12,19 +14,21 @@ import { nombreArchivo, type DatosExportacion } from "@/lib/exportar/datos";
  * un mega entre las dos y no tienen por qué estar en el arranque de la app— y
  * el archivo se arma en memoria.
  *
- * Tras generar se ofrece **compartir** antes que descargar: en Android es lo
- * que lleva el archivo a WhatsApp, al correo o a Drive de un toque, que es lo
- * que se hace de verdad con él.
+ * Tras generar se dice **dónde está el archivo** y se ofrece verlo, guardarlo en
+ * Descargas o compartirlo (ver `ArchivoGenerado`): dentro del APK el navegador
+ * no descarga, y antes el archivo se generaba y no salía por ningún lado.
  */
 export function BotonesExportar({ datos }: { datos: DatosExportacion }) {
   const [trabajando, setTrabajando] = useState<"excel" | "pdf" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [listo, setListo] = useState<ArchivoListo | null>(null);
 
   const vacio = datos.jornadas.length === 0;
 
   async function exportar(formato: "excel" | "pdf") {
     setTrabajando(formato);
     setError(null);
+    setListo(null);
     try {
       const { blob, nombre } =
         formato === "excel"
@@ -37,7 +41,7 @@ export function BotonesExportar({ datos }: { datos: DatosExportacion }) {
               nombre: nombreArchivo(datos, "pdf"),
             };
 
-      await entregar(blob, nombre);
+      setListo(await prepararArchivo(blob, nombre));
     } catch (e) {
       setError(
         e instanceof Error
@@ -72,6 +76,8 @@ export function BotonesExportar({ datos }: { datos: DatosExportacion }) {
         </button>
       </div>
 
+      {listo && <ArchivoGenerado archivo={listo} alCerrar={() => setListo(null)} />}
+
       {error && (
         <p className="flex items-center gap-2 text-sm font-semibold text-mal">
           <Alerta className="size-4 shrink-0" />
@@ -85,35 +91,4 @@ export function BotonesExportar({ datos }: { datos: DatosExportacion }) {
       </p>
     </div>
   );
-}
-
-/**
- * Comparte el archivo si el equipo puede, y si no lo descarga.
- *
- * `canShare` con el archivo delante es la única comprobación fiable: hay
- * navegadores que tienen `navigator.share` pero rechazan archivos.
- */
-async function entregar(blob: Blob, nombre: string): Promise<void> {
-  const archivo = new File([blob], nombre, { type: blob.type });
-
-  if (navigator.canShare?.({ files: [archivo] })) {
-    try {
-      await navigator.share({ files: [archivo], title: nombre });
-      return;
-    } catch (e) {
-      // Cancelar el diálogo de compartir no es un error: se sale sin descargar.
-      if (e instanceof DOMException && e.name === "AbortError") return;
-      // Cualquier otro fallo cae a la descarga de toda la vida.
-    }
-  }
-
-  const url = URL.createObjectURL(blob);
-  const enlace = document.createElement("a");
-  enlace.href = url;
-  enlace.download = nombre;
-  document.body.appendChild(enlace);
-  enlace.click();
-  enlace.remove();
-  // Se libera después para no cortar la descarga mientras arranca.
-  setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }

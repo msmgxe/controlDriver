@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 
+import { ArchivoGenerado } from "@/components/ArchivoGenerado";
 import { Alerta, Hoja } from "@/components/iconos";
+import { prepararArchivo, type ArchivoListo } from "@/lib/exportar/entregar";
 import { formatearFecha } from "@/lib/fechas";
 
 /**
@@ -15,6 +17,9 @@ import { formatearFecha } from "@/lib/fechas";
  * **Siempre en tema claro**, aunque la app esté en oscuro: un PDF con fondo
  * negro es ilegible impreso y se come la tinta. Se consigue poniendo
  * `data-tema="claro"` en el bloque justo antes de capturarlo.
+ *
+ * Al terminar se dice dónde está el archivo y se ofrece verlo, guardarlo en
+ * Descargas o compartirlo (ver `ArchivoGenerado`).
  */
 
 export interface BloqueExportable {
@@ -40,10 +45,12 @@ export function ExportarEstadisticas({
 }) {
   const [trabajando, setTrabajando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [listo, setListo] = useState<ArchivoListo | null>(null);
 
   async function exportar() {
     setTrabajando(true);
     setError(null);
+    setListo(null);
 
     // Elementos a los que se les forzó el tema, para poder devolverlos como
     // estaban pase lo que pase.
@@ -147,7 +154,7 @@ export function ExportarEstadisticas({
         doc.text("Rutas-A", margen, altoPagina - 8);
       }
 
-      await entregar(doc.output("blob"), `estadisticas_${desde}_a_${hasta}.pdf`);
+      setListo(await prepararArchivo(doc.output("blob"), `estadisticas_${desde}_a_${hasta}.pdf`));
     } catch (e) {
       setError(
         e instanceof Error ? `No se pudo generar el PDF: ${e.message}` : "No se pudo generar el PDF.",
@@ -170,6 +177,8 @@ export function ExportarEstadisticas({
         {trabajando ? "Componiendo el PDF…" : "Exportar estadísticas a PDF"}
       </button>
 
+      {listo && <ArchivoGenerado archivo={listo} alCerrar={() => setListo(null)} />}
+
       {error && (
         <p className="flex items-center gap-2 text-sm font-semibold text-mal">
           <Alerta className="size-4 shrink-0" />
@@ -182,27 +191,4 @@ export function ExportarEstadisticas({
       </p>
     </div>
   );
-}
-
-/** Comparte si el equipo puede, y si no descarga. Igual que en el listado. */
-async function entregar(blob: Blob, nombre: string): Promise<void> {
-  const archivo = new File([blob], nombre, { type: blob.type });
-
-  if (navigator.canShare?.({ files: [archivo] })) {
-    try {
-      await navigator.share({ files: [archivo], title: nombre });
-      return;
-    } catch (e) {
-      if (e instanceof DOMException && e.name === "AbortError") return;
-    }
-  }
-
-  const url = URL.createObjectURL(blob);
-  const enlace = document.createElement("a");
-  enlace.href = url;
-  enlace.download = nombre;
-  document.body.appendChild(enlace);
-  enlace.click();
-  enlace.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }

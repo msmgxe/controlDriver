@@ -8,9 +8,11 @@ import { nombreDelDia, rangoDeFechas, sumarDias, type FechaISO } from "@/lib/fec
 /**
  * La barra de semanas: siete días, y se arrastra para ir a otra semana.
  *
- * Está en Inicio (para elegir qué día se mira) y en Pagos (para elegir qué
- * semana se cobra). Es la misma pieza con dos caras: en Inicio cada día lleva
- * un punto si está cargado; en Pagos, lo que se cobró ese día.
+ * Está en Inicio (para elegir qué día se mira), en Pagos (para elegir qué
+ * semana se cobra), y en Estadísticas e Historial (para elegir qué semana se
+ * mira o se compara). Es la misma pieza con tres caras: en Inicio cada día lleva
+ * un punto si está cargado; en Pagos, lo que se cobró ese día; en Estadísticas
+ * e Historial, cuántos pedidos tuvo.
  *
  * **Sin huecos.** La semana anterior y la siguiente ya están pegadas a los
  * lados, con el mismo espacio que hay entre día y día: al arrastrar, las
@@ -33,7 +35,11 @@ export interface DatosDelDia {
   descanso: boolean;
   /** Lo que se cobró ese día, para la cara de Pagos. */
   centimos?: number;
+  /** Cuántos pedidos tuvo, para la cara de Estadísticas e Historial. */
+  pedidos?: number;
 }
+
+export type ModoDeLaTira = "inicio" | "pagos" | "pedidos";
 
 /** Cuánto hay que arrastrar, en píxeles, para que cuente como "cambiar de semana" y no como un toque que tembló. */
 const UMBRAL_ARRASTRE = 6;
@@ -48,17 +54,24 @@ export function TiraDeSemanas({
   datos,
   alElegirDia,
   alMoverSemana,
+  interactivo = true,
 }: {
   /** El lunes de la semana que se enseña. */
   semana: FechaISO;
   /** El día elegido; en Pagos puede no haber ninguno. */
   dia: FechaISO | null;
   hoy: FechaISO;
-  modo: "inicio" | "pagos";
+  modo: ModoDeLaTira;
   /** Lo que se sabe de cada día de las tres semanas visibles. */
   datos: ReadonlyMap<FechaISO, DatosDelDia>;
   alElegirDia: (fecha: FechaISO) => void;
   alMoverSemana: (delta: -1 | 1) => void;
+  /**
+   * Falso cuando la tira solo sirve para **elegir la semana** —Estadísticas e
+   * Historial—: los días se ven pero no se tocan, para que un toque no parezca
+   * hacer algo y no lo haga.
+   */
+  interactivo?: boolean;
 }) {
   const marcoRef = useRef<HTMLDivElement>(null);
   const [desplazamiento, setDesplazamiento] = useState(0);
@@ -181,6 +194,7 @@ export function TiraDeSemanas({
                 modo={modo}
                 elegido={fecha === dia}
                 datos={datos.get(fecha)}
+                interactivo={interactivo}
                 alElegir={() => {
                   // Un arrastre no debe, además, elegir el día que haya quedado bajo el dedo.
                   if (!arrastrando) alElegirDia(fecha);
@@ -201,13 +215,15 @@ function Ficha({
   elegido,
   datos,
   alElegir,
+  interactivo,
 }: {
   fecha: FechaISO;
   hoy: FechaISO;
-  modo: "inicio" | "pagos";
+  modo: ModoDeLaTira;
   elegido: boolean;
   datos: DatosDelDia | undefined;
   alElegir: () => void;
+  interactivo: boolean;
 }) {
   const futuro = fecha > hoy;
   const cargado = datos?.cargado ?? false;
@@ -224,7 +240,9 @@ function Ficha({
       modo === "inicio" ? (
         <i aria-hidden className={`size-[7px] rounded-full ${elegido ? "bg-acento-texto" : "bg-acento"}`} />
       ) : (
-        <span className="font-mono text-[10px] font-bold">{Math.round((datos?.centimos ?? 0) / 100)}</span>
+        <span className="font-mono text-[10px] font-bold">
+          {modo === "pedidos" ? (datos?.pedidos ?? 0) : Math.round((datos?.centimos ?? 0) / 100)}
+        </span>
       );
   } else if (!futuro) {
     // Un día pasado sin carga ni descanso: falta subirlo.
@@ -239,23 +257,44 @@ function Ficha({
       );
   }
 
-  return (
-    <button
-      type="button"
-      onClick={alElegir}
-      aria-pressed={elegido}
-      aria-label={`${nombre} ${Number(fecha.slice(8))}${cargado ? ", cargado" : descanso ? ", descanso" : futuro ? "" : ", sin cargar"}`}
-      className={`flex min-h-[66px] min-w-0 flex-col items-center justify-center gap-px rounded-btn border text-[11.5px] ${
-        elegido
-          ? "border-acento bg-acento text-acento-texto"
-          : fecha === hoy
-            ? "border-acento bg-sup-2 text-acento-tinta"
-            : "border-linea bg-sup-2 text-tinta-2"
-      } ${futuro && !elegido ? "opacity-45" : ""}`}
-    >
+  const etiqueta = `${nombre} ${Number(fecha.slice(8))}${
+    cargado
+      ? modo === "pedidos"
+        ? `, ${datos?.pedidos ?? 0} pedidos`
+        : ", cargado"
+      : descanso
+        ? ", descanso"
+        : futuro
+          ? ""
+          : ", sin cargar"
+  }`;
+  const clases = `flex min-h-[66px] min-w-0 flex-col items-center justify-center gap-px rounded-btn border text-[11.5px] ${
+    elegido
+      ? "border-acento bg-acento text-acento-texto"
+      : fecha === hoy
+        ? "border-acento bg-sup-2 text-acento-tinta"
+        : "border-linea bg-sup-2 text-tinta-2"
+  } ${futuro && !elegido ? "opacity-45" : ""}`;
+  const contenido = (
+    <>
       <span className="font-bold capitalize">{nombre}</span>
       <b className={`text-base leading-tight font-extrabold ${elegido ? "" : "text-tinta"}`}>{fecha.slice(8)}</b>
       <span className="grid h-3.5 place-items-center">{marca}</span>
+    </>
+  );
+
+  // Sin interacción es solo un rótulo: no es un botón que no hace nada.
+  if (!interactivo) {
+    return (
+      <div role="img" aria-label={etiqueta} className={clases}>
+        {contenido}
+      </div>
+    );
+  }
+
+  return (
+    <button type="button" onClick={alElegir} aria-pressed={elegido} aria-label={etiqueta} className={clases}>
+      {contenido}
     </button>
   );
 }

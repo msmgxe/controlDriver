@@ -36,6 +36,41 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v36 — 26/09/2026
+Elegir la semana en Estadísticas e Historial, y el PDF que no aparecía.
+- **Arreglado: el PDF (y el Excel) no salían por ningún lado.** El botón generaba
+  el archivo y no pasaba nada: dentro del APK el navegador no descarga y su
+  «compartir» no admite archivos, así que el archivo se perdía sin aviso. Ahora,
+  al terminar, sale un cuadro «Tu archivo está listo» con su nombre y tres
+  botones: **Ver** (lo abre el visor de PDF o la hoja de cálculo del teléfono),
+  **Guardar en Descargas** (queda en `Descargas/Rutas-A`, visible desde el gestor
+  de archivos) y **Compartir** (WhatsApp, correo, Drive). Vale para el PDF de
+  Estadísticas y para el Excel y el PDF de Historial. Es un plugin nuevo de
+  Android: solo se puede probar en el teléfono.
+- **Nuevo: Estadísticas con la semana que quieras.** Tres pestañas —**Semana**,
+  **Comparar** y **Mes**— y arriba la misma barra de días que Inicio y Pagos:
+  se arrastra para ir a otra semana, o se toca el calendario para ir a una fecha.
+  Cada día de la barra dice cuántos pedidos tuvo.
+  · **Semana**: sus siete días en barras (ahora caben sin deslizar) y, debajo,
+    «Semana a semana», las últimas ocho con la elegida resaltada; tocar una
+    semana la abre.
+  · **Comparar**: la semana elegida frente a otra —por defecto la anterior; con
+    las flechas, la de hace 2, 3… semanas—. Las cifras dicen cuánto subió o bajó,
+    y el gráfico pone las dos día por día: la elegida llena, la otra solo
+    contorno. «Cifra por cifra» da el detalle.
+  · **Mes**: el mes elegido semana a semana, con flechas para cambiar de mes.
+  Sustituye a «7 días / 30 días / Este mes»: eran treinta barras de un día que
+  empezaban por las más viejas y dejaban fuera la semana pasada y la de ahora.
+  El gráfico de días ya abre por lo más reciente cuando no cabe.
+- **Nuevo: Historial con el mismo selector.** Pestañas Semana | Mes en vez de
+  los cuatro rangos fijos: se elige cualquier semana con la barra de días y
+  cualquier mes con las flechas. Una semana muestra sus días directamente; un mes,
+  sus semanas plegadas. Exportar sigue bajando exactamente lo que se ve.
+- **Cambio: el menú.** Estadísticas e Historial intercambian lugar: Inicio,
+  Cargar, Pagos, **Estadísticas**, Buscar, **Historial**, Ajustes.
+- **Pendiente de probar en el celular:** Ver, Guardar y Compartir tras exportar
+  (necesitan Android), y la barra de días arrastrable en Estadísticas.
+
 ### v35 — 26/09/2026
 La barra de abajo, el botón de cargar y los iconos de vehículo.
 - **Cambio: la barra de abajo enseña dónde estás.** La pastilla de color (amarilla

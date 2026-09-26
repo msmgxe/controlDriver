@@ -22,9 +22,9 @@ export const PUERTAS: readonly Puerta[] = [
   { id: "inicio", href: "/", nombre: "Hoy", corto: "Inicio" },
   { id: "cargar", nombre: "Cargar" },
   { id: "pagos", href: "/pagos", nombre: "Pagos" },
-  { id: "historial", href: "/historial", nombre: "Historial" },
-  { id: "buscar", href: "/buscar", nombre: "Buscar" },
   { id: "estadisticas", href: "/estadisticas", nombre: "Estadísticas", corto: "Estadíst." },
+  { id: "buscar", href: "/buscar", nombre: "Buscar" },
+  { id: "historial", href: "/historial", nombre: "Historial" },
   { id: "ajustes", href: "/ajustes", nombre: "Ajustes" },
 ];
 
