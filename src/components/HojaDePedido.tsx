@@ -14,6 +14,7 @@ import {
 import { Alerta, Camara, Check, Equis, Ojo, Pin, Telefono, Ticket } from "@/components/iconos";
 import { Pestanas } from "@/components/Pestanas";
 import { RadarDeTramos } from "@/components/RadarDeTramos";
+import { numeroDeDespacho } from "@/lib/extraccion/esquema";
 import { Aviso } from "@/components/ui";
 import { useCapa } from "@/hooks/useCapa";
 import { comprimir } from "@/lib/carga";
@@ -1025,7 +1026,7 @@ function TabEvidencia({
       const blob = await (await fetch(vista)).blob();
       const { hojas } = await leerFotoDeComandas(blob);
       // Si en la foto hay varias hojas, la de este pedido es la que lleva su número.
-      const numero = /^v(\d{8})wofp-/.exec(orden.codigo)?.[1];
+      const numero = numeroDeDespacho(orden.codigo) ?? undefined;
       const hoja = hojas.find((h) => h.comanda.numero.valor === numero) ?? hojas[0];
       const c = hoja.comanda;
       if (!c.nombre.valor && !c.direccion.valor && !c.telefono.valor) {

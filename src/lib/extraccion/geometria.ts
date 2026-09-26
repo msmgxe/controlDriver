@@ -24,7 +24,7 @@
  * entendía el intérprete, pero ordenadas y sin el ruido. Así se puede probar
  * con lecturas reales, sin teléfono.
  */
-import { ESTADOS_DE_PEDIDO, RE_CODIGO, RE_RUTA_DEL_PEDIDO, estadoDe, normalizar } from "./ocr";
+import { ESTADOS_DE_PEDIDO, RE_RUTA_DEL_PEDIDO, estadoDe, hayCodigo, normalizar } from "./ocr";
 
 /** Un trozo de texto con el rectángulo que ocupa, en píxeles de la imagen. */
 export interface LineaConCaja {
@@ -102,7 +102,7 @@ function enFrases(fila: readonly LineaConCaja[]): LineaConCaja[] {
  * Qué es cada cosa
  * ------------------------------------------------------------------------- */
 
-const conCodigo = (t: string) => RE_CODIGO.test(t);
+const conCodigo = (t: string) => hayCodigo(t);
 const esRuta = (t: string) => RE_RUTA_DEL_PEDIDO.test(normalizar(t));
 const esSoloCifra = (t: string) => /^(?:[^\w\s]|[oaq@©])?\s*\d{1,3}$/.test(normalizar(t));
 

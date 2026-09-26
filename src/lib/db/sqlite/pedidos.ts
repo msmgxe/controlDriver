@@ -12,7 +12,7 @@
  * dos veces en el pago de la semana, y una ruta que no existe deja un pedido
  * apuntando a nada. La pantalla avisa antes, pero quien no deja pasar es esto.
  */
-import { RE_CODIGO_PEDIDO } from "@/lib/extraccion/esquema";
+import { FORMATO_DE_CODIGO, RE_CODIGO_PEDIDO } from "@/lib/extraccion/esquema";
 
 import { consultar, ejecutar, enTransaccion } from "./conexion";
 
@@ -67,7 +67,7 @@ export async function actualizarPedido(
     if (cambios.codigo !== undefined) {
       const codigo = normalizarCodigo(cambios.codigo);
       if (!RE_CODIGO_PEDIDO.test(codigo)) {
-        throw new Error(`"${cambios.codigo}" no es un código de pedido: debe tener la forma v12238726wofp-01.`);
+        throw new Error(`"${cambios.codigo}" no es un código de pedido: debe tener la forma ${FORMATO_DE_CODIGO}.`);
       }
       /* Se compara sin distinguir mayúsculas: un código guardado tal como lo
          transcribió el lector sigue siendo el mismo pedido aunque venga en

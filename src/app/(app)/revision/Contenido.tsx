@@ -14,8 +14,9 @@ import { DueloDePago } from "@/components/DueloDePago";
 import { FilaPedidoSimple } from "@/components/FilaPedidoSimple";
 import { BotonReordenar, LectorDeRutas, ListaDeRutas, RutaManual } from "@/components/RutaManual";
 import { reordenarPorHora } from "@/lib/db/sqlite/rutas";
-import { RE_CODIGO_PEDIDO } from "@/lib/extraccion/esquema";
+import { FORMATO_DE_CODIGO, RE_CODIGO_PEDIDO } from "@/lib/extraccion/esquema";
 import type { Alerta as AlertaValidacion } from "@/lib/extraccion/validar";
+import type { LoCombinado } from "@/lib/extraccion/combinar";
 import type { JornadaFusionada } from "@/lib/extraccion/fusionar";
 import { hoyEnLima } from "@/lib/fechas";
 import {
@@ -43,7 +44,13 @@ interface RespuestaExtraccion {
   // La ruta de extracción añade `tramo` a cada pedido antes de devolverlos:
   // todos nacen en tramo 1 y el driver solo toca las excepciones (§13).
   jornada: Omit<JornadaFusionada, "ordenes"> & {
-    ordenes: (JornadaFusionada["ordenes"][number] & { tramo: number })[];
+    /* `km` y `montoCentimos` solo vienen en los pedidos que ya estaban
+       guardados de ese día: conservan lo que ya se les había puesto. */
+    ordenes: (JornadaFusionada["ordenes"][number] & {
+      tramo: number;
+      km?: number | null;
+      montoCentimos?: number;
+    })[];
     /** Lo que se quitó por ser de la noche anterior o estar ya guardado. */
     descartes?: {
       rutas: JornadaFusionada["rutas"];
@@ -51,6 +58,8 @@ interface RespuestaExtraccion {
     };
   };
   alertas: AlertaValidacion[];
+  /** Ese día ya tenía datos guardados: lo leído se suma a ellos. */
+  combinado?: LoCombinado;
   regla: ReglaPago;
   /** Horario propuesto desde el perfil; el driver lo corrige si el día cambió. */
   permanencia: {
@@ -128,8 +137,10 @@ export function Contenido({ alSiguiente }: { alSiguiente?: () => void } = {}) {
       posicion: o.posicion,
       ruta: o.ruta,
       tramo: o.tramo ?? 1,
-      km: null,
-      montoManualCentimos: null,
+      km: o.km ?? null,
+      // Un pedido de más de 12 km ya guardado conserva el monto que se le escribió.
+      montoManualCentimos:
+        (o.tramo ?? 1) === TRAMO_MAS_DE_12_KM ? (o.montoCentimos ?? null) : null,
     })),
   );
   /* Editable, y no solo lo que trajo la lectura: la captura de Rutas puede
@@ -257,7 +268,12 @@ export function Contenido({ alSiguiente }: { alSiguiente?: () => void } = {}) {
       rutasDeclaradas: jornada.contadorRutas,
       ordenesDeclaradas: jornada.contadorOrdenes,
       validacionOk: bloqueos.length === 0,
-      modo: "reemplazar",
+      /* Si la fecha se eligió o se cambió a mano, esta pantalla no sabe qué
+         hay guardado ese día —solo lo sabe de la fecha que leyeron las
+         capturas—: se combina, que no borra nada. Con la fecha leída, la lista
+         de aquí ya incluye lo guardado y reemplazar respeta las bajas que la
+         persona haya hecho. */
+      modo: fecha === (jornada.fecha ?? "") ? "reemplazar" : "combinar",
       horaEntrada: horaEntrada || null,
       horaSalida: horaSalida || null,
       rutas: rutas.map((r) => ({
@@ -308,6 +324,8 @@ export function Contenido({ alSiguiente }: { alSiguiente?: () => void } = {}) {
           {datos.imagenesLeidas === 1 ? "" : "s"}
         </span>
       </div>
+
+      {datos.combinado && <AvisoDeCombinado c={datos.combinado} />}
 
       {/* §4.5 — la fecha va arriba, grande y editable */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-card bg-acento-suave px-4 py-3">
@@ -641,6 +659,35 @@ export function Contenido({ alSiguiente }: { alSiguiente?: () => void } = {}) {
 }
 
 
+/**
+ * Avisa de que ese día ya estaba guardado y que lo leído **se suma**.
+ *
+ * Es lo que hace que subir una captura mejor de un pedido no se lea como
+ * «empezar de cero»: aquí se ve, antes de guardar, qué había y qué se añade.
+ */
+function AvisoDeCombinado({ c }: { c: LoCombinado }) {
+  const cuantos = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno : varios}`;
+  const nuevos = [
+    c.pedidosNuevos > 0 ? cuantos(c.pedidosNuevos, "pedido nuevo", "pedidos nuevos") : null,
+    c.rutasNuevas > 0 ? cuantos(c.rutasNuevas, "ruta nueva", "rutas nuevas") : null,
+  ].filter(Boolean);
+
+  return (
+    <div className="flex flex-col gap-1 rounded-btn bg-acento-suave px-4 py-3 text-sm text-acento-tinta">
+      <b>
+        Este día ya tenía {cuantos(c.pedidos, "pedido", "pedidos")} y {cuantos(c.rutas, "ruta", "rutas")} guardados.
+      </b>
+      <p>
+        {nuevos.length > 0
+          ? `Lo que leíste se suma: ${nuevos.join(" y ")}. Lo que ya estaba se conserva tal cual.`
+          : "Las capturas no traen nada nuevo: todo lo que leyeron ya estaba guardado."}
+        {c.porCantidad > 0 &&
+          ` Los ${c.porCantidad} pedidos que anotaste por cantidad se reemplazan por los que se leyeron.`}
+      </p>
+    </div>
+  );
+}
+
 /* --------------------------------------------------------------------------
  * Hoja inferior con los cinco tramos (§13)
  * ------------------------------------------------------------------------ */
@@ -679,7 +726,7 @@ function HojaPedido({
   const [confirmandoBorrado, setConfirmandoBorrado] = useState(false);
   const codigoLimpio = codigo.trim().toLowerCase();
   const errorCodigo = !RE_CODIGO_PEDIDO.test(codigoLimpio)
-    ? "Debe tener la forma v12238726wofp-01."
+    ? `Debe tener la forma ${FORMATO_DE_CODIGO}.`
     : otrosCodigos.includes(codigoLimpio)
       ? "Ese código ya está en la lista: un pedido no se cuenta dos veces."
       : null;

@@ -17,13 +17,16 @@
  */
 import {
   REGLA_INICIAL,
+  TARIFA_MOTO_ELECTRICA,
   VEHICULO_POR_DEFECTO,
   esquemaReglaPago,
+  TRAMO_MAS_DE_12_KM,
   pagoDelTramo,
+  reglaTarifaUnica,
   type ReglaPago,
   type TipoVehiculo,
 } from "@/lib/pagos/reglas";
-import type { FechaISO } from "@/lib/fechas";
+import { lunesDeLaSemana, type FechaISO } from "@/lib/fechas";
 import { montoDelDia } from "@/lib/pagos/calcular-liquidacion";
 import { perfilActual } from "./perfil";
 import type {
@@ -334,7 +337,8 @@ export async function reglaVigente(
   tiendaId: string | null,
   vehiculo: TipoVehiculo = VEHICULO_POR_DEFECTO,
 ): Promise<{ id: string | null; regla: ReglaPago }> {
-  if (!tiendaId) return { id: null, regla: REGLA_INICIAL };
+  const sinRegla = { id: null, regla: reglaPorDefecto(vehiculo) };
+  if (!tiendaId) return sinRegla;
 
   const filas = await consultar<{ id: string; parametros: string }>(
     `select id, parametros from reglas_pago
@@ -342,16 +346,87 @@ export async function reglaVigente(
       order by vigente_desde desc limit 1`,
     [tiendaId, vehiculo, fecha],
   );
-  if (filas.length === 0) return { id: null, regla: REGLA_INICIAL };
+  if (filas.length === 0) return sinRegla;
 
   try {
     const parseada = esquemaReglaPago.safeParse(JSON.parse(filas[0].parametros));
     // Si la fila está corrupta se usa la regla del código antes que romper un
     // cálculo de dinero con datos a medias.
-    return { id: filas[0].id, regla: parseada.success ? parseada.data : REGLA_INICIAL };
+    return { id: filas[0].id, regla: parseada.success ? parseada.data : reglaPorDefecto(vehiculo) };
   } catch {
-    return { id: filas[0].id, regla: REGLA_INICIAL };
+    return { id: filas[0].id, regla: reglaPorDefecto(vehiculo) };
   }
+}
+
+/**
+ * La regla del código para un vehículo, cuando la base no trae ninguna.
+ *
+ * Tiene que ser **la de ese vehículo**: la tabla por tramos del auto no es la
+ * de la moto, que paga un monto único. Antes cualquier vehículo sin regla
+ * guardada caía en la del auto, y una moto sin tarifa propia cobraba como auto.
+ */
+function reglaPorDefecto(vehiculo: TipoVehiculo): ReglaPago {
+  return vehiculo === "moto" ? reglaTarifaUnica(TARIFA_MOTO_ELECTRICA) : REGLA_INICIAL;
+}
+
+/**
+ * Arregla los días de moto que se guardaron con los montos del auto.
+ *
+ * Hasta la v33, confirmar una carga calculaba los montos sin decir el
+ * vehículo, y `reglaVigente` sin vehículo cae en auto: una moto quedaba con la
+ * tarifa por tramos del auto en cada pedido, aunque en pantalla se hubiera
+ * visto la suya. El día se guardaba con `vehiculo = 'moto'` pero con dinero de
+ * auto, y los totales de la semana salían de más.
+ *
+ * Esto recalcula, para los días de moto, el monto de cada pedido con la regla
+ * de moto que le toca por fecha. Cuatro cuidados:
+ *
+ *   · solo días de moto: los de auto no se tocan;
+ *   · **no toca las semanas ya cerradas o pagadas**: ahí lo que cuenta es lo que
+ *     se cobró, y cambiar los pedidos por debajo descuadraría lo anotado;
+ *   · no toca los pedidos de más de 12 km, cuyo monto lo escribió la persona;
+ *   · es **idempotente**: si ya cuadra no escribe nada, así que puede correr en
+ *     cada arranque.
+ *
+ * Devuelve cuántos pedidos corrigió.
+ */
+export async function repararMontosDeMoto(): Promise<number> {
+  const dias = await consultar<{ id: string; fecha: string; tienda_id: string | null }>(
+    `select id, fecha, tienda_id from jornadas where vehiculo = 'moto' order by fecha asc`,
+  );
+
+  let corregidos = 0;
+  for (const dia of dias) {
+    const fecha = dia.fecha as FechaISO;
+
+    const cerrada = await consultar<{ estado: string }>(
+      `select estado from liquidaciones where semana_inicio = ? and estado <> 'abierta'`,
+      [lunesDeLaSemana(fecha)],
+    );
+    if (cerrada.length > 0) continue;
+
+    const { regla } = await reglaVigente(fecha, dia.tienda_id, "moto");
+    const pedidos = await consultar<{ id: string; tramo: number; monto_centimos: number | null }>(
+      `select id, tramo, monto_centimos from ordenes where jornada_id = ? and tramo <> ?`,
+      [dia.id, TRAMO_MAS_DE_12_KM],
+    );
+
+    let cambio = false;
+    for (const p of pedidos) {
+      const esperado = pagoDelTramo(regla, p.tramo || 1);
+      if (esperado === null || esperado === p.monto_centimos) continue;
+      await ejecutar(`update ordenes set monto_centimos = ? where id = ?`, [esperado, p.id]);
+      corregidos += 1;
+      cambio = true;
+    }
+    if (cambio) {
+      await ejecutar(`update jornadas set actualizado_en = ?, sincronizado = 0 where id = ?`, [
+        ahora(),
+        dia.id,
+      ]);
+    }
+  }
+  return corregidos;
 }
 
 /* ---------------------------------------------------------------------------
@@ -373,6 +448,15 @@ export async function guardarJornada(
   const noEntregado = datos.ordenes.filter((o) => o.estado === "No entregado").length;
   const momento = ahora();
 
+  // «Combinar» añade a lo que ya hay y no toca nada de la jornada: lo que la
+  // carga no trae (un contador que no se leyó, las horas de la tienda) no
+  // borra lo que ya estaba guardado.
+  const combinando = modo === "combinar";
+  const declarada = (columna: string) =>
+    combinando ? `coalesce(excluded.${columna}, jornadas.${columna})` : `excluded.${columna}`;
+  const conservada = (columna: string) =>
+    combinando ? `coalesce(jornadas.${columna}, excluded.${columna})` : `excluded.${columna}`;
+
   return enTransaccion(async () => {
     const existentes = await consultar<{ id: string }>(
       `select id from jornadas where fecha = ?`,
@@ -387,15 +471,15 @@ export async function guardarJornada(
           vehiculo, creado_en, actualizado_en, sincronizado)
        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
        on conflict (fecha) do update set
-         rutas_declaradas   = excluded.rutas_declaradas,
-         ordenes_declaradas = excluded.ordenes_declaradas,
+         rutas_declaradas   = ${declarada("rutas_declaradas")},
+         ordenes_declaradas = ${declarada("ordenes_declaradas")},
          entregado          = excluded.entregado,
          parcial            = excluded.parcial,
          no_entregado       = excluded.no_entregado,
          validacion_ok      = excluded.validacion_ok,
-         tienda_id          = excluded.tienda_id,
-         hora_entrada       = excluded.hora_entrada,
-         hora_salida        = excluded.hora_salida,
+         tienda_id          = ${conservada("tienda_id")},
+         hora_entrada       = ${conservada("hora_entrada")},
+         hora_salida        = ${conservada("hora_salida")},
          vehiculo           = excluded.vehiculo,
          actualizado_en     = excluded.actualizado_en,
          sincronizado       = 0`,
@@ -437,9 +521,9 @@ export async function guardarJornada(
         `insert into rutas (id, jornada_id, numero, estado, hora_inicio, hora_fin)
          values (?, ?, ?, ?, ?, ?)
          on conflict (jornada_id, numero) do update set
-           estado = excluded.estado,
-           hora_inicio = excluded.hora_inicio,
-           hora_fin = excluded.hora_fin`,
+           estado = ${combinando ? "rutas.estado" : "excluded.estado"},
+           hora_inicio = ${combinando ? "coalesce(rutas.hora_inicio, excluded.hora_inicio)" : "excluded.hora_inicio"},
+           hora_fin = ${combinando ? "coalesce(rutas.hora_fin, excluded.hora_fin)" : "excluded.hora_fin"}`,
         [nuevoId(), jornadaId, r.numero, r.estado, r.horaInicio, r.horaFin],
       );
     }
@@ -456,15 +540,18 @@ export async function guardarJornada(
            (id, jornada_id, ruta_id, codigo, estado, posicion, tramo, km, monto_centimos)
          values (?, ?, ?, ?, ?, ?, ?, ?, ?)
          on conflict (jornada_id, codigo) do update set
-           ruta_id        = excluded.ruta_id,
-           estado         = excluded.estado,
-           posicion       = excluded.posicion,
+           /* Al combinar, un pedido que ya estaba se queda como estaba —su
+              estado, su tramo, su monto— y la carga solo le pone la ruta si no
+              la tenía. */
+           ruta_id        = ${combinando ? "coalesce(ordenes.ruta_id, excluded.ruta_id)" : "excluded.ruta_id"},
+           estado         = ${combinando ? "ordenes.estado" : "excluded.estado"},
+           posicion       = ${combinando ? "ordenes.posicion" : "excluded.posicion"},
            /* Un pedido con distancia ya calculada —de su comanda— conserva su
               tramo, su distancia y su monto: la captura los trae siempre en
               tramo 1, y pisarlos borraría lo que la distancia ya decidió. */
-           tramo          = case when ordenes.km is not null then ordenes.tramo else excluded.tramo end,
-           km             = case when ordenes.km is not null then ordenes.km else excluded.km end,
-           monto_centimos = case when ordenes.km is not null then ordenes.monto_centimos else excluded.monto_centimos end`,
+           tramo          = ${combinando ? "ordenes.tramo" : "case when ordenes.km is not null then ordenes.tramo else excluded.tramo end"},
+           km             = ${combinando ? "ordenes.km" : "case when ordenes.km is not null then ordenes.km else excluded.km end"},
+           monto_centimos = ${combinando ? "ordenes.monto_centimos" : "case when ordenes.km is not null then ordenes.monto_centimos else excluded.monto_centimos end"}`,
         [
           nuevoId(), jornadaId,
           o.ruta === null ? null : (idPorNumero.get(o.ruta) ?? null),
@@ -472,6 +559,10 @@ export async function guardarJornada(
         ],
       );
     }
+
+    /* Al combinar, los contadores de arriba solo cuentan los pedidos de esta
+       carga; los de la jornada son los que hay guardados. */
+    if (combinando) await recontarEstados(jornadaId, momento);
 
     return { jornadaId };
   });

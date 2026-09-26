@@ -9,6 +9,7 @@ import { ProveedorLicencia, useLicencia } from "@/components/Licencia";
 import { Alerta } from "@/components/iconos";
 import { useDatos } from "@/hooks/useDatos";
 import { mensajeDeLicencia } from "@/lib/licencia/estado";
+import { repararMontosDeMoto } from "@/lib/db/sqlite/jornadas";
 import { perfilActual, sembrarSiHaceFalta } from "@/lib/db/sqlite/perfil";
 
 /**
@@ -34,6 +35,9 @@ function Contenido({ children }: { children: React.ReactNode }) {
      pantalla salga a medio configurar. */
   const { datos: perfil, error, recargar } = useDatos(async () => {
     await sembrarSiHaceFalta();
+    // Corrige los días de moto guardados con montos de auto (error de v33 y
+    // anteriores). Si algo falla, no debe impedir abrir la aplicación.
+    await repararMontosDeMoto().catch(() => 0);
     return perfilActual();
   }, []);
 

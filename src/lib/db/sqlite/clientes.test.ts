@@ -136,6 +136,22 @@ describe("encontrar los pedidos de un despacho", () => {
     expect(r.map((x) => x.codigo)).toEqual(["v12261836wofp-02", "v12261836wofp-01"]);
   });
 
+  it("también cuando el código es del otro formato, con el número en el medio", async () => {
+    await guardarJornada(
+      {
+        ...dia,
+        ordenes: [
+          ...dia.ordenes,
+          { codigo: "wpet-12268585-01", estado: "Entregado", posicion: 4, ruta: 1, tramo: 1, km: null, montoCentimos: 1000 },
+        ],
+      },
+      "reemplazar",
+    );
+    const r = await pedidosPorNumero("12268585");
+    expect(r.map((x) => x.codigo)).toEqual(["wpet-12268585-01"]);
+    expect(r[0]).toMatchObject({ fecha: FECHA, ruta: 1 });
+  });
+
   it("no encuentra lo que no existe, ni se deja engañar por comodines", async () => {
     expect(await pedidosPorNumero("99999999")).toEqual([]);
     expect(await pedidosPorNumero("%")).toEqual([]);

@@ -151,7 +151,8 @@ export interface PedidoDeUnNumero {
  * Los pedidos que llevan este número de despacho, en cualquier día.
  *
  * Una comanda dice «Hoja de despacho Nº 12264655», y el código del pedido es
- * `v12264655wofp-01`: el número **es** la parte del medio. Con eso se sabe si
+ * `v12264655wofp-01` o `wpet-12264655-01`: el número **es** la parte del medio,
+ * en los dos formatos. Con eso se sabe si
  * el pedido ya estaba cargado desde las capturas —y entonces la comanda solo
  * lo completa— o si hay que crearlo.
  *
@@ -182,9 +183,9 @@ export async function pedidosPorNumero(numero: string): Promise<PedidoDeUnNumero
        from ordenes o
        join jornadas j on j.id = o.jornada_id
        left join rutas r on r.id = o.ruta_id
-      where o.codigo like ?
+      where o.codigo like ? or o.codigo like ?
       order by con_cliente asc, j.fecha desc, o.codigo asc`,
-    [`v${numero}wofp-%`],
+    [`v${numero}wofp-%`, `wpet-${numero}-%`],
   );
 
   return filas.map((f) => ({

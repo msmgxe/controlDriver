@@ -12,8 +12,25 @@ import { z } from "zod";
  * se ve se marca, no se inventa.
  */
 
-/** `^v\d{8}wofp-\d{2}$`, p. ej. `v12239582wofp-01`. */
-export const RE_CODIGO_PEDIDO = /^v\d{8}wofp-\d{2}$/;
+/**
+ * Los dos formatos de código de pedido que trae la app de reparto:
+ *
+ *   · `v12239582wofp-01` — el habitual;
+ *   · `wpet-12268585-01` — el otro, con el número de despacho en el medio.
+ *
+ * En los dos hay un número de despacho de 8 dígitos y un sufijo de 2 (el bulto).
+ */
+export const RE_CODIGO_PEDIDO = /^(?:v\d{8}wofp-\d{2}|wpet-\d{8}-\d{2})$/;
+
+/** El texto que dice cómo es un código, para los mensajes de error. */
+export const FORMATO_DE_CODIGO = "v12238726wofp-01 o wpet-12268585-01";
+
+/** El número de despacho de un código —sus 8 dígitos—, sea cual sea su formato. */
+export function numeroDeDespacho(codigo: string): string | null {
+  return (
+    /^v(\d{8})wofp-\d{2}$/.exec(codigo)?.[1] ?? /^wpet-(\d{8})-\d{2}$/.exec(codigo)?.[1] ?? null
+  );
+}
 
 /** Hora de 24 h, `HH:MM`. */
 export const esquemaHora = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Hora en formato HH:MM de 24 h");

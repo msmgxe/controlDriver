@@ -163,6 +163,56 @@ function codigoCompleto(digitos: string, sufijo: string): boolean {
 }
 
 /**
+ * `wpet-12268585-01` — el otro formato de código que trae la app de reparto,
+ * con el número de despacho en el medio.
+ *
+ * Aquí el ancla es la **palabra**, no la forma: `w`, `p` y dos caracteres
+ * cualesquiera —para tolerar el `wpet` mal leído—. Sin exigir la `p`, cualquier
+ * palabra de cuatro letras seguida de un número podía pasar por código, porque
+ * los dígitos admiten letras que el lector confunde con ellos.
+ */
+export const RE_CODIGO_WPET = new RegExp(
+  `w\\s*p\\s*[a-z0-9]\\s*[a-z0-9]\\s*[-\\u2010-\\u2015\\u2212_.·:]\\s*(${DIG}{6,10})\\s*[-\\u2010-\\u2015\\u2212_.·:]\\s*(${DIG}{1,3})`,
+  "i",
+);
+
+/** Un código de pedido hallado en una línea de texto. */
+export interface CodigoHallado {
+  /** Su forma canónica: `v12238726wofp-01` o `wpet-12268585-01`. */
+  codigo: string;
+  digitos: string;
+  sufijo: string;
+  /** Lo que ocupaba en la línea, para poder quitarlo y mirar lo que queda. */
+  texto: string;
+}
+
+/**
+ * El código de pedido que trae una línea, en cualquiera de sus dos formatos.
+ *
+ * Se prueba primero el habitual: el otro solo se busca si ese no está.
+ */
+export function buscarCodigo(linea: string): CodigoHallado | null {
+  const m = linea.match(RE_CODIGO);
+  if (m) {
+    const digitos = soloDigitos(m[1]);
+    const sufijo = soloDigitos(m[2]);
+    return { codigo: `v${digitos}wofp-${sufijo}`, digitos, sufijo, texto: m[0] };
+  }
+
+  const w = linea.match(RE_CODIGO_WPET);
+  // Con al menos cinco dígitos de verdad: los que el lector confunde con letras no bastan.
+  if (w && (w[1].match(/\d/g)?.length ?? 0) >= 5) {
+    const digitos = soloDigitos(w[1]);
+    const sufijo = soloDigitos(w[2]);
+    return { codigo: `wpet-${digitos}-${sufijo}`, digitos, sufijo, texto: w[0] };
+  }
+  return null;
+}
+
+/** ¿Lleva esta línea un código de pedido? */
+export const hayCodigo = (linea: string): boolean => buscarCodigo(linea) !== null;
+
+/**
  * `Ruta 4` — en singular: la ruta a la que pertenecen los pedidos.
  *
  * Admite cosas detrás —una flecha, el horario, el estado— porque en la lista
@@ -314,7 +364,7 @@ function lineasDeCabecera(lineas: readonly string[]): {
   // Hasta dónde llega la cabecera: nunca más allá del primer pedido.
   let limite = lineas.length;
   for (let i = 0; i < lineas.length; i++) {
-    if (RE_CODIGO.test(lineas[i])) {
+    if (hayCodigo(lineas[i])) {
       limite = i;
       break;
     }
@@ -540,7 +590,7 @@ export function interpretarConContexto(
   let rutasDeTarjeta = 0;
   for (let i = 0; i < lineas.length; i++) {
     if (consumidas.has(i)) continue;
-    if (RE_CODIGO.test(lineas[i])) codigos++;
+    if (hayCodigo(lineas[i])) codigos++;
     else if (RE_RUTA_DEL_PEDIDO.test(normalizar(lineas[i]))) {
       if (esCabeceraDeRuta(lineas, i, consumidas)) cabeceras++;
       else rutasDeTarjeta++;
@@ -615,16 +665,14 @@ export function interpretarConContexto(
     }
 
     /* --- pedidos --- */
-    const mCodigo = cruda.match(RE_CODIGO);
-    if (mCodigo) {
-      const digitos = soloDigitos(mCodigo[1]);
-      const sufijo = soloDigitos(mCodigo[2]);
-      const codigo = `v${digitos}wofp-${sufijo}`;
+    const hallado = buscarCodigo(cruda);
+    if (hallado) {
+      const { codigo, digitos, sufijo } = hallado;
 
       /* En la pantalla real la etiqueta `Ruta 1` va en la misma fila que el
          código, a la derecha, y el lector a menudo los devuelve juntos. Se
          mira primero ahí: es la asociación más segura que hay. */
-      const resto = normalizar(cruda.replace(RE_CODIGO, " "));
+      const resto = normalizar(cruda.replace(hallado.texto, " "));
       const rutaEnLaLinea = resto.match(RE_RUTA_EN_LINEA);
       const estadoEnLaLinea = ESTADOS_EN_LINEA.find((e) => e.patron.test(resto))?.canonico ?? null;
 
@@ -765,7 +813,7 @@ function esCabeceraDeRuta(
 ): boolean {
   for (let i = desde + 1; i < Math.min(lineas.length, desde + 5); i++) {
     if (consumidas.has(i)) continue;
-    if (RE_CODIGO.test(lineas[i])) return true;
+    if (hayCodigo(lineas[i])) return true;
     const linea = normalizar(lineas[i]);
     if (RE_HORARIO.test(linea)) continue;
     const estado = estadoDe(linea);
@@ -796,7 +844,7 @@ function orientacionDeLasTarjetas(
 
   for (let i = 0; i < lineas.length; i++) {
     if (consumidas.has(i)) continue;
-    if (primerCodigo === -1 && RE_CODIGO.test(lineas[i])) primerCodigo = i;
+    if (primerCodigo === -1 && hayCodigo(lineas[i])) primerCodigo = i;
     if (primeraRuta === -1 && RE_RUTA_DEL_PEDIDO.test(normalizar(lineas[i]))) primeraRuta = i;
     if (primerCodigo !== -1 && primeraRuta !== -1) break;
   }
@@ -825,7 +873,7 @@ function orientacionDeLosEstados(
   let primerCodigo = -1;
   let ultimoCodigo = -1;
   for (let i = 0; i < lineas.length; i++) {
-    if (consumidas.has(i) || !RE_CODIGO.test(lineas[i])) continue;
+    if (consumidas.has(i) || !hayCodigo(lineas[i])) continue;
     if (primerCodigo === -1) primerCodigo = i;
     ultimoCodigo = i;
   }
@@ -861,7 +909,7 @@ function recorrerTarjeta(
   const paso = orientacion === "adelante" ? 1 : -1;
   for (let i = desde + paso; i >= 0 && i < lineas.length; i += paso) {
     if (consumidas.has(i)) continue;
-    if (RE_CODIGO.test(lineas[i])) return;
+    if (hayCodigo(lineas[i])) return;
     if (buscar(normalizar(lineas[i]))) return;
   }
 }

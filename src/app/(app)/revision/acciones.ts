@@ -108,7 +108,10 @@ export async function confirmarJornada(envio: unknown): Promise<ResultadoConfirm
     o.ruta !== null && !numerosDeRuta.has(o.ruta) ? { ...o, ruta: null } : o,
   );
 
-  const { regla } = await reglaVigente(datos.fecha, perfil.tiendaId);
+  /* Con el vehículo del perfil: es el que decide qué tarifa se aplica (§13).
+     Sin él, `reglaVigente` cae en auto y una moto se guardaba con los montos de
+     un auto aunque en pantalla se hubiera visto la tarifa de la moto. */
+  const { regla } = await reglaVigente(datos.fecha, perfil.tiendaId, perfil.vehiculo);
 
   const ordenes = [];
   for (const orden of datos.ordenes) {

@@ -13,7 +13,7 @@ import {
 } from "@/lib/db/sqlite/jornadas";
 import { guardarPrueba } from "@/lib/db/sqlite/pruebas";
 import { esFechaISO, formatearFecha, hoyEnLima, type FechaISO } from "@/lib/fechas";
-import { RE_CODIGO_PEDIDO } from "@/lib/extraccion/esquema";
+import { FORMATO_DE_CODIGO, RE_CODIGO_PEDIDO } from "@/lib/extraccion/esquema";
 import { formatearSoles, pagoDelTramo, type ReglaPago } from "@/lib/pagos/reglas";
 
 const ESTADOS = ["Entregado", "Entrega parcial", "No entregado"] as const;
@@ -57,7 +57,7 @@ export function PedidoManual({
 
   async function guardar() {
     if (!codigoValido) {
-      setError("El código debe tener la forma v12238726wofp-01.");
+      setError(`El código debe tener la forma ${FORMATO_DE_CODIGO}.`);
       return;
     }
     setGuardando(true);
@@ -118,7 +118,7 @@ export function PedidoManual({
           className="min-h-[52px] rounded-btn border border-linea-fuerte bg-sup px-3 font-mono text-base"
         />
         {codigo !== "" && !codigoValido && (
-          <span className="text-xs text-mal">Debe tener la forma v12238726wofp-01.</span>
+          <span className="text-xs text-mal">Debe tener la forma {FORMATO_DE_CODIGO}.</span>
         )}
       </label>
 

@@ -18,13 +18,14 @@
 import { Capacitor } from "@capacitor/core";
 
 import { consultar, ejecutar } from "@/lib/db/sqlite/conexion";
-import { codigosYaRegistrados, reglaVigente, type PedidoLeido } from "@/lib/db/sqlite/jornadas";
+import { codigosYaRegistrados, jornadaPorFecha, reglaVigente, type PedidoLeido } from "@/lib/db/sqlite/jornadas";
 import { perfilActual } from "@/lib/db/sqlite/perfil";
-import { hoyEnLima, type FechaISO } from "@/lib/fechas";
+import { esFechaISO, hoyEnLima, type FechaISO } from "@/lib/fechas";
 import { pagoDelTramo } from "@/lib/pagos/reglas";
 
 import { guardarPrueba } from "@/lib/db/sqlite/pruebas";
 
+import { capturaDeLoGuardado, loCombinado, type LoCombinado } from "./combinar";
 import { agruparPorFecha, fusionarCapturas } from "./fusionar";
 import { leerImagen, type LecturaDeImagen } from "./lectorTexto";
 import { interpretarCaptura, interpretarConContexto, type ContextoEntreCapturas } from "./ocr";
@@ -37,8 +38,15 @@ export interface DiaLeido {
     ordenes: Array<ReturnType<typeof fusionarCapturas>["ordenes"][number] & {
       tramo: number;
       montoCentimos: number;
+      /** La distancia que el pedido ya tenía guardada, si ese día ya estaba cargado. */
+      km?: number | null;
     }>;
   };
+  /**
+   * Si ese día **ya tenía datos guardados**: cuántos, y cuántos añade esta
+   * carga. Lo leído se suma a lo guardado, no lo reemplaza.
+   */
+  combinado?: LoCombinado;
   alertas: ReturnType<typeof validarJornada>;
   regla: Awaited<ReturnType<typeof reglaVigente>>["regla"];
   permanencia: { tiendaId: string | null; horaEntrada: string | null; horaSalida: string | null };
@@ -207,7 +215,23 @@ export async function leerCapturas(
 
   const dias: DiaLeido[] = [];
   for (const [fechaDelGrupo, delDia] of agruparPorFecha(leidas, (l) => l.extraida.fecha)) {
-    const fusionada = fusionarCapturas(delDia.map((l) => l.extraida));
+    /* Si ese día ya estaba guardado, lo guardado entra primero y las capturas
+       nuevas se suman: subir una captura mejor de un pedido que no se leyó no
+       puede borrar los demás. Sin fecha no hay día que consultar. Si la base
+       falla, el día se lee tal como venía: perder la suma es molesto, perder la
+       carga no es aceptable. */
+    let guardada: Awaited<ReturnType<typeof jornadaPorFecha>> = null;
+    if (esFechaISO(fechaDelGrupo)) {
+      try {
+        guardada = await jornadaPorFecha(fechaDelGrupo);
+      } catch {
+        guardada = null;
+      }
+    }
+    const fusionada = fusionarCapturas([
+      ...(guardada ? [capturaDeLoGuardado(guardada)] : []),
+      ...delDia.map((l) => l.extraida),
+    ]);
 
     /* Fuera lo que la app arrastra de la noche anterior: las primeras rutas si
        son de noche, y cualquier pedido que ya esté guardado en otro día —un
@@ -274,17 +298,29 @@ export async function leerCapturas(
       });
     }
     const montoTramo1 = pagoDelTramo(regla, 1) ?? 1000;
+    const guardadoPorCodigo = new Map((guardada?.ordenes ?? []).map((o) => [o.codigo, o]));
 
     dias.push({
       jornada: {
         ...jornada,
-        // Todos los pedidos nacen en tramo 1; el repartidor solo toca las
-        // excepciones, que son las que la captura no puede saber.
-        ordenes: jornada.ordenes.map((o) => ({ ...o, tramo: 1, montoCentimos: montoTramo1 })),
+        /* Todos los pedidos nacen en tramo 1; el repartidor solo toca las
+           excepciones, que son las que la captura no puede saber. Los que ya
+           estaban guardados conservan su tramo, su distancia y su monto: es
+           trabajo ya hecho, y la captura no lo sabe. */
+        ordenes: jornada.ordenes.map((o) => {
+          const g = guardadoPorCodigo.get(o.codigo);
+          return g
+            ? { ...o, tramo: g.tramo || 1, montoCentimos: g.montoCentimos ?? montoTramo1, km: g.km }
+            : { ...o, tramo: 1, montoCentimos: montoTramo1 };
+        }),
       },
+      combinado: guardada ? loCombinado(guardada, jornada) : undefined,
       alertas,
       regla,
-      permanencia,
+      permanencia: guardada
+        ? // Las horas del día ya guardado, que la persona pudo corregir; no las del perfil.
+          { tiendaId: guardada.tiendaId, horaEntrada: guardada.horaEntrada, horaSalida: guardada.horaSalida }
+        : permanencia,
       imagenesLeidas: leidas.length,
       imagenesDescartadas: descartadas,
       uso: { modelo: "lector-del-dispositivo", tokensEntrada: 0, tokensSalida: 0 },
