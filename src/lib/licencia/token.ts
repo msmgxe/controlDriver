@@ -74,7 +74,7 @@ export function aBase64Url(datos: ArrayBuffer | Uint8Array): string {
   return btoa(binario).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-export function deBase64Url(texto: string): Uint8Array {
+function deBase64Url(texto: string): Uint8Array {
   const normalizado = texto.replace(/-/g, "+").replace(/_/g, "/");
   const relleno = normalizado + "=".repeat((4 - (normalizado.length % 4)) % 4);
   const binario = atob(relleno);

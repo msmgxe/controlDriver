@@ -28,7 +28,7 @@
  */
 
 /** Una cara completa de la app: colores, tipografía y forma. */
-export type Tema = "claro" | "oscuro" | "turbo" | "menta";
+type Tema = "claro" | "oscuro" | "turbo" | "menta";
 /** Lo que el repartidor eligió: un tema fijo, o que la app decida sola. */
 export type Preferencia = "auto" | Tema;
 /** Lo que termina puesto en pantalla: siempre uno de los cuatro temas. */
@@ -54,7 +54,7 @@ export function leerPreferencia(): Preferencia {
 }
 
 /** ¿El teléfono está en modo oscuro ahora mismo? */
-export function sistemaEsOscuro(): boolean {
+function sistemaEsOscuro(): boolean {
   try {
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   } catch {

@@ -36,6 +36,40 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v34 — 26/09/2026
+Tres fallos que salieron de usarla de verdad, y una limpieza.
+- **Arreglado: subir una captura de un día que ya tenías cargado borraba lo
+  demás.** Se cargó el día entero, faltó un pedido, y al subir una captura donde
+  se leía mejor, Revisión enseñó solo lo de esa captura («faltan 13 pedidos»,
+  «falta una captura de Rutas») y al guardar se perdió el resto del día. Ahora lo
+  que ya estaba guardado entra primero y lo que lees **se suma**: Revisión dice
+  cuántos pedidos y rutas tenía el día y cuántos añade la captura. Lo que ya
+  estaba se conserva tal cual —estado, ruta, tramo, distancia, monto y las horas
+  de la tienda—; la captura solo llena huecos (un pedido que faltaba, una ruta sin
+  asignar). Si quieres quitar algo, lo borras en Revisión. Los pedidos anotados
+  solo por cantidad se reemplazan por los leídos, como antes.
+- **Arreglado: un pedido de la ruta 6 no se leía.** Su código era
+  `wpet-12268585-01`, un segundo formato que no se conocía: el lector solo
+  reconocía `v12268269wofp-01`, así que faltaba uno en el día y tampoco se podía
+  añadir a mano, porque tampoco se aceptaba como código válido. Ahora se reconocen
+  los dos formatos al leer, al escribirlo a mano, al corregirlo, y al buscar el
+  pedido de una comanda por su número de despacho.
+- **Arreglado: la moto se guardaba como auto.** Al confirmar una carga, los montos
+  se calculaban sin decir el vehículo, y sin vehículo la app usa el auto: en
+  pantalla se veía la tarifa de la moto (S/ 6) pero se guardaba la del auto
+  (S/ 10). Además, una moto sin tarifa propia guardada caía en la tabla del auto.
+  Al abrir la app se **corrigen solos los días de moto ya guardados mal**; no toca
+  los días de auto, los pedidos de más de 12 km, ni las semanas ya cerradas o
+  pagadas.
+- **Limpieza de lo que no se usaba:** dos tipografías que ninguna cara usaba
+  (bajan el peso del APK), cuatro iconos, tres componentes, una acción de pagos,
+  helpers de fechas y de tarifas, la dependencia `sql.js` y los `export` que nadie
+  importaba. El README se reescribió: hablaba de la versión web de cuando la app
+  iba a ser un servicio en la nube.
+- **Pendiente de probar en el celular:** la lectura de comandas y el buscador de
+  direcciones (ver v33). La lectura de capturas con `wpet-…` se probó con las
+  líneas de la captura real, no con el lector de Android.
+
 ### v33 — 25/09/2026
 Rediseño de todas las pantallas (la opción A del prototipo) y las comandas.
 - **Nuevo: Inicio solo tiene lo esencial.** La tira de semanas arriba —se

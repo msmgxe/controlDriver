@@ -271,7 +271,7 @@ export async function jornadasPorRango(
  * Un cliente vacío y ningún cliente son lo mismo: así la pantalla no tiene que
  * distinguir «null» de «un objeto con todo en null» para saber si enseñar algo.
  */
-export function aCliente(fila: {
+function aCliente(fila: {
   cliente_nombre: string | null;
   cliente_telefono: string | null;
   direccion: string | null;

@@ -18,9 +18,9 @@ import type { JornadaFusionada } from "./fusionar";
  *   No es un error y no se pinta como tal: pintar de amarillo una corrección
  *   correcta es justo lo que llenaba la pantalla de falsas alarmas.
  */
-export type NivelAlerta = "bloqueo" | "aviso" | "info";
+type NivelAlerta = "bloqueo" | "aviso" | "info";
 
-export type CodigoAlerta =
+type CodigoAlerta =
   | "fechas-mixtas"
   | "sin-fecha"
   | "fecha-futura"

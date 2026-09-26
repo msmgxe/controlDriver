@@ -151,7 +151,7 @@ export function fusionarCapturas(imagenes: readonly ImagenExtraida[]): JornadaFu
  *
  * Si no se leyó ninguno, se numeran desde la 1 en el orden de la lista.
  */
-export function numerarRutas(rutas: readonly RutaFusionada[]): RutaFusionada[] {
+function numerarRutas(rutas: readonly RutaFusionada[]): RutaFusionada[] {
   const enLista = [...rutas].sort((a, b) => a.posicion - b.posicion);
   const numeros = enLista.map((r) => (r.numero_deducido ? null : r.numero));
 
@@ -191,7 +191,7 @@ export function numerarRutas(rutas: readonly RutaFusionada[]): RutaFusionada[] {
  * solapamiento entre capturas —el mismo pedido sale en dos y en una se leyó
  * la etiqueta—, que ya resuelve la fusión.
  */
-export function completarRutasPorVecinos(ordenes: OrdenFusionada[]): OrdenFusionada[] {
+function completarRutasPorVecinos(ordenes: OrdenFusionada[]): OrdenFusionada[] {
   return ordenes.map((o, i) => {
     if (o.ruta !== null) return o;
 
@@ -222,7 +222,7 @@ export function completarRutasPorVecinos(ordenes: OrdenFusionada[]): OrdenFusion
  * hubo un no entregado y se leyeron tres, no hay forma de saber cuál es el
  * bueno, y se deja como está para que lo decida la persona.
  */
-export function cuadrarConElResumen(
+function cuadrarConElResumen(
   ordenes: OrdenFusionada[],
   resumen: ResumenOrdenes | null,
 ): OrdenFusionada[] {

@@ -64,8 +64,6 @@ const esquemaEnvio = z.object({
     .nullable(),
 });
 
-export type EnvioRevision = z.infer<typeof esquemaEnvio>;
-
 export type ResultadoConfirmacion =
   | { ok: true; fecha: FechaISO }
   | { ok: false; error: string };

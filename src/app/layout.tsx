@@ -3,7 +3,6 @@ import {
   Barlow,
   Barlow_Condensed,
   Bricolage_Grotesque,
-  DM_Mono,
   DM_Sans,
   Figtree,
   Fredoka,
@@ -12,7 +11,6 @@ import {
   JetBrains_Mono,
   Lora,
   Nunito,
-  Plus_Jakarta_Sans,
   Unbounded,
 } from "next/font/google";
 import Script from "next/script";
@@ -94,19 +92,6 @@ const jetbrains = JetBrains_Mono({
   display: "swap",
 });
 
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--fuente-jakarta",
-  display: "swap",
-});
-const dmMono = DM_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--fuente-dm-mono",
-  display: "swap",
-});
-
 /* Panel /admin — dirección Profesional */
 const lora = Lora({
   subsets: ["latin"],
@@ -158,7 +143,7 @@ export default function RootLayout({
        etiqueta antes de que React arranque, y React no tiene por qué saberlo. */
     <html lang="es-PE" suppressHydrationWarning>
       <body
-        className={`${unbounded.variable} ${dmSans.variable} ${barlowCondensed.variable} ${barlow.variable} ${fredoka.variable} ${nunito.variable} ${bricolage.variable} ${figtree.variable} ${jetbrains.variable} ${jakarta.variable} ${dmMono.variable} ${lora.variable} ${plex.variable} ${plexMono.variable} antialiased`}
+        className={`${unbounded.variable} ${dmSans.variable} ${barlowCondensed.variable} ${barlow.variable} ${fredoka.variable} ${nunito.variable} ${bricolage.variable} ${figtree.variable} ${jetbrains.variable} ${lora.variable} ${plex.variable} ${plexMono.variable} antialiased`}
       >
         {/* Antes que nada: elige la cara clara u oscura, para que no haya un
             fogonazo del tema equivocado al abrir la app. */}

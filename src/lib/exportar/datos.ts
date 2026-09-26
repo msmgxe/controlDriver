@@ -8,7 +8,7 @@ import type { FechaISO } from "@/lib/fechas";
  * ni guardar un archivo temporal con códigos de pedido.
  */
 
-export interface RutaExportable {
+interface RutaExportable {
   numero: number;
   horaInicio: string | null;
   horaFin: string | null;
@@ -16,7 +16,7 @@ export interface RutaExportable {
   pedidos: number;
 }
 
-export interface PedidoExportable {
+interface PedidoExportable {
   posicion: number;
   codigo: string;
   ruta: number | null;
@@ -27,7 +27,7 @@ export interface PedidoExportable {
   montoCentimos: number;
 }
 
-export interface JornadaExportable {
+interface JornadaExportable {
   fecha: FechaISO;
   rutas: RutaExportable[];
   pedidos: PedidoExportable[];

@@ -1,8 +1,6 @@
 import { Auto } from "@/components/Auto";
 import type { TipoVehiculo } from "@/lib/pagos/reglas";
-import { Alerta, Check, Equis, Luna, Medio } from "@/components/iconos";
-import { formatearFecha, nombreDelDia, type FechaISO } from "@/lib/fechas";
-import { formatearSoles } from "@/lib/pagos/reglas";
+import { Alerta, Check, Equis, Medio } from "@/components/iconos";
 
 /**
  * Piezas de interfaz que se repiten por toda la app.
@@ -66,21 +64,6 @@ export function EstadoPedido({ estado }: { estado: string }) {
   );
 }
 
-export function ChipTramo({ tramo }: { tramo: number }) {
-  const fuera = tramo > 1;
-  return (
-    <span
-      className={`inline-flex items-center rounded-chip px-2 py-0.5 font-mono text-xs ${
-        fuera
-          ? "bg-acento-suave font-medium text-acento-tinta"
-          : "border border-linea-fuerte text-tinta-3"
-      }`}
-    >
-      T{tramo}
-    </span>
-  );
-}
-
 /* --------------------------------------------------------------------------
  * Cifras clave
  * ------------------------------------------------------------------------ */
@@ -100,82 +83,6 @@ export function Cifras({ datos }: { datos: { etiqueta: string; valor: string; pi
           </span>
         </div>
       ))}
-    </div>
-  );
-}
-
-export function MontoHero({
-  centimos,
-  pie,
-}: {
-  centimos: number;
-  pie: string;
-}) {
-  return (
-    <div className="flex flex-col gap-0.5">
-      <span className="font-display text-[44px] leading-none font-bold tracking-tight text-acento tabular-nums">
-        {formatearSoles(centimos)}
-      </span>
-      <span className="text-sm text-tinta-2">{pie}</span>
-    </div>
-  );
-}
-
-/* --------------------------------------------------------------------------
- * Tira de la semana (lunes a domingo)
- *
- * Cada día está en uno de tres estados, y ninguno depende solo del color: lleva
- * la barra de abajo y, para el descanso, además la luna.
- *   · cargado   → barra del color de la marca
- *   · descanso  → barra amarilla (azul cielo en oscuro) y una luna
- *   · sin nada  → barra tenue
- * ------------------------------------------------------------------------ */
-
-const LETRAS = ["L", "M", "X", "J", "V", "S", "D"];
-
-export function TiraSemana({
-  dias,
-  hoy,
-}: {
-  dias: { fecha: FechaISO; cargado: boolean; pedidos: number; descanso?: boolean }[];
-  hoy: FechaISO;
-}) {
-  const hayDescanso = dias.some((d) => d.descanso);
-
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="grid grid-cols-7 gap-1">
-        {dias.map((d, i) => (
-          <div
-            key={d.fecha}
-            title={`${nombreDelDia(d.fecha)} ${formatearFecha(d.fecha)}${
-              d.cargado ? ` · ${d.pedidos} pedidos` : d.descanso ? " · descanso" : " · sin carga"
-            }`}
-            className={`flex flex-col items-center gap-1 rounded-chip py-2 text-[10px] ${
-              d.fecha === hoy ? "bg-sup-2 font-bold" : ""
-            } ${d.cargado || d.descanso ? "text-tinta" : "text-tinta-3"}`}
-          >
-            <span>{LETRAS[i]}</span>
-            <span className="font-mono text-xs">{Number(d.fecha.slice(8, 10))}</span>
-            <span
-              className={`h-1 w-full rounded-full ${
-                d.cargado ? "bg-acento" : d.descanso ? "bg-descanso" : "bg-linea"
-              }`}
-            />
-            {d.descanso && !d.cargado ? (
-              <Luna aria-label="Descanso" className="size-3 text-tinta-2" />
-            ) : (
-              <span className="size-3" aria-hidden />
-            )}
-          </div>
-        ))}
-      </div>
-      {hayDescanso && (
-        <p className="flex items-center gap-1.5 text-[11px] text-tinta-2">
-          <span className="h-1 w-4 rounded-full bg-descanso" aria-hidden />
-          Descanso: los días que dijiste que no trabajaste.
-        </p>
-      )}
     </div>
   );
 }

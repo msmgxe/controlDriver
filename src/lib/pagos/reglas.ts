@@ -26,19 +26,12 @@ import { z } from "zod";
  * únicamente en el perfil haría que cambiar de vehículo reescribiera el
  * pasado.
  */
-export const esquemaVehiculo = z.enum(["auto", "moto", "bicicleta"]);
-export type TipoVehiculo = z.infer<typeof esquemaVehiculo>;
-
-export const VEHICULOS: ReadonlyArray<{ id: TipoVehiculo; nombre: string }> = [
-  { id: "auto", nombre: "Auto" },
-  { id: "moto", nombre: "Moto eléctrica" },
-  { id: "bicicleta", nombre: "Bicicleta" },
-];
+export type TipoVehiculo = "auto" | "moto" | "bicicleta";
 
 /** El de siempre, mientras no se diga otra cosa. */
 export const VEHICULO_POR_DEFECTO: TipoVehiculo = "auto";
 
-export const esquemaTramo = z.object({
+const esquemaTramo = z.object({
   id: z.number().int().min(1).max(6),
   desde: z.number().min(0),
   hasta: z.number().min(0),
@@ -59,7 +52,7 @@ export const esquemaTramo = z.object({
  * Las horas se cuentan **completas, redondeando hacia abajo**: de 9:00 a 21:30
  * son 12 h, no 12.5.
  */
-export const esquemaGarantiaPermanencia = z.object({
+const esquemaGarantiaPermanencia = z.object({
   activa: z.boolean(),
   solesPorHora: z.number().min(0),
   /** Por ahora solo "diaria": cada día se compara por separado. */
@@ -76,8 +69,6 @@ export const esquemaReglaPago = z.object({
   garantiaPermanencia: esquemaGarantiaPermanencia.nullish(),
 });
 
-export type Tramo = z.infer<typeof esquemaTramo>;
-export type GarantiaPermanencia = z.infer<typeof esquemaGarantiaPermanencia>;
 export type ReglaPago = z.infer<typeof esquemaReglaPago>;
 
 /**
@@ -148,11 +139,6 @@ export const TRAMO_MAS_DE_12_KM = 6;
 /** Soles con decimales → céntimos enteros. */
 export function aCentimos(soles: number): number {
   return Math.round(soles * 100);
-}
-
-/** Céntimos enteros → soles, listo para una columna numeric(10,2). */
-export function aSoles(centimos: number): number {
-  return centimos / 100;
 }
 
 /** "S/ 141.50" */

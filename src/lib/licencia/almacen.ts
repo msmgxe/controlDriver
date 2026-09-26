@@ -56,7 +56,7 @@ export async function certificadoGuardado(): Promise<string | null> {
   return leer(CLAVE_CERTIFICADO);
 }
 
-export async function guardarCertificado(texto: string): Promise<void> {
+async function guardarCertificado(texto: string): Promise<void> {
   await escribir(CLAVE_CERTIFICADO, texto);
 }
 

@@ -33,10 +33,10 @@ export function numeroDeDespacho(codigo: string): string | null {
 }
 
 /** Hora de 24 h, `HH:MM`. */
-export const esquemaHora = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Hora en formato HH:MM de 24 h");
+const esquemaHora = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Hora en formato HH:MM de 24 h");
 
 /** Fecha de calendario `YYYY-MM-DD`. */
-export const esquemaFechaISO = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha en formato YYYY-MM-DD");
+const esquemaFechaISO = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha en formato YYYY-MM-DD");
 
 export const esquemaRutaExtraida = z.object({
   numero: z.number().int().positive(),
@@ -64,7 +64,7 @@ export const esquemaOrdenExtraida = z.object({
   legible_completo: z.boolean().default(true),
 });
 
-export const esquemaResumenOrdenes = z.object({
+const esquemaResumenOrdenes = z.object({
   entregado: z.number().int().min(0),
   parcial: z.number().int().min(0),
   no_entregado: z.number().int().min(0),
@@ -85,7 +85,7 @@ export type OrdenExtraida = z.infer<typeof esquemaOrdenExtraida>;
 export type ResumenOrdenes = z.infer<typeof esquemaResumenOrdenes>;
 export type ImagenExtraida = z.infer<typeof esquemaImagenExtraida>;
 
-export interface ImagenDescartada {
+interface ImagenDescartada {
   indice: number;
   motivo: string;
 }

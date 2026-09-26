@@ -152,7 +152,7 @@ const DIG = "[0-9oOlLiI|sSbBgGzZqQdDT]";
  * «wofp» salga exacto: basta `w`, dos caracteres cualesquiera y una `p`, y el
  * guion admite las variantes tipográficas que ponen los lectores.
  */
-export const RE_CODIGO = new RegExp(
+const RE_CODIGO = new RegExp(
   `v\\s*(${DIG}{6,10})\\s*(?:w|vv)\\s*[a-z0-9]\\s*[a-z0-9]\\s*p\\s*[-\\u2010-\\u2015\\u2212_.·:]?\\s*(${DIG}{1,3})`,
   "i",
 );
@@ -171,7 +171,7 @@ function codigoCompleto(digitos: string, sufijo: string): boolean {
  * palabra de cuatro letras seguida de un número podía pasar por código, porque
  * los dígitos admiten letras que el lector confunde con ellos.
  */
-export const RE_CODIGO_WPET = new RegExp(
+const RE_CODIGO_WPET = new RegExp(
   `w\\s*p\\s*[a-z0-9]\\s*[a-z0-9]\\s*[-\\u2010-\\u2015\\u2212_.·:]\\s*(${DIG}{6,10})\\s*[-\\u2010-\\u2015\\u2212_.·:]\\s*(${DIG}{1,3})`,
   "i",
 );

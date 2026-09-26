@@ -16,7 +16,7 @@
  * jornada, nunca la de carga.
  */
 
-export const ZONA = "America/Lima";
+const ZONA = "America/Lima";
 
 /** Fecha de calendario en formato `YYYY-MM-DD`. */
 export type FechaISO = string;
@@ -94,11 +94,6 @@ export function lunesDeLaSemana(f: FechaISO): FechaISO {
   // que la abra, así que lo mapeamos a 6.
   const desplazamiento = (diaDeLaSemana(f) + 6) % 7;
   return sumarDias(f, -desplazamiento);
-}
-
-/** El domingo de la semana a la que pertenece esa fecha de jornada. */
-export function domingoDeLaSemana(f: FechaISO): FechaISO {
-  return sumarDias(lunesDeLaSemana(f), 6);
 }
 
 /** Viernes de pago de una semana que cerró ese domingo. */

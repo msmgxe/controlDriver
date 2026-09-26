@@ -39,7 +39,7 @@ export type EstadoLicencia =
  * su licencia (§ LICENCIAS.md). Reinstalar la reinicia, pero también borra todo
  * lo que tenía cargado, así que no sale a cuenta.
  */
-export const DIAS_DE_PRUEBA = 14;
+const DIAS_DE_PRUEBA = 14;
 
 export interface SituacionLicencia {
   estado: EstadoLicencia;
@@ -58,7 +58,7 @@ export interface SituacionLicencia {
 const DIA_EN_MS = 24 * 60 * 60 * 1000;
 
 /** Días de antelación con que se empieza a avisar de la renovación. */
-export const DIAS_DE_AVISO = 5;
+const DIAS_DE_AVISO = 5;
 
 function aFecha(iso: string): number {
   const [a, m, d] = iso.split("-").map(Number);

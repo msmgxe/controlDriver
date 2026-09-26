@@ -138,7 +138,7 @@ export type CampoDeBusqueda = "codigo" | "cliente" | "telefono" | "direccion";
 
 /* --- Escritura ----------------------------------------------------------- */
 
-export interface RutaParaGuardar {
+interface RutaParaGuardar {
   numero: number;
   estado: string;
   horaInicio: string | null;

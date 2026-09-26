@@ -25,19 +25,6 @@ async function conSesion(accion: () => Promise<void>): Promise<Resultado> {
 }
 
 /**
- * Congela el monto, el desglose y la regla de la semana (§13), sin marcarla
- * como pagada todavía. Ya no tiene botón propio —ver `accionRegistrarPago`—
- * pero la usa por debajo, y queda disponible por si algún día hace falta
- * congelar una semana antes de saber cuánto se cobró.
- */
-export async function accionCerrarSemana(semanaInicio: string): Promise<Resultado> {
-  if (!esFechaISO(semanaInicio)) return { ok: false, error: "Semana inválida." };
-  const perfil = await perfilActual();
-  const { regla, id } = await reglaVigente(semanaDe(semanaInicio).fin, perfil?.tiendaId ?? null, perfil?.vehiculo);
-  return conSesion(() => cerrarSemana(semanaInicio, regla, id));
-}
-
-/**
  * El viernes, el driver anota lo que realmente le pagaron. Esto es lo único
  * que bloquea la semana para editarla: antes había un paso aparte —"Cerrar la
  * semana"— que la bloqueaba sin haber cobrado todavía, y era fácil tocarlo

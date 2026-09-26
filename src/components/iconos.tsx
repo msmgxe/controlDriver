@@ -61,12 +61,6 @@ export const Gente = (p: Props) => (
   </Base>
 );
 
-export const Menu = (p: Props) => (
-  <Base strokeWidth={2} {...p}>
-    <path d="M4 7h16M4 12h16M4 17h16" />
-  </Base>
-);
-
 export const Salir = (p: Props) => (
   <Base {...p}>
     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -218,21 +212,3 @@ export const Telefono = (p: Props) => (
   </Base>
 );
 
-export const Enlace = (p: Props) => (
-  <Base {...p}>
-    <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" />
-    <path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />
-  </Base>
-);
-
-export const Lista = (p: Props) => (
-  <Base {...p}>
-    <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
-  </Base>
-);
-
-export const Mas2 = (p: Props) => (
-  <Base strokeWidth={2} {...p}>
-    <path d="M12 5v14M5 12h14" />
-  </Base>
-);

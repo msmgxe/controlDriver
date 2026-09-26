@@ -102,7 +102,7 @@ async function derivar(pin: string, sal: Uint8Array, iteraciones: number): Promi
 }
 
 /** ¿Este dispositivo tiene bloqueo puesto? */
-export function bloqueoConfigurado(): boolean {
+function bloqueoConfigurado(): boolean {
   return leer(CLAVE_PIN) !== null;
 }
 
@@ -143,7 +143,7 @@ export function quitarBloqueo(): void {
  * se verifica ninguna firma en servidor, porque no es un factor de sesión.
  * ------------------------------------------------------------------------- */
 
-export function huellaDisponible(): boolean {
+function huellaDisponible(): boolean {
   return typeof window !== "undefined" && Boolean(window.PublicKeyCredential);
 }
 
@@ -222,7 +222,7 @@ export async function pedirHuella(): Promise<boolean> {
  * el PIN, que es justo el momento en que interesa pedirlo.
  * ------------------------------------------------------------------------- */
 
-export function estaAbierto(): boolean {
+function estaAbierto(): boolean {
   try {
     return sessionStorage.getItem(CLAVE_ABIERTO) === "1";
   } catch {

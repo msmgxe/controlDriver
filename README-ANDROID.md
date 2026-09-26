@@ -1,24 +1,15 @@
 # Rutas-A en tu celular
 
-## Qué es este primer APK
-
-Una **prueba de humo**: comprueba que el APK se instala y abre en tu celular.
-Todavía no lleva la aplicación dentro, solo una pantalla que lo confirma. Se
-hace así a propósito: si instalar da problemas, es mucho mejor descubrirlo hoy
-que después de reescribir la aplicación entera.
-
-Si al abrirla ves **Rutas-A** sobre fondo oscuro, la cadena completa funciona y
-ya solo queda meter la aplicación de verdad dentro.
-
----
-
 ## Generar el APK
 
 ```
 npm run apk
 ```
 
-Deja el archivo en `Rutas-A.apk`, en la carpeta del proyecto.
+Cada compilación sube el número de versión y deja el archivo en la carpeta del
+proyecto como `Rutas-A-v<N>.apk`; el de la versión anterior se borra, para no
+instalar por error uno viejo. La versión instalada se ve en **Ajustes**, arriba del
+todo, y lo que cambió en cada una está en [`VERSIONES.md`](VERSIONES.md).
 
 ---
 
@@ -55,7 +46,7 @@ Al terminar, busca **Rutas-A** en el menú de aplicaciones.
 
 ## Instalarlo — opción B: sin cable
 
-Si prefieres no usar el cable: sube `Rutas-A.apk` a tu Google Drive desde el
+Si prefieres no usar el cable: sube el `Rutas-A-v<N>.apk` a tu Google Drive desde el
 Mac, ábrelo en el celular desde la app de Drive y tócalo.
 
 Android te dirá que la aplicación no viene de la tienda y bloqueará la

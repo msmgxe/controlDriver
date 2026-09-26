@@ -291,7 +291,7 @@ export const ESQUEMA: string[] = [
  * Cada vez que se añada una columna a una tabla existente, va también aquí.
  * `migrar` la añade solo si falta, así que es seguro ejecutarlo siempre.
  */
-export const COLUMNAS_ANADIDAS: ReadonlyArray<[tabla: string, columna: string, definicion: string]> = [
+const COLUMNAS_ANADIDAS: ReadonlyArray<[tabla: string, columna: string, definicion: string]> = [
   ["perfil", "vehiculo", "text not null default 'auto'"],
   ["jornadas", "vehiculo", "text not null default 'auto'"],
   ["reglas_pago", "vehiculo", "text not null default 'auto'"],

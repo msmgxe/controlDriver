@@ -53,7 +53,7 @@ export interface ComandaParaGuardar {
   evidencia: (() => Promise<Blob>) | null;
 }
 
-export type Tramo =
+type Tramo =
   /** El tramo salió de la distancia. */
   | "auto"
   /** Tenía un tramo elegido a mano: se dejó como estaba. */

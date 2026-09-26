@@ -23,7 +23,7 @@ import {
  * Todo el dinero va en céntimos enteros.
  */
 
-export interface PedidoLiquidable {
+interface PedidoLiquidable {
   codigo: string;
   /** 1 a 5 de la tabla de tarifas; 6 = más de 12 km, con monto manual. */
   tramo: number;
@@ -34,7 +34,7 @@ export interface PedidoLiquidable {
   montoManualCentimos?: number | null;
 }
 
-export interface RutaLiquidable {
+interface RutaLiquidable {
   numero: number;
   duracionMin: number | null;
 }
@@ -68,7 +68,7 @@ export interface DetalleDia {
   montoCentimos: number;
 }
 
-export interface DetalleRuta {
+interface DetalleRuta {
   fecha: FechaISO;
   numero: number;
   pedidos: number;
@@ -76,7 +76,7 @@ export interface DetalleRuta {
   montoCentimos: number;
 }
 
-export interface PedidoSinTarifa {
+interface PedidoSinTarifa {
   fecha: FechaISO;
   codigo: string;
   tramo: number;
@@ -301,7 +301,7 @@ export function calcularLiquidacion(
  * El estado del pedido no entra en la cuenta a propósito: `Entregado`,
  * `Entrega parcial` y `No entregado` pagan igual (§13).
  */
-export function montoDelPedido(
+function montoDelPedido(
   pedido: PedidoLiquidable,
   regla: ReglaPago,
 ): number | null {
