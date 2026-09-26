@@ -36,6 +36,38 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v35 — 26/09/2026
+La barra de abajo, el botón de cargar y los iconos de vehículo.
+- **Cambio: la barra de abajo enseña dónde estás.** La pastilla de color (amarilla
+  en Mapa y Turbo, ámbar en Asfalto, verde en Menta) va detrás del icono de la
+  pantalla que estás mirando, y solo de esa. Antes «Cargar» iba siempre pintado,
+  estuvieras donde estuvieras.
+- **Cambio: todas las pantallas caben en la barra**, en este orden: Inicio, Cargar,
+  Pagos, Historial, Buscar, Estadísticas y Ajustes. Ya no hay «Más». Se probó a
+  360 px de ancho en las cuatro caras; «Estadísticas» va como «Estadíst.» para que
+  quepa. El botón de bloquear la app, que estaba en «Más › Salir», pasó a la
+  cabecera (solo sale si tienes un PIN puesto). Revisión y compartir desde la
+  galería encienden «Cargar», y Revisión ya tiene su propio título.
+- **Nuevo: «Cargar» pregunta qué y para qué día.** Antes abría el selector de fotos
+  sin decir a qué día iba ni si esperaba capturas o comandas. Ahora abre una hoja
+  con el día arriba (el que estás mirando en Inicio, o hoy; se cambia ahí mismo) y
+  dos opciones, cada una con su regla:
+  · **Capturas de la tienda** —las pantallas de rutas y pedidos—: cada una se
+    guarda en el día que dice («Resumen del 25/09»); solo las que no lo digan van
+    al día elegido, y Revisión avisa cuando pasa. Si alguna captura trae fecha, esa
+    manda.
+  · **Comandas** —las hojas de despacho—: completan el pedido si ya estaba cargado,
+    en su día; si no estaba, lo crean en el día elegido.
+  El botón grande de Inicio dice ahora lo mismo debajo.
+- **Nuevo: los iconos de auto y moto son otros.** El auto es un compacto con su
+  conductor en la ventanilla y su estela; la moto, un repartidor en su scooter con
+  la caja a la espalda. Los dos toman los colores de la cara elegida, y en los
+  iconos pequeños se dibujan a una sola tinta. Salen en la cabecera, las
+  tarjetas de Inicio, el botón de «Cargar» y los botones de modalidad de Ajustes.
+- Si guardas comandas con la hoja del botón «Cargar», Inicio se pone al día solo.
+- **Pendiente de probar en el celular:** la barra con siete iconos en tu pantalla
+  y elegir fotos desde la hoja.
+
 ### v34 — 26/09/2026
 Tres fallos que salieron de usarla de verdad, y una limpieza.
 - **Arreglado: subir una captura de un día que ya tenías cargado borraba lo

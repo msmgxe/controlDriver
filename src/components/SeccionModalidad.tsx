@@ -352,8 +352,8 @@ function BotonModalidad({
       }`}
     >
       <span className="flex w-full items-center justify-between">
-        <span className="grid size-9 shrink-0 place-items-center rounded-chip bg-sup-2">
-          <Auto vehiculo={valor} className="w-7" />
+        <span className="grid size-12 shrink-0 place-items-center rounded-chip bg-sup-2">
+          <Auto vehiculo={valor} className="w-9" />
         </span>
         {activa && <Check className="size-4 shrink-0 text-acento-tinta" />}
       </span>

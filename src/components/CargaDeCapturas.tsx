@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { Alerta, Check } from "@/components/iconos";
 import { MAX_IMAGENES, procesarCapturas } from "@/lib/carga";
+import type { FechaISO } from "@/lib/fechas";
 
 /**
  * Cargar capturas desde **cualquier** pantalla.
@@ -23,10 +24,17 @@ import { MAX_IMAGENES, procesarCapturas } from "@/lib/carga";
 type Fase = "reposo" | "comprimiendo" | "leyendo" | "error";
 
 interface Carga {
-  /** Abre el selector de capturas. Solo desde un toque del usuario. */
-  abrir: () => void;
+  /**
+   * Abre el selector de capturas. Solo desde un toque del usuario.
+   *
+   * `fechaPorDefecto` es el día al que van las capturas que **no traen fecha**;
+   * cada captura de la app de la tienda trae la suya y esa manda.
+   */
+  abrir: (opciones?: { fechaPorDefecto?: FechaISO }) => void;
   /** Hay una carga en marcha. */
   trabajando: boolean;
+  /** Sin licencia no se cargan jornadas nuevas. */
+  deshabilitado: boolean;
 }
 
 const Contexto = createContext<Carga | null>(null);
@@ -47,6 +55,9 @@ export function ProveedorDeCarga({
 }) {
   const router = useRouter();
   const entrada = useRef<HTMLInputElement>(null);
+  // Se guarda al abrir el selector y se usa al elegir las fotos: entre una cosa
+  // y la otra pasa el selector de Android, y el estado de React no lo necesita.
+  const fechaPorDefecto = useRef<FechaISO | undefined>(undefined);
   const [fase, setFase] = useState<Fase>("reposo");
   const [listas, setListas] = useState(0);
   const [total, setTotal] = useState(0);
@@ -79,6 +90,7 @@ export function ProveedorDeCarga({
           }
         },
         (n) => setListas(n),
+        fechaPorDefecto.current,
       );
 
       if (resultado.ok) {
@@ -105,10 +117,13 @@ export function ProveedorDeCarga({
   return (
     <Contexto.Provider
       value={{
-        abrir: () => {
-          if (!deshabilitado && !trabajando) entrada.current?.click();
+        abrir: (opciones) => {
+          if (deshabilitado || trabajando) return;
+          fechaPorDefecto.current = opciones?.fechaPorDefecto;
+          entrada.current?.click();
         },
         trabajando,
+        deshabilitado,
       }}
     >
       <input

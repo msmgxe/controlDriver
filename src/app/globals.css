@@ -456,6 +456,12 @@
   --a-faro: #ffffff;
   --a-borde: var(--tinta);
   --a-estela: var(--acento);
+  /* La moto es un dibujo de trazo: necesita una tinta de verdad en todas las
+     caras, también en las que el auto va sin borde. */
+  --a-trazo: var(--tinta);
+  --a-trazo-ancho: 4.4;
+  /* El conductor, dentro de la ventanilla: tiene que contrastar con el vidrio. */
+  --a-piloto: var(--tinta);
 }
 .auto .c-oscuro {
   display: none;
@@ -474,6 +480,7 @@
   --a-faro: var(--tinta);
   --a-borde: transparent;
   --a-estela: var(--acento);
+  --a-piloto: var(--acento);
 }
 /* Menta no lleva bordes gruesos en nada: el vehículo tampoco. */
 :root[data-modo="menta"] .auto {
@@ -482,6 +489,10 @@
 /* Sobre una tarjeta del color de la marca, el auto pasa al color contrario. */
 .auto--sobre-acento {
   --a-estela: var(--acento-texto);
+  --a-trazo: var(--acento-texto);
+  /* Ruedas y casco de la moto: el color de la tarjeta, para que se lean como
+     contorno y no como manchas macizas. */
+  --m-relleno: var(--acento);
 }
 :root[data-modo="oscuro"] .auto--sobre-acento {
   --a-cuerpo: var(--acento-texto);
@@ -489,10 +500,15 @@
   --a-rueda: var(--acento-texto);
   --a-buje: var(--acento);
   --a-faro: var(--acento);
+  --a-piloto: var(--acento-texto);
 }
 /* A una sola tinta: la del texto. El «fondo» es lo que asoma por ventanas y llantas. */
 .auto--mono,
 :root[data-modo="oscuro"] .auto--mono {
+  --a-trazo: currentColor;
+  --a-piloto: currentColor;
+  /* Pequeño: el trazo tiene que ser más grueso para verse a 30 px. */
+  --a-trazo-ancho: 7;
   --a-cuerpo: currentColor;
   --a-rueda: currentColor;
   --a-estela: currentColor;
@@ -516,6 +532,9 @@
 .auto-faro {
   fill: var(--a-faro);
 }
+.auto-piloto {
+  fill: var(--a-piloto);
+}
 .auto-rueda {
   fill: var(--a-rueda);
 }
@@ -525,6 +544,31 @@
 .auto-estela path {
   fill: none;
   stroke: var(--a-estela);
+}
+
+/* La moto: casco, torso, brazo, pierna, dos ruedas y la caja de reparto. */
+.moto-trazo,
+.moto-caja,
+.moto-rueda,
+.moto-casco {
+  stroke: var(--a-trazo);
+  stroke-width: var(--a-trazo-ancho);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.moto-trazo {
+  fill: none;
+}
+/* La caja y el torso llevan el color de la cara: es lo que hace de «reparto». */
+.moto-caja {
+  fill: var(--a-cuerpo);
+}
+.moto-rueda,
+.moto-casco {
+  fill: var(--m-relleno, var(--a-vidrio));
+}
+.moto-buje {
+  fill: var(--a-trazo);
 }
 @keyframes auto-llega {
   from {
@@ -542,34 +586,34 @@
   animation: auto-llega 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-/* El botón del centro de la barra de abajo: el auto, sobre una pastilla del
-   segundo color de la marca (amarillo en claro, ámbar en oscuro). */
-.boton-auto {
-  --auto-fondo: var(--acento-2);
+/* La puerta encendida de la barra de abajo: una pastilla detrás del icono, del
+   segundo color de la marca (amarillo en claro y en turbo, ámbar en oscuro). Lo
+   que se está mirando es lo que lleva el color, no un botón fijo. */
+.puerta-icono {
   display: grid;
   place-items: center;
-  width: 52px;
-  height: 36px;
-  margin-bottom: 2px;
+  width: 100%;
+  max-width: 46px;
+  height: 30px;
   border-radius: var(--r-btn);
+  transition: background-color 0.15s;
+}
+.puerta-icono--activa {
+  --auto-fondo: var(--acento-2);
   background: var(--acento-2);
   color: var(--acento-2-tinta);
 }
-:root[data-modo="oscuro"] .boton-auto {
+:root[data-modo="oscuro"] .puerta-icono--activa {
   --auto-fondo: var(--acento);
   background: var(--acento);
   color: var(--acento-texto);
 }
-/* En menta el botón va del color principal (verde), no del segundo (coral):
-   así lo pintaba la propuesta C, y deja el coral libre para lo que pide
-   atención. */
-:root[data-modo="menta"] .boton-auto {
+/* En menta va del color principal (verde), no del segundo (coral): así lo
+   pintaba la propuesta C, y deja el coral libre para lo que pide atención. */
+:root[data-modo="menta"] .puerta-icono--activa {
   --auto-fondo: var(--acento);
   background: var(--acento);
   color: var(--acento-texto);
-}
-.group:active .boton-auto {
-  transform: translateY(1px);
 }
 
 /* La tarjeta de «Hoy cargaste»: la cifra del día, con el auto y su estela. */

@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { alHaberCambios } from "@/lib/cambios";
+
 /**
  * Cargar datos de la base local dentro de una pantalla.
  *
@@ -113,6 +115,15 @@ export function useDatos<T>(
 
   const alDia = resultado.clave === clave;
   const recargar = useCallback(() => setIntento((n) => n + 1), []);
+
+  /* Si algo se guardó desde otro sitio —la hoja de comandas del botón «Cargar»—,
+     las pantallas que conservan sus datos se ponen al día solas. Solo esas: las
+     demás cuentan con vaciarse al recargar, y un aviso ajeno no debe
+     desmontarles el formulario. */
+  useEffect(() => {
+    if (!opciones.conservar) return;
+    return alHaberCambios(recargar);
+  }, [opciones.conservar, recargar]);
 
   // Una recarga con las mismas dependencias: los datos de antes siguen valiendo
   // mientras llegan los nuevos (solo si se pidió conservarlos).

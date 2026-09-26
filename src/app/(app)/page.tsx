@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
@@ -17,6 +17,7 @@ import { TarjetaDelDia } from "@/components/ui";
 import { useDatos } from "@/hooks/useDatos";
 import { useTiraDeSemanas } from "@/hooks/useTiraDeSemanas";
 import { useVehiculo } from "@/hooks/useVehiculo";
+import { publicarDiaElegido } from "@/lib/diaElegido";
 import { leerAjustesDeComandas, type AjustesDeComandas } from "@/lib/db/sqlite/ajustes";
 import { descansosPorRango, marcarDescanso, quitarDescanso } from "@/lib/db/sqlite/descansos";
 import { jornadaPorFecha, reglaVigente } from "@/lib/db/sqlite/jornadas";
@@ -68,6 +69,12 @@ function Contenido() {
   const hoy = hoyEnLima();
   const pedido = params.get("dia");
   const [dia, setDia] = useState<FechaISO>(esFechaISO(pedido) && pedido <= hoy ? pedido : hoy);
+
+  // El botón «Cargar» de la barra de abajo propone el día que se tiene delante.
+  useEffect(() => {
+    publicarDiaElegido(dia);
+    return () => publicarDiaElegido(null);
+  }, [dia]);
 
   const semana = semanaDe(dia);
   const esSemanaActual = semana.inicio === semanaDe(hoy).inicio;
@@ -239,7 +246,7 @@ function DelDia({
         <DiaSinCarga fecha={dia} hoy={hoy} descanso={descanso} puedeEscribir={puedeCargar} alCambiar={alCambiar} />
       )}
 
-      <CargarCapturas deshabilitado={!puedeCargar} />
+      <CargarCapturas deshabilitado={!puedeCargar} dia={dia} />
 
       {jornada && (
         <Acordeon

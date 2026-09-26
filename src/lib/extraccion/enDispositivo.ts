@@ -47,6 +47,11 @@ export interface DiaLeido {
    * carga. Lo leído se suma a lo guardado, no lo reemplaza.
    */
   combinado?: LoCombinado;
+  /**
+   * Ninguna captura traía su fecha: se usó el día que la persona eligió al
+   * cargar. Revisión lo dice, para que lo corrija si no era ese.
+   */
+  fechaElegida?: boolean;
   alertas: ReturnType<typeof validarJornada>;
   regla: Awaited<ReturnType<typeof reglaVigente>>["regla"];
   permanencia: { tiendaId: string | null; horaEntrada: string | null; horaSalida: string | null };
@@ -146,6 +151,14 @@ export interface ResultadoLectura {
 export async function leerCapturas(
   imagenes: ReadonlyArray<{ lectura: Blob; prueba: Blob | Promise<Blob> }>,
   alLeer?: (leidas: number) => void,
+  opciones: {
+    /**
+     * El día al que van las capturas que **no traen fecha**. Cada captura de la
+     * app de la tienda trae la suya («Resumen del 25/09/2026»), y esa manda;
+     * esto solo vale cuando ninguna la trae.
+     */
+    fechaPorDefecto?: FechaISO;
+  } = {},
 ): Promise<ResultadoLectura> {
   /* Cada imagen viaja junto a lo que se leyó de ella. Hace falta para poder
      guardarla como prueba **del día correcto**: una captura sin cabecera no
@@ -213,8 +226,16 @@ export async function leerCapturas(
     horaSalida: perfil?.horaSalida ?? null,
   };
 
+  const grupos = agruparPorFecha(leidas, (l) => l.extraida.fecha);
+  /* Si ninguna captura trae fecha, todas son del día elegido al cargar. Si
+     alguna la trae, las demás se reparten por ella como siempre (ver
+     `agruparPorFecha`): elegir un día no puede pisar lo que dicen las capturas. */
+  const todasSinFecha = grupos.length === 1 && grupos[0][0] === "";
+
   const dias: DiaLeido[] = [];
-  for (const [fechaDelGrupo, delDia] of agruparPorFecha(leidas, (l) => l.extraida.fecha)) {
+  for (const [claveDelGrupo, delDia] of grupos) {
+    const fechaElegida = todasSinFecha && Boolean(opciones.fechaPorDefecto);
+    const fechaDelGrupo = fechaElegida ? (opciones.fechaPorDefecto as string) : claveDelGrupo;
     /* Si ese día ya estaba guardado, lo guardado entra primero y las capturas
        nuevas se suman: subir una captura mejor de un pedido que no se leyó no
        puede borrar los demás. Sin fecha no hay día que consultar. Si la base
@@ -228,10 +249,12 @@ export async function leerCapturas(
         guardada = null;
       }
     }
-    const fusionada = fusionarCapturas([
+    const fusion = fusionarCapturas([
       ...(guardada ? [capturaDeLoGuardado(guardada)] : []),
       ...delDia.map((l) => l.extraida),
     ]);
+    const fusionada =
+      fechaElegida && fusion.fecha === null ? { ...fusion, fecha: fechaDelGrupo as FechaISO } : fusion;
 
     /* Fuera lo que la app arrastra de la noche anterior: las primeras rutas si
        son de noche, y cualquier pedido que ya esté guardado en otro día —un
@@ -315,6 +338,7 @@ export async function leerCapturas(
         }),
       },
       combinado: guardada ? loCombinado(guardada, jornada) : undefined,
+      fechaElegida: fechaElegida || undefined,
       alertas,
       regla,
       permanencia: guardada

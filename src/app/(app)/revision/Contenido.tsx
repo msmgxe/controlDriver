@@ -60,6 +60,8 @@ interface RespuestaExtraccion {
   alertas: AlertaValidacion[];
   /** Ese día ya tenía datos guardados: lo leído se suma a ellos. */
   combinado?: LoCombinado;
+  /** Ninguna captura traía su fecha: es el día que se eligió al cargar. */
+  fechaElegida?: boolean;
   regla: ReglaPago;
   /** Horario propuesto desde el perfil; el driver lo corrige si el día cambió. */
   permanencia: {
@@ -346,9 +348,11 @@ export function Contenido({ alSiguiente }: { alSiguiente?: () => void } = {}) {
           />
         </div>
         <span className="max-w-[17em] text-xs text-acento-tinta">
-          {jornada.fecha
-            ? "Leída en el encabezado de la captura. Manda esta fecha, no la de hoy."
-            : "No se pudo leer en las capturas. Elígela antes de guardar."}
+          {datos.fechaElegida
+            ? "Las capturas no traían la fecha: es el día que elegiste al cargar. Corrígela si no es."
+            : jornada.fecha
+              ? "Leída en el encabezado de la captura. Manda esta fecha, no la de hoy."
+              : "No se pudo leer en las capturas. Elígela antes de guardar."}
         </span>
       </div>
 

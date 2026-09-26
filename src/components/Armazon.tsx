@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore, useState } from "react";
 
 import { Auto } from "@/components/Auto";
 import { BloqueoApp } from "@/components/BloqueoApp";
 import { ProveedorDeCarga, useCarga } from "@/components/CargaDeCapturas";
+import { HojaDeCarga } from "@/components/HojaDeCarga";
 import { usePuedeEscribir } from "@/components/Licencia";
 import {
   Barras,
@@ -16,54 +17,46 @@ import {
   Cartera,
   Casa,
   Gente,
-  Mas,
   Salir,
 } from "@/components/iconos";
 import { useVehiculo } from "@/hooks/useVehiculo";
-import { cerrarDeNuevo } from "@/lib/bloqueo";
+import {
+  cerrarDeNuevo,
+  instantaneaAjustes,
+  instantaneaAjustesServidor,
+  suscribirBloqueo,
+} from "@/lib/bloqueo";
+import { useDiaElegido } from "@/lib/diaElegido";
+import { hoyEnLima } from "@/lib/fechas";
+import { PUERTAS, puertaDe, tituloDe } from "@/lib/navegacion";
 /** Dentro del APK solo existe el repartidor; el administrador vive en la web. */
 type Rol = "admin" | "driver";
 
 /**
  * Armazón de la app del driver.
  *
- * **Móvil**: una barra de abajo con cinco puertas —Inicio, Pagos, el auto que
- * carga capturas, Ajustes y «Más»—, siempre a un pulgar. Son las cinco cosas
- * que se tocan todos los días; «Buscar» y «Historial» no se usan a diario y
- * viven en «Más», que abre el mismo cajón lateral de siempre.
+ * **Móvil**: una barra de abajo con **todas** las pantallas, siempre a un
+ * pulgar —Inicio, Cargar, Pagos, Historial, Buscar, Estadísticas y Ajustes—.
+ * La que se está mirando lleva la pastilla de color detrás del icono, así la
+ * barra dice dónde se está; «Cargar» no es una pantalla, abre una hoja que
+ * pregunta qué se carga y para qué día (ver `HojaDeCarga`).
  *
- * **Desde 900 px**: el cajón queda fijo como barra lateral y la de abajo
- * desaparece. Una sola estructura para los dos tamaños (§9).
+ * **Desde 900 px**: la misma lista pasa a ser una barra lateral fija y la de
+ * abajo desaparece. Una sola estructura para los dos tamaños (§9).
  */
 
-interface Destino {
-  href: string;
-  nombre: string;
-  Icono: typeof Casa;
-  soloAdmin?: boolean;
-}
+/** El icono de cada puerta. «Cargar» no lleva: dibuja el vehículo del perfil. */
+const ICONOS: Record<string, typeof Casa | undefined> = {
+  inicio: Casa,
+  pagos: Cartera,
+  historial: Calendario,
+  buscar: Buscar,
+  estadisticas: Barras,
+  ajustes: Candado,
+};
 
-const DESTINOS: Destino[] = [
-  { href: "/", nombre: "Hoy", Icono: Casa },
-  { href: "/buscar", nombre: "Buscar", Icono: Buscar },
-  { href: "/historial", nombre: "Historial", Icono: Calendario },
-  { href: "/pagos", nombre: "Pagos", Icono: Cartera },
-  { href: "/estadisticas", nombre: "Estadísticas", Icono: Barras },
-];
-
-const DESTINOS_ADMIN: Destino[] = [
-  { href: "/admin", nombre: "Usuarios", Icono: Gente, soloAdmin: true },
-];
-
-/**
- * La barra de abajo: Inicio y Pagos a la izquierda del auto, Ajustes a la
- * derecha. «Buscar» se usa poco —solo cuando se te pierde un pedido— y se
- * quedó mejor guardado en «Más», junto con Historial y Estadísticas.
- */
-const PUERTAS: Array<{ href: string; nombre: string; Icono: typeof Casa }> = [
-  { href: "/", nombre: "Inicio", Icono: Casa },
-  { href: "/pagos", nombre: "Pagos", Icono: Cartera },
-  { href: "/ajustes", nombre: "Ajustes", Icono: Candado },
+const DESTINOS_ADMIN: Array<{ href: string; nombre: string; Icono: typeof Casa }> = [
+  { href: "/admin", nombre: "Usuarios", Icono: Gente },
 ];
 
 export function Armazon(props: {
@@ -95,34 +88,31 @@ function ArmazonInterno({
 }) {
   const ruta = usePathname();
   const router = useRouter();
-  const [abierto, setAbierto] = useState(false);
-  const { abrir, trabajando } = useCarga();
+  const [cargando, setCargando] = useState(false);
+  const { abrir, trabajando, deshabilitado } = useCarga();
   const vehiculo = useVehiculo();
+  const diaElegido = useDiaElegido();
 
-  useEffect(() => {
-    function alPulsar(e: KeyboardEvent) {
-      if (e.key === "Escape") setAbierto(false);
-    }
-    document.addEventListener("keydown", alPulsar);
-    return () => document.removeEventListener("keydown", alPulsar);
-  }, []);
+  // El botón de bloquear solo tiene sentido si hay un PIN puesto.
+  const [conPin] = useSyncExternalStore(
+    suscribirBloqueo,
+    instantaneaAjustes,
+    instantaneaAjustesServidor,
+  )
+    .split(",")
+    .map((v) => v === "true");
 
-  // Ajustes solo vive en la barra de abajo, pero su título tiene que salir arriba
-  // igual: sin esto la cabecera decía «Hoy» estando en Ajustes.
-  const actual =
-    [...DESTINOS, ...DESTINOS_ADMIN, ...PUERTAS.filter((p) => p.href === "/ajustes")].find((d) =>
-      d.href === "/" ? ruta === "/" : ruta.startsWith(d.href),
-    ) ?? DESTINOS[0];
+  const activa = puertaDe(ruta);
+  const titulo = tituloDe(ruta);
 
-  /* Qué puerta de la barra de abajo está encendida. Todo lo que no tiene puerta
-     propia —Historial, Estadísticas, Ajustes— cuelga de «Más». */
-  const puertaActiva =
-    PUERTAS.find((p) => (p.href === "/" ? ruta === "/" : ruta.startsWith(p.href)))?.href ?? "mas";
+  /* «Cargar» propone el día que se tiene delante: el de Inicio, si se está en
+     Inicio; en cualquier otra pantalla, hoy. Cambiarlo es un toque en la hoja. */
+  const diaInicial = ruta === "/" && diaElegido ? diaElegido : hoyEnLima();
 
   /* En el APK no hay sesión que cerrar: los datos son del dueño del teléfono
      y no viajan a ningún lado. Lo equivalente es echar el cerrojo, que es lo
      que de verdad protege la pantalla si alguien coge el aparato. */
-  function salir() {
+  function bloquear() {
     cerrarDeNuevo();
     router.replace("/");
   }
@@ -130,12 +120,10 @@ function ArmazonInterno({
   return (
     <BloqueoApp>
       <div className="grid min-h-dvh lg:grid-cols-[268px_1fr]">
+        {/* Barra lateral: solo desde 900 px. En el móvil manda la de abajo. */}
         <aside
-          id="cajon"
           aria-label="Menú principal"
-          className={`fixed inset-y-0 left-0 z-40 flex w-[min(268px,84vw)] flex-col gap-2 overflow-y-auto bg-papel px-3 pt-[calc(1rem+env(safe-area-inset-top,0px))] pb-[calc(1rem+env(safe-area-inset-bottom,0px))] transition-transform duration-200 lg:sticky lg:top-0 lg:h-dvh lg:w-auto lg:translate-x-0 lg:shadow-none ${
-            abierto ? "translate-x-0 shadow-alta" : "-translate-x-full"
-          }`}
+          className="sticky top-0 hidden h-dvh flex-col gap-2 overflow-y-auto bg-papel px-3 pt-4 pb-4 lg:flex"
         >
           <div className="flex items-center gap-2 px-3 pt-2 pb-4">
             <Auto vehiculo={vehiculo} animado className="w-14 shrink-0" />
@@ -143,23 +131,40 @@ function ArmazonInterno({
           </div>
 
           <nav className="flex flex-col gap-0.5">
-            {DESTINOS.map(({ href, nombre: texto, Icono }) => {
-              const activo = actual.href === href;
-              return (
+            {PUERTAS.map((p) => {
+              const encendida = activa === p.id || (p.id === "cargar" && cargando);
+              const clases = `flex min-h-12 items-center gap-3 rounded-full px-3 text-[15px] ${
+                encendida
+                  ? "bg-acento-suave font-semibold text-acento-tinta"
+                  : "font-medium text-tinta-2 hover:bg-sup-2 hover:text-tinta"
+              }`;
+              const Icono = ICONOS[p.id];
+              const icono = Icono ? (
+                <Icono className="size-5 shrink-0" />
+              ) : (
+                <Auto vehiculo={vehiculo} mono icono className="shrink-0" />
+              );
+              return p.href ? (
                 <Link
-                  key={href}
-                  href={href}
-                  onClick={() => setAbierto(false)}
-                  aria-current={activo ? "page" : undefined}
-                  className={`flex min-h-12 items-center gap-3 rounded-full px-3 text-[15px] ${
-                    activo
-                      ? "bg-acento-suave font-semibold text-acento-tinta"
-                      : "font-medium text-tinta-2 hover:bg-sup-2 hover:text-tinta"
-                  }`}
+                  key={p.id}
+                  href={p.href}
+                  aria-current={activa === p.id ? "page" : undefined}
+                  className={clases}
                 >
-                  <Icono className="size-5 shrink-0" />
-                  {texto}
+                  {icono}
+                  {p.nombre === "Hoy" ? "Inicio" : p.nombre}
                 </Link>
+              ) : (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setCargando(true)}
+                  disabled={trabajando}
+                  className={`${clases} disabled:opacity-60`}
+                >
+                  {icono}
+                  {p.nombre}
+                </button>
               );
             })}
           </nav>
@@ -173,7 +178,6 @@ function ArmazonInterno({
                   <Link
                     key={href}
                     href={href}
-                    onClick={() => setAbierto(false)}
                     className="flex min-h-12 items-center gap-3 rounded-full px-3 text-[15px] font-medium text-tinta-2 hover:bg-sup-2 hover:text-tinta"
                   >
                     <Icono className="size-5 shrink-0" />
@@ -185,20 +189,6 @@ function ArmazonInterno({
           )}
 
           <div className="mt-auto flex flex-col gap-1">
-            <Link
-              href="/ajustes"
-              onClick={() => setAbierto(false)}
-              aria-current={ruta.startsWith("/ajustes") ? "page" : undefined}
-              className={`flex min-h-12 items-center gap-3 rounded-full px-3 text-[15px] ${
-                ruta.startsWith("/ajustes")
-                  ? "bg-acento-suave font-semibold text-acento-tinta"
-                  : "font-medium text-tinta-2 hover:bg-sup-2 hover:text-tinta"
-              }`}
-            >
-              <Candado className="size-5 shrink-0" />
-              Ajustes
-            </Link>
-
             <div className="flex items-center gap-3 rounded-btn bg-sup-2 p-3">
               <span className="grid size-9 shrink-0 place-items-center rounded-full bg-acento font-display text-lg font-bold text-acento-texto">
                 {nombre.slice(0, 1).toUpperCase()}
@@ -211,7 +201,7 @@ function ArmazonInterno({
 
             <button
               type="button"
-              onClick={() => void salir()}
+              onClick={bloquear}
               className="flex min-h-12 items-center gap-3 rounded-full px-3 text-[15px] font-medium text-tinta-2 hover:bg-sup-2 hover:text-tinta"
             >
               <Salir className="size-5 shrink-0" />
@@ -220,21 +210,22 @@ function ArmazonInterno({
           </div>
         </aside>
 
-        {abierto && (
-          <button
-            type="button"
-            aria-label="Cerrar menú"
-            onClick={() => setAbierto(false)}
-            className="fixed inset-0 z-30 bg-black/45 lg:hidden"
-          />
-        )}
-
         <div className="flex min-w-0 flex-col">
           <header className="sticky top-[env(safe-area-inset-top,0px)] z-20 flex items-center gap-3 border-b border-linea bg-papel/85 px-4 py-3 backdrop-blur-md lg:border-transparent">
-            {/* La marca, en el móvil: el auto y el nombre de la pantalla. En
+            {/* La marca, en el móvil: el vehículo y el nombre de la pantalla. En
                 escritorio la marca ya está en la barra lateral. */}
             <Auto vehiculo={vehiculo} className="w-11 shrink-0 lg:hidden" />
-            <h1 className="min-w-0 flex-1 truncate text-[22px]">{actual.nombre}</h1>
+            <h1 className="min-w-0 flex-1 truncate text-[22px]">{titulo}</h1>
+            {conPin && (
+              <button
+                type="button"
+                onClick={bloquear}
+                aria-label="Bloquear la app ahora"
+                className="grid size-11 shrink-0 place-items-center rounded-full text-tinta-2 hover:bg-sup-2 lg:hidden"
+              >
+                <Candado className="size-5" />
+              </button>
+            )}
           </header>
 
           {/* `overflow-x-clip` y no `hidden`: la tira de semanas asoma la vecina al
@@ -246,71 +237,94 @@ function ArmazonInterno({
         </div>
       </div>
 
-      {/* La barra de abajo: cinco puertas, la del medio es el auto. */}
+      {/* La barra de abajo: siete puertas. La encendida lleva una pastilla de
+          color detrás del icono; «Cargar» se enciende mientras su hoja está abierta. */}
       <nav
         aria-label="Navegación principal"
-        className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 items-end rounded-t-[20px] border-t border-linea bg-sup px-1 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] shadow-[0_-10px_24px_-16px_rgb(10_34_96/0.5)] lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-7 items-end rounded-t-[20px] border-t border-linea bg-sup px-0.5 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] shadow-[0_-10px_24px_-16px_rgb(10_34_96/0.5)] lg:hidden"
       >
-        {PUERTAS.slice(0, 2).map((p) => (
-          <PuertaDeLaBarra key={p.href} {...p} activa={puertaActiva === p.href} />
-        ))}
-
-        <button
-          type="button"
-          onClick={abrir}
-          disabled={trabajando}
-          aria-label="Cargar capturas"
-          className="group flex min-h-14 flex-col items-center justify-end gap-1 text-[11px] font-semibold text-tinta-2 disabled:opacity-60"
-        >
-          <span className="boton-auto">
-            <Auto vehiculo={vehiculo} mono animado={false} className="w-9" />
-          </span>
-          Cargar
-        </button>
-
-        {PUERTAS.slice(2).map((p) => (
-          <PuertaDeLaBarra key={p.href} {...p} activa={puertaActiva === p.href} />
-        ))}
-
-        <button
-          type="button"
-          aria-label="Más: buscar, historial y estadísticas"
-          aria-expanded={abierto}
-          aria-controls="cajon"
-          onClick={() => setAbierto((v) => !v)}
-          className={`flex min-h-14 flex-col items-center justify-end gap-1 text-[11px] font-semibold ${
-            puertaActiva === "mas" || abierto ? "text-acento" : "text-tinta-2"
-          }`}
-        >
-          <Mas className="size-6" />
-          Más
-        </button>
+        {PUERTAS.map((p) => {
+          const encendida = activa === p.id || (p.id === "cargar" && cargando);
+          const Icono = ICONOS[p.id];
+          const icono = Icono ? <Icono className="size-6" /> : <Auto vehiculo={vehiculo} mono icono />;
+          return p.href ? (
+            <PuertaDeLaBarra
+              key={p.id}
+              nombre={p.corto ?? p.nombre}
+              href={p.href}
+              activa={encendida}
+              icono={icono}
+            />
+          ) : (
+            <PuertaDeLaBarra
+              key={p.id}
+              nombre={p.nombre}
+              activa={encendida}
+              icono={icono}
+              deshabilitada={trabajando}
+              alTocar={() => setCargando(true)}
+            />
+          );
+        })}
       </nav>
+
+      {cargando && (
+        <HojaDeCarga
+          diaInicial={diaInicial}
+          deshabilitado={deshabilitado}
+          alElegirCapturas={(dia) => {
+            setCargando(false);
+            abrir({ fechaPorDefecto: dia });
+          }}
+          alCerrar={() => setCargando(false)}
+        />
+      )}
     </BloqueoApp>
   );
 }
 
+/**
+ * Una puerta de la barra de abajo: el icono —con su pastilla si es la que se
+ * está mirando— y su nombre. Es un enlace, o un botón si es «Cargar».
+ */
 function PuertaDeLaBarra({
-  href,
   nombre,
-  Icono,
+  href,
   activa,
+  icono,
+  alTocar,
+  deshabilitada = false,
 }: {
-  href: string;
   nombre: string;
-  Icono: typeof Casa;
+  href?: string;
   activa: boolean;
+  icono: React.ReactNode;
+  alTocar?: () => void;
+  deshabilitada?: boolean;
 }) {
-  return (
-    <Link
-      href={href}
-      aria-current={activa ? "page" : undefined}
-      className={`flex min-h-14 flex-col items-center justify-end gap-1 text-[11px] font-semibold ${
-        activa ? "text-acento" : "text-tinta-2"
-      }`}
-    >
-      <Icono className="size-6" />
-      {nombre}
+  const clases = `flex min-h-14 min-w-0 flex-col items-center justify-end gap-1 text-[10px] leading-none tracking-[-0.01em] ${
+    activa ? "font-bold text-tinta" : "font-semibold text-tinta-2"
+  }`;
+  const contenido = (
+    <>
+      <span className={`puerta-icono ${activa ? "puerta-icono--activa" : ""}`}>{icono}</span>
+      <span className="max-w-full truncate">{nombre}</span>
+    </>
+  );
+
+  return href ? (
+    <Link href={href} aria-current={activa ? "page" : undefined} className={clases}>
+      {contenido}
     </Link>
+  ) : (
+    <button
+      type="button"
+      onClick={alTocar}
+      disabled={deshabilitada}
+      aria-haspopup="dialog"
+      className={`${clases} disabled:opacity-60`}
+    >
+      {contenido}
+    </button>
   );
 }

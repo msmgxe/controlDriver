@@ -6,6 +6,8 @@
  * Las dos hacen exactamente lo mismo a partir de aquí.
  */
 
+import type { FechaISO } from "@/lib/fechas";
+
 export const CLAVE_REVISION = "rutas-a.revision";
 
 /**
@@ -100,6 +102,8 @@ export async function procesarCapturas(
   archivos: Blob[],
   alComprimir?: (listas: number) => void,
   alLeer?: (leidas: number) => void,
+  /** El día al que van las capturas que no traen su fecha. */
+  fechaPorDefecto?: FechaISO,
 ): Promise<ResultadoCarga> {
   if (archivos.length === 0) {
     return { ok: false, error: "No llegó ninguna imagen." };
@@ -170,7 +174,7 @@ export async function procesarCapturas(
       alComprimir?.(capturas.length);
     }
 
-    const datos = await leerCapturas(capturas, alLeer);
+    const datos = await leerCapturas(capturas, alLeer, { fechaPorDefecto });
 
     if (datos.dias.length === 0) {
       return {

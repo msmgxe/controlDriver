@@ -183,3 +183,63 @@ describe("leer capturas de un día que no estaba guardado", () => {
     });
   });
 });
+
+describe("el día elegido al cargar", () => {
+  const SIN_FECHA = [
+    "Rutas 2",
+    "Órdenes 2",
+    "v12269031wofp-01",
+    "Ruta 2",
+    "Entregado",
+    "wpet-12268585-01",
+    "Ruta 2",
+    "Entregado",
+  ];
+  const ELEGIDO = "2026-09-24" as FechaISO;
+
+  it("si ninguna captura trae fecha, van al día elegido y Revisión lo sabe", async () => {
+    const { dias } = await leerCapturas([imagen("a", SIN_FECHA)], undefined, { fechaPorDefecto: ELEGIDO });
+
+    expect(dias).toHaveLength(1);
+    expect(dias[0].jornada.fecha).toBe(ELEGIDO);
+    expect(dias[0].fechaElegida).toBe(true);
+    expect(dias[0].alertas.map((a) => a.codigo)).not.toContain("sin-fecha");
+  });
+
+  it("sin día elegido, una captura sin fecha sigue pidiendo la fecha", async () => {
+    const { dias } = await leerCapturas([imagen("a", SIN_FECHA)]);
+
+    expect(dias[0].jornada.fecha).toBeNull();
+    expect(dias[0].fechaElegida).toBeUndefined();
+    expect(dias[0].alertas.map((a) => a.codigo)).toContain("sin-fecha");
+  });
+
+  it("la fecha que trae la captura manda sobre la elegida", async () => {
+    const { dias } = await leerCapturas([imagen("a", CAPTURA_NUEVA)], undefined, { fechaPorDefecto: ELEGIDO });
+
+    expect(dias).toHaveLength(1);
+    expect(dias[0].jornada.fecha).toBe(FECHA);
+    expect(dias[0].fechaElegida).toBeUndefined();
+  });
+
+  it("una captura sin fecha detrás de una con fecha es de ese día, no del elegido", async () => {
+    const { dias } = await leerCapturas(
+      [imagen("a", CAPTURA_NUEVA), imagen("b", ["v12269570wofp-01", "Ruta 3", "Entregado"])],
+      undefined,
+      { fechaPorDefecto: ELEGIDO },
+    );
+
+    expect(dias).toHaveLength(1);
+    expect(dias[0].jornada.fecha).toBe(FECHA);
+    expect(dias[0].jornada.ordenes.map((o) => o.codigo)).toContain("v12269570wofp-01");
+  });
+
+  it("y si ese día ya estaba guardado, se suma a lo que había", async () => {
+    await guardarJornada({ ...DIA_GUARDADO, fecha: ELEGIDO }, "reemplazar");
+
+    const { dias } = await leerCapturas([imagen("a", SIN_FECHA)], undefined, { fechaPorDefecto: ELEGIDO });
+
+    expect(dias[0].combinado).toMatchObject({ pedidos: 4, pedidosNuevos: 1 });
+    expect(dias[0].jornada.ordenes).toHaveLength(5);
+  });
+});
