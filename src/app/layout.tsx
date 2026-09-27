@@ -8,26 +8,33 @@ import {
   Fredoka,
   IBM_Plex_Mono,
   IBM_Plex_Sans,
+  Inter,
   JetBrains_Mono,
   Lora,
+  Manrope,
   Nunito,
+  Space_Grotesk,
   Unbounded,
 } from "next/font/google";
 import Script from "next/script";
 
 import { VigilanteDeApariencia } from "@/components/Apariencia";
+import { AvisoLegal } from "@/components/AvisoLegal";
 import { SplashDeMarca } from "@/components/SplashDeMarca";
 import { SCRIPT_INICIAL } from "@/lib/apariencia";
 import "./globals.css";
 
-/* App del driver. Cuatro caras, una por tema (ver `src/lib/apariencia.ts`):
-     · claro  → «Mapa» (D): Unbounded para títulos y cifras, DM Sans para el texto;
-     · oscuro → «Asfalto» (B): Barlow Condensed para títulos y cifras, Barlow
+/* App del driver. Seis caras, una por tema (ver `src/lib/apariencia.ts`):
+     · claro   → «Mapa» (D): Unbounded para títulos y cifras, DM Sans para el texto;
+     · oscuro  → «Asfalto» (B): Barlow Condensed para títulos y cifras, Barlow
        para el texto;
-     · turbo  → propuesta A: Fredoka para títulos y cifras, Nunito para el texto;
-     · menta  → propuesta C: Bricolage Grotesque para títulos y cifras, Figtree
-       para el texto.
-   JetBrains Mono es de las cuatro: los códigos de pedido tienen que leerse
+     · turbo   → propuesta A: Fredoka para títulos y cifras, Nunito para el texto;
+     · menta   → propuesta C: Bricolage Grotesque para títulos y cifras, Figtree
+       para el texto;
+     · arcilla → terracota y beige: Space Grotesk para títulos y cifras, Inter
+       para el texto;
+     · avispa  → negro y amarillo: Manrope para todo, títulos y texto.
+   JetBrains Mono es de las seis: los códigos de pedido tienen que leerse
    carácter a carácter. `next/font` las descarga al compilar y las mete dentro
    del APK: funcionan sin internet. */
 const unbounded = Unbounded({
@@ -93,6 +100,27 @@ const jetbrains = JetBrains_Mono({
   display: "swap",
 });
 
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+  variable: "--fuente-space-grotesk",
+  display: "swap",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--fuente-inter",
+  display: "swap",
+});
+
+const manrope = Manrope({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--fuente-manrope",
+  display: "swap",
+});
+
 /* Panel /admin — dirección Profesional */
 const lora = Lora({
   subsets: ["latin"],
@@ -144,7 +172,7 @@ export default function RootLayout({
        etiqueta antes de que React arranque, y React no tiene por qué saberlo. */
     <html lang="es-PE" suppressHydrationWarning>
       <body
-        className={`${unbounded.variable} ${dmSans.variable} ${barlowCondensed.variable} ${barlow.variable} ${fredoka.variable} ${nunito.variable} ${bricolage.variable} ${figtree.variable} ${jetbrains.variable} ${lora.variable} ${plex.variable} ${plexMono.variable} antialiased`}
+        className={`${unbounded.variable} ${dmSans.variable} ${barlowCondensed.variable} ${barlow.variable} ${fredoka.variable} ${nunito.variable} ${bricolage.variable} ${figtree.variable} ${jetbrains.variable} ${spaceGrotesk.variable} ${inter.variable} ${manrope.variable} ${lora.variable} ${plex.variable} ${plexMono.variable} antialiased`}
       >
         {/* Antes que nada: elige la cara clara u oscura, para que no haya un
             fogonazo del tema equivocado al abrir la app. */}
@@ -153,7 +181,7 @@ export default function RootLayout({
         </Script>
         <VigilanteDeApariencia />
         <SplashDeMarca />
-        {children}
+        <AvisoLegal>{children}</AvisoLegal>
       </body>
     </html>
   );

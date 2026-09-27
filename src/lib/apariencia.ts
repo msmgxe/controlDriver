@@ -1,20 +1,24 @@
 /**
  * Qué cara tiene la app, y cómo se elige.
  *
- * Salen de las cuatro propuestas de diseño (`prototipo/propuestas-diseno.html`).
- * Dos son pareja **claro/oscuro** y siguen al teléfono si no se elige nada:
+ * Salen de las cuatro propuestas de diseño (`prototipo/propuestas-diseno.html`)
+ * más dos temas añadidos después. Dos son pareja **claro/oscuro** y siguen al
+ * teléfono si no se elige nada:
  *
  *   · `claro`  → propuesta D, «Mapa»;
  *   · `oscuro` → propuesta B, «Asfalto».
  *
- * Las otras dos son **temas propios**, que solo se activan a mano —no tienen
- * media query que los dispare, uno elige el que más le gusta y se queda—:
+ * Los otros cuatro son **temas propios**, que solo se activan a mano —no
+ * tienen media query que los dispare, uno elige el que más le gusta y se
+ * queda—:
  *
- *   · `turbo`  → propuesta A: violeta, mostaza y bordes gruesos;
- *   · `menta`  → propuesta C: la continuación del verde de siempre.
+ *   · `turbo`   → propuesta A: violeta, mostaza y bordes gruesos;
+ *   · `menta`   → propuesta C: la continuación del verde de siempre;
+ *   · `arcilla` → terracota y beige, cálido y de papel;
+ *   · `avispa`  → negro y amarillo de alto contraste.
  *
  * `auto` sigue eligiendo entre claro y oscuro según el teléfono, como hacía
- * antes de que existieran turbo y menta: elegir un tema propio es un acto
+ * antes de que existieran los demás: elegir un tema propio es un acto
  * explícito, y una vez elegido no cambia solo con la hora del día.
  *
  * Lo elegido se guarda en `localStorage` y no en la base, a propósito: hace
@@ -28,15 +32,15 @@
  */
 
 /** Una cara completa de la app: colores, tipografía y forma. */
-type Tema = "claro" | "oscuro" | "turbo" | "menta";
+type Tema = "claro" | "oscuro" | "turbo" | "menta" | "arcilla" | "avispa";
 /** Lo que el repartidor eligió: un tema fijo, o que la app decida sola. */
 export type Preferencia = "auto" | Tema;
-/** Lo que termina puesto en pantalla: siempre uno de los cuatro temas. */
+/** Lo que termina puesto en pantalla: siempre uno de los seis temas. */
 export type Modo = Tema;
 
 export const CLAVE_APARIENCIA = "rutas-a.apariencia";
 
-const TEMAS: readonly Tema[] = ["claro", "oscuro", "turbo", "menta"];
+const TEMAS: readonly Tema[] = ["claro", "oscuro", "turbo", "menta", "arcilla", "avispa"];
 const PREFERENCIAS: readonly Preferencia[] = ["auto", ...TEMAS];
 
 export function esPreferencia(v: unknown): v is Preferencia {
@@ -63,10 +67,11 @@ function sistemaEsOscuro(): boolean {
 }
 
 /**
- * La preferencia, ya resuelta a uno de los cuatro temas.
+ * La preferencia, ya resuelta a uno de los seis temas.
  *
- * Solo `auto` mira el teléfono. Turbo y menta son elecciones fijas: quien los
- * eligió los quiere ver siempre, de día o de noche.
+ * Solo `auto` mira el teléfono. Turbo, menta, arcilla y avispa son
+ * elecciones fijas: quien los eligió los quiere ver siempre, de día o de
+ * noche.
  */
 export function modoDe(preferencia: Preferencia, sistemaOscuro = sistemaEsOscuro()): Modo {
   if (preferencia === "auto") return sistemaOscuro ? "oscuro" : "claro";
@@ -95,4 +100,4 @@ export function elegirPreferencia(preferencia: Preferencia): void {
  * líneas lo que arriba hacen las funciones. Cualquier cambio aquí tiene que
  * hacerse en los dos sitios; la prueba de `apariencia.test.ts` lo comprueba.
  */
-export const SCRIPT_INICIAL = `(function(){var TEMAS=['claro','oscuro','turbo','menta'];var m='claro';try{var p=localStorage.getItem('${CLAVE_APARIENCIA}');if(TEMAS.indexOf(p)===-1)p='auto';m=p==='auto'?(matchMedia('(prefers-color-scheme: dark)').matches?'oscuro':'claro'):p}catch(e){}document.documentElement.dataset.modo=m})();`;
+export const SCRIPT_INICIAL = `(function(){var TEMAS=['claro','oscuro','turbo','menta','arcilla','avispa'];var m='claro';try{var p=localStorage.getItem('${CLAVE_APARIENCIA}');if(TEMAS.indexOf(p)===-1)p='auto';m=p==='auto'?(matchMedia('(prefers-color-scheme: dark)').matches?'oscuro':'claro'):p}catch(e){}document.documentElement.dataset.modo=m})();`;

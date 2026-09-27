@@ -37,7 +37,10 @@ más que una tarde de trabajo a ciegas.
 ## Historial
 
 ### v40 — 27/09/2026
-El ícono y el nombre de la app: Control Driver.
+El ícono y el nombre de la app: Control Driver. Más el aviso legal de entrada y
+dos temas nuevos, añadidos antes de que esta versión llegara a instalarse en un
+celular de verdad —por eso sigue siendo la 40 y no la 41: a pedido tuyo, esta
+compilación reemplaza el APK anterior en vez de sumar una versión más—.
 - **Cambio: el ícono de la app ya no es el de Android por defecto.** Ahora es
   nuestro logo —el mismo visto de la splash—, en un cuadro verde con el anillo
   coral, generado en las cinco resoluciones y en las tres formas que pide
@@ -52,9 +55,30 @@ El ícono y el nombre de la app: Control Driver.
   Android tratara esto como una app distinta y perdieras los datos ya
   guardados—, así que esta actualización se instala encima de la anterior sin
   perder nada.
+- **Nuevo: el aviso legal, antes de poder usar la app.** La primera vez que se
+  abre —después de la marca de dos segundos—, sale el copyright
+  («© 2026 Marco Saldarriaga Medina. Todos los derechos reservados.») y un
+  acordeón con las condiciones: qué es la app, qué datos de tus clientes puede
+  guardar (nombre, teléfono, dirección de la comanda), a qué te comprometes a
+  no hacer con ellos, dónde viven esos datos y de quién es la responsabilidad
+  si se usan mal. Hay que leerlo, marcar la casilla y tocar «Aceptar y
+  continuar»: sin eso, «No acepto» es la única otra opción, y cierra la app.
+  Se acepta una sola vez —queda guardada la fecha— y solo se vuelve a pedir si
+  el texto cambia de verdad más adelante. Desde Ajustes, «Términos y
+  privacidad» (junto a Licencia) enseña el mismo texto en cualquier momento,
+  con la fecha en que lo aceptaste.
+- **Nuevo: dos temas más en Apariencia: Arcilla y Avispa.** Arcilla es
+  terracota y beige, cálido, con las tarjetas muy redondeadas y sin bordes
+  duros. Avispa es negro y amarillo de alto contraste, con un naranja de
+  segundo acento. Se eligen igual que Turbo y Menta —fijos, no siguen al
+  teléfono— y les llega automáticamente todo lo que ya reacciona al tema: la
+  pantalla de marca, los botones, los gráficos, el PDF exportado en claro…
+  Van seis caras en total.
 - **Pendiente de probar en el celular:** cómo se ve el ícono nuevo en tu
   launcher —el adaptativo lo recorta cada fabricante a su manera (círculo,
-  cuadrado con esquinas, gota…) y eso no se puede ver desde la Mac.
+  cuadrado con esquinas, gota…) y eso no se puede ver desde la Mac—; y que
+  «No acepto» cierre la app de verdad (en el navegador solo se puede comprobar
+  que aparece el aviso, no el cierre).
 
 ### v39 — 27/09/2026
 Dos ajustes a la pantalla de marca y un botón nuevo en Ajustes.

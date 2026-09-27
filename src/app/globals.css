@@ -130,9 +130,10 @@
 }
 
 /* ---------------------------------------------------------------------------
-   Turbo (propuesta A) y Menta (propuesta C): los otros dos temas del
-   selector de Ajustes. A diferencia de claro/oscuro no tienen media query que
-   los dispare —se eligen a mano y se quedan— (ver `src/lib/apariencia.ts`).
+   Turbo (propuesta A), Menta (propuesta C), Arcilla y Avispa: los otros
+   cuatro temas del selector de Ajustes. A diferencia de claro/oscuro no
+   tienen media query que los dispare —se eligen a mano y se quedan— (ver
+   `src/lib/apariencia.ts`).
    --------------------------------------------------------------------------- */
 :root[data-modo="turbo"] {
   --papel: #f3efff;
@@ -223,6 +224,99 @@
   --sombra-card: 0 1px 2px rgb(12 26 24 / 0.05), 0 14px 30px -20px rgb(12 26 24 / 0.35);
   --sombra-alta: 0 8px 20px -6px rgb(12 26 24 / 0.18), 0 30px 60px -30px rgb(12 26 24 / 0.5);
   --sombra-tab: 0 1px 3px rgb(12 26 24 / 0.25);
+}
+
+:root[data-modo="arcilla"] {
+  /* Terracota y beige, cálido y de papel: esquinas muy redondeadas, sombra
+     suave, sin bordes duros —lo opuesto de Turbo. */
+  --papel: #f1e9db;
+  --sup: #fdfaf5;
+  --sup-2: #e3dacc;
+  --tinta: #141413;
+  --tinta-2: #5a5347;
+  --tinta-3: #837b6c;
+  --linea: #e6ddd0;
+  --linea-fuerte: #d3c6b3;
+  --acento: #d97757;
+  --acento-tinta: #c15f40;
+  --acento-suave: #f3d9cd;
+  --acento-texto: #2a1509;
+  --acento-2: #feedba;
+  --acento-2-tinta: #3b2410;
+  --barra: #d97757;
+  --barra-extra: #f0b49c;
+  --bien: #2f7d4f;
+  --bien-suave: #dcefe1;
+  --aviso: #8a5a12;
+  --aviso-suave: #f6e6c8;
+  --mal: #a83b2e;
+  --mal-suave: #f7ded9;
+  --descanso: #feedba;
+  --descanso-tinta: #3b2410;
+
+  --f-display: var(--fuente-space-grotesk), var(--fuente-inter), system-ui, sans-serif;
+  --f-texto: var(--fuente-inter), system-ui, sans-serif;
+  --zoom-titulo: 0.92;
+  --tt-titulo: none;
+
+  --r-chip: 999px;
+  --r-btn: 14px;
+  --r-card: 18px;
+  --r-hoja: 22px;
+  --borde-ancho: 0px;
+  --pad-card: 18px;
+  --peso-titulo: 700;
+  --track-titulo: -0.01em;
+  --sombra-card: 0 1px 2px rgb(20 20 19 / 0.06), 0 14px 30px -20px rgb(20 20 19 / 0.35);
+  --sombra-alta: 0 8px 20px -6px rgb(20 20 19 / 0.16), 0 30px 60px -30px rgb(20 20 19 / 0.45);
+  --sombra-tab: 0 1px 3px rgb(20 20 19 / 0.22);
+}
+
+:root[data-modo="avispa"] {
+  /* Negro y amarillo de avispero: fondo casi negro, amarillo de alto
+     contraste como acento, y un naranja de segundo acento para no usar el
+     mismo amarillo con dos sentidos distintos (marca y aviso). */
+  --papel: #09090b;
+  --sup: #18181b;
+  --sup-2: #27272a;
+  --tinta: #fafafa;
+  --tinta-2: #a1a1aa;
+  --tinta-3: #71717a;
+  --linea: #27272a;
+  --linea-fuerte: #3f3f46;
+  --acento: #eab308;
+  --acento-tinta: #ca8a04;
+  --acento-suave: #422f06;
+  --acento-texto: #1a1400;
+  --acento-2: #f97316;
+  --acento-2-tinta: #2b1200;
+  --barra: #eab308;
+  --barra-extra: #7a5c04;
+  --bien: #4ade80;
+  --bien-suave: #12281a;
+  --aviso: #fbbf24;
+  --aviso-suave: #2e2408;
+  --mal: #f87171;
+  --mal-suave: #2c1414;
+  --descanso: #f97316;
+  --descanso-tinta: #2b1200;
+
+  --f-display: var(--fuente-manrope), system-ui, sans-serif;
+  --f-texto: var(--fuente-manrope), system-ui, sans-serif;
+  --zoom-titulo: 0.98;
+  --tt-titulo: none;
+
+  --r-chip: 999px;
+  --r-btn: 10px;
+  --r-card: 14px;
+  --r-hoja: 18px;
+  --borde-ancho: 1px;
+  --pad-card: 16px;
+  --peso-titulo: 800;
+  --track-titulo: -0.02em;
+  --sombra-card: none;
+  --sombra-alta: 0 10px 30px -12px rgb(0 0 0 / 0.7);
+  --sombra-tab: 0 0 0 2px var(--acento);
 }
 
 /* ---------------------------------------------------------------------------

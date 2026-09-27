@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="es" data-skin="menta">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rutas-A · Propuesta de aviso legal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=Bricolage+Grotesque:wght@600;700;800&family=DM+Sans:wght@400;500;700&family=Figtree:wght@400;500;600;700&family=Fredoka:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Nunito:wght@500;600;700;800&family=Unbounded:wght@500;700&display=swap">
+<style>
+/* ═══════════ La página (el escenario), no la app ═══════════ */
+:root{--pg:#eceef3;--pg-card:#fff;--pg-ink:#14161d;--pg-mut:#586071;--pg-line:#d8dce6;--pg-chip:#e2e5ee;--pg-acc:#0b857b;--pg-stage:#e4e7ef}
+@media (prefers-color-scheme:dark){:root{--pg:#111318;--pg-card:#191c23;--pg-ink:#eceef3;--pg-mut:#9aa2b2;--pg-line:#2b303b;--pg-chip:#242832;--pg-acc:#6fd6c9;--pg-stage:#171a21}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--pg);color:var(--pg-ink);font:15px/1.55 "DM Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased;padding:0 clamp(16px,4vw,40px) 80px}
+.wrap{max-width:1280px;margin-inline:auto}
+h1,h2,h3,p,ul{margin:0}
+.rot{font:500 11px/1 "JetBrains Mono",ui-monospace,monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--pg-mut)}
+.cab{padding-block:40px 20px;display:grid;gap:12px}
+.cab h1{font-size:clamp(28px,4.6vw,44px);line-height:1.05;letter-spacing:-.03em;font-weight:700;max-width:26ch}
+.lead{max-width:74ch;color:var(--pg-mut);font-size:16px}
+.lead b{color:var(--pg-ink)}
+
+.barra{position:sticky;top:0;z-index:50;margin-inline:calc(-1*clamp(16px,4vw,40px));padding:10px clamp(16px,4vw,40px);background:color-mix(in srgb,var(--pg) 90%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--pg-line)}
+.barra .wrap{display:flex;flex-wrap:wrap;gap:8px 22px;align-items:center;justify-content:space-between}
+.grupo{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.grupo .rot{margin-right:4px}
+.pg-btn{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:99px;background:var(--pg-chip);color:var(--pg-ink);text-decoration:none;font-weight:600;font-size:13.5px;border:0;cursor:pointer;font-family:inherit}
+.pg-btn[aria-pressed="true"]{background:var(--pg-ink);color:var(--pg)}
+
+.nota{margin-top:14px;display:flex;gap:10px;align-items:flex-start;background:var(--pg-card);border:1px solid var(--pg-line);border-radius:14px;padding:13px 16px;max-width:82ch}
+.nota .ic{flex:none;width:22px;height:22px;border-radius:50%;background:var(--pg-acc);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:800}
+.nota p{color:var(--pg-mut);font-size:13.5px}
+.nota b{color:var(--pg-ink)}
+.nota.aviso{border-color:#caa032}
+.nota.aviso .ic{background:#caa032}
+
+.stage{margin-top:36px;border-radius:28px;background:var(--pg-stage);padding:30px clamp(12px,2vw,26px) 24px}
+.phones{display:flex;gap:30px;overflow-x:auto;padding:10px 12px 20px;flex-wrap:wrap;justify-content:center}
+.slot{flex:none;display:grid;gap:14px;justify-items:center;width:300px}
+.slot h3{font-size:16px;display:flex;align-items:center;gap:8px}
+.slot .letra{width:26px;height:26px;border-radius:8px;background:var(--pg-ink);color:var(--pg);display:grid;place-items:center;font-size:13px;font-weight:800}
+.slot figcaption{font-size:13px;text-align:center;max-width:32ch;line-height:1.45;color:var(--pg-mut)}
+
+.comp{margin-top:52px;display:grid;gap:14px}
+.comp h2{font-size:clamp(22px,3.4vw,30px);letter-spacing:-.02em}
+.comp ol{margin:0;padding-left:20px;display:grid;gap:8px;color:var(--pg-mut);max-width:74ch}
+.comp ol b{color:var(--pg-ink)}
+
+/* ═══════════ El teléfono: tokens = los de la app (globals.css) ═══════════ */
+.ph{
+  --papel:#e6eef8;--sup:#fff;--sup-2:#d9e5f4;--tinta:#0a2260;--tinta-2:#3e5183;--tinta-3:#52658f;--linea:#c4d5ec;--linea-fuerte:#a9bfdf;
+  --acento:#1f5cff;--acento-tinta:#1244cc;--acento-suave:#dce6ff;--acento-texto:#fff;--acento-2:#ffc800;--acento-2-tinta:#0a2260;
+  --fd:"Unbounded","DM Sans",system-ui,sans-serif;--ft:"DM Sans",system-ui,sans-serif;--fm:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --tt:none;--r-btn:12px;--r-card:16px;--bw:0px;
+}
+html[data-skin="turbo"] .ph{
+  --papel:#f3efff;--sup:#fff;--sup-2:#ece6ff;--tinta:#1d1246;--tinta-2:#6b5e9c;--tinta-3:#9c8fc7;--linea:#dcd3fa;--linea-fuerte:#1d1246;
+  --acento:#6a4cf5;--acento-tinta:#5636d6;--acento-suave:#e4dbff;--acento-texto:#fff;--acento-2:#ffd23f;--acento-2-tinta:#1d1246;
+  --fd:"Fredoka","Nunito",system-ui,sans-serif;--ft:"Nunito",system-ui,sans-serif;--tt:none;--r-btn:15px;--r-card:20px;--bw:2px;
+}
+html[data-skin="asfalto"] .ph{
+  --papel:#0e1116;--sup:#161b22;--sup-2:#1e252e;--tinta:#eef1f5;--tinta-2:#aab4c2;--tinta-3:#808b9b;--linea:#28303b;--linea-fuerte:#3a4452;
+  --acento:#ff9f1c;--acento-tinta:#ffb84d;--acento-suave:#3a2a0c;--acento-texto:#1a0f00;--acento-2:#5cc8ff;--acento-2-tinta:#0e1116;
+  --fd:"Barlow Condensed","Barlow",system-ui,sans-serif;--ft:"Barlow",system-ui,sans-serif;--tt:uppercase;--r-btn:8px;--r-card:10px;--bw:1px;
+}
+html[data-skin="menta"] .ph{
+  --papel:#eef4f2;--sup:#fff;--sup-2:#e1ece9;--tinta:#0c1a18;--tinta-2:#566b67;--tinta-3:#7e938e;--linea:#d3e1de;--linea-fuerte:#b9ccc7;
+  --acento:#0b857b;--acento-tinta:#076158;--acento-suave:#dcefec;--acento-texto:#fff;--acento-2:#ff7a5c;--acento-2-tinta:#0c1a18;
+  --fd:"Bricolage Grotesque","Figtree",system-ui,sans-serif;--ft:"Figtree",system-ui,sans-serif;--tt:none;--r-btn:14px;--r-card:20px;--bw:0px;
+}
+
+.ph{width:300px;height:620px;flex:none;position:relative;overflow:hidden;border-radius:34px;background:var(--papel);color:var(--tinta);
+  font-family:var(--ft);box-shadow:0 0 0 7px #101216,0 24px 48px -20px rgb(0 0 0/.5);isolation:isolate;display:flex;flex-direction:column}
+.ph *{box-sizing:border-box}
+.reloj{flex:none;height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;font:700 11.5px/1 var(--fm);color:inherit}
+
+/* ---------- Pantalla 1: la puerta de entrada, la primera vez ---------- */
+.puerta{flex:1;min-height:0;display:flex;flex-direction:column;padding:0 20px 18px;gap:14px;overflow-y:auto}
+.puerta-marca{display:flex;align-items:center;gap:10px;padding-top:4px}
+.puerta-ico{width:34px;height:34px;flex:none}
+.puerta-ico .cuadro{fill:var(--acento)}
+.puerta-ico .visto{fill:#fff}
+.puerta-ico .anillo{fill:var(--acento-2)}
+.puerta-ico .centro{fill:#fff}
+.puerta-marca b{font-family:var(--fd);font-size:17px;font-weight:700;text-transform:var(--tt)}
+.puerta h1{font-family:var(--fd);font-size:22px;line-height:1.15;text-transform:var(--tt)}
+.puerta .copy{font-size:11.5px;color:var(--tinta-3);line-height:1.5}
+.puerta .intro{font-size:13.5px;color:var(--tinta-2);line-height:1.5}
+
+/* El acordeón: como el de la app, cerrado por defecto. */
+.acc{border:var(--bw) solid var(--linea-fuerte);border-radius:var(--r-card);background:var(--sup);overflow:hidden}
+.acc summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;font-size:13.5px;font-weight:700}
+.acc summary::-webkit-details-marker{display:none}
+.acc summary .car{transition:transform .2s ease;color:var(--tinta-3);flex:none}
+.acc[open] summary .car{transform:rotate(90deg)}
+.acc-cuerpo{padding:0 14px 14px;font-size:12.5px;line-height:1.6;color:var(--tinta-2);max-height:260px;overflow-y:auto;display:grid;gap:10px}
+.acc-cuerpo h4{font-size:12px;margin:0;color:var(--tinta);text-transform:var(--tt)}
+.acc-cuerpo ol{margin:0;padding-left:18px;display:grid;gap:8px}
+
+.chk-fila{display:flex;align-items:flex-start;gap:10px;padding:12px;border-radius:var(--r-card);background:var(--sup-2);cursor:pointer}
+.chk-caja{width:22px;height:22px;flex:none;border-radius:6px;border:2px solid var(--linea-fuerte);background:var(--sup);display:grid;place-items:center;margin-top:1px}
+.chk-fila input{position:absolute;opacity:0;width:1px;height:1px}
+.chk-fila input:checked ~ .chk-caja{background:var(--acento);border-color:var(--acento)}
+.chk-caja svg{width:14px;height:14px;color:#fff;opacity:0}
+.chk-fila input:checked ~ .chk-caja svg{opacity:1}
+.chk-texto{font-size:12.5px;line-height:1.5;color:var(--tinta-2)}
+
+.puerta-acciones{margin-top:auto;display:grid;gap:8px;padding-top:4px}
+.btn-principal{min-height:46px;border:0;border-radius:var(--r-btn);background:var(--linea-fuerte);color:var(--tinta-3);font:700 14px/1 var(--ft);cursor:not-allowed;transition:background .15s,color .15s}
+.puerta.aceptado .btn-principal{background:var(--acento);color:var(--acento-texto);cursor:pointer}
+.btn-texto{min-height:40px;border:0;background:none;color:var(--tinta-3);font:600 12.5px/1 var(--ft);text-decoration:underline;cursor:pointer}
+
+/* ---------- Pantalla 2: Ajustes, en lo sucesivo ---------- */
+.ajustes{flex:1;min-height:0;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.ajustes h2{font-size:20px;padding:2px 2px 6px}
+.tarjeta{border:var(--bw) solid var(--linea-fuerte);border-radius:var(--r-card);background:var(--sup);padding:14px 16px}
+.tarjeta.version{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.tarjeta.version b{font-family:var(--fd);font-size:15px;text-transform:var(--tt)}
+.tarjeta.version span{font-size:12px;color:var(--tinta-2)}
+.pastilla-v{font:700 12px/1 var(--fm);background:var(--acento-suave);color:var(--acento-tinta);padding:5px 10px;border-radius:99px}
+.pie-legal{margin-top:auto;display:flex;flex-direction:column;gap:6px;align-items:center;padding:16px 6px 4px;text-align:center}
+.pie-legal .copy{font-size:10.5px;color:var(--tinta-3);line-height:1.5}
+.pie-legal button{border:0;background:none;color:var(--tinta-2);font:600 12px/1 var(--ft);text-decoration:underline;cursor:pointer;padding:6px}
+
+/* La hoja de "Términos y privacidad" al tocarla desde Ajustes: solo lectura. */
+.hoja{position:absolute;inset:0;background:rgb(0 0 0/.5);display:none;align-items:flex-end;z-index:5}
+.hoja.abierta{display:flex}
+.hoja-cuerpo{width:100%;max-height:82%;background:var(--sup);border-radius:20px 20px 0 0;padding:16px 18px calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.hoja-cuerpo header{display:flex;align-items:center;justify-content:space-between}
+.hoja-cuerpo header b{font-family:var(--fd);font-size:16px;text-transform:var(--tt)}
+.hoja-cuerpo header button{border:0;background:var(--sup-2);color:var(--tinta);width:30px;height:30px;border-radius:50%;font-size:15px;cursor:pointer}
+.hoja-texto{overflow-y:auto;font-size:12.5px;line-height:1.6;color:var(--tinta-2);display:grid;gap:10px}
+.hoja-texto h4{font-size:12px;margin:0;color:var(--tinta);text-transform:var(--tt)}
+.hoja-texto ol{margin:0;padding-left:18px;display:grid;gap:8px}
+</style>
+</head>
+<body>
+<div class="barra">
+  <div class="wrap">
+    <div class="grupo">
+      <span class="rot">Tema (como en Ajustes)</span>
+      <button class="pg-btn" data-skin="menta" aria-pressed="true">Menta 🟢</button>
+      <button class="pg-btn" data-skin="turbo" aria-pressed="false">Turbo 🟣</button>
+      <button class="pg-btn" data-skin="asfalto" aria-pressed="false">Asfalto ⚫️</button>
+      <button class="pg-btn" data-skin="claro" aria-pressed="false">Mapa 🔵</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="cab">
+    <span class="rot">Rutas-A · Propuesta de aviso legal y copyright</span>
+    <h1>El copyright no se repite en cada pantalla: aparece una vez, y queda siempre a mano</h1>
+    <p class="lead">
+      Así se hace normalmente: el aviso de derechos de autor y las condiciones de uso se piden
+      <b>una sola vez</b>, al instalar la app —no antes de cada jornada—, y sin aceptarlas la app
+      no se abre. Después, el texto queda guardado y a un toque de distancia en Ajustes, para
+      quien quiera volver a leerlo, pero ya no vuelve a interrumpir. Cambia el tema de arriba para
+      ver los dos teléfonos con tus colores.
+    </p>
+    <div class="nota aviso">
+      <span class="ic">!</span>
+      <p>
+        <b>El texto legal de aquí es un borrador mío, no un documento legal.</b> Cubre lo esencial
+        —que los datos de tus clientes no se pueden compartir ni difundir, y que quedan solo en el
+        teléfono— pero para que tenga peso de verdad frente a un reclamo conviene que lo revise un
+        abogado antes de dejarlo definitivo. Lo escribí para que puedas leerlo y decidir el
+        contenido, no para reemplazar esa revisión.
+      </p>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="phones">
+
+      <!-- ═══════════ 1: la primera vez ═══════════ -->
+      <figure class="slot">
+        <h3><span class="letra">1</span> La primera vez que se abre</h3>
+        <div class="ph">
+          <div class="reloj"><span>9:41</span><span>●●●</span></div>
+          <div class="puerta" id="puerta">
+            <div class="puerta-marca">
+              <svg class="puerta-ico" viewBox="0 0 100 100" aria-hidden="true">
+                <rect class="cuadro" x="4" y="4" width="92" height="92" rx="24"/>
+                <path class="visto" d="M35 52 L46 63 L74 30 a7 7 0 0 1 9 10.7 L50 76.5 a7 7 0 0 1 -9.9 .3 L25.5 62 a7 7 0 0 1 9.5 -10.3Z"/>
+                <circle class="anillo" cx="76" cy="35" r="10"/>
+                <circle class="centro" cx="76" cy="35" r="4"/>
+              </svg>
+              <b>Control Driver</b>
+            </div>
+
+            <h1>Antes de empezar</h1>
+            <p class="intro">
+              Un momento antes de usarla: quién la hizo, y qué se compromete a hacer y a no hacer
+              con los datos de tus clientes.
+            </p>
+
+            <p class="copy">© 2026 Marco Saldarriaga Medina. Todos los derechos reservados.</p>
+
+            <details class="acc">
+              <summary>Aviso legal y protección de datos de tus clientes <span class="car">›</span></summary>
+              <div class="acc-cuerpo">
+                <div>
+                  <h4>1. Propiedad</h4>
+                  <p>Control Driver es una aplicación de Marco Saldarriaga Medina. Su código, su diseño y su
+                    funcionamiento están protegidos por derechos de autor; no se puede copiar, distribuir ni
+                    modificar sin permiso escrito.</p>
+                </div>
+                <div>
+                  <h4>2. Los datos de tus clientes</h4>
+                  <p>Al leer una comanda, la app puede guardar el nombre, el teléfono y la dirección del cliente de
+                    ese pedido. Son datos de una tercera persona, no tuyos, y existen solo para que puedas
+                    completar y encontrar tus entregas.</p>
+                </div>
+                <div>
+                  <h4>3. Lo que te comprometes a no hacer</h4>
+                  <ol>
+                    <li>No compartir, publicar, vender ni difundir por ningún medio —redes sociales, mensajería,
+                      terceros— los datos de tus clientes.</li>
+                    <li>No usarlos para ningún fin distinto de completar la entrega de ese pedido.</li>
+                    <li>Eres tú quien decide activar o no cada dato en Ajustes; lo que actives, es tu
+                      responsabilidad protegerlo.</li>
+                  </ol>
+                </div>
+                <div>
+                  <h4>4. Dónde viven esos datos</h4>
+                  <p>Se guardan solo en este teléfono, protegidos por tu PIN, y no se envían a ningún servidor. No
+                    entran en tu respaldo salvo que tú lo actives a propósito.</p>
+                </div>
+                <div>
+                  <h4>5. Responsabilidad</h4>
+                  <p>El uso indebido de los datos de tus clientes es tu responsabilidad, conforme a la Ley N.º
+                    29733 (Ley de Protección de Datos Personales) y sus modificatorias. Marco Saldarriaga Medina no
+                    responde por el uso que le des a esos datos fuera de la aplicación.</p>
+                </div>
+                <div>
+                  <h4>6. Si este aviso cambia</h4>
+                  <p>Si más adelante se modifican estas condiciones, se te van a volver a pedir antes de seguir
+                    usando la app.</p>
+                </div>
+              </div>
+            </details>
+
+            <label class="chk-fila">
+              <input type="checkbox" id="chk-acepto">
+              <span class="chk-caja">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M4 12l5 5L20 6"/></svg>
+              </span>
+              <span class="chk-texto">He leído y acepto las condiciones de uso, incluida la protección de los
+                datos de mis clientes.</span>
+            </label>
+
+            <div class="puerta-acciones">
+              <button class="btn-principal" id="btn-aceptar" disabled>Aceptar y continuar</button>
+              <button class="btn-texto" id="btn-rechazar">No acepto</button>
+            </div>
+          </div>
+        </div>
+        <figcaption>El botón «Aceptar» no se activa hasta marcar la casilla. «No acepto» cierra la app: sin
+          aceptar, no hay forma de entrar.</figcaption>
+      </figure>
+
+      <!-- ═══════════ 2: en lo sucesivo ═══════════ -->
+      <figure class="slot">
+        <h3><span class="letra">2</span> En lo sucesivo, desde Ajustes</h3>
+        <div class="ph">
+          <div class="reloj"><span>9:41</span><span>●●●</span></div>
+          <div class="ajustes">
+            <h2>Ajustes</h2>
+            <div class="tarjeta version">
+              <div>
+                <b>Control Driver</b>
+                <div><span>Versión 1.0</span></div>
+              </div>
+              <span class="pastilla-v">v40</span>
+            </div>
+            <div class="tarjeta"><b style="font-size:13.5px">Apariencia</b><div style="font-size:11.5px;color:var(--tinta-3);margin-top:2px">Automático · Mapa de día, Asfalto de noche</div></div>
+            <div class="tarjeta"><b style="font-size:13.5px">Bloqueo del dispositivo</b><div style="font-size:11.5px;color:var(--tinta-3);margin-top:2px">Sin PIN</div></div>
+            <div class="tarjeta"><b style="font-size:13.5px">Licencia</b><div style="font-size:11.5px;color:var(--tinta-3);margin-top:2px">En prueba</div></div>
+
+            <div class="pie-legal">
+              <button id="btn-ver-terminos">Términos y privacidad</button>
+              <p class="copy">© 2026 Marco Saldarriaga Medina<br>Todos los derechos reservados.</p>
+            </div>
+          </div>
+
+          <div class="hoja" id="hoja-terminos">
+            <div class="hoja-cuerpo">
+              <header>
+                <b>Términos y privacidad</b>
+                <button id="btn-cerrar-hoja" aria-label="Cerrar">✕</button>
+              </header>
+              <div class="hoja-texto">
+                <p class="copy" style="color:var(--tinta-2);font-size:12px">© 2026 Marco Saldarriaga Medina. Todos los derechos reservados. Aceptado el 27/09/2026.</p>
+                <div>
+                  <h4>1. Propiedad</h4>
+                  <p>Control Driver es una aplicación de Marco Saldarriaga Medina. Su código, su diseño y su
+                    funcionamiento están protegidos por derechos de autor.</p>
+                </div>
+                <div>
+                  <h4>2. Los datos de tus clientes</h4>
+                  <p>Al leer una comanda, la app puede guardar el nombre, el teléfono y la dirección del cliente de
+                    ese pedido, solo para completar y encontrar tus entregas.</p>
+                </div>
+                <div>
+                  <h4>3. Lo que te comprometes a no hacer</h4>
+                  <ol>
+                    <li>No compartir, publicar, vender ni difundir los datos de tus clientes.</li>
+                    <li>No usarlos para ningún fin distinto de completar la entrega.</li>
+                  </ol>
+                </div>
+                <div>
+                  <h4>4. Responsabilidad</h4>
+                  <p>El uso indebido de esos datos es tu responsabilidad, conforme a la Ley N.º 29733 y sus
+                    modificatorias.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <figcaption>Ya no bloquea nada: es solo una línea de copyright y un enlace para releer lo mismo que
+          aceptaste, por si alguna vez lo necesitas.</figcaption>
+      </figure>
+
+    </div>
+  </div>
+
+  <div class="comp">
+    <h2>Cómo lo haría</h2>
+    <ol>
+      <li><b>Una sola vez, al primer arranque</b> —después de los 2 segundos de la marca, antes de pedir el
+        PIN si lo tienes puesto—. Se guarda que aceptaste (con la fecha) y no se vuelve a mostrar, salvo que
+        el texto cambie de verdad.</li>
+      <li><b>«No acepto» cierra la app</b>, con el mismo aviso de confirmación que ya tiene «Salir de la
+        app»: no hay una tercera opción ni una forma de seguir usándola sin aceptar.</li>
+      <li><b>Después, vive en Ajustes</b>, junto a Licencia: una línea de copyright siempre visible y un
+        enlace «Términos y privacidad» que reabre exactamente el mismo texto, de solo lectura, con la fecha
+        en que lo aceptaste.</li>
+      <li><b>El acordeón cerrado por defecto</b>, igual que el resto de la app: se ve el título y se abre
+        quien quiera leerlo antes de marcar la casilla.</li>
+    </ol>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.pg-btn[data-skin]').forEach(b=>b.addEventListener('click',()=>{
+  document.documentElement.setAttribute('data-skin', b.dataset.skin);
+  document.querySelectorAll('.pg-btn[data-skin]').forEach(x=>x.setAttribute('aria-pressed', x===b));
+}));
+
+const chk = document.getElementById('chk-acepto');
+const puerta = document.getElementById('puerta');
+const btnAceptar = document.getElementById('btn-aceptar');
+chk.addEventListener('change', () => {
+  puerta.classList.toggle('aceptado', chk.checked);
+  btnAceptar.disabled = !chk.checked;
+});
+btnAceptar.addEventListener('click', () => {
+  if (!chk.checked) return;
+  alert('Continúa a la app (en la app real, esto pasa a la pantalla de Hoy).');
+});
+document.getElementById('btn-rechazar').addEventListener('click', () => {
+  alert('«¿Seguro? Sin aceptar no puedes usar la app.» → si confirma, se cierra (App.exitApp()).');
+});
+
+const hoja = document.getElementById('hoja-terminos');
+document.getElementById('btn-ver-terminos').addEventListener('click', () => hoja.classList.add('abierta'));
+document.getElementById('btn-cerrar-hoja').addEventListener('click', () => hoja.classList.remove('abierta'));
+</script>
+</body>
+</html>

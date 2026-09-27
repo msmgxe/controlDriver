@@ -9,10 +9,18 @@ import { SeccionComandas } from "@/components/SeccionComandas";
 import { SeccionModalidad } from "@/components/SeccionModalidad";
 import { SeccionLicencia } from "@/components/SeccionLicencia";
 import { SeccionRespaldo } from "@/components/SeccionRespaldo";
+import { LineaCopyright, TextoLegal } from "@/components/TextoLegal";
 import { useDatos } from "@/hooks/useDatos";
 import { useVersion } from "@/hooks/useVersion";
 import { leerAjustesDeComandas } from "@/lib/db/sqlite/ajustes";
 import { espacioOcupado } from "@/lib/db/sqlite/pruebas";
+import { formatearFecha } from "@/lib/fechas";
+import { intentarSalir } from "@/lib/salir";
+import {
+  instantaneaFechaAceptacion,
+  instantaneaFechaAceptacionServidor,
+  suscribirTerminos,
+} from "@/lib/terminos";
 
 import { Check, Huella, Salir } from "@/components/iconos";
 import {
@@ -194,6 +202,8 @@ export default function PaginaAjustes() {
       </Acordeon>
 
       <SeccionLicencia />
+
+      <SeccionTerminos />
 
       <SeccionRespaldo />
 
@@ -418,19 +428,35 @@ function SeccionDiagnostico() {
  * En el navegador (mientras se prueba fuera del APK) no hay aplicación que
  * cerrar: se dice y no se pide confirmar nada.
  */
+/**
+ * «Términos y privacidad»: el mismo aviso legal de la puerta de entrada
+ * (`AvisoLegal`), aquí en modo solo lectura, con la fecha en que se aceptó.
+ * No hay checkbox ni botón: si se está viendo esta pantalla, ya se aceptó.
+ */
+function SeccionTerminos() {
+  const fecha = useSyncExternalStore(
+    suscribirTerminos,
+    instantaneaFechaAceptacion,
+    instantaneaFechaAceptacionServidor,
+  );
+
+  return (
+    <Acordeon titulo="Términos y privacidad" resumen={fecha ? `Aceptado el ${formatearFecha(fecha)}` : "…"}>
+      <TextoLegal />
+      <LineaCopyright className="border-t border-linea pt-3 text-xs text-tinta-3" />
+    </Acordeon>
+  );
+}
+
 function SeccionSalir() {
   const [mensaje, setMensaje] = useState<string | null>(null);
 
   async function pedirSalir() {
     setMensaje(null);
-    const { Capacitor } = await import("@capacitor/core");
-    if (!Capacitor.isNativePlatform()) {
+    const r = await intentarSalir("¿Seguro que quieres salir de Control Driver?");
+    if (!r.ok && r.motivo === "no-nativo") {
       setMensaje("Esto solo cierra la aplicación instalada, no esta pestaña del navegador.");
-      return;
     }
-    if (!confirm("¿Seguro que quieres salir de Control Driver?")) return;
-    const { App } = await import("@capacitor/app");
-    await App.exitApp();
   }
 
   return (

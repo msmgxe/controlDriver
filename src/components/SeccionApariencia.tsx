@@ -6,8 +6,8 @@ import { Check } from "@/components/iconos";
 import type { Preferencia } from "@/lib/apariencia";
 
 /**
- * Elegir la cara de la app: **Mapa**, **Asfalto**, **Turbo** o **Menta** —las
- * cuatro propuestas de diseño—, o dejar que el teléfono decida entre las dos
+ * Elegir la cara de la app: **Mapa**, **Asfalto**, **Turbo**, **Menta**,
+ * **Arcilla** o **Avispa**, o dejar que el teléfono decida entre las dos
  * primeras.
  *
  * Cada opción enseña **cómo se ve**, con los colores reales de esa cara y no
@@ -34,6 +34,8 @@ const CLARO: Paleta = { fondo: "#e6eef8", tarjeta: "#ffffff", acento: "#1f5cff",
 const OSCURO: Paleta = { fondo: "#0e1116", tarjeta: "#161b22", acento: "#ff9f1c", senal: "#5cc8ff", tinta: "#eef1f5" };
 const TURBO: Paleta = { fondo: "#f3efff", tarjeta: "#ffffff", acento: "#6a4cf5", senal: "#ffd23f", tinta: "#1d1246" };
 const MENTA: Paleta = { fondo: "#eef4f2", tarjeta: "#ffffff", acento: "#0b857b", senal: "#ff7a5c", tinta: "#0c1a18" };
+const ARCILLA: Paleta = { fondo: "#f1e9db", tarjeta: "#fdfaf5", acento: "#d97757", senal: "#feedba", tinta: "#141413" };
+const AVISPA: Paleta = { fondo: "#09090b", tarjeta: "#18181b", acento: "#eab308", senal: "#f97316", tinta: "#fafafa" };
 
 /**
  * `duro`: Turbo lleva bordes gruesos y sombra dura en toda la app —incluida
@@ -66,6 +68,8 @@ const TEMAS: Opcion[] = [
   { valor: "oscuro", nombre: "Asfalto", detalle: "Oscuro", vista: <Vista c={OSCURO} /> },
   { valor: "turbo", nombre: "Turbo", detalle: "Violeta y bordes gruesos", vista: <Vista c={TURBO} duro /> },
   { valor: "menta", nombre: "Menta", detalle: "El verde de siempre", vista: <Vista c={MENTA} /> },
+  { valor: "arcilla", nombre: "Arcilla", detalle: "Terracota y beige", vista: <Vista c={ARCILLA} /> },
+  { valor: "avispa", nombre: "Avispa", detalle: "Negro y amarillo", vista: <Vista c={AVISPA} /> },
 ];
 
 export function SeccionApariencia() {
@@ -81,8 +85,8 @@ export function SeccionApariencia() {
       }
     >
       <p className="text-sm text-tinta-2">
-        Cuatro caras para elegir la que más te guste. Mapa y Asfalto son pareja de día y de noche;
-        Turbo y Menta se quedan fijas hasta que elijas otra.
+        Seis caras para elegir la que más te guste. Mapa y Asfalto son pareja de día y de noche;
+        Turbo, Menta, Arcilla y Avispa se quedan fijas hasta que elijas otra.
       </p>
 
       <div role="radiogroup" aria-label="Cara de la app" className="flex flex-col gap-2">

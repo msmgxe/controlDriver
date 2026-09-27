@@ -28,8 +28,8 @@ describe("la preferencia", () => {
     expect(leerPreferencia()).toBe("auto");
   });
 
-  it("recuerda cualquiera de los cuatro temas", () => {
-    for (const tema of ["claro", "oscuro", "turbo", "menta"] as const) {
+  it("recuerda cualquiera de los seis temas", () => {
+    for (const tema of ["claro", "oscuro", "turbo", "menta", "arcilla", "avispa"] as const) {
       vi.stubGlobal("localStorage", almacen({ [CLAVE_APARIENCIA]: tema }));
       expect(leerPreferencia()).toBe(tema);
     }
@@ -62,11 +62,15 @@ describe("qué cara se aplica", () => {
     expect(modoDe("auto", false)).toBe("claro");
   });
 
-  it("turbo y menta no miran el teléfono: son una elección fija", () => {
+  it("turbo, menta, arcilla y avispa no miran el teléfono: son una elección fija", () => {
     expect(modoDe("turbo", true)).toBe("turbo");
     expect(modoDe("turbo", false)).toBe("turbo");
     expect(modoDe("menta", true)).toBe("menta");
     expect(modoDe("menta", false)).toBe("menta");
+    expect(modoDe("arcilla", true)).toBe("arcilla");
+    expect(modoDe("arcilla", false)).toBe("arcilla");
+    expect(modoDe("avispa", true)).toBe("avispa");
+    expect(modoDe("avispa", false)).toBe("avispa");
   });
 });
 
@@ -93,6 +97,8 @@ describe("el script de antes de pintar", () => {
     ["turbo", true, "turbo"],
     ["turbo", false, "turbo"],
     ["menta", true, "menta"],
+    ["arcilla", true, "arcilla"],
+    ["avispa", false, "avispa"],
     ["basura", true, "oscuro"],
   ])("guardada=%s, teléfono oscuro=%s → %s", (guardada, sistema, esperado) => {
     expect(correr(guardada, sistema)).toBe(esperado);
