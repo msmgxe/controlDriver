@@ -8,7 +8,7 @@
  * ofrecen tres cosas:
  *
  *   · **ver** —lo abre la app que tenga el teléfono para ese tipo—;
- *   · **guardar** —lo deja en Descargas/Rutas-A—;
+ *   · **guardar** —lo deja en Descargas/Control Driver—;
  *   · **compartir** —el selector de Android: WhatsApp, correo, Drive—.
  *
  * En el navegador, donde sí se puede, se comparte o se descarga como siempre.

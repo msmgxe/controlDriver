@@ -1,8 +1,9 @@
 # Versiones de Rutas-A
 
-Cada compilación sube el número y deja el archivo como `Rutas-A-v<N>.apk`. El
-anterior se borra, para que no haya forma de instalar por error el de hace tres
-cambios. La versión instalada se ve en **Ajustes**, arriba del todo.
+Cada compilación sube el número y deja el archivo como `Control-Driver-v<N>.apk`
+(antes de la v40, `Rutas-A-v<N>.apk`). El anterior se borra, para que no haya
+forma de instalar por error el de hace tres cambios. La versión instalada se ve
+en **Ajustes**, arriba del todo.
 
 ---
 
@@ -35,6 +36,24 @@ más que una tarde de trabajo a ciegas.
 ---
 
 ## Historial
+
+### v42 — 27/09/2026
+Limpieza: quedaban rincones diciendo «Rutas-A» después del cambio de nombre.
+- **Corrección: el PDF de estadísticas/historial** llevaba «Rutas-A» impreso en
+  el encabezado y en el pie de cada página — ahora dice «Control Driver».
+- **Corrección: el Excel exportado** tenía «Rutas-A» como autor del archivo
+  (se ve en Propiedades, no en las hojas).
+- **Corrección: la huella dactilar.** El nombre que Android puede mostrar al
+  pedir la huella («desbloquea esto para…») decía Rutas-A.
+- **Corrección: dos mensajes de error** — sin permiso de ubicación, y al
+  restaurar un respaldo que no es válido — nombraban a Rutas-A.
+- **Corrección: la carpeta de Descargas.** Guardar un PDF o Excel lo dejaba en
+  `Descargas/Rutas-A`; ahora es `Descargas/Control Driver`. Los archivos que ya
+  guardaste con la versión anterior se quedan donde estaban, en la carpeta
+  vieja: no se pierden, solo que los nuevos van a la carpeta nueva.
+- De paso, en las pantallas web que no entran al APK (`/acceso`, `/admin`,
+  `/configuracion`) también se corrigió el nombre, de cara a subir esto a
+  producción.
 
 ### v41 — 27/09/2026
 Arreglo del tema Avispa.

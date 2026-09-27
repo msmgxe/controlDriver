@@ -89,7 +89,7 @@ export async function posicionActual(): Promise<PosicionActual> {
     if (permiso.location !== "granted") {
       const pedido = await Geolocation.requestPermissions({ permissions: ["location"] });
       if (pedido.location !== "granted") {
-        throw new Error("Sin permiso de ubicación. Actívalo en los ajustes del teléfono para Rutas-A.");
+        throw new Error("Sin permiso de ubicación. Actívalo en los ajustes del teléfono para Control Driver.");
       }
     }
     const p = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 20_000 });

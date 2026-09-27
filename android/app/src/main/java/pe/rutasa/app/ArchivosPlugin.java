@@ -30,8 +30,8 @@ import java.io.OutputStream;
  *
  *   · `abrir`: lo abre con la app que tenga el teléfono para ese tipo de
  *     archivo —el visor de PDF, una hoja de cálculo—;
- *   · `guardarEnDescargas`: lo deja en la carpeta Descargas (`Rutas-A`), donde
- *     se ve desde el gestor de archivos.
+ *   · `guardarEnDescargas`: lo deja en la carpeta Descargas (`Control Driver`),
+ *     donde se ve desde el gestor de archivos.
  *
  * El archivo ya está escrito en la caché de la app (con el plugin de
  * `Filesystem`); aquí solo se recibe su nombre, nunca una ruta, para que no se
@@ -92,7 +92,7 @@ public class ArchivosPlugin extends Plugin {
         ContentValues valores = new ContentValues();
         valores.put(MediaStore.MediaColumns.DISPLAY_NAME, archivo.getName());
         valores.put(MediaStore.MediaColumns.MIME_TYPE, tipo);
-        valores.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/Rutas-A");
+        valores.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/Control Driver");
         valores.put(MediaStore.MediaColumns.IS_PENDING, 1);
 
         Uri destino = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, valores);
@@ -118,7 +118,7 @@ public class ArchivosPlugin extends Plugin {
         resolver.update(destino, listo, null, null);
 
         JSObject respuesta = new JSObject();
-        respuesta.put("carpeta", "Descargas/Rutas-A");
+        respuesta.put("carpeta", "Descargas/Control Driver");
         respuesta.put("nombre", archivo.getName());
         call.resolve(respuesta);
     }

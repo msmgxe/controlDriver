@@ -37,7 +37,7 @@ npm run apk:instalar
 
 En el celular saldrá *¿Permitir la depuración USB?* → **Permitir**.
 
-Al terminar, busca **Rutas-A** en el menú de aplicaciones.
+Al terminar, busca **Control Driver** en el menú de aplicaciones.
 
 > Si el cable solo carga y no transmite datos, no funcionará. Usa el que vino
 > con el celular, o prueba otro.

@@ -170,7 +170,7 @@ export async function activarHuella(nombreUsuario: string): Promise<boolean> {
     const credencial = (await navigator.credentials.create({
       publicKey: {
         challenge: crypto.getRandomValues(new Uint8Array(32)),
-        rp: { name: "Rutas-A" },
+        rp: { name: "Control Driver" },
         user: {
           id: crypto.getRandomValues(new Uint8Array(16)),
           name: nombreUsuario,

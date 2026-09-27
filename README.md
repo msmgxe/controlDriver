@@ -69,7 +69,7 @@ src/
     historial/  buscar/      Consulta por día, por pedido, cliente, teléfono o dirección
     estadisticas/            Gráfico por día, tiempos, ingresos, distancia y récords
     ajustes/                 Apariencia, tienda y tarifa, comandas, PIN, licencia, respaldo
-    compartir/               Destino de «compartir» de Android: galería → Rutas-A
+    compartir/               Destino de «compartir» de Android: galería → Control Driver
   components/                Tira de semanas, hoja del pedido, comandas, acordeones, pestañas
   hooks/
   lib/

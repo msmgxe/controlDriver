@@ -126,7 +126,7 @@ export function leerRespaldo(
 
   const parseado = esquemaRespaldo.safeParse(crudo);
   if (!parseado.success) {
-    return { ok: false, error: "Ese archivo no tiene la forma de un respaldo de Rutas-A." };
+    return { ok: false, error: "Ese archivo no tiene la forma de un respaldo de Control Driver." };
   }
 
   const respaldo = parseado.data as Respaldo;

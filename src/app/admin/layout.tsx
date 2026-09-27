@@ -27,7 +27,7 @@ export default async function LayoutAdmin({ children }: { children: React.ReactN
           </span>
           <h1 className="text-2xl">Esta sección es solo para el administrador</h1>
           <Link href="/" className="boton-sec">
-            Volver a Rutas-A
+            Volver a Control Driver
           </Link>
         </div>
       </div>
@@ -40,7 +40,7 @@ export default async function LayoutAdmin({ children }: { children: React.ReactN
         <div className="mx-auto flex max-w-[1280px] flex-wrap items-center gap-3 px-6 py-4">
           <Link href="/" className="flex items-center gap-2 text-sm text-tinta-2 hover:text-tinta">
             <Flecha className="size-4 rotate-180" />
-            Rutas-A
+            Control Driver
           </Link>
           <span className="h-4 w-px bg-linea-fuerte" />
           <h1 className="font-display text-xl">Administración</h1>
