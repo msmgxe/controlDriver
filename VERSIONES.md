@@ -36,6 +36,23 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v37 — 26/09/2026
+Estadísticas cabe en una pantalla.
+- **Cambio: la vista «Semana» de Estadísticas, como la maqueta.** Todo lo esencial
+  a la vista sin bajar, en un teléfono de 360 × 740:
+  · un selector de una línea, `‹ Sem. 21–27 ›`, con el calendario al tocar el
+    nombre para saltar a cualquier fecha, y «Hoy» para volver;
+  · «Resumen semanal» con los **pedidos** y lo **generado** —antes decía «Soles»—;
+  · «Pedidos por día»: eje con marcas redondas, la cifra sobre cada barra, la línea
+    del promedio con su rótulo, y un selector Pedidos | Soles. Tocar una barra
+    dice qué hubo ese día (soles, rutas, tiempo en ruta, pedidos de más de 3 km);
+  · tres datos rápidos: promedio diario, mejor día y promedio por pedido.
+  «Semana a semana», los avisos y los acordeones quedan debajo.
+- El mismo resumen y los mismos datos rápidos salen en la vista «Mes», y «Comparar»
+  usa el mismo selector de una línea. La barra de días arrastrable sigue en
+  Historial. Quité el título «Estadísticas» que se repetía bajo la cabecera.
+- **Pendiente de probar en el celular:** cómo se ve en tu pantalla y con tu cara.
+
 ### v36 — 26/09/2026
 Elegir la semana en Estadísticas e Historial, y el PDF que no aparecía.
 - **Arreglado: el PDF (y el Excel) no salían por ningún lado.** El botón generaba

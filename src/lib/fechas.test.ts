@@ -10,6 +10,7 @@ import {
   nombreDelMes,
   primerDiaDelMes,
   rangoDeFechas,
+  rangoLegible,
   semanaDe,
   sumarDias,
   sumarMeses,
@@ -126,5 +127,24 @@ describe("meses", () => {
   it("el nombre del mes, con su año", () => {
     expect(nombreDelMes("2026-09-16")).toBe("septiembre 2026");
     expect(nombreDelMes("2027-01-01")).toBe("enero 2027");
+  });
+});
+
+describe("un rango en corto", () => {
+  it("dentro de un mes: el año y el mes una sola vez", () => {
+    expect(rangoLegible("2026-09-21", "2026-09-27")).toBe("21–27 sep 2026");
+    expect(rangoLegible("2026-09-01", "2026-09-30")).toBe("1–30 sep 2026");
+  });
+
+  it("cruzando de mes lleva los dos meses", () => {
+    expect(rangoLegible("2026-09-28", "2026-10-04")).toBe("28 sep – 4 oct 2026");
+  });
+
+  it("cruzando de año lleva los dos años", () => {
+    expect(rangoLegible("2026-12-28", "2027-01-03")).toBe("28 dic 2026 – 3 ene 2027");
+  });
+
+  it("un solo día no se escribe como rango", () => {
+    expect(rangoLegible("2026-09-21", "2026-09-21")).toBe("21 sep 2026");
   });
 });

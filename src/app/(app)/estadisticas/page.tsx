@@ -3,14 +3,17 @@
 import { useState } from "react";
 
 import { Acordeon } from "@/components/Acordeon";
+import { BarraDeSemana } from "@/components/BarraDeSemana";
 import { ComparacionDeSemanas } from "@/components/ComparacionDeSemanas";
+import { DatosRapidos } from "@/components/DatosRapidos";
 import { ExportarEstadisticas } from "@/components/ExportarEstadisticas";
+import { GraficoDeLaSemana } from "@/components/GraficoDeLaSemana";
 import { GraficoDias } from "@/components/GraficoDias";
 import { GraficoSemanas } from "@/components/GraficoSemanas";
 import { Flecha, Reloj, Subir, Trofeo } from "@/components/iconos";
 import { Pestanas } from "@/components/Pestanas";
+import { ResumenDelPeriodo } from "@/components/ResumenDelPeriodo";
 import { SelectorDeMes } from "@/components/SelectorDeMes";
-import { SelectorDeSemana } from "@/components/SelectorDeSemana";
 import { Aviso, Cifras, Vacio } from "@/components/ui";
 import { useDatos } from "@/hooks/useDatos";
 import { descansosPorRango } from "@/lib/db/sqlite/descansos";
@@ -32,6 +35,7 @@ import {
   nombreDelDia,
   nombreDelMes,
   primerDiaDelMes,
+  rangoLegible,
   sumarDias,
   ultimoDiaDelMes,
   type FechaISO,
@@ -55,6 +59,9 @@ const MAX_SEMANAS_ATRAS = 52;
  *     frente a las anteriores;
  *   · **Comparar** — la semana elegida frente a otra, día por día y en cifras;
  *   · **Mes** — el mes elegido semana a semana; tocar una semana la abre.
+ *
+ * La vista **Semana** cabe entera en una pantalla —el selector, el resumen con lo
+ * generado, el gráfico de los días y tres datos rápidos—; lo demás va debajo.
  *
  * Antes eran «7 días / 30 días / Este mes»: treinta barras de un día que
  * empezaban por las más viejas y dejaban fuera la semana pasada y la de ahora,
@@ -103,7 +110,6 @@ export default function PaginaEstadisticas() {
 
   const encabezado = (
     <div className="flex flex-col gap-3">
-      <h2 className="text-[26px] leading-tight">Estadísticas</h2>
       <Pestanas
         etiqueta="Qué mirar"
         actual={vista}
@@ -126,7 +132,7 @@ export default function PaginaEstadisticas() {
     return (
       <div className="mx-auto flex max-w-[880px] flex-col gap-4">
         {encabezado}
-        <SelectorDeSemana semana={semana} alCambiar={setSemana} etiqueta="Semana que miras" />
+        <BarraDeSemana semana={semana} alCambiar={setSemana} etiqueta="Semana que miras" />
 
         <div className="flex items-center justify-between gap-2 rounded-btn border border-linea-fuerte bg-sup p-1">
           <button
@@ -172,6 +178,7 @@ export default function PaginaEstadisticas() {
   const dias = diasDelRango(detalleDesde, detalleHasta, filas, descansos, hoy);
   const t = totalesDe(dias);
   const hayDatos = t.diasTrabajados > 0;
+  const mejorDia = [...dias.filter((d) => d.cargado)].sort((x, y) => y.pedidos - x.pedidos)[0] ?? null;
   // Un día de descanso no es un hueco: no falta nada por subir.
   const huecos = dias.filter((d) => !d.cargado && !d.descanso && d.fecha <= hoy).length;
 
@@ -185,41 +192,54 @@ export default function PaginaEstadisticas() {
       : semanasDe(dias, lunesDeLaSemana);
 
   return (
-    <div className="mx-auto flex max-w-[880px] flex-col gap-4">
+    <div className="mx-auto flex max-w-[880px] flex-col gap-2.5">
       {encabezado}
 
       {vista === "semana" ? (
-        <SelectorDeSemana semana={semana} alCambiar={setSemana} />
+        <BarraDeSemana semana={semana} alCambiar={setSemana} />
       ) : (
         <SelectorDeMes mes={mes} alCambiar={setMes} />
       )}
 
-      <Cifras
-        datos={[
-          { etiqueta: "Pedidos", valor: String(t.pedidos) },
-          { etiqueta: "Soles", valor: (t.centimos / 100).toFixed(2) },
-          { etiqueta: "Días trabajados", valor: String(t.diasTrabajados) },
-          { etiqueta: "Promedio por día", valor: t.promedioPorDia.toFixed(1), pie: "ped." },
-        ]}
+      <ResumenDelPeriodo
+        titulo={vista === "semana" ? "Resumen semanal" : "Resumen mensual"}
+        rango={rangoLegible(detalleDesde, detalleHasta)}
+        pedidos={t.pedidos}
+        centimos={t.centimos}
       />
 
-      {vista === "semana" && (
-        <div className="tarjeta">
-          <GraficoDias dias={dias} />
+      {vista === "semana" ? (
+        <GraficoDeLaSemana dias={dias} />
+      ) : (
+        <div className="tarjeta !p-3.5">
+          <GraficoSemanas
+            semanas={semanas}
+            titulo={`Semanas de ${nombreDelMes(mes)}`}
+            alElegir={(lunes) => {
+              setSemana(lunes);
+              setVista("semana");
+            }}
+          />
         </div>
       )}
 
-      <div className="tarjeta">
-        <GraficoSemanas
-          semanas={semanas}
-          elegida={vista === "semana" ? semana : undefined}
-          titulo={vista === "semana" ? "Semana a semana" : `Semanas de ${nombreDelMes(mes)}`}
-          alElegir={(lunes) => {
-            setSemana(lunes);
-            setVista("semana");
-          }}
-        />
-      </div>
+      <DatosRapidos
+        promedioPorDia={t.promedioPorDia}
+        diasTrabajados={t.diasTrabajados}
+        mejorDia={mejorDia ? { fecha: mejorDia.fecha, pedidos: mejorDia.pedidos } : null}
+        centimosPorPedido={t.centimosPorPedido}
+      />
+
+      {/* Lo demás queda debajo de la primera pantalla. */}
+      {vista === "semana" && (
+        <div className="tarjeta">
+          <GraficoSemanas
+            semanas={semanas}
+            elegida={semana}
+            alElegir={(lunes) => setSemana(lunes)}
+          />
+        </div>
+      )}
 
       {huecos > 0 && (
         <Aviso tono="atento" titulo={`${huecos} día${huecos === 1 ? "" : "s"} sin carga en el rango`}>

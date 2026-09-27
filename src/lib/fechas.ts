@@ -161,6 +161,24 @@ export function nombreDelMes(f: FechaISO): string {
   return `${MESES[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 }
 
+/**
+ * Un rango en corto, para un rótulo: «21–27 sep 2026», o «28 sep – 4 oct 2026»
+ * si cruza de mes. El año va una sola vez, salvo que cruce de año.
+ */
+export function rangoLegible(desde: FechaISO, hasta: FechaISO): string {
+  const d = aDate(desde);
+  const h = aDate(hasta);
+  const corto = (x: Date) => MESES[x.getUTCMonth()].slice(0, 3);
+  if (d.getUTCFullYear() !== h.getUTCFullYear()) {
+    return `${d.getUTCDate()} ${corto(d)} ${d.getUTCFullYear()} – ${h.getUTCDate()} ${corto(h)} ${h.getUTCFullYear()}`;
+  }
+  if (d.getUTCMonth() !== h.getUTCMonth()) {
+    return `${d.getUTCDate()} ${corto(d)} – ${h.getUTCDate()} ${corto(h)} ${h.getUTCFullYear()}`;
+  }
+  if (d.getUTCDate() === h.getUTCDate()) return `${d.getUTCDate()} ${corto(d)} ${d.getUTCFullYear()}`;
+  return `${d.getUTCDate()}–${h.getUTCDate()} ${corto(d)} ${d.getUTCFullYear()}`;
+}
+
 /** "miércoles 16 de septiembre de 2026" */
 export function formatearFechaLarga(f: FechaISO): string {
   const d = aDate(f);

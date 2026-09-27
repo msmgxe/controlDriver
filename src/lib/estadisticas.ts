@@ -166,3 +166,27 @@ export function comparar(a: Totales, b: Totales): FilaDeComparacion[] {
     fila("porPedido", "Por pedido", "soles", a.centimosPorPedido, b.centimosPorPedido),
   ];
 }
+
+/** El eje vertical de un gráfico de barras: hasta dónde llega y dónde van las marcas. */
+export interface EscalaDelEje {
+  /** El valor de arriba del eje: nunca menor que el mayor dato. */
+  techo: number;
+  /** De cuánto en cuánto van las marcas. */
+  paso: number;
+  /** De 0 a `techo`, ambos incluidos. */
+  marcas: number[];
+}
+
+const PASOS_AMABLES = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 2500, 5000];
+
+/**
+ * Una escala «redonda» para el eje: de 0 a un techo que es múltiplo de un paso
+ * fácil de leer —5, 10, 50, 100…—, con como mucho cinco marcas. Para un máximo de
+ * 18 pedidos da 0, 5, 10, 15, 20; para 184 soles, 0, 50, 100, 150, 200.
+ */
+export function escalaDelEje(maximo: number): EscalaDelEje {
+  const dato = Math.max(1, maximo);
+  const paso = PASOS_AMABLES.find((p) => Math.ceil(dato / p) <= 4) ?? Math.ceil(dato / 4);
+  const techo = Math.ceil(dato / paso) * paso;
+  return { techo, paso, marcas: Array.from({ length: techo / paso + 1 }, (_, i) => i * paso) };
+}

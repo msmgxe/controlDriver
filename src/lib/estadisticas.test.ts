@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { FilaResumenDiario } from "@/lib/db/tipos";
 import { lunesDeLaSemana, type FechaISO } from "@/lib/fechas";
 
-import { comparar, diasDelRango, lunesDeLasUltimas, semanasDe, totalesDe } from "./estadisticas";
+import { comparar, diasDelRango, escalaDelEje, lunesDeLasUltimas, semanasDe, totalesDe } from "./estadisticas";
 
 const HOY = "2026-09-26" as FechaISO;
 
@@ -147,5 +147,34 @@ describe("comparar dos semanas", () => {
     expect(de("promedio").a).toBe(14);
     expect(de("promedio").b).toBe(10);
     expect(de("promedio").diferencia).toBe(4);
+  });
+});
+
+describe("la escala del eje", () => {
+  it("18 pedidos: de 0 a 20 de cinco en cinco", () => {
+    expect(escalaDelEje(18)).toEqual({ techo: 20, paso: 5, marcas: [0, 5, 10, 15, 20] });
+  });
+
+  it("nunca deja un dato por encima del techo", () => {
+    for (const max of [1, 3, 7, 10, 19, 20, 21, 37, 99, 100, 184.5, 999, 2500]) {
+      expect(escalaDelEje(max).techo).toBeGreaterThanOrEqual(max);
+    }
+  });
+
+  it("tiene como mucho cinco marcas, y empieza en cero", () => {
+    for (const max of [1, 4, 12, 18, 33, 60, 184, 750, 1200]) {
+      const { marcas } = escalaDelEje(max);
+      expect(marcas[0]).toBe(0);
+      expect(marcas.length).toBeLessThanOrEqual(5);
+    }
+  });
+
+  it("soles: 184.50 llega a 200 de cincuenta en cincuenta", () => {
+    expect(escalaDelEje(184.5)).toEqual({ techo: 200, paso: 50, marcas: [0, 50, 100, 150, 200] });
+  });
+
+  it("sin datos no se rompe: una escala mínima", () => {
+    expect(escalaDelEje(0).techo).toBeGreaterThan(0);
+    expect(escalaDelEje(0).marcas[0]).toBe(0);
   });
 });
