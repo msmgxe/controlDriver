@@ -663,6 +663,114 @@
   border: 0;
 }
 
+/* ---------------------------------------------------------------------------
+   La pantalla de marca al abrir la app (ver `SplashDeMarca.tsx`).
+   El fondo es un degradado de `--acento` a `--acento-tinta` oscurecido: sale
+   del color de la cara activa, no de un valor fijo. `color-mix` no lo soportan
+   los WebView muy viejos; el `background` plano de antes queda como respaldo,
+   porque una declaración con una función que el navegador no entiende se
+   descarta entera y se queda con la anterior.
+   ------------------------------------------------------------------------- */
+.splash-marca {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: var(--acento);
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--acento) 46%, #00110e 54%),
+    var(--acento) 62%,
+    color-mix(in srgb, var(--acento) 70%, #fff 30%)
+  );
+  opacity: 1;
+  transition: opacity 0.45s ease;
+}
+.splash-marca--sale {
+  opacity: 0;
+  pointer-events: none;
+}
+.splash-marca-contenido {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: env(safe-area-inset-top, 0px) 24px env(safe-area-inset-bottom, 0px);
+}
+.splash-marca-ico {
+  width: 92px;
+  height: 92px;
+  filter: drop-shadow(0 10px 20px rgb(0 0 0 / 0.28));
+  animation: splash-marca-entra-ico 0.5s ease 0.15s both;
+}
+.splash-marca-nombre {
+  font-family: var(--f-display);
+  font-weight: 700;
+  font-size: 26px;
+  letter-spacing: var(--track-titulo, -0.01em);
+  text-transform: var(--tt-titulo, none);
+  color: #fff;
+  text-align: center;
+  line-height: 1.15;
+  animation: splash-marca-entra-arriba 0.45s ease 0.5s both;
+}
+.splash-marca-nombre em {
+  font-style: normal;
+  color: var(--acento-2);
+}
+.splash-marca-lema {
+  font-family: var(--f-texto);
+  font-size: 13px;
+  color: rgb(255 255 255 / 0.78);
+  text-align: center;
+  max-width: 22ch;
+  line-height: 1.4;
+  animation: splash-marca-entra-arriba 0.45s ease 0.75s both;
+}
+.splash-marca-cuadro {
+  fill: var(--acento);
+  fill: url(#splash-marca-degradado);
+}
+.splash-marca-parada-a {
+  stop-color: var(--acento);
+}
+.splash-marca-parada-b {
+  stop-color: var(--acento-tinta);
+}
+.splash-marca-visto {
+  fill: #fff;
+}
+.splash-marca-anillo {
+  fill: var(--acento-2);
+}
+.splash-marca-anillo-centro {
+  fill: #fff;
+}
+.splash-marca-punto {
+  fill: #fff;
+}
+@keyframes splash-marca-entra-ico {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes splash-marca-entra-arriba {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @layer components {
   .rotulo {
     font-family: var(--f-mono);

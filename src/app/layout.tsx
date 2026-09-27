@@ -16,6 +16,7 @@ import {
 import Script from "next/script";
 
 import { VigilanteDeApariencia } from "@/components/Apariencia";
+import { SplashDeMarca } from "@/components/SplashDeMarca";
 import { SCRIPT_INICIAL } from "@/lib/apariencia";
 import "./globals.css";
 
@@ -151,6 +152,7 @@ export default function RootLayout({
           {SCRIPT_INICIAL}
         </Script>
         <VigilanteDeApariencia />
+        <SplashDeMarca />
         {children}
       </body>
     </html>

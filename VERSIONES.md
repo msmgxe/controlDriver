@@ -36,6 +36,28 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v38 — 27/09/2026
+La pantalla de marca al abrir la app.
+- **Nuevo: dos segundos de marca al arrancar** —la opción «A» que se probó como
+  prototipo—. El ícono, «Control Driver» y una frase, y se retira solo. No hace
+  nada más: solo aparece una vez por arranque, no cada vez que cambias de
+  pantalla dentro de la app.
+- El fondo **no es un color fijo**: sale de `--acento` de la cara elegida en
+  Ajustes, igual que el resto de la app —verde en Menta, morado en Turbo,
+  naranja en Asfalto, azul en Mapa—. Hoy la app arranca en «Automático»
+  (Mapa de día, Asfalto de noche) mientras no se elija otra cosa en Ajustes,
+  así que la primera vez la splash sigue esa regla, no siempre verde; si
+  quieres que la cara de fábrica sea Menta, dilo y lo cambiamos aparte.
+- El ícono es un redibujo en vector propio (el mismo del prototipo), no la
+  imagen que mandaste: así puede cambiar de color con el tema. El nombre
+  «Control Driver» solo sale aquí por ahora; el resto de la app (el nombre en
+  Android, el ícono del launcher) sigue diciendo Rutas-A hasta que se decida
+  si es un cambio de nombre completo.
+- La pantalla previa a que cargue la app (la nativa de Android, antes de que
+  haya nada de React) pasó de un recuadro sin marca a un verde oscuro liso,
+  para que no haya un parpadeo en blanco antes de que aparezca la marca de
+  verdad. Esto no se puede probar en la Mac: solo se ve instalando el APK.
+
 ### v37 — 26/09/2026
 Estadísticas cabe en una pantalla.
 - **Cambio: la vista «Semana» de Estadísticas, como la maqueta.** Todo lo esencial

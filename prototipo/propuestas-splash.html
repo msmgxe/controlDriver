@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="es" data-skin="menta">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rutas-A · Propuestas de pantalla de inicio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=Bricolage+Grotesque:wght@600;700;800&family=DM+Sans:wght@400;500;700&family=Figtree:wght@400;500;600;700&family=Fredoka:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Nunito:wght@500;600;700;800&family=Unbounded:wght@500;700&display=swap">
+<style>
+/* ═══════════ La página (el escenario), no la app ═══════════ */
+:root{--pg:#eceef3;--pg-card:#fff;--pg-ink:#14161d;--pg-mut:#586071;--pg-line:#d8dce6;--pg-chip:#e2e5ee;--pg-acc:#0b857b;--pg-stage:#e4e7ef}
+@media (prefers-color-scheme:dark){:root{--pg:#111318;--pg-card:#191c23;--pg-ink:#eceef3;--pg-mut:#9aa2b2;--pg-line:#2b303b;--pg-chip:#242832;--pg-acc:#6fd6c9;--pg-stage:#171a21}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--pg);color:var(--pg-ink);font:15px/1.55 "DM Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased;padding:0 clamp(16px,4vw,40px) 80px}
+.wrap{max-width:1280px;margin-inline:auto}
+h1,h2,h3,p,ul{margin:0}
+.rot{font:500 11px/1 "JetBrains Mono",ui-monospace,monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--pg-mut)}
+.cab{padding-block:40px 20px;display:grid;gap:12px}
+.cab h1{font-size:clamp(28px,4.6vw,44px);line-height:1.05;letter-spacing:-.03em;font-weight:700;max-width:20ch}
+.lead{max-width:70ch;color:var(--pg-mut);font-size:16px}
+.lead b{color:var(--pg-ink)}
+
+.barra{position:sticky;top:0;z-index:50;margin-inline:calc(-1*clamp(16px,4vw,40px));padding:10px clamp(16px,4vw,40px);background:color-mix(in srgb,var(--pg) 90%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--pg-line)}
+.barra .wrap{display:flex;flex-wrap:wrap;gap:8px 22px;align-items:center;justify-content:space-between}
+.grupo{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.grupo .rot{margin-right:4px}
+.pg-btn{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:99px;background:var(--pg-chip);color:var(--pg-ink);text-decoration:none;font-weight:600;font-size:13.5px;border:0;cursor:pointer;font-family:inherit}
+.pg-btn[aria-pressed="true"]{background:var(--pg-ink);color:var(--pg)}
+
+.nota{margin-top:14px;display:flex;gap:10px;align-items:flex-start;background:var(--pg-card);border:1px solid var(--pg-line);border-radius:14px;padding:13px 16px;max-width:78ch}
+.nota .ic{flex:none;width:22px;height:22px;border-radius:50%;background:var(--pg-acc);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:800}
+.nota p{color:var(--pg-mut);font-size:13.5px}
+.nota b{color:var(--pg-ink)}
+
+.stage{margin-top:36px;border-radius:28px;background:var(--pg-stage);padding:30px clamp(12px,2vw,26px) 24px}
+.phones{display:flex;gap:26px;overflow-x:auto;padding:10px 12px 20px;scroll-snap-type:x proximity;justify-content:safe center}
+.slot{flex:none;display:grid;gap:14px;justify-items:center;scroll-snap-align:center;width:300px}
+.slot h3{font-size:16px;display:flex;align-items:center;gap:8px}
+.slot .letra{width:26px;height:26px;border-radius:8px;background:var(--pg-ink);color:var(--pg);display:grid;place-items:center;font-size:13px;font-weight:800}
+.elegida{font-size:11.5px;font-weight:700;color:var(--pg-acc);background:color-mix(in srgb,var(--pg-acc) 16%,transparent);padding:2px 8px;border-radius:99px;letter-spacing:.02em}
+.slot figcaption{font-size:13px;text-align:center;max-width:30ch;line-height:1.45;color:var(--pg-mut)}
+.slot .badge{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:99px;background:var(--pg-chip);font:700 11px/1.8 "JetBrains Mono",monospace;color:var(--pg-ink)}
+.replay{margin-top:2px;border:0;border-radius:99px;padding:8px 16px;background:var(--pg-ink);color:var(--pg);font:700 13px/1 "DM Sans",sans-serif;cursor:pointer}
+
+.comp{margin-top:52px;display:grid;gap:14px}
+.comp h2{font-size:clamp(22px,3.4vw,30px);letter-spacing:-.02em}
+.tabla-p{overflow-x:auto;border:1px solid var(--pg-line);border-radius:16px;background:var(--pg-card)}
+.tabla-p table{border-collapse:collapse;width:100%;min-width:680px;font-size:13.5px}
+.tabla-p th,.tabla-p td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--pg-line);vertical-align:top}
+.tabla-p th{font:500 11px/1.3 "JetBrains Mono",monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--pg-mut)}
+.tabla-p tr:last-child td{border-bottom:0}
+.tabla-p td:first-child{font-weight:700;white-space:nowrap}
+
+/* ═══════════ El teléfono: tokens = los de la app (globals.css) ═══════════ */
+.ph{
+  --papel:#e6eef8;--sup:#fff;--sup-2:#d9e5f4;--tinta:#0a2260;--tinta-2:#3e5183;--tinta-3:#52658f;--linea:#c4d5ec;--linea-fuerte:#a9bfdf;
+  --acento:#1f5cff;--acento-tinta:#1244cc;--acento-suave:#dce6ff;--acento-texto:#fff;--acento-2:#ffc800;--acento-2-tinta:#0a2260;
+  --fd:"Unbounded","DM Sans",system-ui,sans-serif;--ft:"DM Sans",system-ui,sans-serif;--fm:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --tt:none;--r-btn:12px;--r-card:16px;--bw:0px;
+}
+html[data-skin="turbo"] .ph{
+  --papel:#f3efff;--sup:#fff;--sup-2:#ece6ff;--tinta:#1d1246;--tinta-2:#6b5e9c;--tinta-3:#9c8fc7;--linea:#dcd3fa;--linea-fuerte:#1d1246;
+  --acento:#6a4cf5;--acento-tinta:#5636d6;--acento-suave:#e4dbff;--acento-texto:#fff;--acento-2:#ffd23f;--acento-2-tinta:#1d1246;
+  --fd:"Fredoka","Nunito",system-ui,sans-serif;--ft:"Nunito",system-ui,sans-serif;--tt:none;--r-btn:15px;--r-card:20px;--bw:2px;
+}
+html[data-skin="asfalto"] .ph{
+  --papel:#0e1116;--sup:#161b22;--sup-2:#1e252e;--tinta:#eef1f5;--tinta-2:#aab4c2;--tinta-3:#808b9b;--linea:#28303b;--linea-fuerte:#3a4452;
+  --acento:#ff9f1c;--acento-tinta:#ffb84d;--acento-suave:#3a2a0c;--acento-texto:#1a0f00;--acento-2:#5cc8ff;--acento-2-tinta:#0e1116;
+  --fd:"Barlow Condensed","Barlow",system-ui,sans-serif;--ft:"Barlow",system-ui,sans-serif;--tt:uppercase;--r-btn:8px;--r-card:10px;--bw:1px;
+}
+html[data-skin="menta"] .ph{
+  --papel:#eef4f2;--sup:#fff;--sup-2:#e1ece9;--tinta:#0c1a18;--tinta-2:#566b67;--tinta-3:#7e938e;--linea:#d3e1de;--linea-fuerte:#b9ccc7;
+  --acento:#0b857b;--acento-tinta:#076158;--acento-suave:#dcefec;--acento-texto:#fff;--acento-2:#ff7a5c;--acento-2-tinta:#0c1a18;
+  --fd:"Bricolage Grotesque","Figtree",system-ui,sans-serif;--ft:"Figtree",system-ui,sans-serif;--tt:none;--r-btn:14px;--r-card:20px;--bw:0px;
+}
+
+.ph{width:280px;height:590px;flex:none;position:relative;overflow:hidden;border-radius:34px;background:var(--papel);color:var(--tinta);
+  font-family:var(--ft);box-shadow:0 0 0 7px #101216,0 24px 48px -20px rgb(0 0 0/.5);isolation:isolate}
+.ph *{box-sizing:border-box}
+.reloj{position:absolute;inset:0 0 auto 0;height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;font:700 11.5px/1 var(--fm);z-index:5;color:inherit}
+
+/* ---- capa de Inicio, detrás: lo que hay cuando la splash se retira ---- */
+.home{position:absolute;inset:0;display:flex;flex-direction:column}
+.home .cabecera{height:44px;margin-top:30px;display:flex;align-items:center;gap:8px;padding:0 14px;border-bottom:var(--bw) solid var(--linea)}
+.home .cabecera b{font-family:var(--fd);font-size:15px;text-transform:var(--tt)}
+.home .cuerpo{flex:1;padding:14px;display:flex;flex-direction:column;gap:10px}
+.home .tarjeta{border-radius:var(--r-card);background:var(--sup);border:var(--bw) solid var(--linea-fuerte);padding:14px;height:64px}
+.home .tarjeta.grande{height:96px;background:var(--acento);border:0}
+.home .skel{border-radius:var(--r-card);background:var(--sup-2);height:16px;width:70%}
+.home nav{height:58px;display:flex;align-items:center;justify-content:space-around;border-top:var(--bw) solid var(--linea);background:var(--sup)}
+.home nav .puerta{display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--tinta-3)}
+.home nav .puerta svg{width:18px;height:18px}
+.home nav .puerta span{font-size:8.5px;font-weight:700}
+.home nav .puerta.activa{color:var(--acento)}
+
+/* ---- la marca: el ícono redibujado en vector, con los tokens del tema ---- */
+.marca{display:flex;flex-direction:column;align-items:center;gap:14px}
+.marca svg{width:84px;height:84px;filter:drop-shadow(0 10px 18px rgb(0 0 0/.25))}
+.marca .cuadro{fill:url(#g-cuadro)}
+.marca .check{fill:#fff}
+.marca .anillo{fill:var(--acento-2)}
+.marca .anillo-centro{fill:#fff}
+.marca .punto{fill:#fff}
+.marca .nombre{font-family:var(--fd);font-weight:700;font-size:23px;letter-spacing:-.01em;text-transform:var(--tt);color:#fff;text-align:center;line-height:1.15}
+.marca .nombre em{font-style:normal;color:var(--acento-2)}
+.marca .lema{font-size:12px;color:rgb(255 255 255/.78);text-align:center;max-width:19ch;line-height:1.4}
+
+/* ---- Alternativa A: pantalla de marca, aparece 3 s y se retira ---- */
+.splashA{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,color-mix(in srgb,var(--acento) 46%,#00110e 54%),var(--acento) 62%,color-mix(in srgb,var(--acento) 70%,#fff 30%));
+  opacity:0;transition:opacity .5s ease}
+.stage-a.playing .splashA{opacity:1;animation:retirarse .45s ease 2s both}
+.stage-a.playing .splashA .marca > *{opacity:0}
+.stage-a.playing .splashA .ico{animation:entra-ico .5s ease .15s both}
+.stage-a.playing .splashA .nombre{animation:entra-arriba .45s ease .5s both}
+.stage-a.playing .splashA .lema{animation:entra-arriba .45s ease .75s both}
+
+/* ---- Alternativa B: igual, pero adaptativa (~0.9 s, sin espera fija) ---- */
+.splashB{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,color-mix(in srgb,var(--acento) 46%,#00110e 54%),var(--acento) 62%,color-mix(in srgb,var(--acento) 70%,#fff 30%));
+  opacity:0}
+.stage-b.playing .splashB{opacity:1;animation:retirarse .35s ease .9s both}
+.stage-b.playing .splashB .marca > *{opacity:0}
+.stage-b.playing .splashB .ico{animation:entra-rebote .4s cubic-bezier(.34,1.56,.64,1) both}
+.stage-b.playing .splashB .nombre{animation:entra-arriba .3s ease .12s both}
+.stage-b.playing .splashB .lema{display:none}
+.stage-b .home .skel{animation:brillo 1.1s ease-in-out infinite}
+
+/* ---- Alternativa C: el menú se ve, atenuado y sin poder tocarse ---- */
+.stage-c .home{filter:saturate(.35) brightness(.7);pointer-events:none;transition:filter .5s ease .1s}
+.stage-c.playing .home{animation:atenuar-y-brillar 3.4s ease both}
+.ribbon{position:absolute;top:34px;left:50%;transform:translateX(-50%);z-index:6;background:rgb(0 0 0/.55);color:#fff;font:700 9.5px/1.8 var(--fm);letter-spacing:.04em;text-transform:uppercase;padding:2px 10px;border-radius:99px;opacity:0}
+.stage-c.playing .ribbon{animation:parpadea 3s ease both}
+.splashC-marca{position:absolute;inset:0;top:74px;bottom:58px;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.splashC-marca svg{width:64px;height:64px;filter:drop-shadow(0 8px 16px rgb(0 0 0/.35))}
+.stage-c.playing .splashC-marca{animation:pulso 1.1s ease-in-out infinite,desvanece .4s ease 3s both}
+
+@keyframes entra-ico{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+@keyframes entra-rebote{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+@keyframes entra-arriba{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes retirarse{to{opacity:0;visibility:hidden}}
+@keyframes brillo{50%{opacity:.4}}
+@keyframes pulso{50%{transform:scale(1.08)}}
+@keyframes desvanece{to{opacity:0}}
+@keyframes parpadea{0%,88%{opacity:1}100%{opacity:0}}
+@keyframes atenuar-y-brillar{0%,84%{filter:saturate(.35) brightness(.7)}100%{filter:saturate(1) brightness(1)}}
+
+@media (max-width:640px){.slot{width:82vw;max-width:300px}.ph{width:100%;height:calc(100vw*590/280);max-height:610px}}
+</style>
+</head>
+<body>
+<div class="barra">
+  <div class="wrap">
+    <div class="grupo">
+      <span class="rot">Tema (como en Ajustes)</span>
+      <button class="pg-btn" data-skin="menta" aria-pressed="true">Menta 🟢 (con el que instala)</button>
+      <button class="pg-btn" data-skin="turbo" aria-pressed="false">Turbo 🟣</button>
+      <button class="pg-btn" data-skin="asfalto" aria-pressed="false">Asfalto ⚫️</button>
+      <button class="pg-btn" data-skin="claro" aria-pressed="false">Mapa 🔵</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="cab">
+    <span class="rot">Rutas-A · Propuestas de pantalla de inicio</span>
+    <h1>Tres formas de mostrar la marca al abrir la app</h1>
+    <p class="lead">
+      Cambia el tema de arriba: el fondo de las tres pantallas <b>cambia con él</b>, igual que pasaría en la app de
+      verdad. Al instalarla por primera vez arrancaría con <b>Menta</b> (el verde de tu imagen); si después eliges
+      otra cara en Ajustes, la próxima vez que abras Rutas-A la pantalla de inicio sale con esos colores. Toca
+      «Reproducir» para ver la animación de cada una otra vez.
+    </p>
+    <div class="nota">
+      <span class="ic">i</span>
+      <p>
+        El ícono de aquí es un <b>redibujo en vector</b> de tu logo —no la imagen que mandaste tal cual—, para poder
+        cambiarle el color con el tema en vivo. Si eliges una alternativa, la pulimos con tu archivo de origen antes
+        de dejarla definitiva. El nombre «Control Driver» es solo para esta prueba: seguimos hablando si la app se
+        renombra del todo o si esto se queda como imagen de marca nada más.
+      </p>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="phones">
+
+      <!-- ═══════════ A ═══════════ -->
+      <figure class="slot">
+        <h3><span class="letra">A</span> De marca <span class="elegida">✓ Elegida</span></h3>
+        <div class="ph stage-a playing" id="stageA">
+          <div class="reloj"><span>9:41</span><span>●●●</span></div>
+          <div class="home">
+            <div class="cabecera"><b>Hoy</b></div>
+            <div class="cuerpo">
+              <div class="tarjeta grande"></div>
+              <div class="skel"></div>
+              <div class="tarjeta"></div>
+            </div>
+            <nav>
+              <span class="puerta activa">🏠<span>Inicio</span></span>
+              <span class="puerta">⬆️<span>Cargar</span></span>
+              <span class="puerta">👛<span>Pagos</span></span>
+              <span class="puerta">📈<span>Estad.</span></span>
+              <span class="puerta">🔍<span>Buscar</span></span>
+              <span class="puerta">📅<span>Histor.</span></span>
+              <span class="puerta">🔒<span>Ajustes</span></span>
+            </nav>
+          </div>
+          <div class="splashA">
+            <div class="marca">
+              <svg class="ico" viewBox="0 0 100 100" aria-hidden="true">
+                <defs><linearGradient id="g-cuadro" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="var(--acento)"/><stop offset="1" stop-color="var(--acento-tinta)"/>
+                </linearGradient></defs>
+                <rect class="cuadro" x="4" y="4" width="92" height="92" rx="24"/>
+                <circle class="punto" cx="22" cy="66" r="3" opacity=".55"/>
+                <circle class="punto" cx="30" cy="61" r="3.6" opacity=".8"/>
+                <path class="check" d="M35 52 L46 63 L74 30 a7 7 0 0 1 9 10.7 L50 76.5 a7 7 0 0 1 -9.9 .3 L25.5 62 a7 7 0 0 1 9.5 -10.3Z"/>
+                <circle class="anillo" cx="76" cy="35" r="10"/>
+                <circle class="anillo-centro" cx="76" cy="35" r="4"/>
+              </svg>
+              <span class="nombre">Control<br><em>Driver</em></span>
+              <span class="lema">Tus pedidos y tus pagos, claros en tu celular</span>
+            </div>
+          </div>
+        </div>
+        <span class="badge">⏱ 2.0 s fijos</span>
+        <button class="replay" data-target="stageA">Reproducir</button>
+        <figcaption>Ajustada a 2 segundos, como pediste. El resto de los tiempos —cuándo entra el ícono, el nombre y
+          el lema— quedó igual: entran rápido y hay margen de sobra antes de que se retire.</figcaption>
+      </figure>
+
+      <!-- ═══════════ B ═══════════ -->
+      <figure class="slot">
+        <h3><span class="letra">B</span> Adaptativa, sin espera fija</h3>
+        <div class="ph stage-b playing" id="stageB">
+          <div class="reloj"><span>9:41</span><span>●●●</span></div>
+          <div class="home">
+            <div class="cabecera"><b>Hoy</b></div>
+            <div class="cuerpo">
+              <div class="tarjeta grande"></div>
+              <div class="skel"></div>
+              <div class="tarjeta"></div>
+            </div>
+            <nav>
+              <span class="puerta activa">🏠<span>Inicio</span></span>
+              <span class="puerta">⬆️<span>Cargar</span></span>
+              <span class="puerta">👛<span>Pagos</span></span>
+              <span class="puerta">📈<span>Estad.</span></span>
+              <span class="puerta">🔍<span>Buscar</span></span>
+              <span class="puerta">📅<span>Histor.</span></span>
+              <span class="puerta">🔒<span>Ajustes</span></span>
+            </nav>
+          </div>
+          <div class="splashB">
+            <div class="marca">
+              <svg class="ico" viewBox="0 0 100 100" aria-hidden="true">
+                <rect class="cuadro" x="4" y="4" width="92" height="92" rx="24"/>
+                <circle class="punto" cx="22" cy="66" r="3" opacity=".55"/>
+                <circle class="punto" cx="30" cy="61" r="3.6" opacity=".8"/>
+                <path class="check" d="M35 52 L46 63 L74 30 a7 7 0 0 1 9 10.7 L50 76.5 a7 7 0 0 1 -9.9 .3 L25.5 62 a7 7 0 0 1 9.5 -10.3Z"/>
+                <circle class="anillo" cx="76" cy="35" r="10"/>
+                <circle class="anillo-centro" cx="76" cy="35" r="4"/>
+              </svg>
+              <span class="nombre">Control<br><em>Driver</em></span>
+              <span class="lema">Tus pedidos y tus pagos, claros en tu celular</span>
+            </div>
+          </div>
+        </div>
+        <span class="badge">⏱ ~0.9 s, según carga</span>
+        <button class="replay" data-target="stageB">Reproducir</button>
+        <figcaption>La marca aparece igual, pero se retira apenas el perfil y la licencia terminan de leerse —no hay
+          pausa de más—. Se siente más rápida; se ve menos «espectáculo».</figcaption>
+      </figure>
+
+      <!-- ═══════════ C ═══════════ -->
+      <figure class="slot">
+        <h3><span class="letra">C</span> Con el menú de fondo</h3>
+        <div class="ph stage-c playing" id="stageC">
+          <div class="reloj"><span>9:41</span><span>●●●</span></div>
+          <div class="home">
+            <div class="cabecera"><b>Hoy</b></div>
+            <div class="cuerpo">
+              <div class="tarjeta grande"></div>
+              <div class="skel"></div>
+              <div class="tarjeta"></div>
+            </div>
+            <nav>
+              <span class="puerta activa">🏠<span>Inicio</span></span>
+              <span class="puerta">⬆️<span>Cargar</span></span>
+              <span class="puerta">👛<span>Pagos</span></span>
+              <span class="puerta">📈<span>Estad.</span></span>
+              <span class="puerta">🔍<span>Buscar</span></span>
+              <span class="puerta">📅<span>Histor.</span></span>
+              <span class="puerta">🔒<span>Ajustes</span></span>
+            </nav>
+          </div>
+          <span class="ribbon">Vista previa · no se toca</span>
+          <div class="splashC-marca">
+            <svg viewBox="0 0 100 100" aria-hidden="true">
+              <rect class="cuadro" x="4" y="4" width="92" height="92" rx="24" fill="var(--acento)"/>
+              <circle class="punto" cx="22" cy="66" r="3" opacity=".55"/>
+              <circle class="punto" cx="30" cy="61" r="3.6" opacity=".8"/>
+              <path class="check" d="M35 52 L46 63 L74 30 a7 7 0 0 1 9 10.7 L50 76.5 a7 7 0 0 1 -9.9 .3 L25.5 62 a7 7 0 0 1 9.5 -10.3Z"/>
+              <circle class="anillo" cx="76" cy="35" r="10"/>
+              <circle class="anillo-centro" cx="76" cy="35" r="4"/>
+            </svg>
+          </div>
+        </div>
+        <span class="badge">⏱ 3.0 s, y sigue solo</span>
+        <button class="replay" data-target="stageC">Reproducir</button>
+        <figcaption>Tu idea: el menú ya se ve, apagado, y el logo late encima. A los 3 s se enciende solo —nadie
+          puede saltar antes tocándolo—. Es la más parecida a lo que describiste; a mí me sigue gustando más la A.</figcaption>
+      </figure>
+
+    </div>
+  </div>
+
+  <div class="comp">
+    <h2>Para decidir de un vistazo</h2>
+    <div class="tabla-p">
+      <table>
+        <thead><tr><th>Alternativa</th><th>Duración</th><th>Qué se ve</th><th>Riesgo</th></tr></thead>
+        <tbody>
+          <tr><td>A · De marca ✓</td><td>2 s fijos</td><td>Solo la marca, nada más</td><td>Espera aunque ya esté listo</td></tr>
+          <tr><td>B · Adaptativa</td><td>~0.9 s, según carga</td><td>Solo la marca, nada más</td><td>Se siente menos «de presentación»</td></tr>
+          <tr><td>C · Menú de fondo</td><td>3 s fijos</td><td>El menú apagado detrás del logo</td><td>El menú a la vista y sin poder tocarlo puede leerse como que algo falló</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.pg-btn[data-skin]').forEach(b=>b.addEventListener('click',()=>{
+  document.documentElement.setAttribute('data-skin', b.dataset.skin);
+  document.querySelectorAll('.pg-btn[data-skin]').forEach(x=>x.setAttribute('aria-pressed', x===b));
+}));
+document.querySelectorAll('.replay').forEach(b=>b.addEventListener('click',()=>{
+  const el = document.getElementById(b.dataset.target);
+  el.classList.remove('playing');
+  void el.offsetWidth;
+  el.classList.add('playing');
+}));
+</script>
+</body>
+</html>
