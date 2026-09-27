@@ -1093,7 +1093,7 @@ function TabEvidencia({
 
       <Aviso tono="atento" titulo="Un pedido tiene como mucho una foto">
         <p>
-          Sirve de respaldo si la tienda discute ese pedido. Se guarda en el almacenamiento privado de Rutas-A:
+          Sirve de respaldo si la tienda discute ese pedido. Se guarda en el almacenamiento privado de Control Driver:
           no sale en la galería, y ninguna otra app la ve.
         </p>
       </Aviso>

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Rutas-A</string>
-    <string name="title_activity_main">Rutas-A</string>
+    <string name="app_name">Control Driver</string>
+    <string name="title_activity_main">Control Driver</string>
     <string name="package_name">pe.rutasa.app</string>
     <string name="custom_url_scheme">pe.rutasa.app</string>
 </resources>

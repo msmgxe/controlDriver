@@ -73,7 +73,7 @@ export default function PaginaAjustes() {
     marcarAbierto();
     setPin("");
     setRepetir("");
-    setMensaje("Listo. La próxima vez que abras Rutas-A te pedirá el PIN.");
+    setMensaje("Listo. La próxima vez que abras Control Driver te pedirá el PIN.");
   }
 
   return (
@@ -170,7 +170,7 @@ export default function PaginaAjustes() {
                 type="button"
                 className="boton-sec"
                 onClick={async () => {
-                  const ok = await activarHuella("Rutas-A");
+                  const ok = await activarHuella("Control Driver");
                   setMensaje(
                     ok
                       ? "Huella activada. El PIN sigue funcionando como respaldo."
@@ -428,7 +428,7 @@ function SeccionSalir() {
       setMensaje("Esto solo cierra la aplicación instalada, no esta pestaña del navegador.");
       return;
     }
-    if (!confirm("¿Seguro que quieres salir de Rutas-A?")) return;
+    if (!confirm("¿Seguro que quieres salir de Control Driver?")) return;
     const { App } = await import("@capacitor/app");
     await App.exitApp();
   }
@@ -441,7 +441,7 @@ function SeccionSalir() {
         </span>
         <div>
           <h3 className="text-lg">Salir de la app</h3>
-          <p className="text-sm text-tinta-2">Cierra Rutas-A del todo. Tus datos se quedan igual.</p>
+          <p className="text-sm text-tinta-2">Cierra Control Driver del todo. Tus datos se quedan igual.</p>
         </div>
       </div>
       <button type="button" onClick={() => void pedirSalir()} className="boton-secundario self-start">
@@ -466,7 +466,7 @@ function SeccionVersion() {
   return (
     <section className="tarjeta flex items-center justify-between gap-3">
       <div className="flex flex-col">
-        <h3 className="text-lg">Rutas-A</h3>
+        <h3 className="text-lg">Control Driver</h3>
         <span className="text-sm text-tinta-2">
           {datos ? `Versión ${datos.version}` : "…"}
         </span>

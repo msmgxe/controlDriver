@@ -54,7 +54,7 @@ function BloqueCrear() {
       const { clientesEnRespaldo } = await leerAjustesDeComandas();
       const respaldo = await crearRespaldo({ incluirClientes: clientesEnRespaldo });
       const contenido = JSON.stringify(respaldo, null, 2);
-      const archivo = `rutas-a-respaldo-${hoyEnLima()}.json`;
+      const archivo = `control-driver-respaldo-${hoyEnLima()}.json`;
 
       if (!Capacitor.isNativePlatform()) {
         throw new Error("Crear y compartir el respaldo solo funciona en la app instalada.");
@@ -71,7 +71,7 @@ function BloqueCrear() {
       });
       const { uri } = await Filesystem.getUri({ path: archivo, directory: Directory.Cache });
 
-      await Share.share({ title: "Respaldo de Rutas-A", url: uri });
+      await Share.share({ title: "Respaldo de Control Driver", url: uri });
       await anotarRespaldoCreado();
       setEstado("reposo");
     } catch (fallo) {

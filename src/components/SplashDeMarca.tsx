@@ -68,7 +68,7 @@ export function SplashDeMarca() {
  */
 function IconoApp({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 100 100" role="img" aria-label="Rutas-A">
+    <svg className={className} viewBox="0 0 100 100" role="img" aria-label="Control Driver">
       <defs>
         <linearGradient id="splash-marca-degradado" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" className="splash-marca-parada-a" />

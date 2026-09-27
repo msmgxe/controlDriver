@@ -127,7 +127,7 @@ function ArmazonInterno({
         >
           <div className="flex items-center gap-2 px-3 pt-2 pb-4">
             <Auto vehiculo={vehiculo} animado className="w-14 shrink-0" />
-            <strong className="font-display text-2xl font-bold tracking-tight">Rutas-A</strong>
+            <strong className="font-display text-2xl font-bold tracking-tight">Control Driver</strong>
           </div>
 
           <nav className="flex flex-col gap-0.5">

@@ -6,7 +6,7 @@
 #   ./scripts/apk.sh --instalar genera y lo instala en el celular por USB
 #
 # Cada compilación sube el número de versión y deja el archivo como
-# Rutas-A-v<N>.apk, borrando el anterior: así se sabe siempre cuál se está
+# Control-Driver-v<N>.apk, borrando el anterior: así se sabe siempre cuál se está
 # copiando, y no hay forma de instalar por error el de hace tres cambios.
 #
 # Por qué hace falta un JDK aparte: el Mac trae el 26, y el plugin de Gradle
@@ -98,8 +98,8 @@ fi
 
 # El anterior se borra: tener seis APK viejos en la carpeta solo sirve para
 # instalar el equivocado.
-rm -f Rutas-A-v*.apk
-APK="Rutas-A-v$VERSION.apk"
+rm -f Rutas-A-v*.apk Control-Driver-v*.apk
+APK="Control-Driver-v$VERSION.apk"
 cp "$SALIDA" "$APK"
 
 echo

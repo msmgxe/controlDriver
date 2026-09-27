@@ -114,12 +114,12 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Rutas-A", template: "%s · Rutas-A" },
+  title: { default: "Control Driver", template: "%s · Control Driver" },
   description:
     "Registro diario de rutas y pedidos: sube las capturas, revisa y confirma. El resto es consulta.",
-  applicationName: "Rutas-A",
+  applicationName: "Control Driver",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, title: "Rutas-A", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "Control Driver", statusBarStyle: "default" },
   formatDetection: { telephone: false },
   // La app es privada: nada de esto debe indexarse.
   robots: { index: false, follow: false },

@@ -69,7 +69,7 @@ export function ExportarEstadisticas({
       /* ----------------------------- portada ----------------------------- */
       doc.setFont("helvetica", "bold");
       doc.setFontSize(22);
-      doc.text("Rutas-A", margen, 28);
+      doc.text("Control Driver", margen, 28);
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(12);
@@ -151,7 +151,7 @@ export function ExportarEstadisticas({
         doc.text(`Página ${i} de ${paginas}`, anchoPagina - margen, altoPagina - 8, {
           align: "right",
         });
-        doc.text("Rutas-A", margen, altoPagina - 8);
+        doc.text("Control Driver", margen, altoPagina - 8);
       }
 
       setListo(await prepararArchivo(doc.output("blob"), `estadisticas_${desde}_a_${hasta}.pdf`));

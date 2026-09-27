@@ -45,6 +45,7 @@ next-env.d.ts
 
 # --- Android / Capacitor ---
 /Rutas-A-v*.apk
+/Control-Driver-v*.apk
 /android/local.properties
 /android/.gradle/
 /android/build/

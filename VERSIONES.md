@@ -36,6 +36,26 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v40 — 27/09/2026
+El ícono y el nombre de la app: Control Driver.
+- **Cambio: el ícono de la app ya no es el de Android por defecto.** Ahora es
+  nuestro logo —el mismo visto de la splash—, en un cuadro verde con el anillo
+  coral, generado en las cinco resoluciones y en las tres formas que pide
+  Android (cuadrado, redondo y el adaptativo que cada launcher recorta a su
+  manera). El color es fijo (no cambia con el tema, como cualquier ícono de
+  celular).
+- **Cambio: el nombre bajo el ícono pasa de «Rutas-A» a «Control Driver»**, y
+  con él, todo lo que el driver lee dentro de la app: Ajustes, la pantalla de
+  bloqueo, el título del PDF, el mensaje al compartir un respaldo, el de
+  «Cargar capturas», el de «Salir de la app»… No se tocó lo técnico: el
+  paquete de Android sigue siendo `pe.rutasa.app` —cambiarlo habría hecho que
+  Android tratara esto como una app distinta y perdieras los datos ya
+  guardados—, así que esta actualización se instala encima de la anterior sin
+  perder nada.
+- **Pendiente de probar en el celular:** cómo se ve el ícono nuevo en tu
+  launcher —el adaptativo lo recorta cada fabricante a su manera (círculo,
+  cuadrado con esquinas, gota…) y eso no se puede ver desde la Mac.
+
 ### v39 — 27/09/2026
 Dos ajustes a la pantalla de marca y un botón nuevo en Ajustes.
 - **Cambio: el ícono de la marca es mucho más grande**, cerca de la mitad del

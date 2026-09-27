@@ -39,7 +39,7 @@ export function CargarCapturas({
       <p className="text-xs text-tinta-3">
         Son las capturas de la app de la tienda, con tus rutas y pedidos. Cada una se guarda en el
         día que dice{dia ? `; las que no lo digan, el ${nombreDelDia(dia)} ${Number(dia.slice(8))}` : ""}.
-        También puedes compartirlas a Rutas-A desde la galería. Máximo {TOPE_DE_CAPTURAS} por carga.
+        También puedes compartirlas a Control Driver desde la galería. Máximo {TOPE_DE_CAPTURAS} por carga.
       </p>
     </div>
   );

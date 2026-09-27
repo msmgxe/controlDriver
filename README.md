@@ -36,7 +36,7 @@ salvo que lo actives en Ajustes.
 
 | Comando | Qué hace |
 |---|---|
-| `npm run apk` | Compila el APK: sube el número de versión y deja `Rutas-A-v<N>.apk` |
+| `npm run apk` | Compila el APK: sube el número de versión y deja `Control-Driver-v<N>.apk` |
 | `npm run apk:instalar` | Igual, y lo instala en el celular conectado por USB |
 | `npm test` | Pruebas unitarias (vitest) contra SQLite de verdad, en memoria |
 | `npm run typecheck` | `tsc --noEmit` |

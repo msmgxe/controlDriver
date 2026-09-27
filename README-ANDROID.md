@@ -7,7 +7,7 @@ npm run apk
 ```
 
 Cada compilación sube el número de versión y deja el archivo en la carpeta del
-proyecto como `Rutas-A-v<N>.apk`; el de la versión anterior se borra, para no
+proyecto como `Control-Driver-v<N>.apk`; el de la versión anterior se borra, para no
 instalar por error uno viejo. La versión instalada se ve en **Ajustes**, arriba del
 todo, y lo que cambió en cada una está en [`VERSIONES.md`](VERSIONES.md).
 
@@ -46,7 +46,7 @@ Al terminar, busca **Rutas-A** en el menú de aplicaciones.
 
 ## Instalarlo — opción B: sin cable
 
-Si prefieres no usar el cable: sube el `Rutas-A-v<N>.apk` a tu Google Drive desde el
+Si prefieres no usar el cable: sube el `Control-Driver-v<N>.apk` a tu Google Drive desde el
 Mac, ábrelo en el celular desde la app de Drive y tócalo.
 
 Android te dirá que la aplicación no viene de la tienda y bloqueará la
