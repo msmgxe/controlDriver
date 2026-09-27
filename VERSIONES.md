@@ -36,6 +36,19 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v39 — 27/09/2026
+Dos ajustes a la pantalla de marca y un botón nuevo en Ajustes.
+- **Cambio: el ícono de la marca es mucho más grande**, cerca de la mitad del
+  ancho del teléfono, como en la imagen que mandaste; el nombre y la frase
+  también crecieron para acompañarlo.
+- **Nuevo: «Salir de la app», al final de Ajustes.** Hasta ahora la única forma
+  de cerrar la app del todo era el gesto físico —dos toques seguidos en atrás,
+  desde Hoy— que sigue funcionando igual. Este botón es la versión visible, y
+  pide confirmación antes de cerrar («¿Seguro que quieres salir de Rutas-A?»);
+  tus datos no se tocan, solo se cierra la aplicación.
+- **Pendiente de probar en el celular:** que «Salir» cierre la app de verdad
+  (en el navegador solo se puede comprobar que aparece el aviso, no el cierre).
+
 ### v38 — 27/09/2026
 La pantalla de marca al abrir la app.
 - **Nuevo: dos segundos de marca al arrancar** —la opción «A» que se probó como

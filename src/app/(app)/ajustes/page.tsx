@@ -14,7 +14,7 @@ import { useVersion } from "@/hooks/useVersion";
 import { leerAjustesDeComandas } from "@/lib/db/sqlite/ajustes";
 import { espacioOcupado } from "@/lib/db/sqlite/pruebas";
 
-import { Check, Huella } from "@/components/iconos";
+import { Check, Huella, Salir } from "@/components/iconos";
 import {
   activarHuella,
   fijarPin,
@@ -202,6 +202,8 @@ export default function PaginaAjustes() {
       <SeccionEjemplo />
 
       <SeccionDiagnostico />
+
+      <SeccionSalir />
     </div>
   );
 }
@@ -402,6 +404,51 @@ function SeccionDiagnostico() {
         </>
       )}
     </Acordeon>
+  );
+}
+
+/**
+ * Salir de la app.
+ *
+ * Ya existe el atajo físico —dos toques seguidos en atrás, desde Hoy— pero es
+ * un gesto que no todos conocen y que no deja sitio para un «¿seguro?»: la
+ * confirmación ahí es la propia repetición del toque. Este botón es la versión
+ * visible, con una confirmación de verdad antes de cerrar.
+ *
+ * En el navegador (mientras se prueba fuera del APK) no hay aplicación que
+ * cerrar: se dice y no se pide confirmar nada.
+ */
+function SeccionSalir() {
+  const [mensaje, setMensaje] = useState<string | null>(null);
+
+  async function pedirSalir() {
+    setMensaje(null);
+    const { Capacitor } = await import("@capacitor/core");
+    if (!Capacitor.isNativePlatform()) {
+      setMensaje("Esto solo cierra la aplicación instalada, no esta pestaña del navegador.");
+      return;
+    }
+    if (!confirm("¿Seguro que quieres salir de Rutas-A?")) return;
+    const { App } = await import("@capacitor/app");
+    await App.exitApp();
+  }
+
+  return (
+    <section className="tarjeta flex flex-col gap-3">
+      <div className="flex items-center gap-3">
+        <span className="grid size-10 shrink-0 place-items-center rounded-chip bg-sup-2 text-tinta-2">
+          <Salir className="size-5" />
+        </span>
+        <div>
+          <h3 className="text-lg">Salir de la app</h3>
+          <p className="text-sm text-tinta-2">Cierra Rutas-A del todo. Tus datos se quedan igual.</p>
+        </div>
+      </div>
+      <button type="button" onClick={() => void pedirSalir()} className="boton-secundario self-start">
+        Salir
+      </button>
+      {mensaje && <p className="text-sm text-tinta-2">{mensaje}</p>}
+    </section>
   );
 }
 
