@@ -35,7 +35,7 @@ const OSCURO: Paleta = { fondo: "#0e1116", tarjeta: "#161b22", acento: "#ff9f1c"
 const TURBO: Paleta = { fondo: "#f3efff", tarjeta: "#ffffff", acento: "#6a4cf5", senal: "#ffd23f", tinta: "#1d1246" };
 const MENTA: Paleta = { fondo: "#eef4f2", tarjeta: "#ffffff", acento: "#0b857b", senal: "#ff7a5c", tinta: "#0c1a18" };
 const ARCILLA: Paleta = { fondo: "#f1e9db", tarjeta: "#fdfaf5", acento: "#d97757", senal: "#feedba", tinta: "#141413" };
-const AVISPA: Paleta = { fondo: "#09090b", tarjeta: "#18181b", acento: "#eab308", senal: "#f97316", tinta: "#fafafa" };
+const AVISPA: Paleta = { fondo: "#ffffff", tarjeta: "#ffffff", acento: "#eab308", senal: "#f97316", tinta: "#09090b" };
 
 /**
  * `duro`: Turbo lleva bordes gruesos y sombra dura en toda la app —incluida
@@ -69,7 +69,7 @@ const TEMAS: Opcion[] = [
   { valor: "turbo", nombre: "Turbo", detalle: "Violeta y bordes gruesos", vista: <Vista c={TURBO} duro /> },
   { valor: "menta", nombre: "Menta", detalle: "El verde de siempre", vista: <Vista c={MENTA} /> },
   { valor: "arcilla", nombre: "Arcilla", detalle: "Terracota y beige", vista: <Vista c={ARCILLA} /> },
-  { valor: "avispa", nombre: "Avispa", detalle: "Negro y amarillo", vista: <Vista c={AVISPA} /> },
+  { valor: "avispa", nombre: "Avispa", detalle: "Amarillo y negro sobre blanco", vista: <Vista c={AVISPA} duro /> },
 ];
 
 export function SeccionApariencia() {

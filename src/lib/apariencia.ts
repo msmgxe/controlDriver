@@ -15,7 +15,7 @@
  *   · `turbo`   → propuesta A: violeta, mostaza y bordes gruesos;
  *   · `menta`   → propuesta C: la continuación del verde de siempre;
  *   · `arcilla` → terracota y beige, cálido y de papel;
- *   · `avispa`  → negro y amarillo de alto contraste.
+ *   · `avispa`  → fondo blanco, amarillo y negro de alto contraste.
  *
  * `auto` sigue eligiendo entre claro y oscuro según el teléfono, como hacía
  * antes de que existieran los demás: elegir un tema propio es un acto

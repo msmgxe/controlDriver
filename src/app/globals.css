@@ -273,33 +273,34 @@
 }
 
 :root[data-modo="avispa"] {
-  /* Negro y amarillo de avispero: fondo casi negro, amarillo de alto
-     contraste como acento, y un naranja de segundo acento para no usar el
-     mismo amarillo con dos sentidos distintos (marca y aviso). */
-  --papel: #09090b;
-  --sup: #18181b;
-  --sup-2: #27272a;
-  --tinta: #fafafa;
-  --tinta-2: #a1a1aa;
+  /* Blanco, amarillo y negro de avispero: el fondo es blanco —no oscuro—,
+     los gadgets (botones, chips, la tarjeta del día) van en amarillo con
+     letra negra, y un borde negro grueso más sombra dura los hace resaltar,
+     como una pegatina. Lo seleccionado usa el mismo amarillo, más suave. */
+  --papel: #ffffff;
+  --sup: #ffffff;
+  --sup-2: #f4f4f5;
+  --tinta: #09090b;
+  --tinta-2: #52525b;
   --tinta-3: #71717a;
-  --linea: #27272a;
-  --linea-fuerte: #3f3f46;
+  --linea: #e4e4e7;
+  --linea-fuerte: #09090b;
   --acento: #eab308;
   --acento-tinta: #ca8a04;
-  --acento-suave: #422f06;
-  --acento-texto: #1a1400;
+  --acento-suave: #fef9c3;
+  --acento-texto: #09090b;
   --acento-2: #f97316;
-  --acento-2-tinta: #2b1200;
+  --acento-2-tinta: #431407;
   --barra: #eab308;
-  --barra-extra: #7a5c04;
-  --bien: #4ade80;
-  --bien-suave: #12281a;
-  --aviso: #fbbf24;
-  --aviso-suave: #2e2408;
-  --mal: #f87171;
-  --mal-suave: #2c1414;
+  --barra-extra: #fde68a;
+  --bien: #15803d;
+  --bien-suave: #dcfce7;
+  --aviso: #92400e;
+  --aviso-suave: #ffedd5;
+  --mal: #b91c1c;
+  --mal-suave: #fee2e2;
   --descanso: #f97316;
-  --descanso-tinta: #2b1200;
+  --descanso-tinta: #431407;
 
   --f-display: var(--fuente-manrope), system-ui, sans-serif;
   --f-texto: var(--fuente-manrope), system-ui, sans-serif;
@@ -307,16 +308,16 @@
   --tt-titulo: none;
 
   --r-chip: 999px;
-  --r-btn: 10px;
-  --r-card: 14px;
-  --r-hoja: 18px;
-  --borde-ancho: 1px;
-  --pad-card: 16px;
+  --r-btn: 14px;
+  --r-card: 18px;
+  --r-hoja: 22px;
+  --borde-ancho: 2px;
+  --pad-card: 18px;
   --peso-titulo: 800;
   --track-titulo: -0.02em;
-  --sombra-card: none;
-  --sombra-alta: 0 10px 30px -12px rgb(0 0 0 / 0.7);
-  --sombra-tab: 0 0 0 2px var(--acento);
+  --sombra-card: 3px 3px 0 var(--tinta);
+  --sombra-alta: 5px 5px 0 var(--tinta);
+  --sombra-tab: 0 0 0 2px var(--tinta);
 }
 
 /* ---------------------------------------------------------------------------

@@ -36,6 +36,15 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v41 — 27/09/2026
+Arreglo del tema Avispa.
+- **Corrección: Avispa tenía el fondo negro y no era lo que pediste.** Ahora el
+  fondo es blanco, como todas las demás caras; el amarillo y el negro quedan
+  para los gadgets (botones, chips, la tarjeta del día) y para el texto, con
+  un borde negro grueso y una sombra dura tipo pegatina —parecido a Turbo,
+  pero con esta paleta—. Lo seleccionado (en el selector de temas, por
+  ejemplo) usa ese mismo amarillo, más suave.
+
 ### v40 — 27/09/2026
 El ícono y el nombre de la app: Control Driver. Más el aviso legal de entrada y
 dos temas nuevos, añadidos antes de que esta versión llegara a instalarse en un

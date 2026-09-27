@@ -33,7 +33,7 @@ import "./globals.css";
        para el texto;
      · arcilla → terracota y beige: Space Grotesk para títulos y cifras, Inter
        para el texto;
-     · avispa  → negro y amarillo: Manrope para todo, títulos y texto.
+     · avispa  → blanco, amarillo y negro: Manrope para todo, títulos y texto.
    JetBrains Mono es de las seis: los códigos de pedido tienen que leerse
    carácter a carácter. `next/font` las descarga al compilar y las mete dentro
    del APK: funcionan sin internet. */
