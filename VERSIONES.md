@@ -37,6 +37,35 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v46 — 28/09/2026
+Dos botones en Inicio, un recorrido guiado, «Acerca de», y el ícono cambia a Mapa.
+- **Cambio: «Cargar capturas» se separa en dos botones.** Uno junto al otro, de
+  colores distintos a propósito: **«Cargar resumen del día»** (azul, lo de
+  siempre: subir las capturas de la app de la tienda) y **«Tomar foto de una
+  comanda»** (amarillo, nuevo: abre la cámara de una vez, sin pasar por «Subir
+  más», para registrar un pedido apenas lo entregas en vez de esperar al final
+  del día). El color mismo dice cuál conviene, sin tener que leer el texto.
+- **Nuevo: recorrido guiado.** La primera vez que se abre la app, después del
+  PIN, un recorrido de cuatro pasos resalta los botones reales de Inicio —la
+  tira de días, los dos de cargar, y «Subir más»— con una burbuja explicando
+  cada uno. Se pregunta una sola vez; después queda disponible para repetirlo
+  desde **Tutoriales › Cómo registrar tus pedidos por día › Ver el recorrido
+  guiado**.
+- **Nuevo: «Acerca de»**, al final del menú «Más»: el logo, la versión
+  instalada, el copyright y un teléfono de contacto.
+- **Cambio: el tema de fábrica es Mapa** (claro, azul) para todo el que instala
+  sin tocar nada en Ajustes —antes seguía al teléfono («Automático»)—. Se
+  puede seguir eligiendo cualquiera de los seis en Ajustes › Apariencia, donde
+  Mapa ahora aparece primero en la lista.
+- **Cambio: el ícono de la app pasa de verde a azul**, a juego con Mapa —el
+  cuadro, el ícono clásico, el redondo y el adaptativo, en las cinco
+  resoluciones—. El paquete y los datos ya guardados no se tocan: es solo el
+  color.
+- **Pendiente de probar en el celular:** que la cámara del recorrido guiado
+  no se dispare por accidente si el PIN o el aviso legal tardan en cargar; y
+  cómo se ve el ícono nuevo en el launcher real (el adaptativo lo recorta
+  cada fabricante a su manera).
+
 ### v44 — 28/09/2026
 Orden de «Subir más», menú de abajo más simple, y llega Tutoriales.
 - **Cambio: orden de «Subir más» › Pedido.** Ahora primero «Leer una comanda»

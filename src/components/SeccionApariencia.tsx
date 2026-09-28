@@ -63,8 +63,10 @@ function Vista({ c, duro = false }: { c: Paleta; duro?: boolean }) {
   );
 }
 
+// Mapa va primero: es la cara de fábrica desde que se instala, hasta que se
+// elija otra en esta misma lista (ver `src/lib/apariencia.ts`).
 const TEMAS: Opcion[] = [
-  { valor: "claro", nombre: "Mapa", detalle: "Claro", vista: <Vista c={CLARO} /> },
+  { valor: "claro", nombre: "Mapa", detalle: "Claro · de fábrica", vista: <Vista c={CLARO} /> },
   { valor: "oscuro", nombre: "Asfalto", detalle: "Oscuro", vista: <Vista c={OSCURO} /> },
   { valor: "turbo", nombre: "Turbo", detalle: "Violeta y bordes gruesos", vista: <Vista c={TURBO} duro /> },
   { valor: "menta", nombre: "Menta", detalle: "El verde de siempre", vista: <Vista c={MENTA} /> },

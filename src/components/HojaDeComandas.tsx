@@ -136,6 +136,7 @@ export function HojaDeComandas({
   ajustes,
   alCerrar,
   alTerminar,
+  iniciarConCamara = false,
 }: {
   /** El día que se estaba mirando: a él van los pedidos nuevos. */
   fecha: FechaISO;
@@ -146,6 +147,10 @@ export function HojaDeComandas({
   alCerrar: () => void;
   /** Vuelve a leer el día: algo se guardó. */
   alTerminar: () => void;
+  /** Para «Tomar foto de una comanda» en Inicio: abre la cámara de una vez,
+      sin pasar primero por esta pantalla vacía. Menos pasos para lo que más
+      se usa. */
+  iniciarConCamara?: boolean;
 }) {
   const [items, setItems] = useState<Item[]>([]);
   const [leyendo, setLeyendo] = useState<{ hechas: number; total: number } | null>(null);
@@ -315,6 +320,16 @@ export function HojaDeComandas({
   function quitar(id: string) {
     setItems((previos) => previos.filter((i) => i.id !== id));
   }
+
+  // «Tomar foto de una comanda» en Inicio: la cámara se abre sola al montar
+  // esta hoja, una sola vez —el `ref` evita que un re-render la vuelva a abrir.
+  const yaIniciada = useRef(false);
+  useEffect(() => {
+    if (!iniciarConCamara || yaIniciada.current) return;
+    yaIniciada.current = true;
+    void alTomarFoto();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- se dispara una sola vez, a propósito.
+  }, []);
 
   /** Guarda una comanda. Devuelve si salió bien. */
   async function guardar(item: Item): Promise<boolean> {

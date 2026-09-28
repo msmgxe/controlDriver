@@ -949,6 +949,41 @@
     box-shadow: none;
   }
 
+  /* Mismo tamaño y peso que el principal, pero en el segundo color de la
+     marca: para una acción tan a mano como la principal pero distinta —Inicio
+     tiene dos, «Cargar resumen del día» y «Tomar foto de una comanda»—, y el
+     color mismo dice "este es otro camino", no solo el texto. */
+  .boton-segundo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 60px;
+    padding: 12px 16px;
+    border-radius: var(--r-btn);
+    background: var(--acento-2);
+    color: var(--acento-2-tinta);
+    font-family: var(--f-display);
+    font-size: 22px;
+    font-weight: var(--peso-titulo);
+    text-transform: var(--tt-titulo);
+    zoom: var(--zoom-titulo, 1);
+    box-shadow: 0 10px 24px -14px var(--acento-2);
+    transition: filter 0.12s, transform 0.12s;
+  }
+  .boton-segundo:hover:not(:disabled) {
+    filter: brightness(1.06);
+  }
+  .boton-segundo:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+  .boton-segundo:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
   .boton-sec {
     display: inline-flex;
     align-items: center;

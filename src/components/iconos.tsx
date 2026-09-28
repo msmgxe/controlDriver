@@ -220,3 +220,11 @@ export const Tutorial = (p: Props) => (
   </Base>
 );
 
+/** «Acerca de»: quién hizo la app, la versión, y cómo contactarlo. */
+export const Info = (p: Props) => (
+  <Base {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 11v6M12 7.5h.01" />
+  </Base>
+);
+

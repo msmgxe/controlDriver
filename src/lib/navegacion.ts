@@ -27,6 +27,7 @@ export const PUERTAS: readonly Puerta[] = [
   { id: "historial", href: "/historial", nombre: "Historial" },
   { id: "tutoriales", href: "/tutoriales", nombre: "Tutoriales" },
   { id: "ajustes", href: "/ajustes", nombre: "Ajustes" },
+  { id: "acerca", href: "/acerca-de", nombre: "Acerca de" },
 ];
 
 /**

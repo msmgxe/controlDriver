@@ -17,9 +17,11 @@
  *   · `arcilla` → terracota y beige, cálido y de papel;
  *   · `avispa`  → fondo blanco, amarillo y negro de alto contraste.
  *
- * `auto` sigue eligiendo entre claro y oscuro según el teléfono, como hacía
- * antes de que existieran los demás: elegir un tema propio es un acto
- * explícito, y una vez elegido no cambia solo con la hora del día.
+ * `auto` sigue eligiendo entre claro y oscuro según el teléfono: es una
+ * elección tan explícita como cualquier tema propio, y una vez elegida no
+ * cambia sola con la hora del día. Pero **nadie la elige sin querer**: hasta
+ * que alguien toca algo en Ajustes, la cara de fábrica es `claro` —Mapa—, no
+ * «lo que decida el teléfono».
  *
  * Lo elegido se guarda en `localStorage` y no en la base, a propósito: hace
  * falta **antes de pintar**, y la base responde después. Un script mínimo en
@@ -27,8 +29,9 @@
  * de que aparezca nada; sin eso, quien eligió un tema vería un fogonazo del
  * tema equivocado cada vez que abre la app.
  *
- * Si `localStorage` no está —modo privado, datos borrados— se cae a `auto`.
- * El tema es una comodidad, y perder la preferencia no puede romper nada.
+ * Si `localStorage` no está —modo privado, datos borrados— se cae a `claro`,
+ * igual que en una instalación nueva. El tema es una comodidad, y perder la
+ * preferencia no puede romper nada.
  */
 
 /** Una cara completa de la app: colores, tipografía y forma. */
@@ -47,13 +50,13 @@ export function esPreferencia(v: unknown): v is Preferencia {
   return typeof v === "string" && (PREFERENCIAS as readonly string[]).includes(v);
 }
 
-/** Lo que el repartidor eligió, o `auto` si no eligió nada o no se puede leer. */
+/** Lo que el repartidor eligió, o `claro` —la de fábrica— si no eligió nada o no se puede leer. */
 export function leerPreferencia(): Preferencia {
   try {
     const guardada = localStorage.getItem(CLAVE_APARIENCIA);
-    return esPreferencia(guardada) ? guardada : "auto";
+    return esPreferencia(guardada) ? guardada : "claro";
   } catch {
-    return "auto";
+    return "claro";
   }
 }
 
@@ -100,4 +103,4 @@ export function elegirPreferencia(preferencia: Preferencia): void {
  * líneas lo que arriba hacen las funciones. Cualquier cambio aquí tiene que
  * hacerse en los dos sitios; la prueba de `apariencia.test.ts` lo comprueba.
  */
-export const SCRIPT_INICIAL = `(function(){var TEMAS=['claro','oscuro','turbo','menta','arcilla','avispa'];var m='claro';try{var p=localStorage.getItem('${CLAVE_APARIENCIA}');if(TEMAS.indexOf(p)===-1)p='auto';m=p==='auto'?(matchMedia('(prefers-color-scheme: dark)').matches?'oscuro':'claro'):p}catch(e){}document.documentElement.dataset.modo=m})();`;
+export const SCRIPT_INICIAL = `(function(){var TEMAS=['claro','oscuro','turbo','menta','arcilla','avispa'];var m='claro';try{var p=localStorage.getItem('${CLAVE_APARIENCIA}');if(p==='auto')m=matchMedia('(prefers-color-scheme: dark)').matches?'oscuro':'claro';else if(TEMAS.indexOf(p)!==-1)m=p}catch(e){}document.documentElement.dataset.modo=m})();`;

@@ -2,14 +2,15 @@
 
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { Acordeon } from "@/components/Acordeon";
 import { CargarCapturas } from "@/components/CargarCapturas";
 import { DetalleDelDia } from "@/components/DetalleDelDia";
 import { HojaDeComandas } from "@/components/HojaDeComandas";
-import { Calendario, Luna } from "@/components/iconos";
+import { Calendario, Luna, Ticket } from "@/components/iconos";
 import { usePuedeEscribir } from "@/components/Licencia";
+import { RecorridoGuiado, type PasoDeRecorrido } from "@/components/RecorridoGuiado";
 import { SubirMas } from "@/components/SubirMas";
 import { TiraDeSemanas } from "@/components/TiraDeSemanas";
 import { Auto } from "@/components/Auto";
@@ -18,6 +19,7 @@ import { useDatos } from "@/hooks/useDatos";
 import { useTiraDeSemanas } from "@/hooks/useTiraDeSemanas";
 import { useVehiculo } from "@/hooks/useVehiculo";
 import { publicarDiaElegido } from "@/lib/diaElegido";
+import { marcarRecorridoVisto, recorridoYaVisto } from "@/lib/recorrido";
 import { leerAjustesDeComandas, type AjustesDeComandas } from "@/lib/db/sqlite/ajustes";
 import { descansosPorRango, marcarDescanso, quitarDescanso } from "@/lib/db/sqlite/descansos";
 import { jornadaPorFecha, reglaVigente } from "@/lib/db/sqlite/jornadas";
@@ -49,7 +51,10 @@ import { formatearSoles, type ReglaPago } from "@/lib/pagos/reglas";
  *      La fecha se elige aquí y no manda sobre la carga: las capturas traen su
  *      propia fecha, y atarlas al día elegido sería una trampa silenciosa.
  *   2. **¿Cuánto llevo?** La cifra del día, con el auto.
- *   3. **Cargar capturas.** La acción de todos los días.
+ *   3. **Cargar el día.** Dos botones, no uno: «Cargar resumen del día» —la
+ *      captura de la app de la tienda, lo normal— y «Tomar foto de una
+ *      comanda» —directo a la cámara, sin pasar por «Subir más»—, cada uno en
+ *      el color de la marca que le toca. Menos pasos para lo que más se hace.
  *   4. **El detalle** de lo subido (pedidos y rutas) y **subir más**: los dos
  *      acordeones nacen cerrados, y cada uno dice lo esencial sin abrirse.
  *
@@ -163,21 +168,23 @@ function Contenido() {
           </div>
         </div>
 
-        <TiraDeSemanas
-          semana={semana.inicio}
-          dia={dia}
-          hoy={hoy}
-          modo="inicio"
-          datos={tira}
-          alElegirDia={setDia}
-          alMoverSemana={(delta) =>
-            setDia((d) => {
-              // Mismo día de la semana en la semana nueva, sin pasar de hoy.
-              const siguiente = sumarDias(d, delta * 7);
-              return siguiente > hoy ? hoy : siguiente;
-            })
-          }
-        />
+        <div id="recorrido-tira">
+          <TiraDeSemanas
+            semana={semana.inicio}
+            dia={dia}
+            hoy={hoy}
+            modo="inicio"
+            datos={tira}
+            alElegirDia={setDia}
+            alMoverSemana={(delta) =>
+              setDia((d) => {
+                // Mismo día de la semana en la semana nueva, sin pasar de hoy.
+                const siguiente = sumarDias(d, delta * 7);
+                return siguiente > hoy ? hoy : siguiente;
+              })
+            }
+          />
+        </div>
       </div>
 
       {detalle ? (
@@ -219,7 +226,55 @@ function DelDia({
   const vehiculo = useVehiculo();
   const puedeCargar = usePuedeEscribir();
   const [comanda, setComanda] = useState(false);
+  /** «Tomar foto de una comanda» abre la hoja directo con la cámara; «Leer una
+      comanda» desde «Subir más» la abre en su pantalla de siempre. */
+  const [comandaConCamara, setComandaConCamara] = useState(false);
+  const [subirMasAbierto, setSubirMasAbierto] = useState(false);
   const { jornada, regla, estado, tienda, ajustes, descanso } = detalle;
+
+  // El recorrido guiado: se dispara solo la primera vez que se abre la app,
+  // y también cuando Tutoriales navega a `/?tour=registrar` para repetirlo
+  // —eso siempre gana, sin importar si ya se había visto—. El parámetro se
+  // limpia al leerlo, para que no se repita solo al volver a esta ruta.
+  const params = useSearchParams();
+  const router = useRouter();
+  const [recorrido, setRecorrido] = useState(false);
+  /* eslint-disable react-hooks/set-state-in-effect -- se lee un dato externo (la URL, el almacenamiento) tras montar. */
+  useEffect(() => {
+    if (params.get("tour") === "registrar") {
+      setRecorrido(true);
+      router.replace("/", { scroll: false });
+    } else if (!recorridoYaVisto()) {
+      setRecorrido(true);
+      marcarRecorridoVisto();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- se comprueba solo al montar.
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  const pasosRecorrido: PasoDeRecorrido[] = [
+    {
+      selector: "#recorrido-tira",
+      titulo: "Elige el día",
+      texto: "La tira de arriba manda: toca el que quieres cargar. Por defecto es hoy.",
+    },
+    {
+      selector: "#recorrido-cargar-resumen",
+      titulo: "Cargar resumen del día",
+      texto: "La forma normal: sube las capturas de la app de la tienda, con tus rutas y pedidos, al terminar la jornada.",
+    },
+    {
+      selector: "#recorrido-tomar-foto",
+      titulo: "Tomar foto de una comanda",
+      texto: "El camino más corto: abre la cámara de una vez y registra un pedido apenas lo entregas, sin esperar al final del día.",
+    },
+    {
+      selector: "#recorrido-subir-mas",
+      titulo: "¿Falta algo más?",
+      texto: "Aquí están las otras formas: anotar cuántos pedidos fueron, añadir uno a mano, o leer varias comandas de la galería de una vez.",
+      antes: () => setSubirMasAbierto(true),
+    },
+  ];
 
   // Lo que bloquea es haber cobrado, no haber cerrado la semana: cerrar en
   // Pagos congela el monto para poder anotar el pago, pero no debe impedir
@@ -246,7 +301,27 @@ function DelDia({
         <DiaSinCarga fecha={dia} hoy={hoy} descanso={descanso} puedeEscribir={puedeCargar} alCambiar={alCambiar} />
       )}
 
-      <CargarCapturas deshabilitado={!puedeCargar} dia={dia} />
+      <div className="flex flex-col gap-2">
+        <div id="recorrido-cargar-resumen">
+          <CargarCapturas deshabilitado={!puedeCargar} dia={dia} />
+        </div>
+        <button
+          id="recorrido-tomar-foto"
+          type="button"
+          className="boton-segundo"
+          disabled={!puedeCargar}
+          onClick={() => {
+            setComandaConCamara(true);
+            setComanda(true);
+          }}
+        >
+          <Ticket className="size-[22px]" />
+          Tomar foto de una comanda
+        </button>
+        <p className="text-xs text-tinta-3">
+          Una foto por pedido, con cliente y dirección: directo a la cámara, sin pasar por «Subir más».
+        </p>
+      </div>
 
       {jornada && (
         <Acordeon
@@ -268,17 +343,27 @@ function DelDia({
       )}
 
       {!esFuturo && (
-        <Acordeon titulo="Subir más" resumen="A mano, por cantidad, foto o comanda" destacado>
-          <SubirMas
-            fecha={dia}
-            jornada={jornada}
-            regla={regla}
-            editable={editable}
-            alCambiar={alCambiar}
-            alLeerComanda={() => setComanda(true)}
-          />
-        </Acordeon>
+        <div id="recorrido-subir-mas">
+          <Acordeon
+            titulo="Subir más"
+            resumen="A mano, por cantidad, foto o comanda"
+            destacado
+            abierto={subirMasAbierto}
+            alCambiar={setSubirMasAbierto}
+          >
+            <SubirMas
+              fecha={dia}
+              jornada={jornada}
+              regla={regla}
+              editable={editable}
+              alCambiar={alCambiar}
+              alLeerComanda={() => setComanda(true)}
+            />
+          </Acordeon>
+        </div>
       )}
+
+      {recorrido && <RecorridoGuiado pasos={pasosRecorrido} alTerminar={() => setRecorrido(false)} />}
 
       {comanda && (
         <HojaDeComandas
@@ -287,7 +372,11 @@ function DelDia({
           rutas={(jornada?.rutas ?? []).map((r) => ({ numero: r.numero, inicio: r.horaInicio }))}
           tienda={tienda}
           ajustes={ajustes}
-          alCerrar={() => setComanda(false)}
+          iniciarConCamara={comandaConCamara}
+          alCerrar={() => {
+            setComanda(false);
+            setComandaConCamara(false);
+          }}
           alTerminar={alCambiar}
         />
       )}
@@ -300,7 +389,7 @@ function DelDia({
  *
  * Es lo que en Pagos se contesta con «No trabajé esos días», pero para un solo
  * día y desde donde se está mirando: si el jueves fue libre, se dice aquí mismo.
- * Subir el día se hace con «Cargar capturas» o con «Subir más», debajo.
+ * Subir el día se hace con los dos botones de arriba, o con «Subir más», debajo.
  */
 function DiaSinCarga({
   fecha,

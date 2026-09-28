@@ -23,9 +23,9 @@ function almacen(inicial: Record<string, string> = {}) {
 beforeEach(() => vi.unstubAllGlobals());
 
 describe("la preferencia", () => {
-  it("por defecto es automático", () => {
+  it("por defecto es claro (Mapa), la de fábrica", () => {
     vi.stubGlobal("localStorage", almacen());
-    expect(leerPreferencia()).toBe("auto");
+    expect(leerPreferencia()).toBe("claro");
   });
 
   it("recuerda cualquiera de los seis temas", () => {
@@ -35,19 +35,19 @@ describe("la preferencia", () => {
     }
   });
 
-  it("un valor raro se trata como automático", () => {
+  it("un valor raro se trata como si no hubiera nada guardado: claro", () => {
     vi.stubGlobal("localStorage", almacen({ [CLAVE_APARIENCIA]: "sepia" }));
-    expect(leerPreferencia()).toBe("auto");
+    expect(leerPreferencia()).toBe("claro");
     expect(esPreferencia("sepia")).toBe(false);
   });
 
-  it("si el almacenamiento falla, no rompe: automático", () => {
+  it("si el almacenamiento falla, no rompe: claro", () => {
     vi.stubGlobal("localStorage", {
       getItem: () => {
         throw new Error("bloqueado");
       },
     });
-    expect(leerPreferencia()).toBe("auto");
+    expect(leerPreferencia()).toBe("claro");
   });
 });
 
@@ -90,8 +90,9 @@ describe("el script de antes de pintar", () => {
 
   it.each([
     [null, false, "claro"],
-    [null, true, "oscuro"],
+    [null, true, "claro"],
     ["auto", true, "oscuro"],
+    ["auto", false, "claro"],
     ["claro", true, "claro"],
     ["oscuro", false, "oscuro"],
     ["turbo", true, "turbo"],
@@ -99,11 +100,11 @@ describe("el script de antes de pintar", () => {
     ["menta", true, "menta"],
     ["arcilla", true, "arcilla"],
     ["avispa", false, "avispa"],
-    ["basura", true, "oscuro"],
+    ["basura", true, "claro"],
   ])("guardada=%s, teléfono oscuro=%s → %s", (guardada, sistema, esperado) => {
     expect(correr(guardada, sistema)).toBe(esperado);
     // Y coincide con lo que dice la función.
-    const pref = esPreferencia(guardada) ? guardada : "auto";
+    const pref = esPreferencia(guardada) ? guardada : "claro";
     expect(esperado).toBe(modoDe(pref, sistema));
   });
 });

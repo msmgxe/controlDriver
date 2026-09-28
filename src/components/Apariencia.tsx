@@ -33,9 +33,10 @@ export function VigilanteDeApariencia() {
 
 /** La preferencia actual y cómo cambiarla, para la pantalla de Ajustes. */
 export function useApariencia() {
-  // Empieza en `auto` y se corrige al montar: leer `localStorage` durante el
-  // primer pintado haría que el servidor y el cliente no coincidieran.
-  const [preferencia, setPreferencia] = useState<Preferencia>("auto");
+  // Empieza en `claro` —la de fábrica— y se corrige al montar: leer
+  // `localStorage` durante el primer pintado haría que el servidor y el
+  // cliente no coincidieran.
+  const [preferencia, setPreferencia] = useState<Preferencia>("claro");
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- se lee un dato externo tras montar

@@ -18,6 +18,7 @@ import {
   Casa,
   Equis,
   Gente,
+  Info,
   Mas,
   Salir,
   Tutorial,
@@ -60,6 +61,7 @@ const ICONOS: Record<string, typeof Casa | undefined> = {
   estadisticas: Barras,
   tutoriales: Tutorial,
   ajustes: Candado,
+  acerca: Info,
 };
 
 const DESTINOS_ADMIN: Array<{ href: string; nombre: string; Icono: typeof Casa }> = [

@@ -1,9 +1,9 @@
 /**
  * Flujo de carga de capturas (§4).
  *
- * Vive aparte porque hay dos puertas de entrada: el botón «Cargar capturas» de
- * Hoy y el destino de compartir de Android (galería → Compartir → Rutas-A).
- * Las dos hacen exactamente lo mismo a partir de aquí.
+ * Vive aparte porque hay dos puertas de entrada: el botón «Cargar resumen del
+ * día» de Hoy y el destino de compartir de Android (galería → Compartir →
+ * Control Driver). Las dos hacen exactamente lo mismo a partir de aquí.
  */
 
 import type { FechaISO } from "@/lib/fechas";

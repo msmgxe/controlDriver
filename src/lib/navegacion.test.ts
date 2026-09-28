@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { PUERTAS, PUERTAS_PRINCIPALES, puertaDe, tituloDe } from "./navegacion";
 
 describe("el orden de la barra de abajo", () => {
-  it("Inicio, Cargar, Pagos, Estadísticas, Buscar, Historial, Tutoriales y Ajustes", () => {
+  it("Inicio, Cargar, Pagos, Estadísticas, Buscar, Historial, Tutoriales, Ajustes y Acerca de", () => {
     expect(PUERTAS.map((p) => p.id)).toEqual([
       "inicio",
       "cargar",
@@ -13,6 +13,7 @@ describe("el orden de la barra de abajo", () => {
       "historial",
       "tutoriales",
       "ajustes",
+      "acerca",
     ]);
   });
 
@@ -40,6 +41,7 @@ describe("qué puerta está encendida", () => {
     ["/estadisticas/", "estadisticas"],
     ["/tutoriales/", "tutoriales"],
     ["/ajustes/", "ajustes"],
+    ["/acerca-de/", "acerca"],
   ])("en %s, la de %s", (ruta, id) => {
     expect(puertaDe(ruta)).toBe(id);
   });
@@ -58,7 +60,17 @@ describe("qué puerta está encendida", () => {
   });
 
   it("nunca hay dos encendidas: cada ruta cae en una sola puerta", () => {
-    for (const ruta of ["/", "/pagos/", "/historial/", "/buscar/", "/estadisticas/", "/tutoriales/", "/ajustes/", "/revision/"]) {
+    for (const ruta of [
+      "/",
+      "/pagos/",
+      "/historial/",
+      "/buscar/",
+      "/estadisticas/",
+      "/tutoriales/",
+      "/ajustes/",
+      "/acerca-de/",
+      "/revision/",
+    ]) {
       const encendidas = PUERTAS.filter((p) => p.id === puertaDe(ruta));
       expect(encendidas).toHaveLength(1);
     }
@@ -72,6 +84,7 @@ describe("el título de arriba", () => {
     ["/ajustes/", "Ajustes"],
     ["/estadisticas/", "Estadísticas"],
     ["/tutoriales/", "Tutoriales"],
+    ["/acerca-de/", "Acerca de"],
     ["/revision/", "Revisión"],
     ["/compartir/", "Cargar"],
   ])("en %s dice «%s»", (ruta, titulo) => {

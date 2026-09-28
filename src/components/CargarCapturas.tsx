@@ -8,11 +8,14 @@ import { nombreDelDia, type FechaISO } from "@/lib/fechas";
 export { Progreso } from "@/components/CargaDeCapturas";
 
 /**
- * Carga diaria (§4): el botón grande de Inicio.
+ * Carga diaria (§4): uno de los dos botones grandes de Inicio —el otro es
+ * «Tomar foto de una comanda», directo a la cámara, ver `page.tsx`—. Cada uno
+ * en el color de la marca que le toca, para que el color diga cuál conviene
+ * sin tener que leer el texto.
  *
- * Las otras puertas de entrada son el auto de la barra de abajo y compartir
- * desde la galería (§8). Las tres hacen lo mismo, y el flujo vive en
- * `@/components/CargaDeCapturas` y en `@/lib/carga`; aquí solo está el botón.
+ * Las otras puertas de entrada a esta carga son el auto de la barra de abajo
+ * y compartir desde la galería (§8). Las tres hacen lo mismo, y el flujo vive
+ * en `@/components/CargaDeCapturas` y en `@/lib/carga`; aquí solo está el botón.
  */
 export function CargarCapturas({
   deshabilitado,
@@ -33,7 +36,7 @@ export function CargarCapturas({
         onClick={() => abrir({ fechaPorDefecto: dia })}
       >
         <Subir className="size-[22px]" />
-        {trabajando ? "Procesando…" : "Cargar capturas"}
+        {trabajando ? "Procesando…" : "Cargar resumen del día"}
       </button>
 
       <p className="text-xs text-tinta-3">

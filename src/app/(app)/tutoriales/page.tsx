@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { Acordeon } from "@/components/Acordeon";
 
 export const dynamic = "force-static";
@@ -21,7 +23,10 @@ export default function PaginaTutoriales() {
         </p>
       </div>
 
-      <Acordeon titulo="Cómo registrar tus pedidos por día" resumen="La forma normal: subir capturas y confirmar">
+      <Acordeon
+        titulo="Cómo registrar tus pedidos por día: resumen y foto"
+        resumen="Los dos botones de Inicio, y qué hace cada uno"
+      >
         <TutorialRegistrarPedidos />
       </Acordeon>
     </div>
@@ -46,19 +51,25 @@ function TutorialRegistrarPedidos() {
   return (
     <div className="flex flex-col gap-4 text-sm text-tinta-2">
       <p>
-        Hay dos caminos para que un pedido quede registrado: <b className="text-tinta">subir la captura</b> de la
-        app de reparto —lo normal, cuando terminas el día— o <b className="text-tinta">añadirlo aparte</b>, para lo
-        que se escapó o llegó distinto. Los dos terminan en el mismo lugar: el pedido, con su código, su ruta y su
-        monto, contando para tu pago de la semana.
+        En Inicio hay <b className="text-tinta">dos botones</b>, uno junto al otro y de distinto color a
+        propósito, para los dos momentos en que se registra un pedido: al terminar el día, con todo junto, o
+        pedido por pedido, apenas lo entregas. Elige el que va con tu forma de trabajar; los dos terminan en el
+        mismo lugar, contando para tu pago de la semana.
       </p>
 
+      <Link href="/?tour=registrar" className="boton-sec self-start !text-sm">
+        ▶ Ver el recorrido guiado
+      </Link>
+
       <div>
-        <h4 className="mb-2 text-xs font-bold tracking-wide text-tinta uppercase">El camino normal</h4>
+        <h4 className="mb-2 text-xs font-bold tracking-wide text-tinta uppercase">
+          «Cargar resumen del día» — al terminar la jornada
+        </h4>
         <ol className="flex flex-col gap-3">
           <Paso numero={1} titulo="Elige el día en Inicio">
             La tira de días de arriba manda: toca el que quieres cargar. Por defecto es hoy.
           </Paso>
-          <Paso numero={2} titulo='Toca "Cargar capturas"'>
+          <Paso numero={2} titulo='Toca "Cargar resumen del día"'>
             Elige las capturas de la app de la tienda —de la galería o compartidas desde ella—, con tus rutas y tus
             pedidos. Puedes subir varias a la vez.
           </Paso>
@@ -73,6 +84,19 @@ function TutorialRegistrarPedidos() {
         </ol>
       </div>
 
+      <div className="rounded-card border border-linea-fuerte bg-sup-2 p-3">
+        <h4 className="mb-1 text-xs font-bold tracking-wide text-tinta uppercase">
+          «Tomar foto de una comanda» — pedido por pedido, el camino más corto
+        </h4>
+        <p>
+          Un solo toque abre la cámara de una vez, sin pasar por ninguna otra pantalla. Fotografías la hoja de
+          despacho del pedido que acabas de recoger o entregar, y la app lee sola el número, el cliente, el
+          teléfono y la dirección —con la dirección, calcula cuánto se cobra—. Revisas lo dudoso y guardas. Es la
+          misma lectura de comandas de siempre; este botón solo la deja a un toque, para cuando prefieres ir
+          registrando cada pedido en el momento en vez de guardar todas las fotos para el final del día.
+        </p>
+      </div>
+
       <div>
         <h4 className="mb-2 text-xs font-bold tracking-wide text-tinta uppercase">
           Cuando falta un pedido, o no hay captura
@@ -84,9 +108,8 @@ function TutorialRegistrarPedidos() {
         </p>
         <ul className="flex flex-col gap-2">
           <li>
-            <b className="text-tinta">Leer una comanda:</b> toma o elige la foto de la hoja de despacho. Lee el
-            número de pedido, el cliente, el teléfono y la dirección; con la dirección, calcula sola cuánto se
-            cobra.
+            <b className="text-tinta">Leer una comanda:</b> la misma lectura del botón de arriba, pero desde aquí
+            se puede elegir varias fotos de la galería de una vez, no solo tomar una con la cámara.
           </li>
           <li>
             <b className="text-tinta">Anotar cuántos pedidos hice:</b> cuando no tienes ni el código a mano. Escribes
