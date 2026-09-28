@@ -20,8 +20,10 @@ import {
   buscarPedidos,
   codigosYaRegistrados,
   esCodigoPendiente,
+  fechaDePedido,
   guardarJornada,
   jornadaPorFecha,
+  moverPedido,
   resumenPorRango,
 } from "./jornadas";
 import { actualizarPedido } from "./pedidos";
@@ -295,6 +297,50 @@ describe("pedidos añadidos a mano", () => {
     expect(despues!.ordenes).toHaveLength(2);
     expect(despues!.noEntregado).toBe(0);
     expect(despues!.entregado).toBe(2);
+  });
+
+  it("se puede mover a otro día, y se queda sin ruta", async () => {
+    await guardarJornada(jornadaDe("2026-09-16", 2, 2), "reemplazar");
+    await agregarPedidoManual("2026-09-16" as FechaISO, nuevo);
+    const antes = await jornadaPorFecha("2026-09-16" as FechaISO);
+    const aMover = antes!.ordenes.find((o) => o.codigo === nuevo.codigo)!;
+    expect(aMover.ruta).toBe(2);
+
+    await moverPedido(aMover.id, "2026-09-20" as FechaISO);
+
+    expect(await fechaDePedido(aMover.id)).toBe("2026-09-20");
+    const origen = await jornadaPorFecha("2026-09-16" as FechaISO);
+    expect(origen!.ordenes.some((o) => o.codigo === nuevo.codigo)).toBe(false);
+    expect(origen!.ordenes).toHaveLength(2);
+    const destino = await jornadaPorFecha("2026-09-20" as FechaISO);
+    const movido = destino!.ordenes.find((o) => o.codigo === nuevo.codigo)!;
+    expect(movido.ruta).toBeNull();
+  });
+
+  it("crea el día destino si no existía", async () => {
+    await guardarJornada(jornadaDe("2026-09-16", 1, 1), "reemplazar");
+    await agregarPedidoManual("2026-09-16" as FechaISO, nuevo);
+    const aMover = (await jornadaPorFecha("2026-09-16" as FechaISO))!.ordenes.find(
+      (o) => o.codigo === nuevo.codigo,
+    )!;
+
+    await moverPedido(aMover.id, "2026-09-25" as FechaISO);
+
+    expect((await jornadaPorFecha("2026-09-25" as FechaISO))!.ordenes).toHaveLength(1);
+  });
+
+  it("moverlo al mismo día donde ya está no hace nada, ni le quita la ruta", async () => {
+    await guardarJornada(jornadaDe("2026-09-16", 2, 2), "reemplazar");
+    await agregarPedidoManual("2026-09-16" as FechaISO, nuevo);
+    const aMover = (await jornadaPorFecha("2026-09-16" as FechaISO))!.ordenes.find(
+      (o) => o.codigo === nuevo.codigo,
+    )!;
+    expect(aMover.ruta).toBe(2);
+
+    await moverPedido(aMover.id, "2026-09-16" as FechaISO);
+
+    const despues = (await jornadaPorFecha("2026-09-16" as FechaISO))!.ordenes.find((o) => o.id === aMover.id)!;
+    expect(despues.ruta).toBe(2);
   });
 
   it("el monto del pedido manual entra en el total del día", async () => {

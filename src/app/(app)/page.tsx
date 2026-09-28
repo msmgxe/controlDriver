@@ -268,7 +268,7 @@ function DelDia({
       )}
 
       {!esFuturo && (
-        <Acordeon titulo="Subir más" resumen="A mano, por cantidad, foto o comanda">
+        <Acordeon titulo="Subir más" resumen="A mano, por cantidad, foto o comanda" destacado>
           <SubirMas
             fecha={dia}
             jornada={jornada}

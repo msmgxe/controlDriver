@@ -14,7 +14,7 @@ import { leerFotoDeComandas, type HojaLeida } from "@/lib/comanda/leer";
 import type { AjustesDeComandas } from "@/lib/db/sqlite/ajustes";
 import { pedidosPorNumero, type PedidoDeUnNumero } from "@/lib/db/sqlite/clientes";
 import type { Tienda } from "@/lib/db/tipos";
-import { formatearFecha, hoyEnLima, nombreDelDia, sumarDias, type FechaISO } from "@/lib/fechas";
+import { formatearFecha, horaEnLima, hoyEnLima, nombreDelDia, sumarDias, type FechaISO } from "@/lib/fechas";
 import { esPuntoValido, kmEnLinea, type Punto } from "@/lib/geo/distancia";
 import { enlaceDeMapa } from "@/lib/geo/enlaces";
 import { buscarDireccion, resolverEnlace, rutaPorCalles, type Candidato } from "@/lib/geo/nativo";
@@ -24,17 +24,25 @@ import { TRAMO_MAS_DE_12_KM, formatearSoles, type ReglaPago } from "@/lib/pagos/
 /**
  * Leer comandas, una por una.
  *
- * Se eligen fotos de las hojas de despacho —de la cámara o de la galería, una
- * o varias— y cada una se lee en el teléfono. De cada comanda sale el número de
+ * Se eligen fotos de las hojas de despacho —**tomadas con la cámara** (una a
+ * la vez, con el plugin nativo) **o elegidas de la galería** (una o varias)—
+ * y cada una se lee en el teléfono. De cada comanda sale el número de
  * despacho, el nombre, la dirección y el teléfono, **cada dato con su
  * legibilidad**: Legible, Dudoso o No se leyó. Lo dudoso se revisa; lo que no se
  * leyó se escribe o se deja vacío. Nada se guarda sin pasar por aquí, salvo que
  * Ajustes diga que las que se leyeron con claridad se guarden juntas.
  *
- * Cada comanda hace una de dos cosas: **completa** el pedido que ya estaba
- * cargado —el número de despacho es la parte del medio de su código—, o
- * **crea** uno nuevo si no estaba. En los dos casos la foto queda como su
- * evidencia, y con la dirección ubicada el tramo sale de la distancia.
+ * Cada comanda hace una de tres cosas: **completa** el pedido que ya estaba
+ * cargado —el número de despacho es la parte del medio de su código—,
+ * **crea** uno nuevo si no estaba, o, si ese pedido ya estaba cargado en
+ * *otro* día, opcionalmente lo **mueve** al día que se está revisando. En
+ * cualquier caso el código de pedido nunca se duplica: quien lo encuentra
+ * primero completa siempre el mismo, nunca crea uno al lado. En los tres
+ * casos la foto queda como su evidencia (reemplaza a la anterior si ya
+ * tenía), y con la dirección ubicada el tramo sale de la distancia.
+ *
+ * Una comanda leída y no guardada todavía se puede **quitar** de la lista
+ * —con su pregunta de seguridad—, por si la foto salió repetida o de más.
  *
  * Solo buscar la dirección necesita internet; leer la foto, no.
  */
@@ -42,6 +50,47 @@ import { TRAMO_MAS_DE_12_KM, formatearSoles, type ReglaPago } from "@/lib/pagos/
 const LEGIBLE = 0.8;
 const DUDOSO = 0.45;
 const MAX_FOTOS = 12;
+
+/**
+ * La ruta más probable a esta hora: la de inicio más tardío que ya empezó.
+ * Es solo una sugerencia inicial al tomar una foto con la cámara —se puede
+ * cambiar o dejar en «Sin ruta» en el selector— para no tener que elegirla a
+ * mano en cada comanda si ya se sabe en qué ruta se está.
+ */
+function rutaSegunHoraActual(rutas: Array<{ numero: number; inicio: string | null }>): number | null {
+  const ahora = horaEnLima();
+  let mejor: { numero: number; inicio: string } | null = null;
+  for (const r of rutas) {
+    if (!r.inicio) continue;
+    const inicio = r.inicio.slice(0, 5);
+    if (inicio > ahora) continue;
+    if (!mejor || inicio > mejor.inicio) mejor = { numero: r.numero, inicio };
+  }
+  return mejor?.numero ?? null;
+}
+
+/** Una foto tomada con la cámara nativa, o null si no se pudo o se canceló. */
+async function tomarFotoConCamara(): Promise<File | null> {
+  const { Capacitor } = await import("@capacitor/core");
+  if (!Capacitor.isNativePlatform()) return null;
+
+  const { Camera, CameraResultType, CameraSource } = await import("@capacitor/camera");
+  try {
+    const foto = await Camera.getPhoto({
+      quality: 85,
+      allowEditing: false,
+      resultType: CameraResultType.Uri,
+      source: CameraSource.Camera,
+      saveToGallery: false,
+    });
+    if (!foto.webPath) return null;
+    const respuesta = await fetch(foto.webPath);
+    const bytes = await respuesta.blob();
+    return new File([bytes], `comanda-${Date.now()}.jpg`, { type: bytes.type || "image/jpeg" });
+  } catch {
+    return null; // Cámara cancelada, o sin permiso: no es un error que avisar.
+  }
+}
 
 type Calidad = "lista" | "revisar" | "ilegible";
 type EstadoUbicacion = "pendiente" | "buscando" | "ok" | "varias" | "no" | "sin-tienda" | "error";
@@ -60,6 +109,8 @@ interface Item {
   /** El pedido que completa; null para crear uno nuevo. */
   elegido: string | null;
   fecha: FechaISO;
+  /** Si `elegido` está en otro día, ¿se pidió traerlo al día que se revisa? */
+  moverAFecha: boolean;
   ruta: number | null;
   ubicacion: { estado: EstadoUbicacion; candidatos: Candidato[]; etiqueta: string | null; mensaje: string | null };
   punto: Punto | null;
@@ -102,6 +153,9 @@ export function HojaDeComandas({
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
   const entrada = useRef<HTMLInputElement>(null);
+  /** Respaldo para «Tomar foto» fuera del APK: sin el plugin nativo, esta
+      entrada con `capture` abre la cámara del navegador en un celular real. */
+  const capturaEntrada = useRef<HTMLInputElement>(null);
   // La búsqueda de una dirección termina más tarde y tiene que ver la tienda de
   // ese momento, no la de cuando empezó.
   const tiendaRef = useRef(tienda);
@@ -171,16 +225,15 @@ export function HojaDeComandas({
     [actualizar, fijarPunto],
   );
 
-  async function alElegir(e: React.ChangeEvent<HTMLInputElement>) {
-    const archivos = Array.from(e.target.files ?? []).slice(0, MAX_FOTOS);
-    e.target.value = "";
+  /** Lee cada foto y arma sus ítems. Compartido entre la galería y la cámara. */
+  async function procesarArchivos(archivos: File[], opciones: { desdeCamara?: boolean } = {}) {
     if (archivos.length === 0) return;
 
     setError(null);
     setLeyendo({ hechas: 0, total: archivos.length });
 
     for (let k = 0; k < archivos.length; k++) {
-      const origenFoto = `Foto ${k + 1}`;
+      const origenFoto = opciones.desdeCamara ? "La foto" : `Foto ${k + 1}`;
       try {
         const { hojas } = await leerFotoDeComandas(archivos[k]);
         const nuevos: Item[] = [];
@@ -190,6 +243,8 @@ export function HojaDeComandas({
           const existentes = numero ? await pedidosPorNumero(numero) : [];
           const hoy = hoyEnLima();
           const deLaHoja = c.fecha.valor && c.fecha.valor <= hoy && c.fecha.valor >= sumarDias(hoy, -45) ? c.fecha.valor : null;
+          // Un pedido nuevo va al día que se miraba, salvo que la hoja diga otro que sea creíble.
+          const fechaDelItem = (deLaHoja as FechaISO | null) ?? fecha;
           nuevos.push({
             id: crypto.randomUUID(),
             origen: hojas.length > 1 ? `${origenFoto}, hoja ${nuevos.length + 1}` : origenFoto,
@@ -201,9 +256,14 @@ export function HojaDeComandas({
             direccion: c.direccion.valor ?? "",
             existentes,
             elegido: existentes[0]?.ordenId ?? null,
-            // Un pedido nuevo va al día que se miraba, salvo que la hoja diga otro que sea creíble.
-            fecha: (deLaHoja as FechaISO | null) ?? fecha,
-            ruta: null,
+            fecha: fechaDelItem,
+            moverAFecha: false,
+            // Solo se sugiere ruta para un pedido nuevo que va al día de hoy,
+            // recién fotografiado en el momento: es cuando la hora dice algo.
+            ruta:
+              opciones.desdeCamara && existentes.length === 0 && fechaDelItem === fecha
+                ? rutaSegunHoraActual(rutas)
+                : null,
             ubicacion: { estado: "pendiente", candidatos: [], etiqueta: null, mensaje: null },
             punto: null,
             distancia: null,
@@ -225,7 +285,7 @@ export function HojaDeComandas({
         }
       } catch (fallo) {
         setError(
-          `No se pudo leer la ${origenFoto.toLowerCase()}. ${fallo instanceof Error ? fallo.message : ""}`.trim(),
+          `No se pudo leer ${opciones.desdeCamara ? "la foto" : origenFoto.toLowerCase()}. ${fallo instanceof Error ? fallo.message : ""}`.trim(),
         );
       }
       setLeyendo({ hechas: k + 1, total: archivos.length });
@@ -233,16 +293,41 @@ export function HojaDeComandas({
     setLeyendo(null);
   }
 
+  async function alElegir(e: React.ChangeEvent<HTMLInputElement>) {
+    const archivos = Array.from(e.target.files ?? []).slice(0, MAX_FOTOS);
+    e.target.value = "";
+    await procesarArchivos(archivos);
+  }
+
+  /** Tomar una foto con la cámara del teléfono, una comanda a la vez. */
+  async function alTomarFoto() {
+    const archivo = await tomarFotoConCamara();
+    if (archivo) {
+      await procesarArchivos([archivo], { desdeCamara: true });
+    } else {
+      // En el navegador (sin Capacitor) no hay cámara nativa: se cae a la
+      // entrada de siempre, que en un celular real también ofrece la cámara.
+      capturaEntrada.current?.click();
+    }
+  }
+
+  /** Quita una comanda leída y no guardada todavía: no toca la base de datos. */
+  function quitar(id: string) {
+    setItems((previos) => previos.filter((i) => i.id !== id));
+  }
+
   /** Guarda una comanda. Devuelve si salió bien. */
   async function guardar(item: Item): Promise<boolean> {
     actualizar(item.id, { error: null });
     try {
       const elegido = item.existentes.find((x) => x.ordenId === item.elegido) ?? null;
+      const mover = !!elegido && elegido.fecha !== fecha && item.moverAFecha;
       const resultado = await guardarComanda(
         {
           numero: item.numero,
           ordenExistenteId: elegido?.ordenId ?? null,
-          fecha: elegido?.fecha ?? item.fecha,
+          fecha: elegido ? (mover ? fecha : elegido.fecha) : item.fecha,
+          moverAFecha: mover,
           ruta: item.ruta,
           nombre: item.nombre,
           telefono: item.telefono,
@@ -315,6 +400,15 @@ export function HojaDeComandas({
           tabIndex={-1}
           onChange={(e) => void alElegir(e)}
         />
+        <input
+          ref={capturaEntrada}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="sr-only"
+          tabIndex={-1}
+          onChange={(e) => void alElegir(e)}
+        />
 
         {item ? (
           <Revision
@@ -337,11 +431,16 @@ export function HojaDeComandas({
                 setAbierta(siguiente?.id ?? null);
               }
             }}
+            alQuitar={() => {
+              const siguiente = pendientes.find((i) => i.id !== item.id);
+              quitar(item.id);
+              setAbierta(siguiente?.id ?? null);
+            }}
           />
         ) : (
           <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4">
             {items.length === 0 && !leyendo && (
-              <Inicio alElegir={() => entrada.current?.click()} hayTienda={origen !== null} />
+              <Inicio alTomarFoto={() => void alTomarFoto()} alElegir={() => entrada.current?.click()} hayTienda={origen !== null} />
             )}
 
             {leyendo && (
@@ -381,11 +480,16 @@ export function HojaDeComandas({
         )}
 
         {!item && items.length > 0 && (
-          <div className="grid grid-flow-col auto-cols-fr gap-2 border-t border-linea px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
-            <button type="button" className="boton-sec" disabled={!!leyendo} onClick={() => entrada.current?.click()}>
-              <Camara className="size-[18px]" />
-              Otra foto
-            </button>
+          <div className="flex flex-col gap-2 border-t border-linea px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
+            <div className="grid grid-cols-2 gap-2">
+              <button type="button" className="boton-sec !text-sm" disabled={!!leyendo} onClick={() => void alTomarFoto()}>
+                <Camara className="size-[16px]" />
+                Cámara
+              </button>
+              <button type="button" className="boton-sec !text-sm" disabled={!!leyendo} onClick={() => entrada.current?.click()}>
+                Galería
+              </button>
+            </div>
             {ajustes.confirmarSiempre ? (
               <button
                 type="button"
@@ -416,16 +520,30 @@ export function HojaDeComandas({
  * Primer paso
  * ------------------------------------------------------------------------- */
 
-function Inicio({ alElegir, hayTienda }: { alElegir: () => void; hayTienda: boolean }) {
+function Inicio({
+  alTomarFoto,
+  alElegir,
+  hayTienda,
+}: {
+  alTomarFoto: () => void;
+  alElegir: () => void;
+  hayTienda: boolean;
+}) {
   return (
     <>
       <p className="text-[15px] text-tinta-2">
-        Una foto por comanda —o varias de la galería—. La app lee el pedido, el cliente y la dirección; tú confirmas.
+        Una foto por comanda —tomada ahí mismo, o varias de la galería—. La app lee el pedido, el cliente y la
+        dirección; tú confirmas.
       </p>
-      <button type="button" className="boton-principal" onClick={alElegir}>
-        <Camara className="size-[22px]" />
-        Tomar o elegir fotos
-      </button>
+      <div className="flex flex-col gap-2">
+        <button type="button" className="boton-principal" onClick={alTomarFoto}>
+          <Camara className="size-[22px]" />
+          Tomar foto
+        </button>
+        <button type="button" className="boton-sec" onClick={alElegir}>
+          Elegir de la galería
+        </button>
+      </div>
       <ul className="flex flex-col gap-2.5 text-sm text-tinta-2">
         <li className="flex gap-2.5">
           <Check className="mt-0.5 size-[18px] shrink-0 text-acento-tinta" />
@@ -605,6 +723,7 @@ function Revision({
   hayMas,
   alVolver,
   alGuardar,
+  alQuitar,
 }: {
   item: Item;
   regla: ReglaPago;
@@ -619,10 +738,13 @@ function Revision({
   hayMas: boolean;
   alVolver: () => void;
   alGuardar: () => Promise<void>;
+  /** Quita esta comanda de la lista, sin guardar nada. */
+  alQuitar: () => void;
 }) {
   const [pestana, setPestana] = useState("pedido");
   const [guardando, setGuardando] = useState(false);
   const [ampliada, setAmpliada] = useState(false);
+  const [confirmandoQuitar, setConfirmandoQuitar] = useState(false);
   const foto = useFoto(item.hoja);
   const c = item.hoja.comanda;
   const ilegible = item.calidad === "ilegible" && !item.numero && !item.nombre && !item.direccion;
@@ -678,13 +800,33 @@ function Revision({
         {pestana === "pedido" && (
           <>
             {elegido ? (
-              <Aviso tono="bien" titulo="Este pedido ya está cargado">
-                <p>
-                  {nombreDelDia(elegido.fecha)} {Number(elegido.fecha.slice(8))}
-                  {elegido.ruta ? ` · Ruta ${elegido.ruta}` : ""}
-                  {elegido.horaRuta ? ` · ${elegido.horaRuta}` : ""}. Se le añaden el cliente, la distancia y la foto.
-                </p>
-              </Aviso>
+              <>
+                <Aviso tono="bien" titulo="Este pedido ya está cargado">
+                  <p>
+                    {nombreDelDia(elegido.fecha)} {Number(elegido.fecha.slice(8))}
+                    {elegido.ruta ? ` · Ruta ${elegido.ruta}` : ""}
+                    {elegido.horaRuta ? ` · ${elegido.horaRuta}` : ""}. Se le añaden el cliente, la distancia y la foto,
+                    que reemplaza a la que tuviera.
+                  </p>
+                </Aviso>
+                {elegido.fecha !== fecha && (
+                  <label className="flex items-start gap-2.5 rounded-btn bg-sup-2 p-3">
+                    <input
+                      type="checkbox"
+                      checked={item.moverAFecha}
+                      onChange={(e) => actualizar(item.id, { moverAFecha: e.target.checked })}
+                      className="mt-0.5 size-[18px] shrink-0"
+                    />
+                    <span className="text-sm text-tinta-2">
+                      Está en otro día. Moverlo a{" "}
+                      <b className="text-tinta">
+                        {nombreDelDia(fecha)} {Number(fecha.slice(8))} ({formatearFecha(fecha)})
+                      </b>
+                      : se queda sin ruta, la asignas de nuevo si hace falta.
+                    </span>
+                  </label>
+                )}
+              </>
             ) : (
               <Aviso tono="atento" titulo="Pedido nuevo">
                 <p>
@@ -843,6 +985,33 @@ function Revision({
           />
         )}
       </div>
+
+      {!item.guardada &&
+        (confirmandoQuitar ? (
+          <div className="mx-4 mb-1 flex flex-col gap-2 rounded-btn bg-mal-suave p-3">
+            <p className="text-sm text-mal">¿Quitar esta comanda de la lista? Se pierde lo leído de esta foto.</p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={alQuitar}
+                className="min-h-11 flex-1 rounded-btn bg-mal px-4 text-sm font-semibold text-white"
+              >
+                Sí, quitarla
+              </button>
+              <button type="button" onClick={() => setConfirmandoQuitar(false)} className="boton-sec flex-1">
+                No
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setConfirmandoQuitar(true)}
+            className="mx-4 mb-1 min-h-9 self-start text-sm font-semibold text-mal"
+          >
+            Quitar esta comanda
+          </button>
+        ))}
 
       <div className="grid grid-flow-col auto-cols-fr gap-2 border-t border-linea px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
         <button type="button" className="boton-sec" onClick={alVolver}>

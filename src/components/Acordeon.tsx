@@ -23,6 +23,7 @@ export function Acordeon({
   titulo,
   resumen,
   aviso = false,
+  destacado = false,
   abierto: controlado,
   alCambiar,
   children,
@@ -32,6 +33,14 @@ export function Acordeon({
   resumen?: React.ReactNode;
   /** El resumen pide atención (falta algo): sale en el color de aviso. */
   aviso?: boolean;
+  /**
+   * Para el que hay que encontrar rápido sin pensar: cabecera fija gris
+   * oscuro con letra blanca —igual en los seis temas, a propósito, para que
+   * no dependa de cuál esté elegida— y el cuerpo con el tinte del acento de
+   * la cara activa. No es el estilo de por defecto: se usa con cuentagotas,
+   * en la única sección que de verdad conviene que salte a la vista.
+   */
+  destacado?: boolean;
   abierto?: boolean;
   alCambiar?: (abierto: boolean) => void;
   children: React.ReactNode;
@@ -53,20 +62,30 @@ export function Acordeon({
         onClick={alternar}
         aria-expanded={abierto}
         aria-controls={id}
-        className="flex min-h-[62px] w-full items-center justify-between gap-3 px-[var(--pad-card)] py-3 text-left"
+        className={`flex min-h-[62px] w-full items-center justify-between gap-3 px-[var(--pad-card)] py-3 text-left ${
+          destacado ? "bg-neutral-800" : ""
+        }`}
       >
         <span className="flex min-w-0 flex-col">
-          <b className="font-display text-[17px] leading-tight font-bold [zoom:var(--zoom-titulo,1)]">
+          <b
+            className={`font-display text-[17px] leading-tight font-bold [zoom:var(--zoom-titulo,1)] ${
+              destacado ? "text-white" : ""
+            }`}
+          >
             {titulo}
           </b>
           {resumen && (
-            <span className={`text-[13px] leading-snug ${aviso ? "font-semibold text-aviso" : "text-tinta-3"}`}>
+            <span
+              className={`text-[13px] leading-snug ${
+                aviso ? "font-semibold text-aviso" : destacado ? "text-white/75" : "text-tinta-3"
+              }`}
+            >
               {resumen}
             </span>
           )}
         </span>
         <Flecha
-          className={`size-4 shrink-0 text-tinta-3 transition-transform duration-300 ${
+          className={`size-4 shrink-0 transition-transform duration-300 ${destacado ? "text-white" : "text-tinta-3"} ${
             abierto ? "-rotate-90" : "rotate-90"
           }`}
         />
@@ -81,7 +100,11 @@ export function Acordeon({
         style={{ gridTemplateRows: abierto ? "1fr" : "0fr" }}
       >
         <div id={id} className="overflow-hidden" inert={!abierto}>
-          <div className="flex flex-col gap-4 border-t border-linea px-[var(--pad-card)] py-4">
+          <div
+            className={`flex flex-col gap-4 border-t border-linea px-[var(--pad-card)] py-4 ${
+              destacado ? "bg-acento-suave" : ""
+            }`}
+          >
             {children}
           </div>
         </div>

@@ -22,7 +22,14 @@
  */
 import { estadoDeSemana } from "@/lib/db/sqlite/liquidaciones";
 import { guardarCliente, guardarDistancia } from "@/lib/db/sqlite/clientes";
-import { agregarPedidoManual, codigosYaRegistrados, jornadaPorFecha, reglaVigente } from "@/lib/db/sqlite/jornadas";
+import {
+  agregarPedidoManual,
+  codigosYaRegistrados,
+  fechaDePedido,
+  jornadaPorFecha,
+  moverPedido,
+  reglaVigente,
+} from "@/lib/db/sqlite/jornadas";
 import { perfilActual } from "@/lib/db/sqlite/perfil";
 import type { AjustesDeComandas } from "@/lib/db/sqlite/ajustes";
 import type { DatosDeCliente } from "@/lib/db/tipos";
@@ -38,8 +45,16 @@ export interface ComandaParaGuardar {
   numero: string;
   /** El pedido que la comanda completa; null para crear uno nuevo. */
   ordenExistenteId: string | null;
-  /** El día del pedido existente, o el día al que se añade uno nuevo. */
+  /**
+   * El día del pedido: el existente, el que se elige para uno nuevo, o el día
+   * nuevo si se pidió mover uno existente (ver `moverAFecha`).
+   */
   fecha: FechaISO;
+  /**
+   * El pedido existente estaba en otro día y se decidió moverlo a `fecha`.
+   * Se ignora si no hay `ordenExistenteId`, o si ya estaba en ese día.
+   */
+  moverAFecha: boolean;
   /** Solo para un pedido nuevo. */
   ruta: number | null;
   nombre: string;
@@ -128,6 +143,16 @@ export async function guardarComanda(
       horaSalida: perfil?.horaSalida ?? null,
     }));
     creado = true;
+  } else if (d.moverAFecha) {
+    const fechaDeAhora = await fechaDePedido(ordenId);
+    if (fechaDeAhora && fechaDeAhora !== d.fecha) {
+      if ((await estadoDeSemana(fechaDeAhora)) === "pagada") {
+        throw new Error(
+          "Ese pedido está en una semana que ya está pagada. Reábrela desde Pagos antes de moverlo a otro día.",
+        );
+      }
+      await moverPedido(ordenId, d.fecha);
+    }
   }
 
   const jornada = await jornadaPorFecha(d.fecha);

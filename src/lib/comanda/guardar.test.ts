@@ -10,7 +10,7 @@ import { cerrarSemana, registrarPago } from "@/lib/db/sqlite/liquidaciones";
 import { motorEnMemoria } from "@/lib/db/sqlite/motor-en-memoria";
 import { pedidosPorNumero } from "@/lib/db/sqlite/clientes";
 import type { JornadaParaGuardar } from "@/lib/db/tipos";
-import type { FechaISO } from "@/lib/fechas";
+import { semanaDe, type FechaISO } from "@/lib/fechas";
 import { REGLA_INICIAL } from "@/lib/pagos/reglas";
 
 import { guardarComanda, type ComandaParaGuardar } from "./guardar";
@@ -40,6 +40,7 @@ const base: ComandaParaGuardar = {
   numero: "12264655",
   ordenExistenteId: null,
   fecha: FECHA,
+  moverAFecha: false,
   ruta: null,
   nombre: "Claudia Castro",
   telefono: "987 654 321",
@@ -177,6 +178,77 @@ describe("solo se guarda lo que Ajustes permite", () => {
     const existente = await ordenDe("v12264655wofp-01");
     await expect(guardarComanda({ ...base, ordenExistenteId: existente.id, evidencia: null }, ajustes(), deps)).resolves.toBeTruthy();
     expect(fotos).toEqual([]);
+  });
+});
+
+describe("mover un pedido a otro día", () => {
+  const OTRO_DIA = "2026-09-10" as FechaISO; // otra semana
+
+  beforeEach(async () => {
+    await guardarJornada(
+      {
+        fecha: OTRO_DIA,
+        rutasDeclaradas: 1,
+        ordenesDeclaradas: 1,
+        validacionOk: true,
+        horaEntrada: "09:00",
+        horaSalida: "20:00",
+        tiendaId: null,
+        vehiculo: "auto",
+        rutas: [{ numero: 1, estado: "Finalizado", horaInicio: "10:00", horaFin: "10:30" }],
+        ordenes: [
+          { codigo: "v12269999wofp-01", estado: "Entregado", posicion: 1, ruta: 1, tramo: 1, km: null, montoCentimos: 1000 },
+        ],
+      },
+      "reemplazar",
+    );
+  });
+
+  async function existenteDeOtroDia() {
+    return (await jornadaPorFecha(OTRO_DIA))!.ordenes.find((o) => o.codigo === "v12269999wofp-01")!;
+  }
+
+  it("con moverAFecha, lo trae al día que se está viendo y lo deja sin ruta", async () => {
+    const existente = await existenteDeOtroDia();
+
+    const r = await guardarComanda(
+      { ...base, numero: "12269999", ordenExistenteId: existente.id, moverAFecha: true },
+      ajustes(),
+      deps,
+    );
+
+    expect(r.fecha).toBe(FECHA);
+    expect((await jornadaPorFecha(OTRO_DIA))!.ordenes.some((o) => o.codigo === "v12269999wofp-01")).toBe(false);
+    const movido = (await ordenes()).find((o) => o.codigo === "v12269999wofp-01")!;
+    expect(movido.ruta).toBeNull();
+    expect(movido.cliente?.nombre).toBe("Claudia Castro");
+  });
+
+  it("sin moverAFecha, lo completa donde ya estaba y no lo mueve", async () => {
+    const existente = await existenteDeOtroDia();
+
+    const r = await guardarComanda(
+      { ...base, numero: "12269999", ordenExistenteId: existente.id, fecha: OTRO_DIA },
+      ajustes(),
+      deps,
+    );
+
+    expect(r.fecha).toBe(OTRO_DIA);
+    expect((await jornadaPorFecha(OTRO_DIA))!.ordenes.some((o) => o.codigo === "v12269999wofp-01")).toBe(true);
+  });
+
+  it("no mueve un pedido que está en una semana ya pagada", async () => {
+    await cerrarSemana(OTRO_DIA, REGLA_INICIAL, null);
+    await registrarPago(semanaDe(OTRO_DIA).inicio, 100000);
+    const existente = await existenteDeOtroDia();
+
+    await expect(
+      guardarComanda(
+        { ...base, numero: "12269999", ordenExistenteId: existente.id, moverAFecha: true },
+        ajustes(),
+        deps,
+      ),
+    ).rejects.toThrow(/ya está pagada/);
   });
 });
 

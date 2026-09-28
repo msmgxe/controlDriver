@@ -41,4 +41,7 @@
     <!-- Para «Estoy en la tienda» (Ajustes › Tienda): dónde está el punto de partida. Solo al pedirlo. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- Para tomar la foto de una comanda directamente, sin pasar por la galería. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 </manifest>

@@ -957,6 +957,15 @@ export async function quitarDeDiasPosteriores(
   return encontrados.map((e) => ({ codigo: e.codigo, fecha: e.fecha as FechaISO }));
 }
 
+/** En qué día está un pedido ahora mismo. Para comprobar su semana antes de moverlo. */
+export async function fechaDePedido(ordenId: string): Promise<FechaISO | null> {
+  const filas = await consultar<{ fecha: string }>(
+    `select j.fecha from ordenes o join jornadas j on j.id = o.jornada_id where o.id = ?`,
+    [ordenId],
+  );
+  return (filas[0]?.fecha as FechaISO | undefined) ?? null;
+}
+
 /** Borra un pedido. Para cuando se añadió por error o llegó duplicado. */
 export async function borrarPedido(ordenId: string): Promise<void> {
   const filas = await consultar<{ jornada_id: string }>(
@@ -965,6 +974,65 @@ export async function borrarPedido(ordenId: string): Promise<void> {
   );
   await ejecutar(`delete from ordenes where id = ?`, [ordenId]);
   if (filas[0]) await recontarEstados(filas[0].jornada_id, ahora());
+}
+
+/**
+ * Mueve un pedido a otro día. Para cuando una comanda vuelve a leerse y el
+ * pedido que completa está cargado en una fecha equivocada.
+ *
+ * Se queda sin ruta: la ruta del día viejo no significa nada en el nuevo, y
+ * queda pendiente de asignar, igual que un pedido recién leído sin ruta.
+ * Si el día destino no existía, se crea, con la tienda y el vehículo del
+ * perfil actual —igual que al añadir un pedido a mano.
+ */
+export async function moverPedido(ordenId: string, fechaNueva: FechaISO): Promise<void> {
+  const momento = ahora();
+
+  await enTransaccion(async () => {
+    const filas = await consultar<{ jornada_id: string; fecha: string }>(
+      `select o.jornada_id, j.fecha
+         from ordenes o join jornadas j on j.id = o.jornada_id
+        where o.id = ?`,
+      [ordenId],
+    );
+    const actual = filas[0];
+    if (!actual) throw new Error("Ese pedido ya no existe.");
+    if (actual.fecha === fechaNueva) return; // Ya está en ese día: nada que mover.
+
+    const destino = await consultar<{ id: string }>(`select id from jornadas where fecha = ?`, [fechaNueva]);
+    let jornadaDestinoId = destino[0]?.id;
+
+    if (!jornadaDestinoId) {
+      const perfil = await perfilActual();
+      jornadaDestinoId = nuevoId();
+      await ejecutar(
+        `insert into jornadas
+           (id, fecha, validacion_ok, tienda_id, vehiculo, hora_entrada, hora_salida,
+            creado_en, actualizado_en, sincronizado)
+         values (?, ?, 0, ?, ?, ?, ?, ?, ?, 0)`,
+        [
+          jornadaDestinoId, fechaNueva, perfil?.tiendaId ?? null,
+          perfil?.vehiculo ?? VEHICULO_POR_DEFECTO,
+          perfil?.horaEntrada ?? null, perfil?.horaSalida ?? null,
+          momento, momento,
+        ],
+      );
+    }
+
+    const ultimas = await consultar<{ ultima: number | null }>(
+      `select max(posicion) as ultima from ordenes where jornada_id = ?`,
+      [jornadaDestinoId],
+    );
+    const posicion = (ultimas[0]?.ultima ?? 0) + 1;
+
+    await ejecutar(
+      `update ordenes set jornada_id = ?, ruta_id = null, posicion = ? where id = ?`,
+      [jornadaDestinoId, posicion, ordenId],
+    );
+
+    await recontarEstados(actual.jornada_id, momento);
+    await recontarEstados(jornadaDestinoId, momento);
+  });
 }
 
 /**

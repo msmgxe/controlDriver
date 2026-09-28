@@ -37,6 +37,41 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v43 — 28/09/2026
+Tomar la foto de la comanda con la cámara, quitar una leída de más, mover un
+pedido de día si hace falta, y el acordeón «Subir más» se hace notar.
+- **Nuevo: «Tomar foto» al leer comandas.** Antes de Leer comandas solo se
+  podía elegir de la galería; ahora hay un botón dedicado que abre la cámara
+  del teléfono directamente (con el plugin nativo de la cámara), una comanda a
+  la vez. La galería —una o varias fotos— sigue ahí, como alternativa. Si se
+  toma con la cámara y no se elige ruta a mano, se sugiere sola la más
+  probable según la hora —la ruta que ya empezó más tarde—; se puede cambiar
+  o dejar «Sin ruta» en el selector, igual que siempre.
+- **Nuevo: «Quitar esta comanda».** Una foto leída y todavía sin guardar —se
+  repitió, salió de más, se equivocó de hoja— se puede sacar de la lista, con
+  su pregunta de seguridad antes de hacerlo. No toca nada ya guardado: eso
+  sigue siendo «Borrar este pedido», desde el propio pedido.
+- **Nuevo: mover un pedido de día.** Si la comanda que se lee ya está cargada
+  pero en *otro* día —se cargó con la fecha equivocada, por ejemplo—, ahora se
+  puede traer opcionalmente al día que se está revisando, además de
+  completarlo con el cliente y la foto como ya hacía. El pedido nunca se
+  duplica: un código de despacho es siempre un solo pedido, se complete,
+  se reemplace o se mueva. Al moverlo se queda sin ruta —la del día viejo no
+  significa nada en el nuevo— y no se puede mover si su semana ya está
+  pagada, igual que el resto de ediciones.
+- **Cambio: el acordeón «Subir más» se destaca.** Cabecera fija gris oscuro
+  con letra blanca, igual en las seis caras, para encontrarlo de un vistazo;
+  por dentro, un tinte del color de la cara elegida —ladrillo en Arcilla,
+  azul en Mapa, amarillo oscuro en Avispa…—.
+- Recordatorio de lo que ya existía y sigue igual: cada dato leído de la
+  comanda (número de pedido, cliente, teléfono, dirección) se marca Legible,
+  Dudoso o No se leyó, y nada se guarda sin que lo veas —salvo que actives en
+  Ajustes guardar juntas las que se leyeron con claridad—.
+- **Pendiente de probar en el celular:** que la cámara nativa abra bien y
+  guarde la foto —en el navegador de la Mac solo se pudo probar el respaldo
+  con la entrada de archivo—; y que la sugerencia de ruta por hora acierte en
+  un caso real.
+
 ### v42 — 27/09/2026
 Limpieza: quedaban rincones diciendo «Rutas-A» después del cambio de nombre.
 - **Corrección: el PDF de estadísticas/historial** llevaba «Rutas-A» impreso en
