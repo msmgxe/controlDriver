@@ -11,6 +11,8 @@ import {
   crearParDeClaves,
   emitirCertificado,
   importarClavePrivada,
+  parsearDuracion,
+  sumarDiasDeVigencia,
   sumarMeses,
 } from "./emitir";
 import {
@@ -196,6 +198,39 @@ describe("sumar meses al vencimiento", () => {
 
   it("varios meses de golpe, para quien paga el año", () => {
     expect(sumarMeses(null, 12, "2026-09-19")).toBe("2027-09-19");
+  });
+});
+
+describe("sumar días al vencimiento (renovaciones cortas)", () => {
+  it("activar por primera vez cuenta desde hoy", () => {
+    expect(sumarDiasDeVigencia(null, 15, "2026-09-19")).toBe("2026-10-04");
+  });
+
+  it("renovar antes de vencer no pierde los días que quedaban", () => {
+    expect(sumarDiasDeVigencia("2026-10-31", 15, "2026-10-15")).toBe("2026-11-15");
+  });
+
+  it("renovar después de vencer cuenta desde hoy", () => {
+    expect(sumarDiasDeVigencia("2026-10-31", 15, "2026-12-10")).toBe("2026-12-25");
+  });
+});
+
+describe("entender lo que se escribió en la terminal", () => {
+  it("un número solo son meses", () => {
+    expect(parsearDuracion("1")).toEqual({ unidad: "meses", cantidad: 1 });
+    expect(parsearDuracion("12")).toEqual({ unidad: "meses", cantidad: 12 });
+  });
+
+  it("un número con 'd' son días", () => {
+    expect(parsearDuracion("15d")).toEqual({ unidad: "dias", cantidad: 15 });
+    expect(parsearDuracion("7D")).toEqual({ unidad: "dias", cantidad: 7 });
+  });
+
+  it("lo que no se entiende, null: quien llama decide cómo avisar", () => {
+    expect(parsearDuracion("")).toBeNull();
+    expect(parsearDuracion("mes")).toBeNull();
+    expect(parsearDuracion("-1")).toBeNull();
+    expect(parsearDuracion("1.5")).toBeNull();
   });
 });
 

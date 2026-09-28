@@ -42,7 +42,8 @@ export async function registrarEmision(datos: {
   vigenteHasta: string;
   diasDeGracia: number;
   fechaDePago: string;
-  meses: number;
+  /** "1", "12"… meses, o "15d" para una renovación corta en días. */
+  duracion: string;
 }): Promise<void> {
   const db = clienteTurso();
   if (!db) return;
@@ -58,8 +59,8 @@ export async function registrarEmision(datos: {
         args: [datos.codigo, datos.nombre, datos.vigenteHasta, datos.diasDeGracia],
       },
       {
-        sql: `insert into pagos (codigo, fecha, meses, hasta) values (?, ?, ?, ?)`,
-        args: [datos.codigo, datos.fechaDePago, datos.meses, datos.vigenteHasta],
+        sql: `insert into pagos (codigo, fecha, duracion, hasta) values (?, ?, ?, ?)`,
+        args: [datos.codigo, datos.fechaDePago, datos.duracion, datos.vigenteHasta],
       },
     ],
     "write",

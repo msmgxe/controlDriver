@@ -4,8 +4,9 @@
  *   npm run licencia -- claves
  *       Crea el par de claves. Una sola vez en la vida del negocio.
  *
- *   npm run licencia -- emitir <código del teléfono> "<nombre>" [meses]
- *       Firma un certificado. Por defecto, 1 mes.
+ *   npm run licencia -- emitir <código del teléfono> "<nombre>" [meses|Nd]
+ *       Firma un certificado. Por defecto, 1 mes. "15d" son 15 días —para
+ *       una renovación corta que no llega a un mes entero.
  *
  *   npm run licencia -- lista
  *       Quién tiene licencia y hasta cuándo.
@@ -34,6 +35,8 @@ import {
   crearParDeClaves,
   emitirCertificado,
   importarClavePrivada,
+  parsearDuracion,
+  sumarDiasDeVigencia,
   sumarMeses,
 } from "../src/lib/licencia/emitir";
 import { registrarEmision } from "../src/lib/licencia/repositorio";
@@ -91,7 +94,7 @@ interface Linea {
   fecha: string;
   codigo: string;
   nombre: string;
-  meses: number;
+  duracion: string;
   hasta: string;
 }
 
@@ -103,26 +106,36 @@ function leerRegistro(): Linea[] {
     .slice(1)
     .filter(Boolean)
     .map((l) => {
-      const [fecha, codigo, nombre, meses, hasta] = l.split(";");
-      return { fecha, codigo, nombre, meses: Number(meses), hasta };
+      const [fecha, codigo, nombre, duracion, hasta] = l.split(";");
+      return { fecha, codigo, nombre, duracion, hasta };
     });
 }
 
-async function emitir(codigo: string | undefined, nombre: string | undefined, meses: number) {
+async function emitir(codigo: string | undefined, nombre: string | undefined, duracionTexto: string) {
   if (!codigo || !nombre) {
-    salir('Uso: npm run licencia -- emitir <código del teléfono> "<nombre>" [meses]');
+    salir('Uso: npm run licencia -- emitir <código del teléfono> "<nombre>" [meses|Nd]');
   }
   if (!existsSync(PRIVADA)) salir("Primero crea las claves: npm run licencia -- claves");
   if (!/^[0-9a-f-]{36}$/i.test(codigo)) {
     salir("Ese código no parece el de un teléfono. Cópialo de Ajustes → Tu licencia.");
   }
-  if (!Number.isInteger(meses) || meses < 1 || meses > 24) salir("Meses: entre 1 y 24.");
+  const duracion = parsearDuracion(duracionTexto);
+  if (!duracion) salir("Duración inválida: un número de meses (1-24), o de días con 'd', como 15d.");
+  if (duracion.unidad === "meses" && (duracion.cantidad < 1 || duracion.cantidad > 24)) {
+    salir("Meses: entre 1 y 24.");
+  }
+  if (duracion.unidad === "dias" && (duracion.cantidad < 1 || duracion.cantidad > 90)) {
+    salir("Días: entre 1 y 90 —para más de tres meses, usa meses.");
+  }
 
   /* Se suma a lo que le quedaba: quien renueva antes de tiempo no pierde días,
      y quien paga tarde no recibe los que estuvo sin pagar. */
   const hoy = hoyEnLima();
   const previa = leerRegistro().filter((l) => l.codigo === codigo).at(-1);
-  const hasta = sumarMeses(previa?.hasta ?? null, meses, hoy);
+  const hasta =
+    duracion.unidad === "meses"
+      ? sumarMeses(previa?.hasta ?? null, duracion.cantidad, hoy)
+      : sumarDiasDeVigencia(previa?.hasta ?? null, duracion.cantidad, hoy);
 
   const clave = await importarClavePrivada(JSON.parse(readFileSync(PRIVADA, "utf8")));
   const certificado = await emitirCertificado(
@@ -137,8 +150,8 @@ async function emitir(codigo: string | undefined, nombre: string | undefined, me
     clave,
   );
 
-  if (!existsSync(REGISTRO)) writeFileSync(REGISTRO, "fecha;codigo;nombre;meses;hasta\n");
-  appendFileSync(REGISTRO, `${hoy};${codigo};${nombre.replaceAll(";", ",")};${meses};${hasta}\n`);
+  if (!existsSync(REGISTRO)) writeFileSync(REGISTRO, "fecha;codigo;nombre;duracion;hasta\n");
+  appendFileSync(REGISTRO, `${hoy};${codigo};${nombre.replaceAll(";", ",")};${duracionTexto};${hasta}\n`);
 
   // Réplica de lectura para el panel web (ver `Archivos MD/Proximos pasos Web App.md`).
   // El CSV de arriba sigue siendo la fuente de verdad; esto nunca debe poder
@@ -152,7 +165,7 @@ async function emitir(codigo: string | undefined, nombre: string | undefined, me
         vigenteHasta: hasta,
         diasDeGracia: 7,
         fechaDePago: hoy,
-        meses,
+        duracion: duracionTexto,
       });
       sincronizado = true;
     } catch (error) {
@@ -191,6 +204,6 @@ function lista() {
 
 const [orden, ...resto] = process.argv.slice(2);
 if (orden === "claves") await claves();
-else if (orden === "emitir") await emitir(resto[0], resto[1], Number(resto[2] ?? 1));
+else if (orden === "emitir") await emitir(resto[0], resto[1], resto[2] ?? "1");
 else if (orden === "lista") lista();
-else salir('Órdenes: claves · emitir <código> "<nombre>" [meses] · lista');
+else salir('Órdenes: claves · emitir <código> "<nombre>" [meses|Nd] · lista');

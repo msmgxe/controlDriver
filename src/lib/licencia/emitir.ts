@@ -10,6 +10,8 @@
  * de seguridad que guardes tú. En ningún otro sitio. No en el repositorio, no
  * en el APK, no en una variable con prefijo NEXT_PUBLIC_.
  */
+import { sumarDias } from "../fechas";
+
 import { aBase64Url, type Certificado } from "./token";
 
 const ALGORITMO = { name: "ECDSA", namedCurve: "P-256" } as const;
@@ -78,4 +80,28 @@ export function sumarMeses(vigenteHasta: string | null, meses: number, hoy: stri
     String(mesNormalizado + 1).padStart(2, "0"),
     String(dia).padStart(2, "0"),
   ].join("-");
+}
+
+/**
+ * Igual que {@link sumarMeses}, pero en días: para licencias de prueba
+ * cortas, donde "meses" no tiene sentido (¿0.5 meses?).
+ */
+export function sumarDiasDeVigencia(vigenteHasta: string | null, dias: number, hoy: string): string {
+  const partida = vigenteHasta && vigenteHasta >= hoy ? vigenteHasta : hoy;
+  return sumarDias(partida, dias);
+}
+
+export type Duracion = { unidad: "meses"; cantidad: number } | { unidad: "dias"; cantidad: number };
+
+/**
+ * Lee lo que se escribió en la terminal: un número de meses ("1", "12") o de
+ * días con sufijo `d` ("15d"), para renovaciones cortas que no llegan a un
+ * mes. `null` si no se entiende, para que quien llama decida cómo avisar.
+ */
+export function parsearDuracion(texto: string): Duracion | null {
+  const dias = /^(\d+)d$/i.exec(texto);
+  if (dias) return { unidad: "dias", cantidad: Number(dias[1]) };
+  const meses = /^\d+$/.exec(texto);
+  if (meses) return { unidad: "meses", cantidad: Number(texto) };
+  return null;
 }

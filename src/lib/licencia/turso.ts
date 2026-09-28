@@ -41,7 +41,7 @@ create table if not exists pagos (
   id integer primary key autoincrement,
   codigo text not null,
   fecha text not null,
-  meses integer not null,
+  duracion text not null,
   hasta text not null
 );
 `;
