@@ -1,5 +1,5 @@
 /**
- * Emitir licencias de Rutas-A desde la terminal.
+ * Emitir licencias de Control Driver desde la terminal.
  *
  *   npm run licencia -- claves
  *       Crea el par de claves. Una sola vez en la vida del negocio.
@@ -10,9 +10,11 @@
  *   npm run licencia -- lista
  *       Quién tiene licencia y hasta cuándo.
  *
- * Mientras no exista el panel web, esto es el panel. Usa exactamente el mismo
- * código de firma que la app verifica —`src/lib/licencia/emitir.ts`, con sus
- * pruebas—, así que no hay dos implementaciones que puedan desalinearse.
+ * **Esto sigue siendo quien firma**, con panel web o sin él: usa exactamente
+ * el mismo código que la app verifica —`src/lib/licencia/emitir.ts`, con sus
+ * pruebas—, así que no hay dos implementaciones que puedan desalinearse. La
+ * clave privada nunca sale de esta Mac, ni siquiera cuando exista el panel;
+ * el panel solo **lee** una copia (`src/lib/licencia/turso.ts`), no firma.
  *
  * Lo que guarda, en ~/.rutas-a (fuera del proyecto, nunca en GitHub):
  *
@@ -20,6 +22,9 @@
  *                          fabricarse licencias. Si se pierde, no se pueden
  *                          renovar las que hay. GUARDA UNA COPIA.
  *   licencias.csv          el registro: quién, qué teléfono, hasta cuándo.
+ *                          Sigue siendo la fuente de verdad aunque haya panel.
+ *
+ * Ver `Archivos MD/Proximos pasos Web App.md` para el resto del plan.
  */
 import { existsSync, readFileSync, writeFileSync, appendFileSync, chmodSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
@@ -31,6 +36,8 @@ import {
   importarClavePrivada,
   sumarMeses,
 } from "../src/lib/licencia/emitir";
+import { registrarEmision } from "../src/lib/licencia/repositorio";
+import { tursoConfigurado } from "../src/lib/licencia/turso";
 
 const DIR = join(homedir(), ".rutas-a");
 const PRIVADA = join(DIR, "licencia-privada.jwk");
@@ -133,12 +140,33 @@ async function emitir(codigo: string | undefined, nombre: string | undefined, me
   if (!existsSync(REGISTRO)) writeFileSync(REGISTRO, "fecha;codigo;nombre;meses;hasta\n");
   appendFileSync(REGISTRO, `${hoy};${codigo};${nombre.replaceAll(";", ",")};${meses};${hasta}\n`);
 
+  // Réplica de lectura para el panel web (ver `Archivos MD/Proximos pasos Web App.md`).
+  // El CSV de arriba sigue siendo la fuente de verdad; esto nunca debe poder
+  // hacer fallar una emisión ya firmada, así que va aparte y sin tumbar nada.
+  let sincronizado = false;
+  if (tursoConfigurado()) {
+    try {
+      await registrarEmision({
+        codigo,
+        nombre,
+        vigenteHasta: hasta,
+        diasDeGracia: 7,
+        fechaDePago: hoy,
+        meses,
+      });
+      sincronizado = true;
+    } catch (error) {
+      console.error(`  (No se pudo sincronizar con el panel web: ${error instanceof Error ? error.message : error})`);
+    }
+  }
+
   console.log(`
   ✓ Licencia de ${nombre}, válida hasta el ${hasta.split("-").reverse().join("/")}.
+  ${tursoConfigurado() ? (sincronizado ? "✓ Sincronizada con el panel web." : "⚠ No se pudo sincronizar con el panel web (ver arriba).") : "  (Panel web aún sin configurar: solo quedó en tu Mac.)"}
 
   Mándale este mensaje por WhatsApp:
   ──────────────────────────────────────────────────────────────
-  Tu licencia de Rutas-A. Ábrela en Ajustes → Tu licencia → Pegar, y toca Activar:
+  Tu licencia de Control Driver. Ábrela en Ajustes → Tu licencia → Pegar, y toca Activar:
 
   ${certificado}
   ──────────────────────────────────────────────────────────────

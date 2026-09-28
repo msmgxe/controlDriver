@@ -51,7 +51,7 @@ echo "sdk.dir=$ANDROID_HOME" > android/local.properties
 # acceso por correo y el proxy— se aparta durante la compilación. No es que
 # sobre: es que exige un servidor, y dentro del APK no hay ninguno. Se
 # devuelve a su sitio al terminar, pase lo que pase.
-SOLO_WEB=("src/app/admin" "src/app/api" "src/app/acceso" "src/app/configuracion" "src/proxy.ts")
+SOLO_WEB=("src/app/admin" "src/app/api" "src/app/acceso" "src/app/configuracion" "src/app/licencias" "src/proxy.ts")
 APARTADO=".solo-web"
 
 restaurar() {
