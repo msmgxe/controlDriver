@@ -25,8 +25,17 @@ export const PUERTAS: readonly Puerta[] = [
   { id: "estadisticas", href: "/estadisticas", nombre: "Estadísticas", corto: "Estadíst." },
   { id: "buscar", href: "/buscar", nombre: "Buscar" },
   { id: "historial", href: "/historial", nombre: "Historial" },
+  { id: "tutoriales", href: "/tutoriales", nombre: "Tutoriales" },
   { id: "ajustes", href: "/ajustes", nombre: "Ajustes" },
 ];
+
+/**
+ * En el móvil, la barra de abajo no las enseña todas: las cuatro primeras se
+ * quedan a la vista, más grandes, y el resto vive detrás de «Más» (ver
+ * `Armazon.tsx`). La barra lateral de escritorio sigue mostrando `PUERTAS`
+ * entera; solo el móvil tiene este límite de ancho.
+ */
+export const PUERTAS_PRINCIPALES = 4;
 
 /**
  * Qué puerta está encendida para una ruta. Revisión y compartir son el final de

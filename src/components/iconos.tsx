@@ -204,3 +204,19 @@ export const Telefono = (p: Props) => (
   </Base>
 );
 
+/** «Más»: los otros destinos de la barra de abajo, que no caben a la vista. */
+export const Mas = (p: Props) => (
+  <Base strokeWidth={2.4} {...p}>
+    <circle cx="5" cy="12" r="1.2" fill="currentColor" stroke="none" />
+    <circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none" />
+    <circle cx="19" cy="12" r="1.2" fill="currentColor" stroke="none" />
+  </Base>
+);
+
+export const Tutorial = (p: Props) => (
+  <Base {...p}>
+    <path d="M12 6.5c-2-1.3-4.6-2-7-2v13c2.4 0 5 .7 7 2 2-1.3 4.6-2 7-2V4.5c-2.4 0-5 .7-7 2Z" />
+    <path d="M12 6.5v13" />
+  </Base>
+);
+

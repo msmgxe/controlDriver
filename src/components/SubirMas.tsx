@@ -67,7 +67,12 @@ export function SubirMas({
 
       {pestana === "pedido" && (
         <div className="flex flex-col gap-3">
-          <PedidoManual fecha={fecha} regla={regla} rutas={rutas.map((r) => r.numero)} alAgregar={alCambiar} />
+          {/* Primero la más completa: una foto por pedido, con cliente, dirección
+              y distancia. Completa un pedido que ya está o crea uno nuevo. */}
+          <button type="button" onClick={alLeerComanda} className="boton-secundario self-start">
+            <Ticket className="size-[18px]" />
+            Leer una comanda
+          </button>
           {/* Para cuando no se tiene ni el código a mano: se anota cuántos fueron
               y se completa cada uno después. La fecha también se puede elegir,
               para ponerse al día con una jornada pasada. */}
@@ -77,8 +82,10 @@ export function SubirMas({
               if (fechaElegida === fecha) alCambiar();
             }}
           />
-          {/* Igual que con las rutas, la fecha se puede elegir. Los pedidos que
-              ya estaban registrados no se vuelven a añadir. */}
+          <PedidoManual fecha={fecha} regla={regla} rutas={rutas.map((r) => r.numero)} alAgregar={alCambiar} />
+          {/* Al final: lee la lista de códigos de la app de reparto, sin cliente
+              ni dirección. Igual que con las rutas, la fecha se puede elegir; los
+              pedidos que ya estaban registrados no se vuelven a añadir. */}
           <LectorDePedidos
             fecha={fecha}
             onGuardar={async (fechaElegida, pedidos) => {
@@ -90,12 +97,6 @@ export function SubirMas({
               if (fechaElegida === fecha) alCambiar();
             }}
           />
-          {/* La comanda: una foto por pedido, con su cliente, su dirección y la
-              distancia. Completa un pedido que ya está o crea uno nuevo. */}
-          <button type="button" onClick={alLeerComanda} className="boton-secundario self-start">
-            <Ticket className="size-[18px]" />
-            Leer una comanda
-          </button>
         </div>
       )}
 

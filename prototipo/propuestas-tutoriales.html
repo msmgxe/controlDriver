@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="es" data-skin="claro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Control Driver · Propuestas de tutoriales</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+/* ═══════════ La página (el escenario), no la app ═══════════ */
+:root{--pg:#eceef3;--pg-card:#fff;--pg-ink:#14161d;--pg-mut:#586071;--pg-line:#d8dce6;--pg-chip:#e2e5ee;--pg-acc:#1f5cff;--pg-stage:#e4e7ef}
+@media (prefers-color-scheme:dark){:root{--pg:#111318;--pg-card:#191c23;--pg-ink:#eceef3;--pg-mut:#9aa2b2;--pg-line:#2b303b;--pg-chip:#242832;--pg-acc:#7c9fff;--pg-stage:#171a21}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--pg);color:var(--pg-ink);font:15px/1.55 "DM Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased;padding:0 clamp(16px,4vw,40px) 90px}
+.wrap{max-width:1280px;margin-inline:auto}
+h1,h2,h3,p,ul,ol{margin:0}
+.rot{font:500 11px/1 "JetBrains Mono",ui-monospace,monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--pg-mut)}
+.cab{padding-block:36px 18px;display:grid;gap:10px}
+.cab h1{font-size:clamp(26px,4vw,38px);line-height:1.08;letter-spacing:-.03em;font-weight:700;max-width:30ch}
+.lead{max-width:76ch;color:var(--pg-mut);font-size:15.5px}
+.lead b{color:var(--pg-ink)}
+
+.stage{margin-top:24px;border-radius:28px;background:var(--pg-stage);padding:30px clamp(12px,2vw,26px) 26px}
+.slots{display:flex;gap:26px;overflow-x:auto;padding:8px 10px 18px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+.slot{flex:none;display:grid;gap:12px;justify-items:center;width:300px}
+.slot h3{font-size:16px;display:flex;align-items:center;gap:8px;text-align:center}
+.slot .letra{width:26px;height:26px;border-radius:8px;background:var(--pg-ink);color:var(--pg);display:grid;place-items:center;font-size:13px;font-weight:800;flex:none}
+.slot figcaption{font-size:13px;text-align:center;max-width:33ch;line-height:1.5;color:var(--pg-mut)}
+.slot .accion{display:flex;gap:8px}
+.pg-btn{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:99px;background:var(--pg-chip);color:var(--pg-ink);text-decoration:none;font-weight:700;font-size:13px;border:0;cursor:pointer;font-family:inherit}
+.pg-btn.primario{background:var(--pg-acc);color:#fff}
+.pg-btn:disabled{opacity:.5;cursor:default}
+
+.comp{margin-top:44px;display:grid;gap:12px}
+.comp h2{font-size:clamp(20px,3vw,26px);letter-spacing:-.02em}
+.tabla{width:100%;border-collapse:collapse;font-size:13.5px;max-width:920px}
+.tabla th,.tabla td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--pg-line);vertical-align:top}
+.tabla th{color:var(--pg-mut);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+.tabla td b{color:var(--pg-ink)}
+.tabla td{color:var(--pg-mut)}
+
+/* ═══════════ El teléfono: tokens = los de la app (globals.css) ═══════════ */
+.ph{
+  --papel:#e6eef8;--sup:#fff;--sup-2:#d9e5f4;--tinta:#0a2260;--tinta-2:#3e5183;--tinta-3:#52658f;--linea:#c4d5ec;--linea-fuerte:#a9bfdf;
+  --acento:#1f5cff;--acento-tinta:#1244cc;--acento-suave:#dce6ff;--acento-texto:#fff;--acento-2:#ffc800;--acento-2-tinta:#0a2260;
+  --fd:"Unbounded","DM Sans",system-ui,sans-serif;--ft:"DM Sans",system-ui,sans-serif;--fm:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --tt:none;--r-btn:12px;--r-card:16px;--bw:0px;
+}
+.ph{width:300px;height:620px;flex:none;position:relative;overflow:hidden;border-radius:34px;background:var(--papel);color:var(--tinta);
+  font-family:var(--ft);box-shadow:0 0 0 7px #101216,0 24px 48px -20px rgb(0 0 0/.5);isolation:isolate;display:flex;flex-direction:column}
+.ph *{box-sizing:border-box}
+.reloj{flex:none;height:28px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;font:700 11px/1 var(--fm);color:inherit}
+.cabecera{flex:none;display:flex;align-items:center;gap:8px;padding:6px 16px 12px}
+.cabecera .auto{font-size:18px}
+.cabecera b{font-family:var(--fd);font-size:19px;font-weight:700;text-transform:var(--tt)}
+
+/* ---------- contenido base de "Hoy", reusado en las tres opciones ---------- */
+.pantalla{flex:1;min-height:0;overflow-y:auto;padding:0 16px 16px;display:flex;flex-direction:column;gap:12px;position:relative}
+.tira{display:flex;gap:6px}
+.dia{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 2px;border-radius:12px;background:var(--sup-2);font-size:11px;font-weight:700;color:var(--tinta-2)}
+.dia b{font-size:14px;color:var(--tinta)}
+.dia.hoy{background:var(--acento);color:var(--acento-texto)}
+.dia.hoy b{color:var(--acento-texto)}
+.tarjeta{border:var(--bw) solid var(--linea-fuerte);border-radius:var(--r-card);background:var(--sup);padding:14px}
+.tarjeta .fila{display:flex;align-items:center;gap:10px}
+.tarjeta .ic{font-size:22px}
+.tarjeta b{font-size:14px;display:block}
+.tarjeta span{font-size:12px;color:var(--tinta-2)}
+.btn-cargar{min-height:52px;border:0;border-radius:var(--r-btn);background:var(--acento);color:var(--acento-texto);font:700 15px/1 var(--ft);display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
+.subtexto{font-size:11.5px;color:var(--tinta-3);line-height:1.5}
+.acc-oscuro{border-radius:var(--r-card);background:#262626;color:#fff;overflow:hidden}
+.acc-oscuro summary{list-style:none;cursor:pointer;padding:13px 14px;display:flex;align-items:center;justify-content:space-between}
+.acc-oscuro summary::-webkit-details-marker{display:none}
+.acc-oscuro b{font-family:var(--fd);font-size:14.5px}
+.acc-oscuro span{font-size:11px;opacity:.75;display:block}
+.acc-cuerpo2{padding:10px 12px 12px;background:var(--acento-suave);display:grid;gap:6px}
+.mini-btn{min-height:40px;border-radius:var(--r-btn);border:var(--bw) solid var(--linea-fuerte);background:var(--sup);display:flex;align-items:center;gap:8px;padding:0 12px;font-size:12.5px;font-weight:700;color:var(--tinta)}
+
+/* ---------- Opción A: recorrido guiado (spotlight) ---------- */
+.velo{position:absolute;inset:0;z-index:9;pointer-events:none;transition:opacity .25s}
+.velo.oculto{opacity:0;pointer-events:none}
+.hueco{position:absolute;border-radius:14px;box-shadow:0 0 0 9999px rgb(10 15 25/.72);transition:top .35s cubic-bezier(.4,0,.2,1),left .35s cubic-bezier(.4,0,.2,1),width .35s cubic-bezier(.4,0,.2,1),height .35s cubic-bezier(.4,0,.2,1)}
+.globo{position:absolute;z-index:10;max-width:238px;background:#fff;color:#14161d;border-radius:14px;padding:12px 13px;box-shadow:0 14px 30px -10px rgb(0 0 0/.5);transition:top .35s cubic-bezier(.4,0,.2,1),left .35s cubic-bezier(.4,0,.2,1)}
+.globo .num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--acento);color:var(--acento-texto);font:800 11px/1 var(--fm);margin-right:6px}
+.globo b{font-size:12.5px}
+.globo p{font-size:11.5px;color:#4b5262;margin-top:5px;line-height:1.5}
+.globo .nav{display:flex;gap:6px;margin-top:9px}
+.globo .nav button{flex:1;min-height:30px;border:0;border-radius:8px;font:700 11px/1 "DM Sans",sans-serif;cursor:pointer}
+.globo .sig{background:var(--acento);color:var(--acento-texto)}
+.globo .ant{background:#eceef3;color:#14161d}
+.globo .saltar{position:absolute;top:8px;right:10px;border:0;background:none;font-size:10.5px;color:#8a90a0;text-decoration:underline;cursor:pointer;padding:2px}
+.arranque{position:absolute;inset:0;z-index:8;display:flex;align-items:center;justify-content:center;background:rgb(10 15 25/.55)}
+.arranque.oculto{display:none}
+.arranque button{min-height:46px;padding:0 20px;border:0;border-radius:99px;background:#fff;color:#14161d;font:800 13.5px/1 "DM Sans",sans-serif;display:flex;align-items:center;gap:8px;cursor:pointer}
+
+/* ---------- Opción B: tarjetas tipo historia ---------- */
+.historia{position:absolute;inset:0;z-index:9;background:var(--tinta);color:#fff;display:flex;flex-direction:column;transition:opacity .2s}
+.historia.oculto{opacity:0;pointer-events:none}
+.historia .puntos{display:flex;gap:5px;padding:14px 14px 0}
+.historia .puntos i{flex:1;height:3px;border-radius:99px;background:rgb(255 255 255/.28);overflow:hidden}
+.historia .puntos i b{display:block;height:100%;width:0%;background:#fff;border-radius:99px;transition:width .25s}
+.historia .puntos i.hecho b{width:100%}
+.historia .puntos i.actual b{width:100%;transition:width 3.2s linear}
+.historia-cerrar{position:absolute;top:12px;right:12px;z-index:2;border:0;background:rgb(255 255 255/.15);color:#fff;width:26px;height:26px;border-radius:50%;font-size:13px;cursor:pointer}
+.historia-cuerpo{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px 22px;text-align:center}
+.hist-ilustra{width:100%;max-width:210px;aspect-ratio:1.15;border-radius:18px;background:rgb(255 255 255/.08);display:flex;align-items:center;justify-content:center;position:relative}
+.hist-ilustra .dedo{position:absolute;font-size:26px;filter:drop-shadow(0 4px 6px rgb(0 0 0/.4))}
+.historia h4{font-family:var(--fd);font-size:19px;line-height:1.2}
+.historia p{font-size:13px;color:rgb(255 255 255/.78);max-width:30ch;line-height:1.55}
+.hist-zonas{position:absolute;inset:0;display:flex;z-index:1}
+.hist-zonas span{flex:1}
+.historia-pie{flex:none;display:flex;gap:8px;padding:14px 20px calc(16px + env(safe-area-inset-bottom,0px))}
+.historia-pie button{flex:1;min-height:44px;border-radius:99px;border:0;font:800 13px/1 "DM Sans",sans-serif;cursor:pointer}
+.historia-pie .sig{background:#fff;color:var(--tinta)}
+.historia-pie .ant{background:rgb(255 255 255/.14);color:#fff}
+
+/* ---------- Opción C: manual ilustrado, siempre disponible ---------- */
+.manual-acc{border:var(--bw) solid var(--linea-fuerte);border-radius:var(--r-card);background:var(--sup);overflow:hidden}
+.manual-acc summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:13px 14px}
+.manual-acc summary::-webkit-details-marker{display:none}
+.manual-acc summary b{font-size:13.5px}
+.manual-acc summary span{font-size:11px;color:var(--tinta-2);display:block;margin-top:1px}
+.manual-cuerpo{padding:4px 14px 14px;display:grid;gap:12px}
+.paso-ilustrado{display:flex;gap:10px}
+.paso-ilustrado .miniatura{flex:none;width:54px;height:54px;border-radius:12px;background:var(--acento-suave);display:flex;align-items:center;justify-content:center;font-size:22px;position:relative}
+.paso-ilustrado .miniatura .badge{position:absolute;top:-5px;left:-5px;width:18px;height:18px;border-radius:50%;background:var(--acento);color:var(--acento-texto);font:800 10px/18px var(--fm);text-align:center}
+.paso-ilustrado .txt b{font-size:12.5px;display:block}
+.paso-ilustrado .txt p{font-size:11.5px;color:var(--tinta-2);line-height:1.5;margin-top:2px}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="cab">
+    <span class="rot">Control Driver · Propuestas de tutoriales</span>
+    <h1>Tres formas de enseñar a usar la app — misma guía, tres maneras de mostrarla</h1>
+    <p class="lead">
+      Las tres cuentan lo mismo —<b>«Cómo registrar tus pedidos por día»</b>— pero de manera distinta.
+      Tócalas para verlas andar: <b>A</b> resalta el botón real de la pantalla, uno por uno; <b>B</b> es una
+      historia de tarjetas a pantalla completa, como las que ya conoces de otras apps; <b>C</b> es la guía de
+      siempre, para leer con calma, sin nada que se mueva encima de la pantalla.
+    </p>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="stage">
+    <div class="slots">
+
+      <!-- ═══════════ OPCIÓN A: recorrido guiado con foco ═══════════ -->
+      <div class="slot">
+        <h3><span class="letra">A</span> Recorrido guiado</h3>
+        <div class="ph" id="phA">
+          <div class="reloj"><span>9:41</span><span>●●●●</span></div>
+          <div class="cabecera"><span class="auto">🚗</span><b>Hoy</b></div>
+          <div class="pantalla">
+            <div class="tira" id="a-tira">
+              <div class="dia">Vie<br><b>25</b></div>
+              <div class="dia">Sáb<br><b>26</b></div>
+              <div class="dia">Dom<br><b>27</b></div>
+              <div class="dia hoy">Lun<br><b>28</b></div>
+              <div class="dia">Mar<br><b>29</b></div>
+              <div class="dia">Mié<br><b>30</b></div>
+              <div class="dia">Jue<br><b>01</b></div>
+            </div>
+            <div class="tarjeta">
+              <div class="fila"><span class="ic">🚗</span><div><b>Hoy: sin cargar</b><span>Todavía no has subido las capturas de hoy.</span></div></div>
+            </div>
+            <button class="btn-cargar" id="a-btn-cargar">⬆ Cargar capturas</button>
+            <p class="subtexto">Son las capturas de la app de la tienda, con tus rutas y pedidos.</p>
+            <details class="acc-oscuro" id="a-acc">
+              <summary><b>Subir más</b> <span style="opacity:.6">▾</span></summary>
+              <div class="acc-cuerpo2">
+                <div class="mini-btn" id="a-btn-comanda">🎫 Leer una comanda</div>
+                <div class="mini-btn">🔢 Anotar cuántos pedidos hice</div>
+                <div class="mini-btn">✍️ Añadir un pedido a mano</div>
+              </div>
+            </details>
+          </div>
+          <div class="hueco" id="a-hueco" style="top:0;left:0;width:0;height:0;opacity:0"></div>
+          <div class="globo" id="a-globo" style="top:0;left:0;opacity:0"></div>
+          <div class="arranque" id="a-arranque"><button id="a-empezar">▶ Ver el recorrido</button></div>
+        </div>
+        <figcaption>Oscurece todo menos el botón que toca tocar, con una burbuja de texto al lado. Empieza sola la primera vez, o se repite desde Tutoriales.</figcaption>
+        <div class="accion"><button class="pg-btn primario" onclick="tourA.reiniciar()">▶ Repetir</button></div>
+      </div>
+
+      <!-- ═══════════ OPCIÓN B: tarjetas tipo historia ═══════════ -->
+      <div class="slot">
+        <h3><span class="letra">B</span> Tarjetas tipo historia</h3>
+        <div class="ph" id="phB">
+          <div class="reloj"><span>9:41</span><span>●●●●</span></div>
+          <div class="cabecera"><span class="auto">🚗</span><b>Hoy</b></div>
+          <div class="pantalla">
+            <div class="tira">
+              <div class="dia">Vie<br><b>25</b></div><div class="dia">Sáb<br><b>26</b></div><div class="dia">Dom<br><b>27</b></div>
+              <div class="dia hoy">Lun<br><b>28</b></div><div class="dia">Mar<br><b>29</b></div><div class="dia">Mié<br><b>30</b></div><div class="dia">Jue<br><b>01</b></div>
+            </div>
+            <div class="tarjeta"><div class="fila"><span class="ic">🚗</span><div><b>Hoy: sin cargar</b><span>Todavía no has subido las capturas de hoy.</span></div></div></div>
+            <button class="btn-cargar">⬆ Cargar capturas</button>
+            <p class="subtexto">Son las capturas de la app de la tienda, con tus rutas y pedidos.</p>
+            <details class="acc-oscuro"><summary><b>Subir más</b><span style="opacity:.6">▾</span></summary></details>
+          </div>
+
+          <div class="historia oculto" id="b-historia">
+            <button class="historia-cerrar" id="b-cerrar">✕</button>
+            <div class="puntos" id="b-puntos"></div>
+            <div class="historia-cuerpo" id="b-cuerpo">
+              <div class="hist-ilustra" id="b-ilustra"></div>
+              <h4 id="b-titulo"></h4>
+              <p id="b-texto"></p>
+            </div>
+            <div class="hist-zonas"><span id="b-zona-atras"></span><span id="b-zona-sig"></span></div>
+            <div class="historia-pie">
+              <button class="ant" id="b-ant">Atrás</button>
+              <button class="sig" id="b-sig">Siguiente</button>
+            </div>
+          </div>
+          <div class="arranque" id="b-arranque"><button id="b-empezar">▶ Ver la historia</button></div>
+        </div>
+        <figcaption>Pantalla completa, una idea por tarjeta, como un estado de WhatsApp. Se avanza tocando los lados o con los botones; se sale cuando se quiere.</figcaption>
+        <div class="accion"><button class="pg-btn primario" onclick="tourB.reiniciar()">▶ Repetir</button></div>
+      </div>
+
+      <!-- ═══════════ OPCIÓN C: manual ilustrado, siempre disponible ═══════════ -->
+      <div class="slot">
+        <h3><span class="letra">C</span> Manual ilustrado</h3>
+        <div class="ph">
+          <div class="reloj"><span>9:41</span><span>●●●●</span></div>
+          <div class="cabecera"><span class="auto">🚗</span><b>Tutoriales</b></div>
+          <div class="pantalla">
+            <p class="subtexto" style="margin-bottom:2px">Guías cortas, paso a paso. Toca un tema para abrirlo.</p>
+            <details class="manual-acc" open>
+              <summary><div><b>Cómo registrar tus pedidos por día</b><span>La forma normal: subir capturas y confirmar</span></div><span style="opacity:.5">▾</span></summary>
+              <div class="manual-cuerpo">
+                <div class="paso-ilustrado"><div class="miniatura"><span class="badge">1</span>📅</div><div class="txt"><b>Elige el día</b><p>La tira de arriba manda: toca el que quieres cargar.</p></div></div>
+                <div class="paso-ilustrado"><div class="miniatura"><span class="badge">2</span>⬆️</div><div class="txt"><b>Cargar capturas</b><p>Elige las capturas de la app de la tienda, una o varias.</p></div></div>
+                <div class="paso-ilustrado"><div class="miniatura"><span class="badge">3</span>👀</div><div class="txt"><b>Revisa lo leído</b><p>Lo dudoso queda marcado, para que lo corrijas antes de guardar.</p></div></div>
+                <div class="paso-ilustrado"><div class="miniatura"><span class="badge">4</span>✅</div><div class="txt"><b>Confirma</b><p>Los pedidos ya cuentan para el pago de esa semana.</p></div></div>
+              </div>
+            </details>
+            <details class="manual-acc"><summary><div><b>Cómo registrar tus pedidos por ruta</b><span>Próximamente</span></div><span style="opacity:.5">▾</span></summary></details>
+            <details class="manual-acc"><summary><div><b>Actualizar o eliminar registros</b><span>Próximamente</span></div><span style="opacity:.5">▾</span></summary></details>
+          </div>
+        </div>
+        <figcaption>La pantalla de Tutoriales de siempre, pero cada paso lleva un dibujo chico en vez de solo texto. No interrumpe: se abre cuando se busca.</figcaption>
+        <div class="accion"><button class="pg-btn" disabled>Sin animación que repetir</button></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="comp">
+    <h2>¿Cuál conviene para esta app?</h2>
+    <table class="tabla">
+      <tr><th>Opción</th><th>A favor</th><th>En contra</th></tr>
+      <tr><td><b>A · Recorrido guiado</b></td><td>Enseña sobre los botones reales: lo que ves en el tour es exactamente lo que vas a tocar después. Es el patrón que ya conoces de apps nuevas que abres por primera vez.</td><td>Hay que mantenerlo si la pantalla cambia de sitio algún botón; no sirve para explicar algo que no está a la vista en ese momento (como el detalle de una comanda).</td></tr>
+      <tr><td><b>B · Tarjetas historia</b></td><td>El más vistoso y rápido de mirar; no depende de la pantalla real, así que no se rompe si algo cambia de lugar; fácil de ampliar con más temas.</td><td>Es una ilustración, no el botón real: hay un pasito extra de "ahora búscalo tú" al terminar.</td></tr>
+      <tr><td><b>C · Manual ilustrado</b></td><td>El más simple y barato de mantener; queda siempre disponible para volver a consultar, sin interrumpir el trabajo; se lee a su ritmo.</td><td>El menos llamativo de los tres; a nadie le "salta a la vista" solo, hay que ir a buscarlo a Tutoriales.</td></tr>
+    </table>
+    <p class="lead" style="margin-top:6px">
+      Mi sugerencia: <b>C para todos los temas</b> —fácil, no se rompe, se actualiza solo con texto— y
+      <b>A solo para «Cómo registrar tus pedidos por día»</b>, disparado una vez la primera vez que se abre la
+      app (y repetible desde Tutoriales), porque es el paso que más veces se pregunta y el que más ayuda
+      señalar sobre el botón real. B queda como una tercera opción si prefieres algo más visual que C pero sin
+      atarlo a la pantalla real como A.
+    </p>
+  </div>
+</div>
+
+<script>
+/* ═══════════ Opción A: recorrido con foco ═══════════ */
+(function(){
+  const ph = document.getElementById('phA');
+  const hueco = document.getElementById('a-hueco');
+  const globo = document.getElementById('a-globo');
+  const arranque = document.getElementById('a-arranque');
+  const acc = document.getElementById('a-acc');
+  let i = -1;
+
+  const pasos = [
+    { el: () => document.getElementById('a-tira'), t: '1 / 4', h: 'Elige el día', p: 'La tira de arriba manda: toca el que quieres cargar. Por defecto es hoy.' },
+    { el: () => document.getElementById('a-btn-cargar'), t: '2 / 4', h: 'Toca «Cargar capturas»', p: 'Elige las capturas de la app de la tienda, de la galería o compartidas desde ella.' },
+    { el: () => document.getElementById('a-acc'), t: '3 / 4', h: '¿No tienes la captura?', p: 'Abre «Subir más»: ahí están las otras formas de añadir un pedido.', abrir: true },
+    { el: () => document.getElementById('a-btn-comanda'), t: '4 / 4', h: 'Leer una comanda', p: 'Toma o elige la foto de la hoja de despacho: lee el cliente y la dirección solo.' },
+  ];
+
+  function ubicar(elFn){
+    const r = elFn().getBoundingClientRect();
+    const base = ph.getBoundingClientRect();
+    return { top: r.top - base.top, left: r.left - base.left, width: r.width, height: r.height };
+  }
+
+  function pintar(){
+    const paso = pasos[i];
+    if (paso.abrir) acc.open = true;
+    requestAnimationFrame(() => {
+      const b = ubicar(paso.el);
+      hueco.style.opacity = '1';
+      hueco.style.top = (b.top - 6) + 'px';
+      hueco.style.left = (b.left - 6) + 'px';
+      hueco.style.width = (b.width + 12) + 'px';
+      hueco.style.height = (b.height + 12) + 'px';
+
+      let gt = b.top + b.height + 10;
+      if (gt + 120 > 620) gt = Math.max(8, b.top - 128);
+      let gl = Math.min(Math.max(8, b.left), 300 - 238 - 8);
+      globo.style.opacity = '1';
+      globo.style.top = gt + 'px';
+      globo.style.left = gl + 'px';
+      globo.innerHTML =
+        '<button class="saltar" onclick="tourA.cerrar()">Saltar</button>' +
+        '<b><span class="num">' + (i+1) + '</span>' + paso.h + '</b><p>' + paso.p + '</p>' +
+        '<div class="nav">' +
+          (i > 0 ? '<button class="ant" onclick="tourA.atras()">Atrás</button>' : '') +
+          '<button class="sig" onclick="tourA.siguiente()">' + (i === pasos.length-1 ? 'Listo' : 'Siguiente') + '</button>' +
+        '</div>';
+    });
+  }
+
+  window.tourA = {
+    reiniciar(){ acc.open = false; i = 0; arranque.classList.add('oculto'); pintar(); },
+    siguiente(){ if (i >= pasos.length - 1) { this.cerrar(); return; } i++; pintar(); },
+    atras(){ if (i <= 0) return; i--; pintar(); },
+    cerrar(){ hueco.style.opacity = '0'; globo.style.opacity = '0'; arranque.classList.remove('oculto'); i = -1; },
+  };
+  document.getElementById('a-empezar').addEventListener('click', () => tourA.reiniciar());
+})();
+
+/* ═══════════ Opción B: tarjetas tipo historia ═══════════ */
+(function(){
+  const historia = document.getElementById('b-historia');
+  const arranque = document.getElementById('b-arranque');
+  const puntos = document.getElementById('b-puntos');
+  const ilustra = document.getElementById('b-ilustra');
+  const titulo = document.getElementById('b-titulo');
+  const texto = document.getElementById('b-texto');
+  let i = 0;
+
+  const pasos = [
+    { emoji: '📅', dedo: 'left:34px;top:20px;', h: 'Elige el día', p: 'La tira de arriba manda: toca el que quieres cargar.' },
+    { emoji: '⬆️', dedo: 'right:30px;bottom:24px;', h: 'Cargar capturas', p: 'Elige las capturas de la app de la tienda, una o varias.' },
+    { emoji: '👀', dedo: 'left:50%;top:14px;', h: 'Revisa lo leído', p: 'Lo dudoso queda marcado, para que lo corrijas antes de guardar.' },
+    { emoji: '✅', dedo: 'right:26px;top:26px;', h: 'Confirma', p: 'Los pedidos ya cuentan para el pago de esa semana.' },
+  ];
+
+  function puntosHTML(){
+    return pasos.map((_, k) => '<i class="' + (k < i ? 'hecho' : k === i ? 'actual' : '') + '"><b></b></i>').join('');
+  }
+  function pintar(){
+    puntos.innerHTML = puntosHTML();
+    const paso = pasos[i];
+    ilustra.innerHTML = '<span style="font-size:46px">' + paso.emoji + '</span><span class="dedo" style="' + paso.dedo + '">👆</span>';
+    titulo.textContent = paso.h;
+    texto.textContent = paso.p;
+    document.getElementById('b-ant').style.visibility = i === 0 ? 'hidden' : 'visible';
+    document.getElementById('b-sig').textContent = i === pasos.length - 1 ? 'Empezar' : 'Siguiente';
+  }
+
+  window.tourB = {
+    reiniciar(){ i = 0; arranque.classList.add('oculto'); historia.classList.remove('oculto'); pintar(); },
+    siguiente(){ if (i >= pasos.length - 1) { this.cerrar(); return; } i++; pintar(); },
+    atras(){ if (i <= 0) return; i--; pintar(); },
+    cerrar(){ historia.classList.add('oculto'); arranque.classList.remove('oculto'); },
+  };
+  document.getElementById('b-empezar').addEventListener('click', () => tourB.reiniciar());
+  document.getElementById('b-cerrar').addEventListener('click', () => tourB.cerrar());
+  document.getElementById('b-sig').addEventListener('click', () => tourB.siguiente());
+  document.getElementById('b-ant').addEventListener('click', () => tourB.atras());
+  document.getElementById('b-zona-sig').addEventListener('click', () => tourB.siguiente());
+  document.getElementById('b-zona-atras').addEventListener('click', () => tourB.atras());
+})();
+</script>
+</body>
+</html>

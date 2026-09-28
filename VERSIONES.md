@@ -37,6 +37,24 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v44 — 28/09/2026
+Orden de «Subir más», menú de abajo más simple, y llega Tutoriales.
+- **Cambio: orden de «Subir más» › Pedido.** Ahora primero «Leer una comanda»
+  —la más completa—, luego «Anotar cuántos pedidos hice», «Añadir un pedido a
+  mano», y al final «Leer pedidos de una foto» —la que menos trae, solo
+  códigos—.
+- **Cambio: la barra de abajo muestra cuatro** —Inicio, Cargar, Pagos,
+  Estadísticas—, más grandes, y un quinto botón **Más** con el resto: Buscar,
+  Historial, Tutoriales y Ajustes, en una hoja que se abre al tocarlo.
+- **Nuevo: Tutoriales.** Por ahora, un primer tema: «Cómo registrar tus
+  pedidos por día», con los pasos del camino normal y las cuatro formas de
+  «Subir más» explicadas. Van a sumarse más temas.
+- De paso, se armaron **tres propuestas de cómo enseñar cada tutorial**
+  —un recorrido que resalta el botón real, tarjetas tipo historia, y el
+  manual de siempre con dibujos chicos— para elegir antes de construir el
+  resto de temas. Quedaron en `prototipo/propuestas-tutoriales.html`, sin
+  implementar todavía en la app.
+
 ### v43 — 28/09/2026
 Tomar la foto de la comanda con la cámara, quitar una leída de más, mover un
 pedido de día si hace falta, y el acordeón «Subir más» se hace notar.

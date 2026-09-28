@@ -16,9 +16,13 @@ import {
   Candado,
   Cartera,
   Casa,
+  Equis,
   Gente,
+  Mas,
   Salir,
+  Tutorial,
 } from "@/components/iconos";
+import { useCapa } from "@/hooks/useCapa";
 import { useVehiculo } from "@/hooks/useVehiculo";
 import {
   cerrarDeNuevo,
@@ -28,21 +32,23 @@ import {
 } from "@/lib/bloqueo";
 import { useDiaElegido } from "@/lib/diaElegido";
 import { hoyEnLima } from "@/lib/fechas";
-import { PUERTAS, puertaDe, tituloDe } from "@/lib/navegacion";
+import { PUERTAS, PUERTAS_PRINCIPALES, puertaDe, tituloDe, type Puerta } from "@/lib/navegacion";
 /** Dentro del APK solo existe el repartidor; el administrador vive en la web. */
 type Rol = "admin" | "driver";
 
 /**
  * Armazón de la app del driver.
  *
- * **Móvil**: una barra de abajo con **todas** las pantallas, siempre a un
- * pulgar —Inicio, Cargar, Pagos, Historial, Buscar, Estadísticas y Ajustes—.
- * La que se está mirando lleva la pastilla de color detrás del icono, así la
- * barra dice dónde se está; «Cargar» no es una pantalla, abre una hoja que
- * pregunta qué se carga y para qué día (ver `HojaDeCarga`).
+ * **Móvil**: una barra de abajo con las puertas principales —Inicio, Cargar,
+ * Pagos, Estadísticas, `PUERTAS_PRINCIPALES` de ellas—, más grandes que antes
+ * para llegar a un pulgar sin fijarse, y un quinto botón «Más» que abre las
+ * demás (Buscar, Historial, Tutoriales, Ajustes) en una hoja. La que se está
+ * mirando lleva la pastilla de color detrás del icono —o detrás de «Más», si
+ * vive en su menú—; «Cargar» no es una pantalla, abre una hoja que pregunta
+ * qué se carga y para qué día (ver `HojaDeCarga`).
  *
- * **Desde 900 px**: la misma lista pasa a ser una barra lateral fija y la de
- * abajo desaparece. Una sola estructura para los dos tamaños (§9).
+ * **Desde 900 px**: la barra lateral fija sí enseña `PUERTAS` entera —hay
+ * espacio de sobra— y la de abajo desaparece.
  */
 
 /** El icono de cada puerta. «Cargar» no lleva: dibuja el vehículo del perfil. */
@@ -52,6 +58,7 @@ const ICONOS: Record<string, typeof Casa | undefined> = {
   historial: Calendario,
   buscar: Buscar,
   estadisticas: Barras,
+  tutoriales: Tutorial,
   ajustes: Candado,
 };
 
@@ -89,6 +96,7 @@ function ArmazonInterno({
   const ruta = usePathname();
   const router = useRouter();
   const [cargando, setCargando] = useState(false);
+  const [masAbierto, setMasAbierto] = useState(false);
   const { abrir, trabajando, deshabilitado } = useCarga();
   const vehiculo = useVehiculo();
   const diaElegido = useDiaElegido();
@@ -104,6 +112,13 @@ function ArmazonInterno({
 
   const activa = puertaDe(ruta);
   const titulo = tituloDe(ruta);
+
+  /* En el móvil, la barra de abajo no cabe entera: las primeras se quedan a la
+     vista, más grandes, y el resto vive detrás de «Más». Cierra el menú solo
+     al cambiar de pantalla, no al abrirlo de nuevo sobre la misma. */
+  const principales = PUERTAS.slice(0, PUERTAS_PRINCIPALES);
+  const resto = PUERTAS.slice(PUERTAS_PRINCIPALES);
+  const masEncendido = resto.some((p) => p.id === activa);
 
   /* «Cargar» propone el día que se tiene delante: el de Inicio, si se está en
      Inicio; en cualquier otra pantalla, hoy. Cambiarlo es un toque en la hoja. */
@@ -237,16 +252,19 @@ function ArmazonInterno({
         </div>
       </div>
 
-      {/* La barra de abajo: siete puertas. La encendida lleva una pastilla de
-          color detrás del icono; «Cargar» se enciende mientras su hoja está abierta. */}
+      {/* La barra de abajo: las puertas principales, más grandes, y «Más» al
+          final para las demás. La encendida lleva una pastilla de color
+          detrás del icono; «Cargar» se enciende mientras su hoja está
+          abierta, y «Más» si la pantalla activa vive dentro de su menú. */}
       <nav
         aria-label="Navegación principal"
-        className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-7 items-end rounded-t-[20px] border-t border-linea bg-sup px-0.5 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] shadow-[0_-10px_24px_-16px_rgb(10_34_96/0.5)] lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-30 grid items-end rounded-t-[20px] border-t border-linea bg-sup px-0.5 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] shadow-[0_-10px_24px_-16px_rgb(10_34_96/0.5)] lg:hidden"
+        style={{ gridTemplateColumns: `repeat(${principales.length + 1}, minmax(0, 1fr))` }}
       >
-        {PUERTAS.map((p) => {
+        {principales.map((p) => {
           const encendida = activa === p.id || (p.id === "cargar" && cargando);
           const Icono = ICONOS[p.id];
-          const icono = Icono ? <Icono className="size-6" /> : <Auto vehiculo={vehiculo} mono icono />;
+          const icono = Icono ? <Icono className="size-7" /> : <Auto vehiculo={vehiculo} mono icono />;
           return p.href ? (
             <PuertaDeLaBarra
               key={p.id}
@@ -266,7 +284,21 @@ function ArmazonInterno({
             />
           );
         })}
+        <PuertaDeLaBarra
+          nombre="Más"
+          activa={masEncendido}
+          icono={<Mas className="size-7" />}
+          alTocar={() => setMasAbierto(true)}
+        />
       </nav>
+
+      {masAbierto && (
+        <MenuMas
+          resto={resto}
+          activa={activa}
+          alCerrar={() => setMasAbierto(false)}
+        />
+      )}
 
       {cargando && (
         <HojaDeCarga
@@ -280,6 +312,66 @@ function ArmazonInterno({
         />
       )}
     </BloqueoApp>
+  );
+}
+
+/**
+ * La hoja de «Más»: las puertas que no caben a la vista en el móvil. Es una
+ * lista de enlaces sencilla, no un formulario, así que no hace falta el peso
+ * de `Acordeon`; solo una hoja como las demás de la app.
+ */
+function MenuMas({
+  resto,
+  activa,
+  alCerrar,
+}: {
+  resto: readonly Puerta[];
+  activa: string;
+  alCerrar: () => void;
+}) {
+  useCapa(alCerrar);
+  return (
+    <div
+      className="fixed inset-0 z-40 flex items-end justify-center bg-black/50 lg:hidden"
+      onClick={(e) => e.target === e.currentTarget && alCerrar()}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Más"
+        className="flex w-full max-w-md flex-col gap-1 rounded-t-hoja bg-sup p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] shadow-alta"
+      >
+        <div className="relative mb-1 flex items-center justify-center px-1">
+          <span className="block h-1 w-9 rounded-full bg-linea-fuerte" />
+          <button
+            type="button"
+            onClick={alCerrar}
+            aria-label="Cerrar"
+            className="absolute right-1 grid size-11 shrink-0 place-items-center rounded-full text-tinta-2"
+          >
+            <Equis className="size-5" />
+          </button>
+        </div>
+        {resto.map((p) => {
+          const Icono = ICONOS[p.id];
+          const encendida = activa === p.id;
+          return (
+            <Link
+              key={p.id}
+              href={p.href ?? "#"}
+              onClick={alCerrar}
+              aria-current={encendida ? "page" : undefined}
+              className={`flex min-h-14 items-center gap-3 rounded-btn px-3 text-[16px] ${
+                encendida ? "bg-acento-suave font-semibold text-acento-tinta" : "font-medium text-tinta"
+              }`}
+            >
+              {Icono && <Icono className="size-6 shrink-0" />}
+              {p.nombre}
+            </Link>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
