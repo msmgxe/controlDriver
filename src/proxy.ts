@@ -20,7 +20,10 @@ import { revisarConfiguracion } from "@/lib/configuracion";
  * CDN y conviene que no dependa de una consulta a la base en cada petición.
  */
 
-const RUTAS_PUBLICAS = ["/acceso", "/auth", "/configuracion", "/sin-conexion"];
+// /licencias tiene su propia puerta (una contraseña, en vez de Supabase) —
+// ver src/lib/licencia/sesion.ts. Si no estuviera aquí, este proxy la
+// mandaría a /acceso antes de que esa puerta llegara a comprobarse.
+const RUTAS_PUBLICAS = ["/acceso", "/auth", "/configuracion", "/sin-conexion", "/licencias"];
 
 /**
  * Orígenes a los que el navegador puede hablar para llegar a Supabase.
