@@ -7,11 +7,12 @@ cuadren, guarda el día y calcula lo que le toca cobrar cada semana.
 Una sola acción diaria: subir capturas → revisar → confirmar. Todo lo demás es
 consulta.
 
-- **Especificación completa:** [`ESPECIFICACION_APP_RUTAS.md`](ESPECIFICACION_APP_RUTAS.md)
-- **Dónde nos apartamos de ella y por qué:** [`NOTAS-DE-IMPLEMENTACION.md`](NOTAS-DE-IMPLEMENTACION.md)
+- **Especificación completa:** [`Archivos MD/ESPECIFICACION_APP_RUTAS.md`](Archivos%20MD/ESPECIFICACION_APP_RUTAS.md)
+- **Dónde nos apartamos de ella y por qué:** [`Archivos MD/NOTAS-DE-IMPLEMENTACION.md`](Archivos%20MD/NOTAS-DE-IMPLEMENTACION.md)
 - **Qué cambió en cada versión:** [`VERSIONES.md`](VERSIONES.md)
-- **Instalar el APK en un celular:** [`README-ANDROID.md`](README-ANDROID.md)
+- **Instalar el APK en un celular:** [`Archivos MD/README-ANDROID.md`](Archivos%20MD/README-ANDROID.md)
 - **Licencias:** [`LICENCIAS.md`](LICENCIAS.md)
+- **Panel de licencias y usuarios (en construcción):** [`Archivos MD/Proximos pasos Web App.md`](Archivos%20MD/Proximos%20pasos%20Web%20App.md)
 - **Diseño (prototipos):** [`prototipo/`](prototipo/) — `prototipo-final.html` es el de las pantallas actuales
 
 ## Cómo funciona
