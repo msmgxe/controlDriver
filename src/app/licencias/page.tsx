@@ -2,6 +2,7 @@ import { listarLicencias } from "@/lib/licencia/repositorio";
 import { haySesion, panelConfigurado } from "@/lib/licencia/sesion";
 import { tursoConfigurado } from "@/lib/licencia/turso";
 
+import { FormularioEmitir } from "./FormularioEmitir";
 import { FormularioEntrada } from "./FormularioEntrada";
 import { TablaLicencias } from "./TablaLicencias";
 
@@ -45,5 +46,10 @@ export default async function PaginaLicencias() {
   }
 
   const filas = await listarLicencias();
-  return <TablaLicencias filas={filas} />;
+  return (
+    <div className="flex flex-col gap-6">
+      <FormularioEmitir />
+      <TablaLicencias filas={filas} />
+    </div>
+  );
 }

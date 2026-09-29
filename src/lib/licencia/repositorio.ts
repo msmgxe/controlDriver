@@ -1,10 +1,12 @@
 /**
- * Leer y escribir licencias en Turso, para el panel web y para el CLI.
- *
- * El CLI (`scripts/licencia.ts`) sigue siendo quien firma y quien manda el
- * mensaje de WhatsApp; esto solo guarda una copia del resultado para que el
- * panel web pueda mostrarla. Ver `turso.ts` para qué pasa si no hay cuenta
- * conectada todavía, y por qué este módulo tampoco lleva `"server-only"`.
+ * Leer y escribir licencias en Turso: la base que comparten el CLI
+ * (`scripts/licencia.ts`) y el panel web (`src/lib/licencia/servidor.ts`).
+ * Los dos firman —cada uno con su copia de la clave privada, una en
+ * `~/.rutas-a` y otra en la variable de entorno del servidor— y los dos
+ * terminan escribiendo aquí, así que esta tabla es la fuente de verdad de
+ * "hasta cuándo está pagado cada teléfono", vengan las renovaciones de donde
+ * vengan. Ver `turso.ts` para qué pasa si no hay cuenta conectada todavía, y
+ * por qué este módulo tampoco lleva `"server-only"`.
  */
 import { clienteTurso, migrarTurso } from "./turso";
 
@@ -29,6 +31,23 @@ export async function listarLicencias(): Promise<FilaLicencia[]> {
     vigenteHasta: String(f.vigente_hasta),
     diasDeGracia: Number(f.dias_de_gracia),
   }));
+}
+
+/**
+ * La licencia actual de un teléfono, si ya tiene una. Es lo que se usa como
+ * "previa" al renovar: quien paga antes de vencer no pierde los días que le
+ * quedaban, igual que hace el CLI con su CSV.
+ */
+export async function buscarLicencia(codigo: string): Promise<{ vigenteHasta: string } | null> {
+  const db = clienteTurso();
+  if (!db) return null;
+  await migrarTurso();
+  const resultado = await db.execute({
+    sql: `select vigente_hasta from licencias where codigo = ?`,
+    args: [codigo],
+  });
+  const fila = resultado.rows[0];
+  return fila ? { vigenteHasta: String(fila.vigente_hasta) } : null;
 }
 
 /**
