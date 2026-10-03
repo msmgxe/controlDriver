@@ -204,7 +204,7 @@ export default function PaginaPagos() {
       </div>
 
       {/* El total de la semana elegida. */}
-      <section className="tarjeta flex flex-col gap-1.5" aria-label="Total de la semana">
+      <section className="tarjeta entra flex flex-col gap-1.5" aria-label="Total de la semana">
         <div className="flex items-center justify-between gap-2">
           <span className="rotulo !text-tinta-2">
             Sem. {Number(semana.inicio.slice(8, 10))}–{Number(semana.fin.slice(8, 10))}

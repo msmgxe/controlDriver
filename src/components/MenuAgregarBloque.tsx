@@ -6,9 +6,10 @@ import { useCapa } from "@/hooks/useCapa";
 import { Reloj, Suma, Taxi, Tienda } from "@/components/iconos";
 
 /**
- * El botón flotante "+" de Inicio: abre un menú con las tres formas de
- * agregar algo al día (§ plan de apoyo/taxi). "Pedidos de una tienda" no
- * abre nada propio: reusa el "Subir más" que ya existe.
+ * El botón flotante «+» de Inicio: al tocarlo se abre en abanico con las tres
+ * cosas que se pueden agregar al día. El «+» gira a «×», las opciones salen una
+ * tras otra y el resto de la pantalla se oscurece. Mientras está cerrado,
+ * «respira» —un pulso lento— para que se note que invita a tocar.
  */
 export function MenuAgregarBloque({
   disabled,
@@ -23,122 +24,67 @@ export function MenuAgregarBloque({
 }) {
   const [abierto, setAbierto] = useState(false);
 
+  function elegir(accion: () => void) {
+    setAbierto(false);
+    accion();
+  }
+
   return (
     <>
+      {abierto && <Abanico alCerrar={() => setAbierto(false)} />}
+      {abierto && (
+        <div className="fixed right-5 bottom-[calc(150px+env(safe-area-inset-bottom,0px))] z-[45] flex flex-col items-end gap-3 sm:bottom-24">
+          <OpcionDelAbanico i={2} Icono={Taxi} texto="Taxi libre" color="#5b2bd6" onClick={() => elegir(onElegirTaxi)} />
+          <OpcionDelAbanico i={1} Icono={Reloj} texto="Apoyo a otra tienda" color="#c99700" onClick={() => elegir(onElegirApoyo)} />
+          <OpcionDelAbanico i={0} Icono={Tienda} texto="Pedidos de mi tienda" color="var(--acento)" onClick={() => elegir(onElegirTienda)} />
+        </div>
+      )}
       <button
         type="button"
-        aria-label="Agregar al día"
+        aria-label={abierto ? "Cerrar" : "Agregar al día"}
+        aria-expanded={abierto}
         disabled={disabled}
-        onClick={() => setAbierto(true)}
-        className="fixed right-5 bottom-[calc(84px+env(safe-area-inset-bottom,0px))] z-40 grid size-14 place-items-center rounded-full bg-acento text-acento-texto shadow-alta disabled:opacity-50 sm:bottom-6"
+        onClick={() => setAbierto((a) => !a)}
+        className={`fixed right-5 bottom-[calc(84px+env(safe-area-inset-bottom,0px))] z-[46] grid size-14 place-items-center rounded-full bg-acento text-acento-texto shadow-alta transition-transform duration-300 active:scale-90 disabled:opacity-50 sm:bottom-6 ${
+          abierto ? "rotate-45" : "respira"
+        }`}
       >
         <Suma className="size-7" />
       </button>
-
-      {abierto && (
-        <SheetDeOpciones
-          alCerrar={() => setAbierto(false)}
-          onElegirTienda={() => {
-            setAbierto(false);
-            onElegirTienda();
-          }}
-          onElegirApoyo={() => {
-            setAbierto(false);
-            onElegirApoyo();
-          }}
-          onElegirTaxi={() => {
-            setAbierto(false);
-            onElegirTaxi();
-          }}
-        />
-      )}
     </>
   );
 }
 
-/** Aparte de `MenuAgregarBloque`: `useCapa` debe montarse solo mientras la hoja está abierta. */
-function SheetDeOpciones({
-  alCerrar,
-  onElegirTienda,
-  onElegirApoyo,
-  onElegirTaxi,
-}: {
-  alCerrar: () => void;
-  onElegirTienda: () => void;
-  onElegirApoyo: () => void;
-  onElegirTaxi: () => void;
-}) {
+/** Aparte: `useCapa` (el botón «atrás» de Android) debe montarse solo mientras el abanico está abierto. */
+function Abanico({ alCerrar }: { alCerrar: () => void }) {
   useCapa(alCerrar);
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center sm:p-5"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) alCerrar();
-      }}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Agregar al día"
-        className="w-full max-w-md rounded-t-hoja bg-sup px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] shadow-alta sm:rounded-hoja sm:pb-4"
-      >
-        <span className="mx-auto mb-3 block h-1 w-9 rounded-full bg-linea-fuerte sm:hidden" />
-        <p className="mb-1 px-1 text-xs font-bold tracking-wide text-tinta-2 uppercase">Agregar al día</p>
-
-        <OpcionDelMenu
-          Icono={Tienda}
-          titulo="Pedidos de una tienda"
-          detalle="Como ya funciona hoy"
-          fondo="bg-acento-suave text-acento-tinta"
-          onClick={onElegirTienda}
-        />
-        <OpcionDelMenu
-          Icono={Reloj}
-          titulo="Apoyo a otra tienda"
-          detalle="Por hora, o por tramos"
-          fondo="bg-[#fff4d6] text-[#8a6200]"
-          onClick={onElegirApoyo}
-        />
-        <OpcionDelMenu
-          Icono={Taxi}
-          titulo="Taxi libre"
-          detalle="Carrera suelta: inicio, fin y km"
-          fondo="bg-[#ece7ff] text-[#5b2bd6]"
-          onClick={onElegirTaxi}
-        />
-      </div>
-    </div>
-  );
+  return <div className="fixed inset-0 z-[44] bg-black/45" onClick={alCerrar} aria-hidden />;
 }
 
-function OpcionDelMenu({
+function OpcionDelAbanico({
+  i,
   Icono,
-  titulo,
-  detalle,
-  fondo,
+  texto,
+  color,
   onClick,
 }: {
+  i: number;
   Icono: typeof Tienda;
-  titulo: string;
-  detalle: string;
-  fondo: string;
+  texto: string;
+  color: string;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-3 border-t border-linea py-3 text-left first:border-t-0"
+      className="abanico-item flex items-center gap-2.5 rounded-full bg-sup py-1.5 pr-4 pl-1.5 text-sm font-bold shadow-alta active:scale-95"
+      style={{ "--i": i } as React.CSSProperties}
     >
-      <span className={`grid size-10 shrink-0 place-items-center rounded-full ${fondo}`}>
+      <span className="grid size-10 place-items-center rounded-full text-white" style={{ background: color }}>
         <Icono className="size-[19px]" />
       </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm font-bold text-tinta">{titulo}</span>
-        <span className="block text-xs text-tinta-2">{detalle}</span>
-      </span>
-      <span className="text-tinta-3">›</span>
+      {texto}
     </button>
   );
 }

@@ -32,9 +32,9 @@ export function DesgloseDeIngresos({
   const total = filas.reduce((s, f) => s + f.centimos, 0);
 
   return (
-    <div className="flex flex-col gap-3 rounded-card bg-sup-2 p-4" aria-label={titulo ?? "De dónde viene"}>
+    <div className="entra flex flex-col gap-3 rounded-card bg-sup-2 p-4" aria-label={titulo ?? "De dónde viene"}>
       {titulo && <span className="rotulo">{titulo}</span>}
-      {filas.map((f) => {
+      {filas.map((f, i) => {
         const parte = total > 0 ? f.centimos / total : 0;
         return (
           <div key={f.clave} className="flex flex-col gap-1">
@@ -43,7 +43,7 @@ export function DesgloseDeIngresos({
               <b className="shrink-0 font-mono text-[13px] tabular-nums">{formatearSoles(f.centimos)}</b>
             </div>
             <div className="h-2 overflow-hidden rounded-chip bg-papel">
-              <div className={`h-full rounded-chip ${COLOR[f.categoria]}`} style={{ width: `${Math.max(parte * 100, f.centimos > 0 ? 3 : 0)}%` }} />
+              <div className={`barra-crece h-full rounded-chip ${COLOR[f.categoria]}`} style={{ width: `${Math.max(parte * 100, f.centimos > 0 ? 3 : 0)}%`, "--i": i } as React.CSSProperties} />
             </div>
             <span className="text-[11.5px] text-tinta-2">
               {f.detalle}

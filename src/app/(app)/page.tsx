@@ -4,14 +4,15 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { Acordeon } from "@/components/Acordeon";
 import { BloquesDelDia } from "@/components/BloquesDelDia";
 import { CargarCapturas } from "@/components/CargarCapturas";
-import { DesgloseDeIngresos } from "@/components/DesgloseDeIngresos";
+import { BarraDeFuentes } from "@/components/BarraDeFuentes";
+import { FilaDeLista } from "@/components/ListaDelDia";
+import { HojaSubirMas } from "@/components/HojaSubirMas";
 import { DetalleDelDia } from "@/components/DetalleDelDia";
 import { HojaDeBloqueExtra } from "@/components/HojaDeBloqueExtra";
 import { HojaDeComandas } from "@/components/HojaDeComandas";
-import { Calendario, Luna, Ticket } from "@/components/iconos";
+import { Calendario, Luna, Reloj, Taxi, Ticket, Tienda as IconoTienda } from "@/components/iconos";
 import { usePuedeEscribir } from "@/components/Licencia";
 import { MenuAgregarBloque } from "@/components/MenuAgregarBloque";
 import { RecorridoGuiado, type PasoDeRecorrido } from "@/components/RecorridoGuiado";
@@ -245,6 +246,11 @@ function DelDia({
   const [subirMasAbierto, setSubirMasAbierto] = useState(false);
   const [bloqueAbierto, setBloqueAbierto] = useState<"apoyo" | "taxi" | null>(null);
   const { jornada, regla, estado, tienda, tiendas, ajustes, descanso, bloques } = detalle;
+  /** Qué fila de «¿Qué hiciste hoy?» está desplegada. */
+  const [filaAbierta, setFilaAbierta] = useState<"tienda" | "apoyo" | "taxi" | null>(null);
+  function abrirFila(cual: "tienda" | "apoyo" | "taxi") {
+    setFilaAbierta((a) => (a === cual ? null : cual));
+  }
 
   // El recorrido guiado: se dispara solo la primera vez que se abre la app,
   // y también cuando Tutoriales navega a `/?tour=registrar` para repetirlo
@@ -283,10 +289,9 @@ function DelDia({
       texto: "El camino más corto: abre la cámara de una vez y registra un pedido apenas lo entregas, sin esperar al final del día.",
     },
     {
-      selector: "#recorrido-subir-mas",
-      titulo: "¿Falta algo más?",
-      texto: "Aquí están las otras formas: anotar cuántos pedidos fueron, añadir uno a mano, o leer varias comandas de la galería de una vez.",
-      antes: () => setSubirMasAbierto(true),
+      selector: "#recorrido-lista",
+      titulo: "¿Qué hiciste hoy?",
+      texto: "Tus pedidos, un apoyo a otra tienda o una carrera de taxi. Toca lo que ya hiciste para ver el detalle, o lo que falta para anotarlo.",
     },
   ];
 
@@ -303,6 +308,9 @@ function DelDia({
   /* Con apoyo o taxi, la pastilla del día es el total de todo —lo que de verdad
      produjo—, y debajo se reparte por fuente. Sin ellos, queda como siempre. */
   const extrasCentimos = bloques.reduce((s, b) => s + b.montoCentimos, 0);
+  const apoyos = bloques.filter((b) => b.tipo !== "taxi");
+  const taxis = bloques.filter((b) => b.tipo === "taxi");
+  const hayPedidos = (jornada?.ordenes.length ?? 0) > 0 || (jornada?.rutas.length ?? 0) > 0;
   const desglose = desglosePorFuente({
     tiendaNombre: tienda?.nombre ?? null,
     pedidosTienda: jornada?.ordenes.length ?? 0,
@@ -324,11 +332,101 @@ function DelDia({
         <DiaSinCarga fecha={dia} hoy={hoy} descanso={descanso} puedeEscribir={puedeCargar} alCambiar={alCambiar} />
       )}
 
-      {bloques.length > 0 && <DesgloseDeIngresos filas={desglose} titulo="De dónde viene el día" />}
+      <BarraDeFuentes filas={desglose} alElegir={(c) => abrirFila(c === "tienda" ? "tienda" : c)} />
 
-      <BloquesDelDia fecha={dia} bloques={bloques} editable={editable && puedeCargar} alCambiar={alCambiar} />
+      {/* ¿Qué hiciste hoy? Tres preguntas con su respuesta: lo hecho se
+          despliega al tocarlo; lo que falta empieza a anotarse al tocarlo. */}
+      <div id="recorrido-lista" className="flex flex-col gap-2.5">
+        <h3 className="entra px-1 text-[17px]" style={{ "--i": 1 } as React.CSSProperties}>
+          {dia === hoy ? "¿Qué hiciste hoy?" : `¿Qué hiciste el ${nombreDelDia(dia)}?`}
+        </h3>
 
-      <div className="flex flex-col gap-2">
+        <FilaDeLista
+          indice={0}
+          Icono={IconoTienda}
+          fondo="bg-acento-suave text-acento-tinta"
+          titulo="Pedidos de mi tienda"
+          resumen={
+            hayPedidos
+              ? `${jornada!.ordenes.length} pedido${jornada!.ordenes.length === 1 ? "" : "s"} · ${jornada!.rutas.length} ruta${
+                  jornada!.rutas.length === 1 ? "" : "s"
+                }${minutos > 0 ? ` · ${formatearDuracion(minutos)} en ruta` : ""}${conCliente > 0 ? ` · ${conCliente} con cliente` : ""}`
+              : "Toca para anotarlos"
+          }
+          monto={hayPedidos ? formatearSoles(cobrado) : undefined}
+          hecha={hayPedidos}
+          abierta={filaAbierta === "tienda"}
+          alPulsar={() => (hayPedidos ? abrirFila("tienda") : setSubirMasAbierto(true))}
+        >
+          {jornada && (
+            <DetalleDelDia
+              fecha={dia}
+              jornada={jornada}
+              regla={regla}
+              tienda={tienda}
+              ajustes={ajustes}
+              editable={editable}
+              alCambiar={alCambiar}
+            />
+          )}
+          {!esFuturo && (
+            <button type="button" className="boton-fila" onClick={() => setSubirMasAbierto(true)}>
+              Agregar más pedidos o rutas
+            </button>
+          )}
+        </FilaDeLista>
+
+        <FilaDeLista
+          indice={1}
+          Icono={Reloj}
+          fondo="bg-[#fff4d6] text-[#8a6200]"
+          titulo="Apoyé a otra tienda"
+          resumen={
+            apoyos.length > 0
+              ? desglose
+                  .filter((f) => f.categoria === "apoyo")
+                  .map((f) => `${f.etiqueta.replace("Apoyo · ", "")} · ${f.detalle}`)
+                  .join(" · ")
+              : "Toca si cubriste otra tienda"
+          }
+          monto={apoyos.length > 0 ? formatearSoles(apoyos.reduce((s, b) => s + b.montoCentimos, 0)) : undefined}
+          hecha={apoyos.length > 0}
+          abierta={filaAbierta === "apoyo"}
+          alPulsar={() => (apoyos.length > 0 ? abrirFila("apoyo") : setBloqueAbierto("apoyo"))}
+        >
+          <BloquesDelDia fecha={dia} bloques={apoyos} editable={editable && puedeCargar} alCambiar={alCambiar} />
+          {!esFuturo && (
+            <button type="button" className="boton-fila" onClick={() => setBloqueAbierto("apoyo")}>
+              Agregar otro apoyo
+            </button>
+          )}
+        </FilaDeLista>
+
+        <FilaDeLista
+          indice={2}
+          Icono={Taxi}
+          fondo="bg-[#ece7ff] text-[#5b2bd6]"
+          titulo="Hice taxi"
+          resumen={
+            taxis.length > 0
+              ? desglose.find((f) => f.categoria === "taxi")?.detalle ?? ""
+              : "Toca para anotar una carrera"
+          }
+          monto={taxis.length > 0 ? formatearSoles(taxis.reduce((s, b) => s + b.montoCentimos, 0)) : undefined}
+          hecha={taxis.length > 0}
+          abierta={filaAbierta === "taxi"}
+          alPulsar={() => (taxis.length > 0 ? abrirFila("taxi") : setBloqueAbierto("taxi"))}
+        >
+          <BloquesDelDia fecha={dia} bloques={taxis} editable={editable && puedeCargar} alCambiar={alCambiar} />
+          {!esFuturo && (
+            <button type="button" className="boton-fila" onClick={() => setBloqueAbierto("taxi")}>
+              Agregar otra carrera
+            </button>
+          )}
+        </FilaDeLista>
+      </div>
+
+      <div className="entra flex flex-col gap-2" style={{ "--i": 6 } as React.CSSProperties}>
         <div id="recorrido-cargar-resumen">
           <CargarCapturas deshabilitado={!puedeCargar} dia={dia} />
         </div>
@@ -345,50 +443,27 @@ function DelDia({
           <Ticket className="size-[22px]" />
           Tomar foto de una comanda
         </button>
-        <p className="text-xs text-tinta-3">
-          Una foto por pedido, con cliente y dirección: directo a la cámara, sin pasar por «Subir más».
-        </p>
+        <p className="text-xs text-tinta-3">Una foto por pedido, con cliente y dirección: directo a la cámara.</p>
       </div>
 
-      {jornada && (
-        <Acordeon
-          titulo="Detalle de lo subido"
-          resumen={`${jornada.ordenes.length} pedidos · ${jornada.rutas.length} rutas${
-            minutos > 0 ? ` · ${formatearDuracion(minutos)} en ruta` : ""
-          }${conCliente > 0 ? ` · ${conCliente} con cliente` : ""}`}
-        >
-          <DetalleDelDia
+      {subirMasAbierto && !esFuturo && (
+        <HojaSubirMas titulo="Pedidos de mi tienda" alCerrar={() => setSubirMasAbierto(false)}>
+          <SubirMas
             fecha={dia}
             jornada={jornada}
             regla={regla}
-            tienda={tienda}
-            ajustes={ajustes}
             editable={editable}
             alCambiar={alCambiar}
+            alLeerComanda={() => {
+              setSubirMasAbierto(false);
+              setComanda(true);
+            }}
+            alAgregarBloque={(t) => {
+              setSubirMasAbierto(false);
+              setBloqueAbierto(t);
+            }}
           />
-        </Acordeon>
-      )}
-
-      {!esFuturo && (
-        <div id="recorrido-subir-mas">
-          <Acordeon
-            titulo="Subir más"
-            resumen="Pedidos, rutas, taxi y apoyo"
-            destacado
-            abierto={subirMasAbierto}
-            alCambiar={setSubirMasAbierto}
-          >
-            <SubirMas
-              fecha={dia}
-              jornada={jornada}
-              regla={regla}
-              editable={editable}
-              alCambiar={alCambiar}
-              alLeerComanda={() => setComanda(true)}
-              alAgregarBloque={setBloqueAbierto}
-            />
-          </Acordeon>
-        </div>
+        </HojaSubirMas>
       )}
 
       {recorrido && <RecorridoGuiado pasos={pasosRecorrido} alTerminar={() => setRecorrido(false)} />}

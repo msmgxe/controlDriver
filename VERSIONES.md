@@ -37,6 +37,21 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v49 — 03/10/2026
+Inicio rediseñado: «¿Qué hiciste hoy?» y el dinero en una barra de colores.
+- **La barra de semana y el calendario se quedan** arriba, igual que siempre.
+- **Barra de colores del día**: tienda, apoyo y taxi en una sola barra que se
+  llena al abrir; tocar un color despliega esa fuente.
+- **«¿Qué hiciste hoy?»**: tres filas —Pedidos de mi tienda, Apoyé a otra tienda,
+  Hice taxi—. Con ✓ verde si ya está (se despliega con su detalle); con «+» si
+  falta (al tocarla empieza a anotar). «Subir más» pasa a ser una hoja que se
+  abre desde «Pedidos de mi tienda».
+- **El «+» flotante** se abre en abanico (Pedidos, Apoyo, Taxi) y respira
+  suavemente mientras está cerrado.
+- **Movimiento**: las tarjetas entran escalonadas, los ✓ y el monto «saltan», las
+  barras se llenan (también en Pagos), las hojas suben desde abajo. Se apaga
+  solo si el teléfono tiene activada la opción de reducir movimiento.
+
 ### v48 — 03/10/2026
 Correcciones a apoyo y taxi, detalle por tramo y un respaldo que sí los incluye.
 - **Arreglo importante: el respaldo no guardaba el apoyo ni el taxi** (y al

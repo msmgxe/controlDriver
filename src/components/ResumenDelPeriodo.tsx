@@ -22,7 +22,7 @@ export function ResumenDelPeriodo({
   centimos: number;
 }) {
   return (
-    <section className="tarjeta flex flex-col gap-2.5 !p-3.5" aria-label={titulo}>
+    <section className="tarjeta entra flex flex-col gap-2.5 !p-3.5" aria-label={titulo}>
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-base leading-tight font-bold">{titulo}</h3>
         <span className="shrink-0 rounded-chip border border-linea-fuerte px-2.5 py-1 font-mono text-[11px] text-acento-tinta">
