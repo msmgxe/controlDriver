@@ -213,6 +213,24 @@ export const Mas = (p: Props) => (
   </Base>
 );
 
+/** Una tienda, para el apoyo tarifado por tramos. */
+export const Tienda = (p: Props) => (
+  <Base {...p}>
+    <path d="M3 9l1-5h16l1 5" />
+    <path d="M4 9v10a1 1 0 0 0 1 1h3v-6h8v6h3a1 1 0 0 0 1-1V9" />
+  </Base>
+);
+
+/** Taxi libre: una carrera suelta, fuera del flujo de pedidos de tienda. */
+export const Taxi = (p: Props) => (
+  <Base {...p}>
+    <path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11" />
+    <rect x="3" y="11" width="18" height="6" rx="2" />
+    <circle cx="7.5" cy="17.5" r="1.5" />
+    <circle cx="16.5" cy="17.5" r="1.5" />
+  </Base>
+);
+
 export const Tutorial = (p: Props) => (
   <Base {...p}>
     <path d="M12 6.5c-2-1.3-4.6-2-7-2v13c2.4 0 5 .7 7 2 2-1.3 4.6-2 7-2V4.5c-2.4 0-5 .7-7 2Z" />

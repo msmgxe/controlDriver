@@ -5,11 +5,14 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { Acordeon } from "@/components/Acordeon";
+import { BloquesDelDia } from "@/components/BloquesDelDia";
 import { CargarCapturas } from "@/components/CargarCapturas";
 import { DetalleDelDia } from "@/components/DetalleDelDia";
+import { HojaDeBloqueExtra } from "@/components/HojaDeBloqueExtra";
 import { HojaDeComandas } from "@/components/HojaDeComandas";
 import { Calendario, Luna, Ticket } from "@/components/iconos";
 import { usePuedeEscribir } from "@/components/Licencia";
+import { MenuAgregarBloque } from "@/components/MenuAgregarBloque";
 import { RecorridoGuiado, type PasoDeRecorrido } from "@/components/RecorridoGuiado";
 import { SubirMas } from "@/components/SubirMas";
 import { TiraDeSemanas } from "@/components/TiraDeSemanas";
@@ -21,6 +24,7 @@ import { useVehiculo } from "@/hooks/useVehiculo";
 import { publicarDiaElegido } from "@/lib/diaElegido";
 import { marcarRecorridoVisto, recorridoYaVisto } from "@/lib/recorrido";
 import { leerAjustesDeComandas, type AjustesDeComandas } from "@/lib/db/sqlite/ajustes";
+import { listarBloquesDelDia } from "@/lib/db/sqlite/bloques-extra";
 import { descansosPorRango, marcarDescanso, quitarDescanso } from "@/lib/db/sqlite/descansos";
 import { jornadaPorFecha, reglaVigente } from "@/lib/db/sqlite/jornadas";
 import { estadoDeSemana } from "@/lib/db/sqlite/liquidaciones";
@@ -38,7 +42,7 @@ import {
   sumarDias,
   type FechaISO,
 } from "@/lib/fechas";
-import type { EstadoSemana, JornadaCompleta, Tienda } from "@/lib/db/tipos";
+import type { BloqueExtraFila, EstadoSemana, JornadaCompleta, Tienda } from "@/lib/db/tipos";
 import { formatearSoles, type ReglaPago } from "@/lib/pagos/reglas";
 
 /**
@@ -91,13 +95,14 @@ function Contenido() {
      de ayer bajo la fecha de hoy. */
   const { datos: detalle, recargar: recargarDia } = useDatos(
     async () => {
-      const [jornada, perfil, estado, tiendas, ajustes, descansos] = await Promise.all([
+      const [jornada, perfil, estado, tiendas, ajustes, descansos, bloques] = await Promise.all([
         jornadaPorFecha(dia),
         perfilActual(),
         estadoDeSemana(dia),
         listarTiendas(),
         leerAjustesDeComandas(),
         descansosPorRango(dia, dia),
+        listarBloquesDelDia(dia),
       ]);
       const { regla } = await reglaVigente(dia, perfil?.tiendaId ?? null, perfil?.vehiculo);
       return {
@@ -106,7 +111,11 @@ function Contenido() {
         estado,
         ajustes,
         tienda: tiendas.find((t) => t.id === perfil?.tiendaId) ?? null,
+        // Todas las tiendas, no solo la activa: hace falta el picker completo
+        // para elegir a cuál se apoyó (§ plan de apoyo/taxi).
+        tiendas,
         descanso: descansos.length > 0,
+        bloques,
       };
     },
     [dia],
@@ -209,7 +218,9 @@ interface Detalle {
   estado: EstadoSemana;
   ajustes: AjustesDeComandas;
   tienda: Tienda | null;
+  tiendas: Tienda[];
   descanso: boolean;
+  bloques: BloqueExtraFila[];
 }
 
 function DelDia({
@@ -230,7 +241,8 @@ function DelDia({
       comanda» desde «Subir más» la abre en su pantalla de siempre. */
   const [comandaConCamara, setComandaConCamara] = useState(false);
   const [subirMasAbierto, setSubirMasAbierto] = useState(false);
-  const { jornada, regla, estado, tienda, ajustes, descanso } = detalle;
+  const [bloqueAbierto, setBloqueAbierto] = useState<"apoyo" | "taxi" | null>(null);
+  const { jornada, regla, estado, tienda, tiendas, ajustes, descanso, bloques } = detalle;
 
   // El recorrido guiado: se dispara solo la primera vez que se abre la app,
   // y también cuando Tutoriales navega a `/?tour=registrar` para repetirlo
@@ -300,6 +312,8 @@ function DelDia({
       ) : (
         <DiaSinCarga fecha={dia} hoy={hoy} descanso={descanso} puedeEscribir={puedeCargar} alCambiar={alCambiar} />
       )}
+
+      <BloquesDelDia fecha={dia} bloques={bloques} editable={editable && puedeCargar} alCambiar={alCambiar} />
 
       <div className="flex flex-col gap-2">
         <div id="recorrido-cargar-resumen">
@@ -378,6 +392,29 @@ function DelDia({
             setComandaConCamara(false);
           }}
           alTerminar={alCambiar}
+        />
+      )}
+
+      {!esFuturo && (
+        <MenuAgregarBloque
+          disabled={!puedeCargar}
+          onElegirTienda={() => setSubirMasAbierto(true)}
+          onElegirApoyo={() => setBloqueAbierto("apoyo")}
+          onElegirTaxi={() => setBloqueAbierto("taxi")}
+        />
+      )}
+
+      {bloqueAbierto && (
+        <HojaDeBloqueExtra
+          tipo={bloqueAbierto}
+          fecha={dia}
+          tiendas={tiendas.filter((t) => t.id !== tienda?.id)}
+          factorCalles={tienda?.factorCalles ?? 1.3}
+          alCerrar={() => setBloqueAbierto(null)}
+          alGuardar={() => {
+            setBloqueAbierto(null);
+            alCambiar();
+          }}
         />
       )}
     </>
