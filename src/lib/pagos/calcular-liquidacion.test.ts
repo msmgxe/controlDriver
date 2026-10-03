@@ -358,3 +358,68 @@ describe("calcularLiquidacion — la comparación es día a día, no semanal", (
     expect(l.diasConGarantia).toBe(2);
   });
 });
+
+describe("calcularLiquidacion — bloques de apoyo y taxi", () => {
+  it("sin bloquesExtra, los campos nuevos son cero y nada de lo existente cambia", () => {
+    const l = calcularLiquidacion([jornada16()], REGLA_INICIAL, "2026-09-16", { hasta: "2026-09-16" });
+    expect(l.montoApoyoCentimos).toBe(0);
+    expect(l.montoTaxiCentimos).toBe(0);
+    expect(l.montoTotalCentimos).toBe(l.montoCalculadoCentimos);
+    expect(l.detalle.porDia[0].montoApoyoCentimos).toBe(0);
+    expect(l.detalle.porDia[0].montoTaxiCentimos).toBe(0);
+    expect(l.detalle.porDia[0].montoDiaCentimos).toBe(l.detalle.porDia[0].montoCentimos);
+  });
+
+  it("suma un bloque de apoyo al total del día sin tocar el monto de tienda", () => {
+    const jornada: JornadaLiquidable = {
+      ...jornada16(),
+      bloquesExtra: [{ tipo: "apoyo_hora", montoCentimos: 5400 }],
+    };
+    const l = calcularLiquidacion([jornada], REGLA_INICIAL, "2026-09-16", { hasta: "2026-09-16" });
+    expect(l.montoCalculadoCentimos).toBe(14150); // igual que el caso de §16, sin apoyo
+    expect(l.montoApoyoCentimos).toBe(5400);
+    expect(l.montoTotalCentimos).toBe(14150 + 5400);
+    expect(l.detalle.porDia[0].montoDiaCentimos).toBe(14150 + 5400);
+  });
+
+  it("suma un bloque de taxi al total del día, aparte del apoyo", () => {
+    const jornada: JornadaLiquidable = {
+      ...jornada16(),
+      bloquesExtra: [
+        { tipo: "apoyo_tramos", montoCentimos: 2150 },
+        { tipo: "taxi", montoCentimos: 2200 },
+      ],
+    };
+    const l = calcularLiquidacion([jornada], REGLA_INICIAL, "2026-09-16", { hasta: "2026-09-16" });
+    expect(l.montoApoyoCentimos).toBe(2150);
+    expect(l.montoTaxiCentimos).toBe(2200);
+    expect(l.montoTotalCentimos).toBe(14150 + 2150 + 2200);
+  });
+
+  it("la garantía de permanencia de la tienda no se ve afectada por el apoyo", () => {
+    // 11 pedidos de tramo 1 = S/ 110, por debajo del piso de S/ 130: paga el piso.
+    const jornada: JornadaLiquidable = {
+      ...jornadaDe(11, HORARIO),
+      bloquesExtra: [{ tipo: "apoyo_hora", montoCentimos: 3000 }],
+    };
+    const l = calcularLiquidacion([jornada], REGLA_INICIAL, "2026-09-16");
+    expect(l.detalle.porDia[0].pagaPor).toBe("permanencia");
+    expect(l.montoCalculadoCentimos).toBe(13000); // el piso, intacto
+    expect(l.montoApoyoCentimos).toBe(3000);
+    expect(l.montoTotalCentimos).toBe(13000 + 3000);
+  });
+
+  it("una semana con apoyo un día y taxi otro acumula cada categoría por separado", () => {
+    const l = calcularLiquidacion(
+      [
+        { ...jornadaDe(8, HORARIO), fecha: "2026-09-14", bloquesExtra: [{ tipo: "apoyo_hora", montoCentimos: 4000 }] },
+        { ...jornadaDe(9, HORARIO), fecha: "2026-09-15", bloquesExtra: [{ tipo: "taxi", montoCentimos: 2500 }] },
+      ],
+      REGLA_INICIAL,
+      "2026-09-16",
+    );
+    expect(l.montoApoyoCentimos).toBe(4000);
+    expect(l.montoTaxiCentimos).toBe(2500);
+    expect(l.montoTotalCentimos).toBe(l.montoCalculadoCentimos + 4000 + 2500);
+  });
+});

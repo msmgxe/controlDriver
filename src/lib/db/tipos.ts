@@ -17,6 +17,7 @@
 import type { Liquidacion } from "@/lib/pagos/calcular-liquidacion";
 import type { TipoVehiculo } from "@/lib/pagos/reglas";
 import type { FechaISO } from "@/lib/fechas";
+import type { Punto } from "@/lib/geo/distancia";
 
 /* --- Lectura ------------------------------------------------------------- */
 
@@ -32,6 +33,10 @@ export interface FilaResumenDiario {
   montoCentimos: number;
   /** Lo que suman solo los pedidos, sin el piso. */
   montoPedidosCentimos: number;
+  /** Apoyo a otra tienda ese día (por hora + por tramos), aparte de `montoCentimos`. */
+  montoApoyoCentimos: number;
+  /** Taxi libre ese día, aparte de `montoCentimos`. */
+  montoTaxiCentimos: number;
   pagaPor: "pedidos" | "permanencia";
   pedidosFueraTramo1: number;
   entregado: number;
@@ -97,6 +102,85 @@ export interface OrdenFila {
   tramoAuto: boolean;
   /** Cuántas fotos de comanda tiene este pedido (una como mucho, hoy). */
   fotos: number;
+}
+
+/**
+ * Un ingreso del día que no es un pedido de la tienda principal (§ plan de
+ * apoyo/taxi): apoyo a otra tienda —por hora, o por tramos con la regla de
+ * esa tienda— o una carrera de taxi libre. Unión discriminada por `tipo`:
+ * cada rama solo lleva los campos que le corresponden.
+ */
+export type TipoBloqueExtra = "apoyo_hora" | "apoyo_tramos" | "taxi";
+
+export interface PedidoDeApoyoFila {
+  id: string;
+  km: number | null;
+  kmFuente: FuenteDeKm | null;
+  tramo: number;
+  montoCentimos: number;
+}
+
+interface BloqueExtraBase {
+  id: string;
+  posicion: number;
+  horaInicio: string | null;
+  horaFin: string | null;
+  montoCentimos: number;
+  notas: string | null;
+}
+
+export type BloqueExtraFila =
+  | (BloqueExtraBase & {
+      tipo: "apoyo_hora";
+      tiendaNombre: string;
+      tarifaHoraCentimos: number;
+      horas: number;
+      motivo: string | null;
+    })
+  | (BloqueExtraBase & {
+      tipo: "apoyo_tramos";
+      tiendaId: string;
+      tiendaNombre: string;
+      pedidos: PedidoDeApoyoFila[];
+    })
+  | (BloqueExtraBase & {
+      tipo: "taxi";
+      origen: Punto | null;
+      destino: Punto | null;
+      km: number | null;
+      kmFuente: FuenteDeKm | null;
+    });
+
+export interface ApoyoHoraParaGuardar {
+  fecha: FechaISO;
+  horaInicio: string | null;
+  horaFin: string | null;
+  tiendaNombre: string;
+  tarifaHoraCentimos: number;
+  horas: number;
+  motivo: string | null;
+  notas: string | null;
+}
+
+export interface ApoyoTramosParaGuardar {
+  fecha: FechaISO;
+  horaInicio: string | null;
+  horaFin: string | null;
+  tiendaId: string;
+  pedidos: Array<{ km: number | null; kmFuente: FuenteDeKm | null; tramo: number }>;
+  notas: string | null;
+}
+
+export interface TaxiParaGuardar {
+  fecha: FechaISO;
+  horaInicio: string | null;
+  horaFin: string | null;
+  origen: Punto | null;
+  destino: Punto | null;
+  km: number;
+  kmFuente: FuenteDeKm;
+  montoCentimos: number;
+  notas: string | null;
 }
 
 export interface JornadaCompleta {

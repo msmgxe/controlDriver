@@ -27,7 +27,7 @@
  */
 
 /** Versión del esquema. Subirla dispara las migraciones de `migrar()`. */
-export const VERSION_ESQUEMA = 6;
+export const VERSION_ESQUEMA = 7;
 
 export const NOMBRE_BASE = "rutas-a";
 
@@ -225,6 +225,71 @@ export const ESQUEMA: string[] = [
      creado_en text not null
    );`,
 
+  /* Ingresos del día que no son pedidos de la tienda principal: apoyo a otra
+     tienda (por hora, o por tramos con la regla de esa tienda) y carreras de
+     taxi libre. Aparte de `ordenes` a propósito —no comparten código de
+     despacho, no se tarifan con la regla de la jornada, y no deben inflar las
+     cifras de "pedidos/rutas" que son de la tienda principal (§ ver el plan
+     de apoyo/taxi)—, pero sí cuelgan de la misma `jornada_id`: ancla todo a
+     "qué día fue", que es lo único que de verdad comparten los tres tipos. */
+  `create table if not exists bloques_extra (
+     id             text primary key,
+     jornada_id     text not null references jornadas (id) on delete cascade,
+     tipo           text not null check (tipo in ('apoyo_hora', 'apoyo_tramos', 'taxi')),
+     posicion       integer not null default 0,
+     hora_inicio    text,
+     hora_fin       text,
+
+     /* apoyo_hora: una tienda que no está en el sistema, con una tarifa que
+        el driver escribe en el momento —no vale la pena crear una tienda de
+        verdad por una cobertura de unas horas. */
+     tienda_nombre         text,
+     tarifa_hora_centimos  integer,
+     /* Decimal, sin el truncado hacia abajo de horasDePermanencia: ese
+        truncado es la política de garantía de UNA tienda, no se aplica a una
+        tarifa que el driver se pone a sí mismo. */
+     horas                 real,
+     motivo                text,
+
+     /* apoyo_tramos: una tienda real de la lista, tarifada con su propia
+        regla vigente —cada pedido va en la tabla bloques_apoyo_pedidos. */
+     tienda_id      text references tiendas (id) on delete set null,
+
+     /* taxi: siempre dos puntos y un monto a mano, porque lo fija la app de
+        taxi, no una tarifa propia. */
+     origen_lat     real,
+     origen_lng     real,
+     destino_lat    real,
+     destino_lng    real,
+     km             real,
+     km_fuente      text,
+
+     /* Ya calculado para los tres tipos: sumar el total del día no depende
+        de recalcular según de qué tipo es cada bloque. */
+     monto_centimos integer not null,
+     notas          text,
+
+     creado_en      text not null,
+     actualizado_en text not null,
+     sincronizado   integer not null default 0
+   );`,
+
+  `create index if not exists idx_bloques_extra_jornada on bloques_extra (jornada_id);`,
+
+  /* Los pedidos cubiertos de un bloque "apoyo por tramos" —uno por pedido,
+     tarifado por tramo de km igual que un pedido normal de tienda. */
+  `create table if not exists bloques_apoyo_pedidos (
+     id             text primary key,
+     bloque_id      text not null references bloques_extra (id) on delete cascade,
+     posicion       integer not null default 0,
+     km             real,
+     km_fuente      text,
+     tramo          integer not null default 1 check (tramo between 1 and 6),
+     monto_centimos integer not null
+   );`,
+
+  `create index if not exists idx_bloques_apoyo_pedidos_bloque on bloques_apoyo_pedidos (bloque_id);`,
+
   `create index if not exists idx_jornadas_fecha    on jornadas (fecha desc);`,
   `create unique index if not exists uq_rutas_numero   on rutas (jornada_id, numero);`,
   `create unique index if not exists uq_ordenes_codigo on ordenes (jornada_id, codigo);`,
@@ -255,7 +320,9 @@ export const ESQUEMA: string[] = [
        r.ultimo_regreso                                 as ultimo_regreso,
        coalesce(o.pedidos, 0)                           as pedidos,
        coalesce(o.monto_centimos, 0)                    as monto_centimos,
-       coalesce(o.pedidos_fuera_tramo_1, 0)             as pedidos_fuera_tramo_1
+       coalesce(o.pedidos_fuera_tramo_1, 0)             as pedidos_fuera_tramo_1,
+       coalesce(b.monto_apoyo_centimos, 0)              as monto_apoyo_centimos,
+       coalesce(b.monto_taxi_centimos, 0)               as monto_taxi_centimos
      from jornadas j
      left join (
        select jornada_id,
@@ -276,7 +343,16 @@ export const ESQUEMA: string[] = [
               sum(coalesce(monto_centimos, 0))           as monto_centimos,
               sum(case when tramo <> 1 then 1 else 0 end) as pedidos_fuera_tramo_1
        from ordenes group by jornada_id
-     ) o on o.jornada_id = j.id;`,
+     ) o on o.jornada_id = j.id
+     /* Ídem en subconsulta aparte: un tercer join directo volvería a
+        multiplicar filas, igual que pasaría si rutas y órdenes se unieran
+        juntas (ver el comentario de arriba). */
+     left join (
+       select jornada_id,
+              sum(case when tipo <> 'taxi' then monto_centimos else 0 end) as monto_apoyo_centimos,
+              sum(case when tipo = 'taxi' then monto_centimos else 0 end)  as monto_taxi_centimos
+       from bloques_extra group by jornada_id
+     ) b on b.jornada_id = j.id;`,
 ];
 
 /**

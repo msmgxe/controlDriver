@@ -58,6 +58,8 @@ interface FilaResumen {
   ultimo_regreso: string | null;
   monto_centimos: number;
   pedidos_fuera_tramo_1: number;
+  monto_apoyo_centimos: number;
+  monto_taxi_centimos: number;
   entregado: number;
   parcial: number;
   no_entregado: number;
@@ -105,6 +107,8 @@ export async function resumenPorRango(
     montoPedidosCentimos: cobros[i].pedidosCentimos,
     pagaPor: cobros[i].pagaPor,
     pedidosFueraTramo1: f.pedidos_fuera_tramo_1 ?? 0,
+    montoApoyoCentimos: f.monto_apoyo_centimos ?? 0,
+    montoTaxiCentimos: f.monto_taxi_centimos ?? 0,
     entregado: f.entregado ?? 0,
     parcial: f.parcial ?? 0,
     noEntregado: f.no_entregado ?? 0,

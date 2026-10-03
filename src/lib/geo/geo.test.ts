@@ -4,6 +4,7 @@ import { REGLA_INICIAL } from "@/lib/pagos/reglas";
 
 import { kmEnLinea, rumbo } from "./distancia";
 import { enlaceDeMapa, esEnlaceCorto, primerEnlace, puntoDeTexto } from "./enlaces";
+import { distanciaDeTaxi } from "./taxi";
 import { distanciaAlCliente, tramoPorDistancia, type OrigenDeMedida } from "./tramo";
 
 const LIMA = { lat: -12.0464, lng: -77.0428 };
@@ -107,6 +108,30 @@ describe("distanciaAlCliente", () => {
 
   it("por calles, si pedir la ruta revienta, también estima", async () => {
     const d = await distanciaAlCliente({ ...TIENDA, metodo: "calles" }, A_TRES_KM, async () => { throw new Error("sin red"); });
+    expect(d.fuente).toBe("estimado");
+  });
+});
+
+describe("distanciaDeTaxi", () => {
+  it("sin servicio de ruta: línea recta por el factor, y lo dice", async () => {
+    const d = await distanciaDeTaxi(LIMA, A_TRES_KM, 1.5);
+    expect(d.fuente).toBe("estimado");
+    expect(d.km).toBeCloseTo(d.enLinea * 1.5, 0);
+  });
+
+  it("nunca es 'recta': un taxi urbano no se mide en línea recta", async () => {
+    const d = await distanciaDeTaxi(LIMA, A_TRES_KM, 1.3);
+    expect(d.fuente).not.toBe("recta");
+  });
+
+  it("usa la ruta real cuando el servicio la da", async () => {
+    const d = await distanciaDeTaxi(LIMA, A_TRES_KM, 1.3, async () => 4.37);
+    expect(d).toMatchObject({ km: 4.4, fuente: "ruta" });
+    expect(d.enLinea).toBeCloseTo(3, 0);
+  });
+
+  it("si pedir la ruta revienta, cae al estimado", async () => {
+    const d = await distanciaDeTaxi(LIMA, A_TRES_KM, 1.3, async () => { throw new Error("sin red"); });
     expect(d.fuente).toBe("estimado");
   });
 });

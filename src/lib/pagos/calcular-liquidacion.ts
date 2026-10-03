@@ -5,6 +5,8 @@ import {
   type FechaISO,
   type Semana,
 } from "@/lib/fechas";
+import type { TipoBloqueExtra } from "@/lib/db/tipos";
+
 import {
   TRAMO_MAS_DE_12_KM,
   horasDePermanencia,
@@ -39,6 +41,12 @@ interface RutaLiquidable {
   duracionMin: number | null;
 }
 
+/** Lo mínimo de un bloque de apoyo/taxi que hace falta para sumarlo al día. */
+export interface BloqueExtraLiquidable {
+  tipo: TipoBloqueExtra;
+  montoCentimos: number;
+}
+
 export interface JornadaLiquidable {
   fecha: FechaISO;
   rutas: RutaLiquidable[];
@@ -50,6 +58,8 @@ export interface JornadaLiquidable {
    */
   horaEntrada?: string | null;
   horaSalida?: string | null;
+  /** Apoyo a otra tienda y taxi libre de ese día. Ausente = sin bloques. */
+  bloquesExtra?: readonly BloqueExtraLiquidable[];
 }
 
 export interface DetalleDia {
@@ -64,8 +74,14 @@ export interface DetalleDia {
   horasPermanencia: number;
   /** Cuál de los dos ganó. */
   pagaPor: "pedidos" | "permanencia";
-  /** El mayor de los dos: lo que realmente se cobra ese día. */
+  /** El mayor de los dos: lo que realmente se cobra ese día, solo tienda. */
   montoCentimos: number;
+  /** Apoyo a otra tienda ese día (por hora + por tramos), aparte de `montoCentimos`. */
+  montoApoyoCentimos: number;
+  /** Taxi libre ese día, aparte de `montoCentimos`. */
+  montoTaxiCentimos: number;
+  /** Lo que de verdad produjo ese día: tienda + apoyo + taxi. */
+  montoDiaCentimos: number;
 }
 
 interface DetalleRuta {
@@ -89,10 +105,16 @@ export interface Liquidacion {
   totalOrdenes: number;
   /** { "1": 78, "2": 6, … } — cuántos pedidos cayeron en cada tramo. */
   ordenesPorTramo: Record<string, number>;
-  /** Suma de lo que se cobra cada día: por día, el mayor de los dos. */
+  /** Suma de lo que se cobra cada día: por día, el mayor de los dos. Solo tienda. */
   montoCalculadoCentimos: number;
   /** Lo que habrían sumado los pedidos solos, sin la garantía. */
   montoPorPedidosCentimos: number;
+  /** Apoyo a otra tienda de la semana, aparte de `montoCalculadoCentimos`. */
+  montoApoyoCentimos: number;
+  /** Taxi libre de la semana, aparte de `montoCalculadoCentimos`. */
+  montoTaxiCentimos: number;
+  /** Lo que de verdad produjo la semana: tienda + apoyo + taxi. */
+  montoTotalCentimos: number;
   /** Días en que la permanencia superó a los pedidos y pagó el piso. */
   diasConGarantia: number;
   minutosEnRuta: number;
@@ -192,6 +214,8 @@ export function calcularLiquidacion(
   let totalOrdenes = 0;
   let montoCalculadoCentimos = 0;
   let montoPorPedidosCentimos = 0;
+  let montoApoyoCentimos = 0;
+  let montoTaxiCentimos = 0;
   let diasConGarantia = 0;
   let minutosEnRuta = 0;
 
@@ -255,6 +279,18 @@ export function calcularLiquidacion(
     if (pagaPor === "permanencia") diasConGarantia += 1;
     minutosEnRuta += minutosDia;
 
+    // Apoyo y taxi se suman aparte: no compiten con pedidos/permanencia, se
+    // acumulan sobre lo que ya se decidió arriba (§ plan de apoyo/taxi).
+    const bloques = jornada.bloquesExtra ?? [];
+    const montoApoyoDia = bloques
+      .filter((b) => b.tipo !== "taxi")
+      .reduce((total, b) => total + b.montoCentimos, 0);
+    const montoTaxiDia = bloques
+      .filter((b) => b.tipo === "taxi")
+      .reduce((total, b) => total + b.montoCentimos, 0);
+    montoApoyoCentimos += montoApoyoDia;
+    montoTaxiCentimos += montoTaxiDia;
+
     porDia.push({
       fecha: jornada.fecha,
       rutas: jornada.rutas.length,
@@ -268,6 +304,9 @@ export function calcularLiquidacion(
       ),
       pagaPor,
       montoCentimos: montoFinal,
+      montoApoyoCentimos: montoApoyoDia,
+      montoTaxiCentimos: montoTaxiDia,
+      montoDiaCentimos: montoFinal + montoApoyoDia + montoTaxiDia,
     });
   }
 
@@ -286,6 +325,9 @@ export function calcularLiquidacion(
     ordenesPorTramo,
     montoCalculadoCentimos,
     montoPorPedidosCentimos,
+    montoApoyoCentimos,
+    montoTaxiCentimos,
+    montoTotalCentimos: montoCalculadoCentimos + montoApoyoCentimos + montoTaxiCentimos,
     diasConGarantia,
     minutosEnRuta,
     detalle: { porDia, porRuta },

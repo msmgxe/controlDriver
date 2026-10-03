@@ -16,6 +16,8 @@ const fila = (fecha: string, pedidos: number, centimos: number, extra: Partial<F
   ultimoRegreso: null,
   montoCentimos: centimos,
   montoPedidosCentimos: centimos,
+  montoApoyoCentimos: 0,
+  montoTaxiCentimos: 0,
   pagaPor: "pedidos",
   pedidosFueraTramo1: 0,
   entregado: pedidos,
