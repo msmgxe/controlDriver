@@ -37,6 +37,11 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v50 — 04/10/2026
+- **Estadísticas**: el desglose «De dónde viene la semana / el mes» (tienda, cada
+  apoyo, taxi, con su porcentaje y el total) sube justo debajo del resumen, en
+  vez de estar escondido en un acordeón al final.
+
 ### v49 — 03/10/2026
 Inicio rediseñado: «¿Qué hiciste hoy?» y el dinero en una barra de colores.
 - **La barra de semana y el calendario se quedan** arriba, igual que siempre.
