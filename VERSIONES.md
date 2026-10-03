@@ -37,6 +37,29 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v47 — 03/10/2026
+Apoyo a otra tienda y taxi libre, con un botón "+" en Inicio.
+- **Nuevo: botón flotante "+"** en Inicio, abajo a la derecha. Al tocarlo,
+  ofrece tres formas de registrar lo que hiciste: **«Pedidos de una
+  tienda»** (lo de siempre, sin cambios), **«Apoyo a otra tienda»** y
+  **«Taxi libre»**.
+- **Apoyo a otra tienda**: para cuando te mandan a cubrir otra tienda el
+  mismo día. Eliges cada vez cómo te pagan: **por hora** (escribes la
+  tienda, la tarifa y el horario, y la app calcula las horas sola) o **por
+  tramos** (eliges la tienda de tu lista y cada pedido se tarifa solo, con
+  la tarifa real de esa tienda).
+- **Taxi libre**: para carreras sueltas de alguna app de taxi. Tocas
+  «Marcar inicio» y «Marcar fin» —usa tu ubicación— y la app estima los
+  kilómetros sola; si no hay señal de GPS, los escribes a mano. El monto
+  siempre lo escribes tú, porque lo fija la app de taxi.
+- Cada cosa que agregas aparece como una tarjeta en Inicio, con lo que
+  cobraste y un botón para quitarla si te equivocaste.
+- **El total del día y de la semana ahora suma las tres cosas**, pero con
+  un desglose —cuánto fue tienda, cuánto apoyo, cuánto taxi—, tanto en
+  Inicio como en Pagos. Lo que concilias contra lo que te deposita la
+  tienda (en «Cobro») sigue siendo solo lo de la tienda: el apoyo y el
+  taxi son dinero aparte, que no pasa por ahí.
+
 ### v46 — 28/09/2026
 Dos botones en Inicio, un recorrido guiado, «Acerca de», y el ícono cambia a Mapa.
 - **Cambio: «Cargar capturas» se separa en dos botones.** Uno junto al otro, de
