@@ -45,11 +45,11 @@ export function MenuAgregarBloque({
         aria-expanded={abierto}
         disabled={disabled}
         onClick={() => setAbierto((a) => !a)}
-        className={`fixed right-5 bottom-[calc(84px+env(safe-area-inset-bottom,0px))] z-[46] grid size-14 place-items-center rounded-full bg-acento text-acento-texto shadow-alta transition-transform duration-300 active:scale-90 disabled:opacity-50 sm:bottom-6 ${
+        className={`fixed right-5 bottom-[calc(84px+env(safe-area-inset-bottom,0px))] z-[46] grid size-14 place-items-center rounded-full border-2 border-acento-2-tinta bg-acento-2 text-acento-2-tinta shadow-alta transition-transform duration-300 active:scale-90 disabled:opacity-50 sm:bottom-6 ${
           abierto ? "rotate-45" : "respira"
         }`}
       >
-        <Suma className="size-7" />
+        <Suma className="size-8" strokeWidth={3.6} />
       </button>
     </>
   );

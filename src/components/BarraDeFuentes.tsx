@@ -28,7 +28,8 @@ export function BarraDeFuentes({
     .map((c) => ({ c, centimos: filas.filter((f) => f.categoria === c).reduce((s, f) => s + f.centimos, 0) }))
     .filter((x) => x.centimos > 0);
   const total = porCategoria.reduce((s, x) => s + x.centimos, 0);
-  if (total === 0) return null;
+  // Con una sola fuente no hay nada que repartir: menos ruido en pantalla.
+  if (total === 0 || porCategoria.length < 2) return null;
 
   return (
     <div className="entra flex flex-col gap-2" style={{ "--i": 1 } as React.CSSProperties}>

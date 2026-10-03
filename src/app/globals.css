@@ -755,10 +755,10 @@ div:has(> [role="dialog"]) {
 @keyframes respira {
   0%,
   100% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--acento) 45%, transparent);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--acento-2) 70%, transparent);
   }
   50% {
-    box-shadow: 0 0 0 12px color-mix(in srgb, var(--acento) 0%, transparent);
+    box-shadow: 0 0 0 12px color-mix(in srgb, var(--acento-2) 0%, transparent);
   }
 }
 .respira {

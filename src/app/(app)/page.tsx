@@ -337,9 +337,11 @@ function DelDia({
       {/* ¿Qué hiciste hoy? Tres preguntas con su respuesta: lo hecho se
           despliega al tocarlo; lo que falta empieza a anotarse al tocarlo. */}
       <div id="recorrido-lista" className="flex flex-col gap-2.5">
-        <h3 className="entra px-1 text-[17px]" style={{ "--i": 1 } as React.CSSProperties}>
-          {dia === hoy ? "¿Qué hiciste hoy?" : `¿Qué hiciste el ${nombreDelDia(dia)}?`}
-        </h3>
+        {bloques.length > 0 && (
+          <h3 className="entra px-1 text-[17px]" style={{ "--i": 1 } as React.CSSProperties}>
+            {dia === hoy ? "¿Qué hiciste hoy?" : `¿Qué hiciste el ${nombreDelDia(dia)}?`}
+          </h3>
+        )}
 
         <FilaDeLista
           indice={0}
@@ -376,6 +378,7 @@ function DelDia({
           )}
         </FilaDeLista>
 
+        {apoyos.length > 0 && (
         <FilaDeLista
           indice={1}
           Icono={Reloj}
@@ -401,7 +404,9 @@ function DelDia({
             </button>
           )}
         </FilaDeLista>
+        )}
 
+        {taxis.length > 0 && (
         <FilaDeLista
           indice={2}
           Icono={Taxi}
@@ -424,6 +429,7 @@ function DelDia({
             </button>
           )}
         </FilaDeLista>
+        )}
       </div>
 
       <div className="entra flex flex-col gap-2" style={{ "--i": 6 } as React.CSSProperties}>

@@ -37,6 +37,14 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v51 — 04/10/2026
+- **El «+» flotante ahora es amarillo con el «+» oscuro y grueso**, con borde
+  oscuro como la pastilla del día: sobre el azul de «Cargar resumen del día»
+  ya no se confunde.
+- **Menos pantalla cuando no hay apoyo ni taxi**: las filas «Apoyé a otra tienda»
+  y «Hice taxi» y la barra de colores solo aparecen si ese día tienes apoyo o
+  taxi. Para agregarlos, el «+». Un día solo de tienda queda con su fila y nada más.
+
 ### v50 — 04/10/2026
 - **Estadísticas**: el desglose «De dónde viene la semana / el mes» (tienda, cada
   apoyo, taxi, con su porcentaje y el total) sube justo debajo del resumen, en
