@@ -11,6 +11,12 @@ import {
   jornadaPorFecha,
   reglaVigente,
 } from "@/lib/db/sqlite/jornadas";
+import {
+  borrarBloque,
+  guardarApoyoHora,
+  guardarApoyoTramos,
+  guardarTaxi,
+} from "@/lib/db/sqlite/bloques-extra";
 import { guardarCliente, guardarDistancia, quitarCliente } from "@/lib/db/sqlite/clientes";
 import { estadoDeSemana } from "@/lib/db/sqlite/liquidaciones";
 import { reordenarRutasDelDia } from "@/lib/db/sqlite/rutas";
@@ -423,4 +429,126 @@ export async function fijarDistanciaDePedido(
       error: error instanceof Error ? error.message : "No se pudo guardar la distancia.",
     };
   }
+}
+
+/* ---------------------------------------------------------------------------
+ * Apoyo a otra tienda y taxi libre (§ plan de apoyo/taxi)
+ * ------------------------------------------------------------------------- */
+
+const HORA = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+  .nullable();
+const KM_FUENTE = z.enum(["recta", "ruta", "estimado", "manual"]);
+const PUNTO = z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) });
+
+const esquemaApoyoHora = z.object({
+  fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  horaInicio: HORA,
+  horaFin: HORA,
+  tiendaNombre: z.string().min(1).max(80),
+  tarifaHoraCentimos: z.number().int().min(1).max(100_000),
+  horas: z.number().min(0.1).max(24),
+  motivo: z.string().max(200).nullable(),
+  notas: z.string().max(500).nullable(),
+});
+
+/** Registra un bloque de apoyo a otra tienda, pagado por hora (§ plan de apoyo/taxi). */
+export async function guardarBloqueApoyoHora(datos: unknown): Promise<Resultado> {
+  const parseado = esquemaApoyoHora.safeParse(datos);
+  if (!parseado.success) return { ok: false, error: "Datos no válidos." };
+  const { fecha, ...resto } = parseado.data;
+
+  const editable = await semanaEditable(fecha as FechaISO);
+  if (!editable.ok) return { ok: false, error: editable.error };
+
+  try {
+    await guardarApoyoHora({ fecha: fecha as FechaISO, ...resto });
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "No se pudo guardar el apoyo." };
+  }
+  return { ok: true, mensaje: "Apoyo guardado." };
+}
+
+const esquemaApoyoTramos = z.object({
+  fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  horaInicio: HORA,
+  horaFin: HORA,
+  tiendaId: z.string().uuid(),
+  pedidos: z
+    .array(
+      z.object({
+        km: z.number().min(0).max(999).nullable(),
+        kmFuente: KM_FUENTE.nullable(),
+        tramo: z.number().int().min(1).max(6),
+      }),
+    )
+    .min(1)
+    .max(50),
+  notas: z.string().max(500).nullable(),
+});
+
+/** Registra un bloque de apoyo a otra tienda, tarifado por tramos con su propia regla. */
+export async function guardarBloqueApoyoTramos(datos: unknown): Promise<Resultado> {
+  const parseado = esquemaApoyoTramos.safeParse(datos);
+  if (!parseado.success) return { ok: false, error: "Datos no válidos." };
+  const { fecha, ...resto } = parseado.data;
+
+  const editable = await semanaEditable(fecha as FechaISO);
+  if (!editable.ok) return { ok: false, error: editable.error };
+
+  try {
+    await guardarApoyoTramos({ fecha: fecha as FechaISO, ...resto });
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "No se pudo guardar el apoyo." };
+  }
+  return { ok: true, mensaje: "Apoyo guardado." };
+}
+
+const esquemaTaxi = z.object({
+  fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  horaInicio: HORA,
+  horaFin: HORA,
+  origen: PUNTO.nullable(),
+  destino: PUNTO.nullable(),
+  km: z.number().min(0).max(999),
+  kmFuente: KM_FUENTE,
+  montoCentimos: z.number().int().min(1).max(100_000),
+  notas: z.string().max(500).nullable(),
+});
+
+/** Registra una carrera de taxi libre. El monto siempre lo escribe la persona. */
+export async function guardarBloqueTaxi(datos: unknown): Promise<Resultado> {
+  const parseado = esquemaTaxi.safeParse(datos);
+  if (!parseado.success) return { ok: false, error: "Datos no válidos." };
+  const { fecha, ...resto } = parseado.data;
+
+  const editable = await semanaEditable(fecha as FechaISO);
+  if (!editable.ok) return { ok: false, error: editable.error };
+
+  try {
+    await guardarTaxi({ fecha: fecha as FechaISO, ...resto });
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "No se pudo guardar el taxi." };
+  }
+  return { ok: true, mensaje: "Taxi guardado." };
+}
+
+/**
+ * Borra un bloque de apoyo o taxi. v1 sin edición fina (§ plan de
+ * apoyo/taxi): el que se equivoca borra y vuelve a registrarlo, igual de
+ * simple que cómo se trata hoy una ruta completa.
+ */
+export async function eliminarBloque(fecha: string, bloqueId: string): Promise<Resultado> {
+  if (!esFechaISO(fecha)) return { ok: false, error: "Fecha no válida." };
+
+  const editable = await semanaEditable(fecha);
+  if (!editable.ok) return { ok: false, error: editable.error };
+
+  try {
+    await borrarBloque(bloqueId);
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "No se pudo borrar." };
+  }
+  return { ok: true, mensaje: "Bloque borrado." };
 }

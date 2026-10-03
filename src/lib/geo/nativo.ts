@@ -100,6 +100,21 @@ export async function posicionActual(): Promise<PosicionActual> {
   }
 }
 
+/**
+ * Lo mismo que `posicionActual`, para marcar el inicio o el fin de un viaje
+ * de taxi libre, pero sin permiso que forzar: si lo niegan, hay timeout o se
+ * cancela, devuelve `null` en vez de lanzar, y el formulario cae al respaldo
+ * de siempre —escribir el punto a mano—. Mismo patrón que `tomarFotoConCamara`
+ * en `HojaDeComandas.tsx`.
+ */
+export async function posicionParaBloqueExtra(): Promise<PosicionActual | null> {
+  try {
+    return await posicionActual();
+  } catch {
+    return null;
+  }
+}
+
 /* ---------------------------------------------------------------------------
  * Internet
  * ------------------------------------------------------------------------- */

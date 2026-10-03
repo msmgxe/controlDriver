@@ -12,7 +12,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { REGLA_INICIAL } from "@/lib/pagos/reglas";
 import type { FechaISO } from "@/lib/fechas";
 
-import { usarMotor } from "./conexion";
+import { guardarApoyoHora, guardarTaxi } from "./bloques-extra";
+import { consultar, usarMotor } from "./conexion";
 import { motorEnMemoria } from "./motor-en-memoria";
 import { guardarJornada, jornadaPorFecha } from "./jornadas";
 import { guardarPerfil, guardarRegla, guardarTienda } from "./perfil";
@@ -230,5 +231,64 @@ describe("tarifas por vehículo", () => {
     await guardarJornada({ ...jornada("2026-09-16", 3, [5, 0, 0]), vehiculo: "moto" }, "reemplazar");
     const j = await jornadaPorFecha("2026-09-16" as FechaISO);
     expect(j!.vehiculo).toBe("moto");
+  });
+});
+
+describe("apoyo y taxi, de punta a punta", () => {
+  it("montoTotalCentimos los incluye sin alterar montoCalculadoCentimos", async () => {
+    await guardarJornada(jornada("2026-09-16", 7, [13, 1, 0]), "reemplazar"); // S/ 141.50
+    await guardarApoyoHora({
+      fecha: "2026-09-16" as FechaISO,
+      horaInicio: "13:15",
+      horaFin: "16:15",
+      tiendaNombre: "Tienda Limatambo",
+      tarifaHoraCentimos: 1800,
+      horas: 3,
+      motivo: null,
+      notas: null,
+    });
+    await guardarTaxi({
+      fecha: "2026-09-16" as FechaISO,
+      horaInicio: "17:30",
+      horaFin: "18:05",
+      origen: null,
+      destino: null,
+      km: 8.2,
+      kmFuente: "manual",
+      montoCentimos: 2200,
+      notas: null,
+    });
+
+    const { liquidacion } = await liquidacionDeSemana("2026-09-16" as FechaISO);
+    expect(liquidacion.montoCalculadoCentimos).toBe(14_150); // solo tienda, intacto
+    expect(liquidacion.montoApoyoCentimos).toBe(5400);
+    expect(liquidacion.montoTaxiCentimos).toBe(2200);
+    expect(liquidacion.montoTotalCentimos).toBe(14_150 + 5400 + 2200);
+  });
+
+  it("cerrarSemana congela el desglose en el detalle, sin tocar monto_centimos", async () => {
+    await guardarJornada(jornada("2026-09-16", 7, [13, 1, 0]), "reemplazar");
+    await guardarTaxi({
+      fecha: "2026-09-16" as FechaISO,
+      horaInicio: null,
+      horaFin: null,
+      origen: null,
+      destino: null,
+      km: 5,
+      kmFuente: "manual",
+      montoCentimos: 1800,
+      notas: null,
+    });
+
+    await cerrarSemana("2026-09-16" as FechaISO, REGLA_INICIAL, null);
+
+    const filas = await consultar<{ monto_centimos: number; detalle: string }>(
+      `select monto_centimos, detalle from liquidaciones where semana_inicio = ?`,
+      ["2026-09-14"],
+    );
+    expect(filas[0].monto_centimos).toBe(14_150); // solo tienda
+    const detalle = JSON.parse(filas[0].detalle);
+    expect(detalle.montoTaxiCentimos).toBe(1800);
+    expect(detalle.montoTotalCentimos).toBe(14_150 + 1800);
   });
 });

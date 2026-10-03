@@ -19,7 +19,8 @@ import {
 import { VEHICULO_POR_DEFECTO, type ReglaPago, type TipoVehiculo } from "@/lib/pagos/reglas";
 import { semanaDe, type FechaISO } from "@/lib/fechas";
 
-import type { EstadoSemana, JornadaCompleta, SemanaLiquidada } from "../tipos";
+import type { BloqueExtraFila, EstadoSemana, JornadaCompleta, SemanaLiquidada } from "../tipos";
+import { bloquesPorRango } from "./bloques-extra";
 import { consultar, ejecutar, nuevoId } from "./conexion";
 import { descansosPorRango } from "./descansos";
 import { jornadasPorRango, reglaVigente } from "./jornadas";
@@ -34,10 +35,11 @@ export async function liquidacionDeSemana(
   const semana = semanaDe(referencia);
   const perfil = await perfilActual();
 
-  const [jornadas, guardada, descansos] = await Promise.all([
+  const [jornadas, guardada, descansos, bloques] = await Promise.all([
     jornadasPorRango(semana.inicio, semana.fin),
     leerGuardada(semana.inicio),
     descansosPorRango(semana.inicio, semana.fin),
+    bloquesPorRango(semana.inicio, semana.fin),
   ]);
   const { regla } = await reglaVigente(
     semana.fin,
@@ -46,7 +48,7 @@ export async function liquidacionDeSemana(
   );
 
   const liquidacion = calcularLiquidacion(
-    jornadas.map(aLiquidable),
+    jornadas.map((j) => aLiquidable(j, bloques.get(j.fecha))),
     regla,
     semana.inicio,
     { hasta, descansos },
@@ -92,7 +94,7 @@ function vehiculoDeLaSemana(
   return ganador;
 }
 
-function aLiquidable(j: JornadaCompleta): JornadaLiquidable {
+function aLiquidable(j: JornadaCompleta, bloques?: readonly BloqueExtraFila[]): JornadaLiquidable {
   return {
     fecha: j.fecha,
     horaEntrada: j.horaEntrada,
@@ -105,6 +107,7 @@ function aLiquidable(j: JornadaCompleta): JornadaLiquidable {
       ruta: o.ruta,
       montoManualCentimos: o.montoCentimos,
     })),
+    bloquesExtra: bloques?.map((b) => ({ tipo: b.tipo, montoCentimos: b.montoCentimos })),
   };
 }
 
@@ -139,8 +142,15 @@ export async function cerrarSemana(
   reglaId: string | null,
 ): Promise<void> {
   const semana = semanaDe(referencia);
-  const jornadas = await jornadasPorRango(semana.inicio, semana.fin);
-  const liquidacion = calcularLiquidacion(jornadas.map(aLiquidable), regla, semana.inicio);
+  const [jornadas, bloques] = await Promise.all([
+    jornadasPorRango(semana.inicio, semana.fin),
+    bloquesPorRango(semana.inicio, semana.fin),
+  ]);
+  const liquidacion = calcularLiquidacion(
+    jornadas.map((j) => aLiquidable(j, bloques.get(j.fecha))),
+    regla,
+    semana.inicio,
+  );
 
   await ejecutar(
     `insert into liquidaciones
@@ -173,6 +183,12 @@ export async function cerrarSemana(
         ...liquidacion.detalle,
         montoPorPedidosCentimos: liquidacion.montoPorPedidosCentimos,
         diasConGarantia: liquidacion.diasConGarantia,
+        // Apoyo y taxi no los deposita la tienda, así que monto_centimos se
+        // queda solo-tienda (§ plan apoyo/taxi, decisión 1); el desglose
+        // completo de la semana se congela aquí para el historial.
+        montoApoyoCentimos: liquidacion.montoApoyoCentimos,
+        montoTaxiCentimos: liquidacion.montoTaxiCentimos,
+        montoTotalCentimos: liquidacion.montoTotalCentimos,
       }),
       ahora(),
     ],
