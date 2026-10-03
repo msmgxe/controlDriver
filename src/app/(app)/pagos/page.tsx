@@ -5,19 +5,23 @@ import Link from "next/link";
 
 import { AccionesSemana } from "@/components/AccionesSemana";
 import { Acordeon } from "@/components/Acordeon";
-import { DesgloseDeCategorias } from "@/components/DesgloseDeCategorias";
+import { DesgloseDeIngresos } from "@/components/DesgloseDeIngresos";
 import { DueloDePago } from "@/components/DueloDePago";
 import { Alerta, Calendario, Check, Flecha, Luna, Reloj } from "@/components/iconos";
 import { PanelDeDescansos } from "@/components/PanelDeDescansos";
+import { PedidosPorTramo } from "@/components/PedidosPorTramo";
+import { TarjetaBloqueExtra } from "@/components/TarjetaBloqueExtra";
 import { TiraDeSemanas } from "@/components/TiraDeSemanas";
 import { Aviso } from "@/components/ui";
 import { useDatos } from "@/hooks/useDatos";
 import { useTiraDeSemanas } from "@/hooks/useTiraDeSemanas";
+import { leerAjustesDeComandas } from "@/lib/db/sqlite/ajustes";
+import { bloquesPorRango } from "@/lib/db/sqlite/bloques-extra";
 import { marcarDescanso, quitarDescanso } from "@/lib/db/sqlite/descansos";
-import { reglaVigente } from "@/lib/db/sqlite/jornadas";
+import { jornadasPorRango, reglaVigente } from "@/lib/db/sqlite/jornadas";
 import { liquidacionDeSemana } from "@/lib/db/sqlite/liquidaciones";
-import { perfilActual } from "@/lib/db/sqlite/perfil";
-import type { SemanaLiquidada } from "@/lib/db/tipos";
+import { listarTiendas, perfilActual } from "@/lib/db/sqlite/perfil";
+import type { BloqueExtraFila, SemanaLiquidada, Tienda } from "@/lib/db/tipos";
 import {
   formatearDuracion,
   formatearFecha,
@@ -29,6 +33,7 @@ import {
   type FechaISO,
 } from "@/lib/fechas";
 import type { DetalleDia } from "@/lib/pagos/calcular-liquidacion";
+import { desglosePorFuente } from "@/lib/pagos/desglose";
 import { formatearSoles } from "@/lib/pagos/reglas";
 
 /**
@@ -66,7 +71,15 @@ export default function PaginaPagos() {
       // En la semana en curso, «faltan» solo cuenta hasta hoy; en una pasada, la semana entera.
       const s = await liquidacionDeSemana(semana.inicio, esActual ? hoy : undefined);
       const { regla } = await reglaVigente(semana.fin, perfil?.tiendaId ?? null, perfil?.vehiculo);
-      return { s, regla };
+      // Para el desglose por fuente y el detalle por tramo, con su evidencia.
+      const [jornadas, bloques, tiendas, ajustes] = await Promise.all([
+        jornadasPorRango(semana.inicio, semana.fin),
+        bloquesPorRango(semana.inicio, semana.fin),
+        listarTiendas(),
+        leerAjustesDeComandas(),
+      ]);
+      const tienda = tiendas.find((t) => t.id === perfil?.tiendaId) ?? null;
+      return { s, regla, jornadas, bloques, tienda, ajustes };
     },
     [semana.inicio],
     // Marcar un descanso recarga la pantalla; sin conservar, pasaría por el
@@ -108,7 +121,7 @@ export default function PaginaPagos() {
   }
 
   if (!tira || !datos || !otras) return <Esqueleto />;
-  const { s: elegida, regla } = datos;
+  const { s: elegida, regla, jornadas, bloques, tienda, ajustes } = datos;
   const liquidacion = elegida.liquidacion;
 
   const porDia = new Map(liquidacion.detalle.porDia.map((d) => [d.fecha, d]));
@@ -205,13 +218,15 @@ export default function PaginaPagos() {
           {liquidacion.totalOrdenes} pedidos · {liquidacion.totalRutas} rutas
           {fueraTramo1 > 0 && ` · ${fueraTramo1} fuera del tramo 1`}
         </span>
-        {(liquidacion.montoApoyoCentimos > 0 || liquidacion.montoTaxiCentimos > 0) && (
-          <DesgloseDeCategorias
-            tienda={liquidacion.montoCalculadoCentimos}
-            apoyo={liquidacion.montoApoyoCentimos}
-            taxi={liquidacion.montoTaxiCentimos}
-          />
-        )}
+        <DesgloseDeIngresos
+          titulo="De dónde viene"
+          filas={desglosePorFuente({
+            tiendaNombre: tienda?.nombre ?? null,
+            pedidosTienda: liquidacion.totalOrdenes,
+            centimosTienda: liquidacion.montoCalculadoCentimos,
+            bloques: [...bloques.values()].flat(),
+          })}
+        />
         <div className="mt-1.5 grid grid-cols-7 gap-1" aria-label={`${cargados} de 7 días cargados`}>
           {diasDeLaSemana.map((f) => (
             <i
@@ -263,6 +278,9 @@ export default function PaginaPagos() {
               fecha={f}
               hoy={hoy}
               detalle={porDia.get(f) ?? null}
+              tienda={tienda}
+              bloques={bloques.get(f) ?? []}
+              editable={elegida.estado !== "pagada"}
               descanso={liquidacion.diasDescanso.includes(f)}
               elegido={dia === f}
               alPulsar={() => setDia((d) => (d === f ? null : f))}
@@ -270,6 +288,26 @@ export default function PaginaPagos() {
             />
           ))}
         </div>
+      </Acordeon>
+
+      <Acordeon
+        titulo="Por tramo"
+        resumen={
+          dia
+            ? `Solo el ${nombreDelDia(dia)} ${Number(dia.slice(8))} · toca un tramo para ver sus pedidos`
+            : "Toca un tramo para ver sus pedidos y su evidencia"
+        }
+        abierto={!!abiertos.tramos}
+        alCambiar={(a) => abrir("tramos", a)}
+      >
+        <PedidosPorTramo
+          jornadas={dia ? jornadas.filter((j) => j.fecha === dia) : jornadas}
+          regla={regla}
+          tienda={tienda}
+          ajustes={ajustes}
+          editable={elegida.estado !== "pagada"}
+          alCambiar={recargar}
+        />
       </Acordeon>
 
       <Acordeon
@@ -433,6 +471,9 @@ function FilaDeDia({
   fecha,
   hoy,
   detalle,
+  tienda,
+  bloques,
+  editable,
   descanso,
   elegido,
   alPulsar,
@@ -441,6 +482,10 @@ function FilaDeDia({
   fecha: FechaISO;
   hoy: FechaISO;
   detalle: DetalleDia | null;
+  tienda: Tienda | null;
+  /** Apoyo y taxi de ese día. */
+  bloques: BloqueExtraFila[];
+  editable: boolean;
   descanso: boolean;
   elegido: boolean;
   alPulsar: () => void;
@@ -512,12 +557,22 @@ function FilaDeDia({
               ) : (
                 <p className="text-xs text-tinta-3">Sin horario en tienda ese día: se cobra por pedidos.</p>
               )}
-              {(detalle.montoApoyoCentimos > 0 || detalle.montoTaxiCentimos > 0) && (
-                <DesgloseDeCategorias
-                  tienda={detalle.montoCentimos}
-                  apoyo={detalle.montoApoyoCentimos}
-                  taxi={detalle.montoTaxiCentimos}
-                />
+              {bloques.length > 0 && (
+                <>
+                  <DesgloseDeIngresos
+                    filas={desglosePorFuente({
+                      tiendaNombre: tienda?.nombre ?? null,
+                      pedidosTienda: detalle.pedidos,
+                      centimosTienda: detalle.montoCentimos,
+                      bloques,
+                    })}
+                  />
+                  <div className="flex flex-col gap-2">
+                    {bloques.map((b) => (
+                      <TarjetaBloqueExtra key={b.id} bloque={b} fecha={fecha} editable={editable} alCambiar={alCambiar} />
+                    ))}
+                  </div>
+                </>
               )}
               <Link href={`/?dia=${fecha}`} className="inline-flex min-h-11 items-center gap-2 self-start text-sm font-semibold text-acento">
                 Abrir este día en Inicio
@@ -601,7 +656,7 @@ function FilaSemana({
         </span>
       </span>
       <span className="flex flex-col items-end gap-1">
-        <span className="monto text-sm">{formatearSoles(liquidacion.montoCalculadoCentimos)}</span>
+        <span className="monto text-sm">{formatearSoles(liquidacion.montoTotalCentimos)}</span>
         {diferencia !== null && diferencia !== 0 ? (
           <span className="inline-flex items-center gap-1 rounded-chip bg-aviso-suave px-2 py-0.5 text-[10px] font-bold tracking-wide text-aviso uppercase">
             <Alerta className="size-3" />

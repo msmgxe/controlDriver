@@ -25,7 +25,7 @@ export function useTiraDeSemanas(semanaInicio: FechaISO, hoy: FechaISO) {
 
       const mapa = new Map<FechaISO, DatosDelDia>();
       for (const f of filas) {
-        mapa.set(f.fecha, { cargado: true, descanso: false, centimos: f.montoCentimos, pedidos: f.pedidos });
+        mapa.set(f.fecha, { cargado: true, descanso: false, centimos: f.montoCentimos + f.montoApoyoCentimos + f.montoTaxiCentimos, pedidos: f.pedidos });
       }
       for (const d of descansos) if (!mapa.has(d)) mapa.set(d, { cargado: false, descanso: true });
       return mapa;

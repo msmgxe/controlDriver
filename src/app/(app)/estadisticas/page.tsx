@@ -16,10 +16,13 @@ import { ResumenDelPeriodo } from "@/components/ResumenDelPeriodo";
 import { SelectorDeMes } from "@/components/SelectorDeMes";
 import { Aviso, Cifras, Vacio } from "@/components/ui";
 import { useDatos } from "@/hooks/useDatos";
+import { bloquesPorRango } from "@/lib/db/sqlite/bloques-extra";
 import { descansosPorRango } from "@/lib/db/sqlite/descansos";
 import { jornadasPorRango, resumenPorRango, reglaVigente } from "@/lib/db/sqlite/jornadas";
-import { perfilActual } from "@/lib/db/sqlite/perfil";
-import type { JornadaCompleta } from "@/lib/db/tipos";
+import { listarTiendas, perfilActual } from "@/lib/db/sqlite/perfil";
+import { DesgloseDeIngresos } from "@/components/DesgloseDeIngresos";
+import type { BloqueExtraFila, JornadaCompleta } from "@/lib/db/tipos";
+import { desglosePorFuente } from "@/lib/pagos/desglose";
 import {
   diasDelRango,
   lunesDeLasUltimas,
@@ -91,14 +94,24 @@ export default function PaginaEstadisticas() {
 
   const { datos } = useDatos(
     async () => {
-      const [filas, jornadas, perfil, descansos] = await Promise.all([
+      const [filas, jornadas, perfil, descansos, bloquesPorDia, tiendas] = await Promise.all([
         resumenPorRango(resumenDesde, detalleHasta),
         vista === "comparar" ? Promise.resolve([] as JornadaCompleta[]) : jornadasPorRango(detalleDesde, detalleHasta),
         perfilActual(),
         descansosPorRango(resumenDesde, detalleHasta),
+        bloquesPorRango(detalleDesde, detalleHasta),
+        listarTiendas(),
       ]);
       const { regla } = await reglaVigente(detalleHasta, perfil?.tiendaId ?? null, perfil?.vehiculo);
-      return { filas, jornadas, perfil, regla, descansos: new Set<FechaISO>(descansos) };
+      return {
+        filas,
+        jornadas,
+        perfil,
+        regla,
+        descansos: new Set<FechaISO>(descansos),
+        bloques: [...bloquesPorDia.values()].flat(),
+        tiendaNombre: tiendas.find((t) => t.id === perfil?.tiendaId)?.nombre ?? null,
+      };
     },
     [vista, resumenDesde, detalleDesde, detalleHasta],
     // Cambiar de semana no debe vaciar la pantalla: se ve lo de antes un instante.
@@ -106,7 +119,7 @@ export default function PaginaEstadisticas() {
   );
 
   if (!datos) return <Esqueleto />;
-  const { filas, jornadas, perfil, regla, descansos } = datos;
+  const { filas, jornadas, perfil, regla, descansos, bloques, tiendaNombre } = datos;
 
   const encabezado = (
     <div className="flex flex-col gap-3">
@@ -263,6 +276,8 @@ export default function PaginaEstadisticas() {
             jornadas={jornadas}
             dias={dias}
             regla={regla}
+            bloques={bloques}
+            tiendaNombre={tiendaNombre}
             driver={perfil?.nombre ?? ""}
             desde={detalleDesde}
             hasta={detalleHasta}
@@ -281,6 +296,8 @@ function DetalleDelRango({
   jornadas,
   dias,
   regla,
+  bloques,
+  tiendaNombre,
   driver,
   desde,
   hasta,
@@ -288,6 +305,9 @@ function DetalleDelRango({
   jornadas: JornadaCompleta[];
   dias: DiaGrafico[];
   regla: ReglaPago;
+  /** Apoyo y taxi del rango. */
+  bloques: BloqueExtraFila[];
+  tiendaNombre: string | null;
   driver: string;
   desde: FechaISO;
   hasta: FechaISO;
@@ -380,8 +400,22 @@ function DetalleDelRango({
     </div>
   );
 
+  const desglose = desglosePorFuente({
+    tiendaNombre,
+    pedidosTienda: totalPedidos,
+    centimosTienda: t.centimosTienda,
+    bloques,
+  });
+  const resumenFuentes = desglose.map((f) => `${f.etiqueta.replace(/^Tienda .*/, "Tienda").replace(/^Apoyo · /, "Apoyo ")} ${formatearSoles(f.centimos)}`).join(" · ");
+
   return (
     <>
+      {desglose.length > 0 && (
+        <Acordeon titulo="De dónde viene" resumen={resumenFuentes}>
+          <DesgloseDeIngresos filas={desglose} siempre />
+        </Acordeon>
+      )}
+
       <Acordeon
         titulo="Tiempos"
         resumen={`${formatearDuracion(totalMinutos)} en ruta · ${durProm} min por ruta`}

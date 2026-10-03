@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Acordeon } from "@/components/Acordeon";
 import { BloquesDelDia } from "@/components/BloquesDelDia";
 import { CargarCapturas } from "@/components/CargarCapturas";
+import { DesgloseDeIngresos } from "@/components/DesgloseDeIngresos";
 import { DetalleDelDia } from "@/components/DetalleDelDia";
 import { HojaDeBloqueExtra } from "@/components/HojaDeBloqueExtra";
 import { HojaDeComandas } from "@/components/HojaDeComandas";
@@ -30,6 +31,7 @@ import { jornadaPorFecha, reglaVigente } from "@/lib/db/sqlite/jornadas";
 import { estadoDeSemana } from "@/lib/db/sqlite/liquidaciones";
 import { listarTiendas, perfilActual } from "@/lib/db/sqlite/perfil";
 import { montoDelDia } from "@/lib/pagos/calcular-liquidacion";
+import { desglosePorFuente } from "@/lib/pagos/desglose";
 import { diasEntre } from "@/lib/licencia/estado";
 import {
   esFechaISO,
@@ -298,6 +300,15 @@ function DelDia({
   const cobrado = jornada ? montoDelDia(pedidosCentimos, regla, jornada.horaEntrada, jornada.horaSalida).pagadoCentimos : 0;
   const minutos = jornada?.rutas.reduce((s, r) => s + (r.duracionMin ?? 0), 0) ?? 0;
   const conCliente = jornada?.ordenes.filter((o) => o.cliente !== null).length ?? 0;
+  /* Con apoyo o taxi, la pastilla del día es el total de todo —lo que de verdad
+     produjo—, y debajo se reparte por fuente. Sin ellos, queda como siempre. */
+  const extrasCentimos = bloques.reduce((s, b) => s + b.montoCentimos, 0);
+  const desglose = desglosePorFuente({
+    tiendaNombre: tienda?.nombre ?? null,
+    pedidosTienda: jornada?.ordenes.length ?? 0,
+    centimosTienda: cobrado,
+    bloques,
+  });
 
   return (
     <>
@@ -306,12 +317,14 @@ function DelDia({
           encabezado={dia === hoy ? "Hoy cargaste" : `El ${nombreDelDia(dia)} cargaste`}
           cifra={String(jornada.ordenes.length)}
           pie={`pedidos · ${jornada.rutas.length} ruta${jornada.rutas.length === 1 ? "" : "s"}`}
-          monto={formatearSoles(cobrado)}
+          monto={formatearSoles(cobrado + extrasCentimos)}
           vehiculo={vehiculo}
         />
       ) : (
         <DiaSinCarga fecha={dia} hoy={hoy} descanso={descanso} puedeEscribir={puedeCargar} alCambiar={alCambiar} />
       )}
+
+      {bloques.length > 0 && <DesgloseDeIngresos filas={desglose} titulo="De dónde viene el día" />}
 
       <BloquesDelDia fecha={dia} bloques={bloques} editable={editable && puedeCargar} alCambiar={alCambiar} />
 
@@ -360,7 +373,7 @@ function DelDia({
         <div id="recorrido-subir-mas">
           <Acordeon
             titulo="Subir más"
-            resumen="A mano, por cantidad, foto o comanda"
+            resumen="Pedidos, rutas, taxi y apoyo"
             destacado
             abierto={subirMasAbierto}
             alCambiar={setSubirMasAbierto}
@@ -372,6 +385,7 @@ function DelDia({
               editable={editable}
               alCambiar={alCambiar}
               alLeerComanda={() => setComanda(true)}
+              alAgregarBloque={setBloqueAbierto}
             />
           </Acordeon>
         </div>
@@ -511,13 +525,17 @@ function DiaSinCarga({
  * La base vive solo en este teléfono, y hasta que exista la copia en la nube
  * un respaldo manual es la única red de seguridad real. Se avisa aquí, en
  * Inicio, y no solo en Ajustes: nadie va a Ajustes a buscar algo que no sabe
- * que necesita. Es una franja fina y solo sale cuando toca.
+ * que necesita. Es una franja fina y solo sale cuando toca, y el botón hace el
+ * respaldo **ahí mismo**: abre el selector de Android para mandarlo a Drive,
+ * a WhatsApp o al correo, sin pasar por Ajustes.
  */
 function RecordatorioDeRespaldo() {
-  const { datos: ultimo } = useDatos(async () => {
+  const { datos: ultimo, recargar } = useDatos(async () => {
     const { ultimoRespaldoCreado } = await import("@/lib/db/sqlite/respaldo");
     return ultimoRespaldoCreado();
   }, []);
+  const [haciendo, setHaciendo] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (ultimo === undefined) return null; // todavía cargando
 
@@ -530,14 +548,41 @@ function RecordatorioDeRespaldo() {
 
   if (!mensaje) return null;
 
+  async function respaldar() {
+    setHaciendo(true);
+    setError(null);
+    try {
+      const { crearYCompartirRespaldo } = await import("@/lib/db/sqlite/compartir-respaldo");
+      await crearYCompartirRespaldo();
+      recargar();
+    } catch (fallo) {
+      // Cerrar el selector sin elegir nada no es un fallo que valga la pena gritar.
+      const texto = fallo instanceof Error ? fallo.message : "";
+      if (!/cancel/i.test(texto)) setError(texto || "No se pudo crear el respaldo.");
+    } finally {
+      setHaciendo(false);
+    }
+  }
+
   return (
-    <Link
-      href="/ajustes"
-      className="mx-auto flex w-full max-w-[880px] items-center justify-between gap-3 rounded-btn bg-sup-2 px-4 py-2.5 text-sm text-tinta-2"
-    >
-      <span>{mensaje}</span>
-      <b className="shrink-0 text-tinta">Respaldar</b>
-    </Link>
+    <div className="mx-auto flex w-full max-w-[880px] flex-col gap-1.5 rounded-btn bg-sup-2 px-4 py-2.5 text-sm text-tinta-2">
+      <div className="flex items-center justify-between gap-3">
+        <span>{mensaje}</span>
+        <button
+          type="button"
+          disabled={haciendo}
+          onClick={() => void respaldar()}
+          className="min-h-11 shrink-0 px-1 font-bold text-acento-tinta underline underline-offset-2 disabled:opacity-60"
+        >
+          {haciendo ? "Abriendo…" : "Respaldar ahora"}
+        </button>
+      </div>
+      <span className="text-xs text-tinta-3">
+        Es un archivo con tus datos: guárdalo en Drive o mándatelo por WhatsApp. Si cambias de teléfono, lo restauras en{" "}
+        <Link href="/ajustes" className="underline underline-offset-2">Ajustes</Link>.
+      </span>
+      {error && <span className="text-xs text-mal">{error}</span>}
+    </div>
   );
 }
 

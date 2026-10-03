@@ -213,6 +213,13 @@ export const Mas = (p: Props) => (
   </Base>
 );
 
+/** Un «+» de verdad, para agregar. (`Mas` son los tres puntitos de la barra.) */
+export const Suma = (p: Props) => (
+  <Base strokeWidth={2.6} {...p}>
+    <path d="M12 5v14M5 12h14" />
+  </Base>
+);
+
 /** Una tienda, para el apoyo tarifado por tramos. */
 export const Tienda = (p: Props) => (
   <Base {...p}>

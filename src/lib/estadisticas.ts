@@ -19,7 +19,14 @@ export interface DiaGrafico {
   pedidos: number;
   rutas: number;
   minutos: number;
+  /** Lo que de verdad produjo el día: tienda + apoyo + taxi. */
   centimos: number;
+  /** De ese total, lo que vino de los pedidos de la tienda de siempre. */
+  centimosTienda: number;
+  /** De ese total, apoyo a otras tiendas. */
+  centimosApoyo: number;
+  /** De ese total, carreras de taxi libre. */
+  centimosTaxi: number;
   fueraTramo1: number;
 }
 
@@ -49,6 +56,9 @@ export function diasDelRango(
         rutas: 0,
         minutos: 0,
         centimos: 0,
+        centimosTienda: 0,
+        centimosApoyo: 0,
+        centimosTaxi: 0,
         fueraTramo1: 0,
       };
     }
@@ -58,7 +68,10 @@ export function diasDelRango(
       pedidos: f.pedidos,
       rutas: f.rutas,
       minutos: f.minutosEnRuta,
-      centimos: f.montoCentimos,
+      centimos: f.montoCentimos + f.montoApoyoCentimos + f.montoTaxiCentimos,
+      centimosTienda: f.montoCentimos,
+      centimosApoyo: f.montoApoyoCentimos,
+      centimosTaxi: f.montoTaxiCentimos,
       fueraTramo1: f.pedidosFueraTramo1,
     };
   });
@@ -69,6 +82,9 @@ export interface Totales {
   rutas: number;
   minutos: number;
   centimos: number;
+  centimosTienda: number;
+  centimosApoyo: number;
+  centimosTaxi: number;
   fueraTramo1: number;
   /** Días con carga: los huecos y los descansos no cuentan. */
   diasTrabajados: number;
@@ -88,11 +104,16 @@ export function totalesDe(dias: readonly DiaGrafico[]): Totales {
     rutas: suma((d) => d.rutas),
     minutos: suma((d) => d.minutos),
     centimos,
+    centimosTienda: suma((d) => d.centimosTienda),
+    centimosApoyo: suma((d) => d.centimosApoyo),
+    centimosTaxi: suma((d) => d.centimosTaxi),
     fueraTramo1: suma((d) => d.fueraTramo1),
     diasTrabajados: cargados.length,
     promedioPorDia: cargados.length ? pedidos / cargados.length : 0,
     centimosPorDia: cargados.length ? Math.round(centimos / cargados.length) : 0,
-    centimosPorPedido: pedidos ? Math.round(centimos / pedidos) : 0,
+    // Por pedido cuenta solo la tienda: dividir también el apoyo y el taxi entre
+    // los pedidos inflaría la cifra con plata que no vino de ellos.
+    centimosPorPedido: pedidos ? Math.round(suma((d) => d.centimosTienda) / pedidos) : 0,
   };
 }
 

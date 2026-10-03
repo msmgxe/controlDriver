@@ -10,24 +10,27 @@ import type { Punto } from "@/lib/geo/distancia";
 import { posicionParaBloqueExtra } from "@/lib/geo/nativo";
 import { distanciaDeTaxi } from "@/lib/geo/taxi";
 import { aCentimos } from "@/lib/pagos/reglas";
-import type { FuenteDeKm } from "@/lib/db/tipos";
+import type { BloqueExtraFila, FuenteDeKm } from "@/lib/db/tipos";
 
 export function FormularioTaxi({
   fecha,
   factorCalles,
+  inicial,
   alGuardar,
 }: {
   fecha: FechaISO;
   factorCalles: number;
+  /** Si se corrige una carrera ya guardada: sus datos de partida. */
+  inicial?: Extract<BloqueExtraFila, { tipo: "taxi" }>;
   alGuardar: () => void;
 }) {
-  const [origen, setOrigen] = useState<Punto | null>(null);
-  const [destino, setDestino] = useState<Punto | null>(null);
-  const [horaInicio, setHoraInicio] = useState<string | null>(null);
-  const [horaFin, setHoraFin] = useState<string | null>(null);
-  const [km, setKm] = useState("");
-  const [kmFuente, setKmFuente] = useState<FuenteDeKm>("manual");
-  const [monto, setMonto] = useState("");
+  const [origen, setOrigen] = useState<Punto | null>(inicial?.origen ?? null);
+  const [destino, setDestino] = useState<Punto | null>(inicial?.destino ?? null);
+  const [horaInicio, setHoraInicio] = useState<string | null>(inicial?.horaInicio ?? null);
+  const [horaFin, setHoraFin] = useState<string | null>(inicial?.horaFin ?? null);
+  const [km, setKm] = useState(inicial?.km != null ? String(inicial.km) : "");
+  const [kmFuente, setKmFuente] = useState<FuenteDeKm>(inicial?.kmFuente ?? "manual");
+  const [monto, setMonto] = useState(inicial ? String(inicial.montoCentimos / 100) : "");
   const [buscando, setBuscando] = useState<"inicio" | "fin" | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -136,7 +139,7 @@ export function FormularioTaxi({
 
       <div className="flex flex-col gap-2 border-t border-linea px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
         <button type="button" className="boton-principal !min-h-11 !text-base" disabled={!puedeGuardar} onClick={() => void guardar()}>
-          {guardando ? "Guardando…" : "Guardar taxi"}
+          {guardando ? "Guardando…" : inicial ? "Guardar cambios" : "Guardar taxi"}
         </button>
       </div>
     </>

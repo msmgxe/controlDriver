@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Control Driver · 5 propuestas de interfaz</title>
+<style>
+:root{--pg:#eceef3;--card:#fff;--ink:#14161d;--mut:#586071;--line:#d8dce6;--stage:#e4e7ef;
+ /* tokens de la app (tema Mapa) */
+ --papel:#e6eef8;--sup:#fff;--sup2:#d9e5f4;--tinta:#0a2260;--tinta2:#3e5183;--tinta3:#52658f;--linea:#c4d5ec;--acento:#1f5cff;--acentoT:#1244cc;--acentoS:#dce6ff;--amarillo:#ffc800;--apoyo:#c99700;--taxi:#5b2bd6;--bien:#0b7a4d}
+@media(prefers-color-scheme:dark){:root{--pg:#111318;--card:#191c23;--ink:#eceef3;--mut:#9aa2b2;--line:#2b303b;--stage:#171a21}}
+*{box-sizing:border-box}body{margin:0;background:var(--pg);color:var(--ink);font:15px/1.5 system-ui,sans-serif;padding:0 clamp(16px,4vw,40px) 80px}
+.w{max-width:1200px;margin:auto}h1,h2,h3,p{margin:0}
+h1{font-size:clamp(30px,5vw,50px);line-height:1.05;letter-spacing:-.03em;padding-top:40px;max-width:20ch}
+.lead{color:var(--mut);max-width:70ch;margin-top:12px}
+.nav{position:sticky;top:0;background:color-mix(in srgb,var(--pg) 90%,transparent);backdrop-filter:blur(8px);padding:10px 0;margin-top:20px;display:flex;gap:8px;flex-wrap:wrap;z-index:9;border-bottom:1px solid var(--line)}
+.nav a{padding:6px 14px;border-radius:99px;background:var(--line);color:var(--ink);text-decoration:none;font-weight:600;font-size:13.5px}
+.cumple{margin-top:28px;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:820px;font-size:13px}th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:center}
+th:first-child,td:first-child{text-align:left}th{font-size:12px;color:var(--mut)}tr:last-child td{border:0}
+.op{margin-top:64px;scroll-margin-top:70px}.op h2{font-size:clamp(26px,4vw,38px);letter-spacing:-.02em}
+.op .l{display:inline-grid;place-items:center;width:46px;height:46px;border-radius:14px;background:var(--ink);color:var(--pg);font-weight:800;margin-right:12px;vertical-align:middle}
+.pitch{color:var(--mut);max-width:70ch;margin:10px 0 14px}
+.pts{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px;list-style:none;padding:0;margin:0 0 18px}
+.pts li{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 14px;font-size:13.5px;color:var(--mut)}.pts b{display:block;color:var(--ink)}
+.stage{background:var(--stage);border-radius:26px;padding:28px 12px 18px}
+.ph-row{display:flex;gap:26px;overflow-x:auto;padding:8px 14px 18px;justify-content:safe center}
+.slot{flex:none;display:grid;gap:12px;justify-items:center}.slot figcaption{font-size:13px;color:var(--mut);text-align:center;max-width:28ch}.slot figcaption b{display:block;color:var(--ink)}
+/* teléfono */
+.ph{width:300px;height:620px;border-radius:34px;background:#0b0d12;padding:9px;box-shadow:0 18px 40px -18px #0006}
+.sc{position:relative;width:100%;height:100%;border-radius:26px;background:var(--papel);overflow:hidden;color:var(--tinta);font-size:12.5px;display:flex;flex-direction:column}
+.top{display:flex;gap:8px;align-items:center;padding:14px 14px 8px;font-weight:700;font-size:16px}
+.body{flex:1;overflow:hidden;padding:0 12px;display:flex;flex-direction:column;gap:9px}
+.bar{display:grid;grid-template-columns:repeat(5,1fr);background:#fff;border-radius:16px 16px 0 0;padding:7px 2px 9px;font-size:9.5px;font-weight:600;text-align:center;color:var(--tinta2);box-shadow:0 -6px 14px -10px #0a2260}
+.bar i{display:block;font-style:normal;font-size:17px;line-height:1.2}.bar .on{color:var(--tinta)}.bar .on i{background:var(--amarillo);border-radius:10px;margin:0 8px}
+.dias{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}.dias span{background:var(--sup2);border-radius:8px;text-align:center;padding:4px 0;font-size:10px;font-weight:700}.dias .s{background:var(--acento);color:#fff}
+.hero{background:var(--acento);color:#fff;border-radius:16px;padding:12px 14px;border:2px solid #0a2260;position:relative}.hero small{opacity:.9;font-weight:600}.hero b{display:block;font-size:34px;line-height:1}
+.pill{display:inline-block;background:var(--amarillo);color:var(--tinta);border-radius:99px;padding:3px 10px;font-weight:800;margin-top:6px;border:2px solid #0a2260}
+.card{background:#fff;border-radius:14px;padding:9px 11px;display:flex;gap:9px;align-items:center}.card .ic{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:14px;flex:none}
+.card b{display:block;font-size:12.5px}.card small{color:var(--tinta2);font-size:10.5px}.card em{margin-left:auto;font-style:normal;font-weight:800;font-family:ui-monospace,monospace;font-size:12px}
+.ic.t{background:var(--acentoS)}.ic.a{background:#fff4d6}.ic.x{background:#ece7ff}
+.btn{border-radius:12px;padding:11px;text-align:center;font-weight:800;font-size:13px}.b1{background:var(--acento);color:#fff}.b2{background:var(--amarillo);color:var(--tinta)}.b3{background:#fff;border:1px solid #a9bfdf}
+.fab{position:absolute;right:14px;bottom:62px;width:46px;height:46px;border-radius:50%;background:var(--acento);color:#fff;display:grid;place-items:center;font-size:30px;box-shadow:0 6px 14px -4px #0a226099;font-weight:300}
+.sheet{position:absolute;inset:auto 0 0 0;background:#fff;border-radius:20px 20px 0 0;padding:12px 14px 16px;box-shadow:0 -10px 30px #0004;display:grid;gap:8px}.sheet h4{margin:0;font-size:14px}
+.shade{position:absolute;inset:0;background:#0007}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tile{background:var(--papel);border-radius:14px;padding:12px 8px;text-align:center;font-weight:700;font-size:11.5px;min-height:76px;display:grid;gap:4px;place-items:center;align-content:center}.tile i{font-style:normal;font-size:22px}
+.seg{display:grid;grid-auto-flow:column;gap:3px;background:var(--sup2);border-radius:12px;padding:3px}.seg span{text-align:center;padding:7px 2px;border-radius:9px;font-weight:700;font-size:11px}.seg .on{background:#fff;box-shadow:0 1px 3px #0003}
+.stack{display:flex;height:16px;border-radius:99px;overflow:hidden;background:#fff}.stack i{display:block;height:100%}
+.leg{display:flex;gap:10px;flex-wrap:wrap;font-size:10.5px;color:var(--tinta2)}.leg span::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;background:var(--c)}
+.row{display:grid;grid-template-columns:1fr auto;gap:2px 8px;font-size:11.5px}.row b{font-family:ui-monospace,monospace}.row small{grid-column:1/3;color:var(--tinta3);font-size:10px}
+.bg{height:7px;background:#fff;border-radius:9px;overflow:hidden;grid-column:1/3}.bg i{display:block;height:100%}
+.tl{border-left:3px solid var(--linea);margin-left:8px;padding-left:12px;display:grid;gap:8px}.tl .card{position:relative}.tl .card::before{content:"";position:absolute;left:-19px;top:14px;width:10px;height:10px;border-radius:50%;background:var(--c,var(--acento));border:2px solid var(--papel)}
+.q{background:#fff;border-radius:16px;padding:12px;display:flex;gap:10px;align-items:center}.q .ok{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:#fff;background:var(--bien);font-weight:800;flex:none}.q .no{background:#fff;border:2px dashed #a9bfdf;color:#a9bfdf}
+.q b{font-size:13.5px;display:block}.q small{font-size:10.5px;color:var(--tinta2)}
+.vote{margin-top:64px;background:var(--card);border:2px solid var(--ink);border-radius:18px;padding:20px 22px}.vote p{color:var(--mut);margin-top:8px;max-width:75ch}
+.date{border:1px solid #a9bfdf;background:#fff;border-radius:12px;padding:9px 11px;font-weight:700;display:flex;justify-content:space-between}.date span{color:var(--acentoT)}
+</style>
+</head>
+<body><div class="w">
+<h1>Control Driver: 5 formas de ordenarlo todo</h1>
+<p class="lead">Cada propuesta resuelve lo mismo —elegir el día del apoyo, tocar para ver el detalle, el «+» visible, el detalle por tramo con su evidencia, taxi desde «Cargar», un «Subir más» ordenado y el desglose tienda / apoyo / taxi— pero con otra idea de fondo. Los teléfonos son maquetas con los colores del tema Mapa. Elige una (o mezcla) y la construyo.</p>
+
+<nav class="nav"><a href="#A">A · Un solo «+»</a><a href="#B">B · Tres pestañas</a><a href="#C">C · Línea del día</a><a href="#D">D · Lista de «¿qué hiciste?»</a><a href="#E">E · Dinero primero</a></nav>
+
+<div class="cumple"><table>
+<tr><th>Lo que pediste</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th></tr>
+<tr><td>Elegir fecha del apoyo</td><td>✔ en la hoja</td><td>✔</td><td>✔</td><td>✔</td><td>✔</td></tr>
+<tr><td>Tocar un apoyo/taxi → detalle</td><td>✔</td><td>✔</td><td>✔ (toda la tarjeta)</td><td>✔</td><td>✔ (toca la barra)</td></tr>
+<tr><td>«+» blanco y visible</td><td>✔ (único botón)</td><td>✔</td><td>✔</td><td>— no hace falta</td><td>✔ (abanico)</td></tr>
+<tr><td>Detalle por tramo + evidencia</td><td>Pagos › Por tramo</td><td>Pestaña «Tienda»</td><td>Tarjeta «Tienda» se abre</td><td>Paso «Pedidos»</td><td>Toca el segmento Tienda</td></tr>
+<tr><td>Taxi desde «Cargar»</td><td>✔ mismo «+»</td><td>✔ pestaña Taxi</td><td>✔ barra inferior</td><td>✔ casilla Taxi</td><td>✔</td></tr>
+<tr><td>«Subir más» ordenado</td><td>Desaparece: va al «+»</td><td>Cada pestaña lleva lo suyo</td><td>Desaparece</td><td>Cada paso lleva lo suyo</td><td>Abanico</td></tr>
+<tr><td>Desglose tienda/apoyo/taxi</td><td>Barra + filas</td><td>Cabecera por pestaña</td><td>Colores en la línea</td><td>Cifra por casilla</td><td>Barra apilada protagonista</td></tr>
+<tr><td>Facilidad para «dummies»</td><td>★★★★</td><td>★★★★</td><td>★★★</td><td>★★★★★</td><td>★★★</td></tr>
+<tr><td>Cuánto cambia vs. hoy</td><td>medio</td><td>medio</td><td>alto</td><td>alto</td><td>medio</td></tr>
+</table></div>
+
+<!-- ============ A ============ -->
+<section class="op" id="A"><h2><span class="l">A</span>Un solo «+» para todo</h2>
+<p class="pitch">Se acaba la duda de «¿dónde subo esto?». Hay un único punto de entrada: el «+» (y el botón Cargar de la barra abre lo mismo). Una cuadrícula de 6 mosaicos del mismo tamaño, ordenados por tipo. «Subir más» desaparece.</p>
+<ul class="pts"><li><b>Cómo se entiende</b>Todo lo que añades sale de un solo lugar, con iconos grandes.</li><li><b>Taxi y apoyo</b>Dos mosaicos más, con la fecha arriba de su hoja.</li><li><b>Desglose</b>Bajo la cifra del día, una barra por fuente.</li></ul>
+<div class="stage"><div class="ph-row">
+<figure class="slot"><div class="ph"><div class="sc"><div class="top">🚕 Hoy</div><div class="body">
+<div class="dias"><span>L</span><span>M</span><span>M</span><span>J</span><span class="s">V</span><span>S</span><span>D</span></div>
+<div class="hero"><small>Hoy ganaste</small><b>S/ 254.00</b><span class="pill">5 pedidos · 7 rutas</span></div>
+<div class="stack"><i style="width:20%;background:var(--acento)"></i><i style="width:80%;background:var(--apoyo)"></i></div>
+<div class="leg"><span style="--c:var(--acento)">Tienda 51.50</span><span style="--c:var(--apoyo)">Apoyo 202.50</span><span style="--c:var(--taxi)">Taxi 0</span></div>
+<div class="card"><div class="ic a">⏱</div><div><b>Limatambo</b><small>10:15 · 11.25 h ›</small></div><em>202.50</em></div>
+<div class="card"><div class="ic t">🏪</div><div><b>Tu tienda · 5 pedidos</b><small>Por tramo ›</small></div><em>51.50</em></div>
+</div><div class="fab">+</div><div class="bar"><div class="on"><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div></div></div><figcaption><b>Inicio</b>Barra apilada + tarjetas tocables.</figcaption></figure>
+
+<figure class="slot"><div class="ph"><div class="sc"><div class="top">🚕 Hoy</div><div class="shade"></div><div class="sheet"><h4>Agregar al día · Vie 2 oct ✎</h4>
+<div class="tiles"><div class="tile"><i>📸</i>Resumen del día</div><div class="tile"><i>🧾</i>Foto de comanda</div><div class="tile"><i>✍️</i>Pedido a mano</div><div class="tile"><i>🛣</i>Ruta</div><div class="tile" style="background:#ece7ff"><i>🚕</i>Taxi libre</div><div class="tile" style="background:#fff4d6"><i>⏱</i>Apoyo a otra tienda</div></div></div></div></div><figcaption><b>El «+» / Cargar</b>6 mosaicos iguales; el día se cambia arriba.</figcaption></figure>
+
+<figure class="slot"><div class="ph"><div class="sc"><div class="top">👛 Pagos</div><div class="body">
+<div class="hero" style="background:#fff;color:var(--tinta);border:1px solid #c4d5ec"><small>Sem. 28–4</small><b style="color:var(--acento)">S/ 534.00</b></div>
+<div class="card" style="display:grid;gap:7px"><div class="row"><span>Tienda Wong</span><b>331.50</b><div class="bg"><i style="width:62%;background:var(--acento)"></i></div><small>33 pedidos · 62 %</small></div><div class="row"><span>Apoyo · Limatambo</span><b>202.50</b><div class="bg"><i style="width:38%;background:var(--apoyo)"></i></div><small>11.25 h · 38 %</small></div></div>
+<div class="card"><b>Día por día</b><em>›</em></div><div class="card"><b>Por tramo</b><small style="margin-left:6px">T1 28 · T2 4 · T3 1</small><em>›</em></div>
+</div><div class="bar"><div><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div class="on"><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div></div></div><figcaption><b>Pagos</b>Cada fuente con su detalle y %.</figcaption></figure>
+</div></div></section>
+
+<!-- ============ B ============ -->
+<section class="op" id="B"><h2><span class="l">B</span>Tres pestañas: Tienda · Apoyo · Taxi</h2>
+<p class="pitch">El día se divide como lo vives: lo de tu tienda, lo de apoyo, lo de taxi. Cada pestaña tiene su cifra, su lista y sus botones. Nada mezclado, nada escondido.</p>
+<ul class="pts"><li><b>Cómo se entiende</b>Si quieres ver el taxi, vas a «Taxi». Punto.</li><li><b>Subir más</b>Cada pestaña trae sus propios botones, del mismo tamaño.</li><li><b>Tramos</b>Dentro de «Tienda», la lista agrupada por tramo con su evidencia.</li></ul>
+<div class="stage"><div class="ph-row">
+<figure class="slot"><div class="ph"><div class="sc"><div class="top">🚕 Hoy</div><div class="body">
+<div class="hero"><small>Total del día</small><b>S/ 254.00</b></div>
+<div class="seg"><span class="on">Tienda 51</span><span>Apoyo 202</span><span>Taxi 0</span></div>
+<div class="card"><div class="ic t">T1</div><div><b>Tramo 1 · 0–2 km</b><small>3 pedidos ›</small></div><em>30.00</em></div>
+<div class="card"><div class="ic t">T2</div><div><b>Tramo 2 · 2–4 km</b><small>2 pedidos ›</small></div><em>21.50</em></div>
+<div class="btn b1">📸 Cargar resumen del día</div><div class="btn b2">🧾 Foto de comanda</div><div class="btn b3">✍️ Pedido a mano</div><div class="btn b3">🛣 Añadir ruta</div>
+</div><div class="bar"><div class="on"><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div></div></div><figcaption><b>Pestaña Tienda</b>Tramos tocables.</figcaption></figure>
+
+<figure class="slot"><div class="ph"><div class="sc"><div class="top">🚕 Hoy</div><div class="body">
+<div class="hero" style="background:var(--apoyo)"><small>Apoyo de hoy</small><b>S/ 202.50</b></div>
+<div class="seg"><span>Tienda 51</span><span class="on">Apoyo 202</span><span>Taxi 0</span></div>
+<div class="card"><div class="ic a">⏱</div><div><b>Limatambo</b><small>10:15 → 21:30 · 11.25 h</small></div><em>202.50</em></div>
+<div class="date"><span>Día</span>Vie 2 oct ✎</div>
+<div class="btn b3">+ Apoyo por hora</div><div class="btn b3">+ Apoyo por tramos</div>
+</div><div class="bar"><div class="on"><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div></div></div><figcaption><b>Pestaña Apoyo</b>Lista + dos botones iguales.</figcaption></figure>
+
+<figure class="slot"><div class="ph"><div class="sc"><div class="top">📊 Estadísticas</div><div class="body">
+<div class="seg"><span class="on">Todo</span><span>Tienda</span><span>Apoyo</span><span>Taxi</span></div>
+<div class="hero"><small>Semana</small><b>S/ 534.00</b></div>
+<div class="card" style="display:grid;gap:6px"><div class="row"><span>Tienda Wong</span><b>331.50</b><small>33 pedidos</small></div><div class="row"><span>Apoyo · Limatambo</span><b>202.50</b><small>11.25 h</small></div><div class="row"><span>Taxi</span><b>0.00</b><small>sin carreras</small></div></div>
+</div><div class="bar"><div><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div><i>👛</i>Pagos</div><div class="on"><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div></div></div><figcaption><b>Estadísticas</b>El mismo filtro por tipo.</figcaption></figure>
+</div></div></section>
+
+<!-- ============ C ============ -->
+<section class="op" id="C"><h2><span class="l">C</span>La línea del día</h2>
+<p class="pitch">El día como una cinta de tiempo: cada cosa que hiciste es una tarjeta con su color (azul tienda, ámbar apoyo, violeta taxi), en el orden en que pasó. Abajo, tres botones fijos para añadir.</p>
+<ul class="pts"><li><b>Cómo se entiende</b>Como un chat: lo último abajo, todo tocable.</li><li><b>Detalle</b>Tocar cualquier tarjeta la abre: pedidos, capturas, tramo.</li><li><b>Subir más</b>Se sustituye por la barra de 3 botones.</li></ul>
+<div class="stage"><div class="ph-row">
+<figure class="slot"><div class="ph"><div class="sc"><div class="top">🚕 Vie 2 oct</div><div class="body">
+<div class="hero" style="padding:9px 14px"><small>Hoy</small> <b style="font-size:26px">S/ 254.00</b></div>
+<div class="tl">
+<div class="card" style="--c:var(--apoyo)"><div class="ic a">⏱</div><div><b>Apoyo · Limatambo</b><small>10:15 → 21:30</small></div><em>202.50</em></div>
+<div class="card" style="--c:var(--acento)"><div class="ic t">🏪</div><div><b>Tu tienda · 5 pedidos</b><small>7 rutas · 4 h 36 min</small></div><em>51.50</em></div>
+<div class="card" style="--c:var(--taxi)"><div class="ic x">🚕</div><div><b>Taxi · 8.2 km</b><small>19:40</small></div><em>22.00</em></div></div>
+</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:8px 12px"><div class="btn b1" style="font-size:11px;padding:9px 2px">+ Pedido</div><div class="btn" style="background:var(--taxi);color:#fff;font-size:11px;padding:9px 2px">+ Taxi</div><div class="btn" style="background:var(--apoyo);color:#fff;font-size:11px;padding:9px 2px">+ Apoyo</div></div>
+<div class="bar"><div class="on"><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div></div></div><figcaption><b>Inicio</b>Todo el día en una cinta.</figcaption></figure>
+
+<figure class="slot"><div class="ph"><div class="sc"><div class="top">‹ Tu tienda · 5 pedidos</div><div class="body">
+<div class="seg"><span class="on">Por tramo</span><span>Por ruta</span><span>Capturas</span></div>
+<div class="card"><div class="ic t">T1</div><div><b>3 pedidos</b><small>v12238…-01 · 1.2 km 📷</small></div><em>10.00</em></div>
+<div class="card"><div class="ic t">T1</div><div><b>v12238…-02</b><small>0.8 km · comanda ✓</small></div><em>10.00</em></div>
+<div class="card"><div class="ic t">T2</div><div><b>v12239…-01</b><small>2.9 km · cambiar tramo ›</small></div><em>10.75</em></div>
+<div class="btn b3">Corregir un pedido</div></div></div></div><figcaption><b>Detalle al tocar</b>Pedidos con su evidencia.</figcaption></figure>
+</div></div></section>
+
+<!-- ============ D ============ -->
+<section class="op" id="D"><h2><span class="l">D</span>La lista «¿Qué hiciste hoy?»</h2>
+<p class="pitch">Pensada para quien no quiere pensar. Inicio es una lista de preguntas simples con ✔ o «falta»: ¿subiste tu resumen? ¿apoyaste a otra tienda? ¿hiciste taxi? Tocas la que corresponde y la app te lleva paso a paso.</p>
+<ul class="pts"><li><b>Cómo se entiende</b>Se lee como una lista de tareas del día.</li><li><b>Sin botones sueltos</b>Cada casilla trae su cifra y su acción.</li><li><b>Ideal</b>Para conductores nuevos o poco técnicos.</li></ul>
+<div class="stage"><div class="ph-row">
+<figure class="slot"><div class="ph"><div class="sc"><div class="top">🚕 Vie 2 oct</div><div class="body">
+<div class="q"><div class="ok">✓</div><div><b>Pedidos de mi tienda</b><small>5 pedidos · S/ 51.50 ›</small></div></div>
+<div class="q"><div class="ok">✓</div><div><b>Apoyé a otra tienda</b><small>Limatambo · 11.25 h · S/ 202.50 ›</small></div></div>
+<div class="q"><div class="no">+</div><div><b>Hice taxi</b><small>Toca para anotar una carrera</small></div></div>
+<div class="q"><div class="no">+</div><div><b>Tengo comandas por subir</b><small>Fotos con cliente y dirección</small></div></div>
+<div class="hero"><small>Total del día</small><b>S/ 254.00</b></div>
+</div><div class="bar"><div class="on"><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div></div></div><figcaption><b>Inicio</b>Preguntas, no menús.</figcaption></figure>
+
+<figure class="slot"><div class="ph"><div class="sc"><div class="top">‹ Pedidos de mi tienda</div><div class="body">
+<p style="font-weight:700">¿Cómo quieres anotarlos?</p>
+<div class="btn b3" style="text-align:left">📸 Subir capturas de la app</div><div class="btn b3" style="text-align:left">🧾 Foto de una comanda</div><div class="btn b3" style="text-align:left">🔢 Solo dime cuántos fueron</div><div class="btn b3" style="text-align:left">✍️ Uno a mano</div>
+<div class="date"><span>Día</span>Vie 2 oct ✎</div>
+</div></div></div><figcaption><b>Cada paso</b>Opciones del mismo tamaño.</figcaption></figure>
+</div></div></section>
+
+<!-- ============ E ============ -->
+<section class="op" id="E"><h2><span class="l">E</span>El dinero primero</h2>
+<p class="pitch">Lo que más miras es cuánto llevas y de dónde. La barra apilada tienda/apoyo/taxi es la protagonista de Inicio, Pagos y Estadísticas; tocar un color baja al detalle de esa fuente (tramos y capturas para la tienda). El «+» abre un abanico de tres.</p>
+<ul class="pts"><li><b>Cómo se entiende</b>Colores constantes en toda la app.</li><li><b>Corroborar</b>Tocar «Tienda» abre los tramos con sus capturas.</li><li><b>Pagos y Estadísticas</b>Barras por día apiladas por fuente.</li></ul>
+<div class="stage"><div class="ph-row">
+<figure class="slot"><div class="ph"><div class="sc"><div class="top">🚕 Hoy</div><div class="body">
+<div class="hero"><small>Llevas hoy</small><b>S/ 254.00</b></div>
+<div class="stack" style="height:26px"><i style="width:20%;background:var(--acento)"></i><i style="width:71%;background:var(--apoyo)"></i><i style="width:9%;background:var(--taxi)"></i></div>
+<div class="leg"><span style="--c:var(--acento)">Tienda 51.50</span><span style="--c:var(--apoyo)">Apoyo 202.50</span><span style="--c:var(--taxi)">Taxi 22</span></div>
+<div class="card"><div class="ic t">🏪</div><div><b>Tienda</b><small>5 pedidos · ver tramos ›</small></div><em>51.50</em></div>
+<div class="card"><div class="ic a">⏱</div><div><b>Apoyo</b><small>Limatambo · 11.25 h ›</small></div><em>202.50</em></div>
+<div class="card"><div class="ic x">🚕</div><div><b>Taxi</b><small>1 carrera · 8.2 km ›</small></div><em>22.00</em></div>
+</div><div class="fab" style="bottom:62px">+</div><div style="position:absolute;right:20px;bottom:116px;display:grid;gap:6px;justify-items:end"><span class="pill" style="margin:0;background:#fff;border-color:var(--taxi)">🚕 Taxi</span><span class="pill" style="margin:0;background:#fff;border-color:var(--apoyo)">⏱ Apoyo</span><span class="pill" style="margin:0;background:#fff;border-color:var(--acento)">🏪 Pedidos</span></div>
+<div class="bar"><div class="on"><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div></div></div><figcaption><b>Inicio</b>Barra apilada + abanico.</figcaption></figure>
+
+<figure class="slot"><div class="ph"><div class="sc"><div class="top">👛 Pagos</div><div class="body">
+<div class="hero" style="background:#fff;color:var(--tinta);border:1px solid #c4d5ec"><small>Sem. 28–4</small><b style="color:var(--acento)">S/ 556.00</b></div>
+<div class="card" style="height:150px;align-items:flex-end;gap:7px;padding:10px 12px">
+<div style="flex:1;display:flex;flex-direction:column-justify;height:100%;align-items:stretch;justify-content:flex-end"><i style="height:30%;background:var(--acento);display:block"></i></div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%"><i style="height:40%;background:var(--acento);display:block"></i></div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%"><i style="height:20%;background:var(--taxi);display:block"></i><i style="height:35%;background:var(--acento);display:block"></i></div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%"><i style="height:20%;background:var(--acento);display:block"></i><i style="height:72%;background:var(--apoyo);display:block"></i><i style="height:8%;background:var(--taxi);display:block"></i></div></div>
+<div class="leg"><span style="--c:var(--acento)">Tienda</span><span style="--c:var(--apoyo)">Apoyo</span><span style="--c:var(--taxi)">Taxi</span></div>
+<div class="card"><b>Por tramo</b><small style="margin-left:6px">con capturas</small><em>›</em></div><div class="card"><b>Cobro</b><em>›</em></div>
+</div><div class="bar"><div><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div class="on"><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div></div></div><figcaption><b>Pagos</b>Cada día apilado por fuente.</figcaption></figure>
+</div></div></section>
+
+<div class="vote"><h3>Mi recomendación</h3><p><b>D para empezar + el desglose de E.</b> «¿Qué hiciste hoy?» responde exactamente a «como para dummies», y la barra de colores de E (tienda / apoyo / taxi) da el desglose en Inicio, Pagos y Estadísticas. Si prefieres cambiar poco, <b>A</b> es la más rápida de hacer: ya hoy tienes el «+» y la hoja de «Cargar»; solo se unifican. Dime la letra (o la mezcla) y la construyo.</p></div>
+</div></body></html>

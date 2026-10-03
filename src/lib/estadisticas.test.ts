@@ -116,6 +116,32 @@ describe("las últimas semanas", () => {
   });
 });
 
+describe("apoyo y taxi en las estadísticas", () => {
+  const conExtras = diasDelRango(
+    "2026-09-14" as FechaISO,
+    "2026-09-14" as FechaISO,
+    [fila("2026-09-14", 10, 10000, { montoApoyoCentimos: 20250, montoTaxiCentimos: 2200 })],
+    new Set(),
+    "2026-09-20" as FechaISO,
+  );
+
+  it("el día suma tienda, apoyo y taxi, y guarda cada parte", () => {
+    expect(conExtras[0]).toMatchObject({
+      centimos: 32450,
+      centimosTienda: 10000,
+      centimosApoyo: 20250,
+      centimosTaxi: 2200,
+    });
+  });
+
+  it("el promedio por pedido solo cuenta lo de la tienda", () => {
+    const t = totalesDe(conExtras);
+    expect(t.centimos).toBe(32450);
+    expect(t.centimosPorPedido).toBe(1000);
+    expect(t).toMatchObject({ centimosTienda: 10000, centimosApoyo: 20250, centimosTaxi: 2200 });
+  });
+});
+
 describe("comparar dos semanas", () => {
   const semana = (pedidos: number, centimos: number, dias: number) =>
     totalesDe(
@@ -126,6 +152,9 @@ describe("comparar dos semanas", () => {
         rutas: 1,
         minutos: 60,
         centimos: centimos / dias,
+        centimosTienda: centimos / dias,
+        centimosApoyo: 0,
+        centimosTaxi: 0,
         fueraTramo1: 0,
       })),
     );

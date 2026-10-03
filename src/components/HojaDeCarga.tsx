@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { HojaDeComandas } from "@/components/HojaDeComandas";
-import { Calendario, Equis, Subir, Ticket } from "@/components/iconos";
+import { Calendario, Equis, Reloj, Subir, Taxi, Ticket } from "@/components/iconos";
 import { Aviso } from "@/components/ui";
 import { useCapa } from "@/hooks/useCapa";
 import { useDatos } from "@/hooks/useDatos";
@@ -34,6 +34,7 @@ export function HojaDeCarga({
   diaInicial,
   deshabilitado,
   alElegirCapturas,
+  alElegirBloque,
   alCerrar,
 }: {
   /** El día que se tiene delante; por defecto, hoy. */
@@ -41,6 +42,8 @@ export function HojaDeCarga({
   /** Sin licencia no se cargan jornadas nuevas. */
   deshabilitado: boolean;
   alElegirCapturas: (dia: FechaISO) => void;
+  /** Apoyo a otra tienda o taxi libre: se abren aparte, con su propio formulario. */
+  alElegirBloque: (tipo: "apoyo" | "taxi", dia: FechaISO) => void;
   alCerrar: () => void;
 }) {
   const [dia, setDia] = useState<FechaISO>(diaInicial);
@@ -55,6 +58,7 @@ export function HojaDeCarga({
       deshabilitado={deshabilitado}
       alElegirCapturas={alElegirCapturas}
       alElegirComandas={() => setComandas(true)}
+      alElegirBloque={alElegirBloque}
       alCerrar={alCerrar}
     />
   );
@@ -67,6 +71,7 @@ function Eleccion({
   deshabilitado,
   alElegirCapturas,
   alElegirComandas,
+  alElegirBloque,
   alCerrar,
 }: {
   dia: FechaISO;
@@ -74,6 +79,7 @@ function Eleccion({
   deshabilitado: boolean;
   alElegirCapturas: (dia: FechaISO) => void;
   alElegirComandas: () => void;
+  alElegirBloque: (tipo: "apoyo" | "taxi", dia: FechaISO) => void;
   alCerrar: () => void;
 }) {
   const hoy = hoyEnLima();
@@ -147,7 +153,7 @@ function Eleccion({
         )}
 
         <div className="flex flex-col gap-2.5">
-          <span className="rotulo">Qué vas a cargar</span>
+          <span className="rotulo">De tu tienda</span>
 
           <Opcion
             Icono={Subir}
@@ -165,6 +171,29 @@ function Eleccion({
             destino={`Completa el pedido si ya está cargado, en su día. Si no está, lo crea el ${corto}.`}
             deshabilitado={deshabilitado}
             alElegir={alElegirComandas}
+          />
+        </div>
+
+        {/* Lo que no es de la tienda de siempre. Con el mismo día de arriba. */}
+        <div className="flex flex-col gap-2.5">
+          <span className="rotulo">Otros ingresos del día</span>
+
+          <Opcion
+            Icono={Taxi}
+            titulo="Carrera de taxi"
+            detalle="Una carrera suelta: marcas inicio y fin con el GPS, o escribes los km, y el monto que cobraste."
+            destino={`Se suma al ${corto}, aparte de tus pedidos.`}
+            deshabilitado={deshabilitado}
+            alElegir={() => alElegirBloque("taxi", dia)}
+          />
+
+          <Opcion
+            Icono={Reloj}
+            titulo="Apoyo a otra tienda"
+            detalle="Cubriste otra tienda: te pagan por hora, o por tramos como en tu tienda."
+            destino={`Se suma al ${corto}. Ahí puedes cambiar el día.`}
+            deshabilitado={deshabilitado}
+            alElegir={() => alElegirBloque("apoyo", dia)}
           />
         </div>
       </div>

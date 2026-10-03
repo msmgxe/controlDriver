@@ -918,6 +918,38 @@
     opacity: 0.55;
   }
 
+  /* Una fila de acción, a todo el ancho y del mismo alto: la usan las opciones
+     de «Subir más», para que ninguna se vea más importante que otra por su
+     tamaño. El «›» de la derecha dice que se abre. */
+  .boton-fila {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 54px;
+    padding: 10px 14px;
+    border: 1px solid var(--linea-fuerte);
+    border-radius: var(--r-btn);
+    background: var(--sup);
+    color: var(--tinta);
+    font-size: 15px;
+    font-weight: 600;
+    text-align: left;
+  }
+  .boton-fila::after {
+    content: "›";
+    margin-left: auto;
+    color: var(--tinta-3);
+    font-size: 22px;
+    line-height: 1;
+  }
+  .boton-fila:hover:not(:disabled) {
+    background: var(--sup-2);
+  }
+  .boton-fila:disabled {
+    opacity: 0.55;
+  }
+
   .boton-principal {
     display: flex;
     align-items: center;

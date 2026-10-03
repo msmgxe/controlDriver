@@ -15,7 +15,8 @@
  * Qué entra en el respaldo y qué no:
  *
  *   · **Entra**: el perfil, las tiendas, las tarifas, las jornadas, las
- *     rutas, los pedidos y las liquidaciones. Es lo que cuesta caro perder:
+ *     rutas, los pedidos, las liquidaciones, los días de descanso y el apoyo
+ *     a otras tiendas y los taxis. Es lo que cuesta caro perder:
  *     meses de trabajo y de cálculos de pago.
  *   · **No entra la licencia ni el identificador del teléfono.** Restaurar el
  *     identificador de un teléfono viejo en uno nuevo dejaría la licencia
@@ -41,6 +42,11 @@ const TABLAS = [
   "ordenes",
   "liquidaciones",
   "dias_descanso",
+  // Apoyo a otra tienda y taxi libre (v48). Cuelgan de jornadas y tiendas, así
+  // que van después de ellas; sin estas dos, restaurar borraba el apoyo y el
+  // taxi de todos los días y no los devolvía.
+  "bloques_extra",
+  "bloques_apoyo_pedidos",
 ] as const;
 
 type NombreTabla = (typeof TABLAS)[number];
@@ -96,6 +102,9 @@ const esquemaRespaldo = z.object({
     liquidaciones: z.array(z.record(z.string(), z.unknown())),
     // Los respaldos anteriores a los días de descanso no la traen.
     dias_descanso: z.array(z.record(z.string(), z.unknown())).default([]),
+    // Los respaldos anteriores a apoyo/taxi no las traen.
+    bloques_extra: z.array(z.record(z.string(), z.unknown())).default([]),
+    bloques_apoyo_pedidos: z.array(z.record(z.string(), z.unknown())).default([]),
   }),
 });
 

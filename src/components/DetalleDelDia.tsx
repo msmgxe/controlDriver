@@ -8,6 +8,7 @@ import { FilaPedidoSimple } from "@/components/FilaPedidoSimple";
 import { HojaDePedido } from "@/components/HojaDePedido";
 import { Camara, Flecha, Reloj, Equis } from "@/components/iconos";
 import { Pestanas } from "@/components/Pestanas";
+import { PedidosPorTramo } from "@/components/PedidosPorTramo";
 import { PruebasDelDia } from "@/components/PruebasDelDia";
 import { Aviso } from "@/components/ui";
 import type { AjustesDeComandas } from "@/lib/db/sqlite/ajustes";
@@ -18,7 +19,8 @@ import type { FechaISO } from "@/lib/fechas";
 import { horasDePermanencia, formatearSoles, montoPorPermanencia, type ReglaPago } from "@/lib/pagos/reglas";
 
 /**
- * Lo que se subió de un día, en dos pestañas: **Pedidos** y **Rutas**.
+ * Lo que se subió de un día, en tres pestañas: **Pedidos**, **Por tramo** (para
+ * corroborar el pago, con la evidencia de cada pedido) y **Rutas**.
  *
  * Es el contenido del acordeón «Detalle de lo subido» de Inicio, y reúne lo que
  * antes estaba repartido entre la pantalla de la jornada y el recorrido de
@@ -76,6 +78,7 @@ export function DetalleDelDia({
         alCambiar={setPestana}
         items={[
           { id: "pedidos", etiqueta: "Pedidos", cuenta: jornada.ordenes.length },
+          { id: "tramos", etiqueta: "Por tramo" },
           { id: "rutas", etiqueta: "Rutas", cuenta: jornada.rutas.length },
         ]}
       />
@@ -120,6 +123,17 @@ export function DetalleDelDia({
             </button>
           )}
         </>
+      )}
+
+      {pestana === "tramos" && (
+        <PedidosPorTramo
+          jornadas={[jornada]}
+          regla={regla}
+          tienda={tienda}
+          ajustes={ajustes}
+          editable={editable}
+          alCambiar={alCambiar}
+        />
       )}
 
       {pestana === "rutas" && (

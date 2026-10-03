@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { useCapa } from "@/hooks/useCapa";
-import { Reloj, Taxi, Tienda } from "@/components/iconos";
+import { Reloj, Suma, Taxi, Tienda } from "@/components/iconos";
 
 /**
  * El botón flotante "+" de Inicio: abre un menú con las tres formas de
@@ -30,9 +30,9 @@ export function MenuAgregarBloque({
         aria-label="Agregar al día"
         disabled={disabled}
         onClick={() => setAbierto(true)}
-        className="fixed right-5 bottom-[calc(84px+env(safe-area-inset-bottom,0px))] z-40 grid size-14 place-items-center rounded-full bg-acento text-acento-tinta shadow-alta disabled:opacity-50 sm:bottom-6"
+        className="fixed right-5 bottom-[calc(84px+env(safe-area-inset-bottom,0px))] z-40 grid size-14 place-items-center rounded-full bg-acento text-acento-texto shadow-alta disabled:opacity-50 sm:bottom-6"
       >
-        <span aria-hidden className="text-[28px] leading-none font-light">+</span>
+        <Suma className="size-7" />
       </button>
 
       {abierto && (

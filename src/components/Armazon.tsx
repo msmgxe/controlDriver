@@ -7,6 +7,7 @@ import { useSyncExternalStore, useState } from "react";
 import { Auto } from "@/components/Auto";
 import { BloqueoApp } from "@/components/BloqueoApp";
 import { ProveedorDeCarga, useCarga } from "@/components/CargaDeCapturas";
+import { HojaDeBloqueExtraAutonoma } from "@/components/HojaDeBloqueExtra";
 import { HojaDeCarga } from "@/components/HojaDeCarga";
 import { usePuedeEscribir } from "@/components/Licencia";
 import {
@@ -32,7 +33,8 @@ import {
   suscribirBloqueo,
 } from "@/lib/bloqueo";
 import { useDiaElegido } from "@/lib/diaElegido";
-import { hoyEnLima } from "@/lib/fechas";
+import { avisarDeCambios } from "@/lib/cambios";
+import { hoyEnLima, type FechaISO } from "@/lib/fechas";
 import { PUERTAS, PUERTAS_PRINCIPALES, puertaDe, tituloDe, type Puerta } from "@/lib/navegacion";
 /** Dentro del APK solo existe el repartidor; el administrador vive en la web. */
 type Rol = "admin" | "driver";
@@ -98,6 +100,7 @@ function ArmazonInterno({
   const ruta = usePathname();
   const router = useRouter();
   const [cargando, setCargando] = useState(false);
+  const [bloque, setBloque] = useState<{ tipo: "apoyo" | "taxi"; dia: FechaISO } | null>(null);
   const [masAbierto, setMasAbierto] = useState(false);
   const { abrir, trabajando, deshabilitado } = useCarga();
   const vehiculo = useVehiculo();
@@ -310,7 +313,23 @@ function ArmazonInterno({
             setCargando(false);
             abrir({ fechaPorDefecto: dia });
           }}
+          alElegirBloque={(tipo, dia) => {
+            setCargando(false);
+            setBloque({ tipo, dia });
+          }}
           alCerrar={() => setCargando(false)}
+        />
+      )}
+
+      {bloque && (
+        <HojaDeBloqueExtraAutonoma
+          tipo={bloque.tipo}
+          fecha={bloque.dia}
+          alCerrar={() => setBloque(null)}
+          alGuardar={() => {
+            setBloque(null);
+            avisarDeCambios();
+          }}
         />
       )}
     </BloqueoApp>

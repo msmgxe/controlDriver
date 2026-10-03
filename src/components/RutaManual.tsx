@@ -53,7 +53,7 @@ export function RutaManual({
           setNumero(String(siguienteNumero));
           setAbierto(true);
         }}
-        className="boton-secundario self-start"
+        className="boton-fila"
       >
         Añadir una ruta
       </button>
@@ -198,7 +198,7 @@ export function BotonReordenar({
       <button
         type="button"
         onClick={() => setConfirmando(true)}
-        className="boton-secundario self-start"
+        className="boton-fila"
       >
         Reordenar por hora
       </button>
@@ -317,7 +317,7 @@ export function LectorDeRutas({
           setEstado("reposo");
           setAbierto(true);
         }}
-        className="boton-secundario self-start"
+        className="boton-fila"
       >
         Leer rutas de una foto
       </button>

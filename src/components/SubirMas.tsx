@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { agregarPedidosDeFoto, reordenarRutas } from "@/app/(app)/jornada/acciones";
-import { Ticket } from "@/components/iconos";
+import { Reloj, Taxi, Ticket } from "@/components/iconos";
 import { LectorDePedidos, PedidoManual, PedidosPorCantidad } from "@/components/PedidoManual";
 import { Pestanas } from "@/components/Pestanas";
 import { BotonReordenar, LectorDeRutas, RutaManual } from "@/components/RutaManual";
@@ -14,11 +14,16 @@ import type { FechaISO } from "@/lib/fechas";
 import type { ReglaPago } from "@/lib/pagos/reglas";
 
 /**
- * «Subir más»: las otras formas de meter datos en un día, en dos pestañas.
+ * «Subir más»: las otras formas de meter datos en un día, en tres pestañas,
+ * una por tipo de cosa que se sube:
  *
- *   · **Pedido** — a mano, por cantidad, de una foto de la lista, o de una
- *     **comanda** (la hoja de despacho, con su cliente y su dirección).
- *   · **Ruta** — a mano, de una foto, o reordenarlas por hora.
+ *   · **Pedidos** — de una **comanda** (la hoja de despacho, con su cliente y
+ *     su dirección), por cantidad, a mano o de una foto de la lista.
+ *   · **Rutas** — a mano, de una foto, o reordenarlas por hora.
+ *   · **Taxi y apoyo** — lo que no es de la tienda de siempre: una carrera de
+ *     taxi suelta, o haber cubierto a otra tienda.
+ *
+ * Todas las opciones son filas del mismo tamaño (`boton-fila`).
  *
  * Es lo mismo que antes estaba en la pantalla de la jornada, sin cambios de
  * fondo: cada formulario se abre solo cuando se toca su botón.
@@ -30,6 +35,7 @@ export function SubirMas({
   editable,
   alCambiar,
   alLeerComanda,
+  alAgregarBloque,
 }: {
   fecha: FechaISO;
   jornada: JornadaCompleta | null;
@@ -38,6 +44,8 @@ export function SubirMas({
   editable: boolean;
   alCambiar: () => void;
   alLeerComanda: () => void;
+  /** Abre la hoja de apoyo o de taxi, para el día que se está mirando. */
+  alAgregarBloque: (tipo: "apoyo" | "taxi") => void;
 }) {
   const [pestana, setPestana] = useState("pedido");
   const rutas = jornada?.rutas ?? [];
@@ -60,16 +68,18 @@ export function SubirMas({
         actual={pestana}
         alCambiar={setPestana}
         items={[
-          { id: "pedido", etiqueta: "Pedido" },
-          { id: "ruta", etiqueta: "Ruta" },
+          { id: "pedido", etiqueta: "Pedidos" },
+          { id: "ruta", etiqueta: "Rutas" },
+          { id: "otros", etiqueta: "Taxi y apoyo" },
         ]}
       />
 
       {pestana === "pedido" && (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2.5">
+          <p className="text-xs text-tinta-3">Pedidos de tu tienda. Elige cómo quieres anotarlos.</p>
           {/* Primero la más completa: una foto por pedido, con cliente, dirección
               y distancia. Completa un pedido que ya está o crea uno nuevo. */}
-          <button type="button" onClick={alLeerComanda} className="boton-secundario self-start">
+          <button type="button" onClick={alLeerComanda} className="boton-fila">
             <Ticket className="size-[18px]" />
             Leer una comanda
           </button>
@@ -101,7 +111,8 @@ export function SubirMas({
       )}
 
       {pestana === "ruta" && (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2.5">
+          <p className="text-xs text-tinta-3">Las salidas a repartir de tu tienda, con su hora.</p>
           {/* Sin esto no hay dónde elegir la ruta de un pedido: si la captura salió
               cortada o el día se escribió entero a mano, la lista de rutas está
               vacía y el selector de pedidos no tiene nada que ofrecer. */}
@@ -126,6 +137,22 @@ export function SubirMas({
               }}
             />
           )}
+        </div>
+      )}
+
+      {pestana === "otros" && (
+        <div className="flex flex-col gap-2.5">
+          <p className="text-xs text-tinta-3">
+            Lo que no es de tu tienda de siempre. Se suma al total del día, aparte de tus pedidos.
+          </p>
+          <button type="button" onClick={() => alAgregarBloque("taxi")} className="boton-fila">
+            <Taxi className="size-[18px]" />
+            Carrera de taxi
+          </button>
+          <button type="button" onClick={() => alAgregarBloque("apoyo")} className="boton-fila">
+            <Reloj className="size-[18px]" />
+            Apoyo a otra tienda
+          </button>
         </div>
       )}
     </>

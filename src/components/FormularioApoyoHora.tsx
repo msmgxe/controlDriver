@@ -5,6 +5,7 @@ import { useState } from "react";
 import { guardarBloqueApoyoHora } from "@/app/(app)/jornada/acciones";
 import { Aviso } from "@/components/ui";
 import { horaEnLima, type FechaISO } from "@/lib/fechas";
+import type { BloqueExtraFila } from "@/lib/db/tipos";
 import { aCentimos } from "@/lib/pagos/reglas";
 
 /** Horas entre dos `HH:MM`, en decimal —sin el truncado de `horasDePermanencia`: aquí es tarifa, no piso. */
@@ -17,12 +18,21 @@ function horasEntre(inicio: string, fin: string): number {
   return Math.round((minutos / 60) * 100) / 100;
 }
 
-export function FormularioApoyoHora({ fecha, alGuardar }: { fecha: FechaISO; alGuardar: () => void }) {
-  const [tiendaNombre, setTiendaNombre] = useState("");
-  const [horaInicio, setHoraInicio] = useState(horaEnLima());
-  const [horaFin, setHoraFin] = useState("");
-  const [tarifa, setTarifa] = useState("");
-  const [motivo, setMotivo] = useState("");
+export function FormularioApoyoHora({
+  fecha,
+  inicial,
+  alGuardar,
+}: {
+  fecha: FechaISO;
+  /** Si se corrige un apoyo ya guardado: sus datos de partida. */
+  inicial?: Extract<BloqueExtraFila, { tipo: "apoyo_hora" }>;
+  alGuardar: () => void;
+}) {
+  const [tiendaNombre, setTiendaNombre] = useState(inicial?.tiendaNombre ?? "");
+  const [horaInicio, setHoraInicio] = useState(inicial?.horaInicio ?? horaEnLima());
+  const [horaFin, setHoraFin] = useState(inicial?.horaFin ?? "");
+  const [tarifa, setTarifa] = useState(inicial ? String(inicial.tarifaHoraCentimos / 100) : "");
+  const [motivo, setMotivo] = useState(inicial?.motivo ?? "");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -107,7 +117,7 @@ export function FormularioApoyoHora({ fecha, alGuardar }: { fecha: FechaISO; alG
 
       <div className="flex flex-col gap-2 border-t border-linea px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
         <button type="button" className="boton-principal !min-h-11 !text-base" disabled={!puedeGuardar} onClick={() => void guardar()}>
-          {guardando ? "Guardando…" : "Guardar apoyo"}
+          {guardando ? "Guardando…" : inicial ? "Guardar cambios" : "Guardar apoyo"}
         </button>
       </div>
     </>

@@ -3,15 +3,12 @@
 import { useRef, useState } from "react";
 
 import { Acordeon } from "@/components/Acordeon";
-import { leerAjustesDeComandas } from "@/lib/db/sqlite/ajustes";
+import { crearYCompartirRespaldo } from "@/lib/db/sqlite/compartir-respaldo";
 import {
-  anotarRespaldoCreado,
-  crearRespaldo,
   leerRespaldo,
   restaurarRespaldo,
   type ResumenRespaldo,
 } from "@/lib/db/sqlite/respaldo";
-import { hoyEnLima } from "@/lib/fechas";
 
 /**
  * Respaldar y restaurar los datos del teléfono.
@@ -49,30 +46,7 @@ function BloqueCrear() {
     setEstado("generando");
     setError(null);
     try {
-      const { Capacitor } = await import("@capacitor/core");
-      // Nombres, teléfonos y direcciones de clientes: solo si la persona lo eligió.
-      const { clientesEnRespaldo } = await leerAjustesDeComandas();
-      const respaldo = await crearRespaldo({ incluirClientes: clientesEnRespaldo });
-      const contenido = JSON.stringify(respaldo, null, 2);
-      const archivo = `control-driver-respaldo-${hoyEnLima()}.json`;
-
-      if (!Capacitor.isNativePlatform()) {
-        throw new Error("Crear y compartir el respaldo solo funciona en la app instalada.");
-      }
-
-      const { Filesystem, Directory, Encoding } = await import("@capacitor/filesystem");
-      const { Share } = await import("@capacitor/share");
-
-      await Filesystem.writeFile({
-        path: archivo,
-        data: contenido,
-        directory: Directory.Cache,
-        encoding: Encoding.UTF8,
-      });
-      const { uri } = await Filesystem.getUri({ path: archivo, directory: Directory.Cache });
-
-      await Share.share({ title: "Respaldo de Control Driver", url: uri });
-      await anotarRespaldoCreado();
+      await crearYCompartirRespaldo();
       setEstado("reposo");
     } catch (fallo) {
       setEstado("error");

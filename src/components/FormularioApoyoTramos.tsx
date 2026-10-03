@@ -7,7 +7,7 @@ import { Campo } from "@/components/FormularioApoyoHora";
 import { Equis } from "@/components/iconos";
 import { Aviso } from "@/components/ui";
 import { horaEnLima, type FechaISO } from "@/lib/fechas";
-import type { FuenteDeKm, Tienda } from "@/lib/db/tipos";
+import type { BloqueExtraFila, FuenteDeKm, Tienda } from "@/lib/db/tipos";
 
 const TRAMOS = [1, 2, 3, 4, 5, 6] as const;
 
@@ -19,16 +19,23 @@ interface PedidoLocal {
 export function FormularioApoyoTramos({
   fecha,
   tiendas,
+  inicial,
   alGuardar,
 }: {
   fecha: FechaISO;
   tiendas: Tienda[];
+  /** Si se corrige un apoyo ya guardado: sus datos de partida. */
+  inicial?: Extract<BloqueExtraFila, { tipo: "apoyo_tramos" }>;
   alGuardar: () => void;
 }) {
-  const [tiendaId, setTiendaId] = useState<string | null>(null);
-  const [horaInicio] = useState(horaEnLima());
-  const [horaFin, setHoraFin] = useState("");
-  const [pedidos, setPedidos] = useState<PedidoLocal[]>([{ tramo: 1, km: "" }]);
+  const [tiendaId, setTiendaId] = useState<string | null>(inicial?.tiendaId ?? null);
+  const [horaInicio] = useState(inicial?.horaInicio ?? horaEnLima());
+  const [horaFin, setHoraFin] = useState(inicial?.horaFin ?? "");
+  const [pedidos, setPedidos] = useState<PedidoLocal[]>(
+    inicial && inicial.pedidos.length > 0
+      ? inicial.pedidos.map((p) => ({ tramo: p.tramo, km: p.km !== null ? String(p.km) : "" }))
+      : [{ tramo: 1, km: "" }],
+  );
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -160,7 +167,7 @@ export function FormularioApoyoTramos({
 
       <div className="flex flex-col gap-2 border-t border-linea px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
         <button type="button" className="boton-principal !min-h-11 !text-base" disabled={!puedeGuardar} onClick={() => void guardar()}>
-          {guardando ? "Guardando…" : "Guardar apoyo"}
+          {guardando ? "Guardando…" : inicial ? "Guardar cambios" : "Guardar apoyo"}
         </button>
       </div>
     </>

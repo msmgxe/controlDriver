@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { usarMotor } from "./conexion";
 import { motorEnMemoria } from "./motor-en-memoria";
 import { guardarJornada, jornadaPorFecha } from "./jornadas";
+import { guardarApoyoHora, guardarApoyoTramos, guardarTaxi, listarBloquesDelDia } from "./bloques-extra";
 import { guardarPerfil } from "./perfil";
 import { crearRespaldo, leerRespaldo, restaurarRespaldo, VERSION_RESPALDO } from "./respaldo";
 import type { JornadaParaGuardar } from "../tipos";
@@ -128,3 +129,74 @@ describe("restaurar un respaldo", () => {
     await expect(restaurarRespaldo(respaldo)).rejects.toThrow();
   });
 });
+
+describe("apoyo y taxi en el respaldo", () => {
+  const fecha = "2026-09-16" as FechaISO;
+
+  async function conBloques() {
+    await guardarApoyoHora({
+      fecha, horaInicio: "10:00", horaFin: "21:00", tiendaNombre: "Limatambo",
+      tarifaHoraCentimos: 1800, horas: 11, motivo: "Apoyo", notas: null,
+    });
+    await guardarTaxi({
+      fecha, horaInicio: null, horaFin: null, origen: null, destino: null,
+      km: 8, kmFuente: "manual", montoCentimos: 2200, notas: null,
+    });
+  }
+
+  it("se guardan en el respaldo", async () => {
+    await conBloques();
+    const r = await crearRespaldo();
+    expect(r.tablas.bloques_extra).toHaveLength(2);
+  });
+
+  it("vuelven al restaurar en un teléfono nuevo", async () => {
+    await conBloques();
+    const respaldo = await crearRespaldo();
+
+    usarMotor(motorEnMemoria());
+    await restaurarRespaldo(respaldo);
+
+    const bloques = await listarBloquesDelDia(fecha);
+    expect(bloques.map((b) => b.tipo)).toEqual(["apoyo_hora", "taxi"]);
+    expect(bloques.reduce((s, b) => s + b.montoCentimos, 0)).toBe(19800 + 2200);
+  });
+
+  it("un apoyo por tramos conserva sus pedidos", async () => {
+    const tienda = (await consultarTiendaPrueba())!;
+    await guardarApoyoTramos({
+      fecha, horaInicio: "10:00", horaFin: null, tiendaId: tienda,
+      pedidos: [{ km: 2, kmFuente: "manual", tramo: 1 }, { km: 5, kmFuente: "manual", tramo: 3 }],
+      notas: null,
+    });
+    const respaldo = await crearRespaldo();
+    expect(respaldo.tablas.bloques_apoyo_pedidos).toHaveLength(2);
+
+    usarMotor(motorEnMemoria());
+    await restaurarRespaldo(respaldo);
+    const [bloque] = await listarBloquesDelDia(fecha);
+    expect(bloque.tipo === "apoyo_tramos" && bloque.pedidos).toHaveLength(2);
+  });
+
+  it("un respaldo viejo, sin esas tablas, se lee y se restaura igual", async () => {
+    const respaldo = await crearRespaldo();
+    const viejo = JSON.parse(JSON.stringify(respaldo));
+    delete viejo.tablas.bloques_extra;
+    delete viejo.tablas.bloques_apoyo_pedidos;
+
+    const leido = leerRespaldo(JSON.stringify(viejo));
+    expect(leido.ok).toBe(true);
+    if (!leido.ok) return;
+    usarMotor(motorEnMemoria());
+    await expect(restaurarRespaldo(leido.respaldo)).resolves.not.toThrow();
+  });
+});
+
+async function consultarTiendaPrueba(): Promise<string | null> {
+  const { ejecutar, consultar, nuevoId } = await import("./conexion");
+  const id = nuevoId();
+  const ahora = new Date().toISOString();
+  await ejecutar(`insert into tiendas (id, nombre, creado_en, actualizado_en) values (?, ?, ?, ?)`, [id, "Otra", ahora, ahora]).catch(() => undefined);
+  const filas = await consultar<{ id: string }>(`select id from tiendas where nombre = 'Otra'`);
+  return filas[0]?.id ?? null;
+}

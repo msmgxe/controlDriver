@@ -93,7 +93,7 @@ export function PedidoManual({
 
   if (!abierto) {
     return (
-      <button type="button" onClick={() => setAbierto(true)} className="boton-secundario self-start">
+      <button type="button" onClick={() => setAbierto(true)} className="boton-fila">
         Añadir un pedido a mano
       </button>
     );
@@ -285,7 +285,7 @@ export function PedidosPorCantidad({
           setAbierto(true);
           setAgregados(null);
         }}
-        className="boton-secundario self-start"
+        className="boton-fila"
       >
         Anotar cuántos pedidos hice
       </button>
@@ -502,7 +502,7 @@ export function LectorDePedidos({
           setEstado("reposo");
           setAbierto(true);
         }}
-        className="boton-secundario self-start"
+        className="boton-fila"
       >
         Leer pedidos de una foto
       </button>

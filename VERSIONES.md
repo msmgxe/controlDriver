@@ -37,6 +37,29 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### v48 — 03/10/2026
+Correcciones a apoyo y taxi, detalle por tramo y un respaldo que sí los incluye.
+- **Arreglo importante: el respaldo no guardaba el apoyo ni el taxi** (y al
+  restaurar los borraba). Ahora entran en el archivo. Los respaldos viejos se
+  siguen pudiendo restaurar. En Inicio, el aviso de respaldo tiene un botón
+  **«Respaldar ahora»** que abre el selector de Android (Drive, WhatsApp…).
+- **El apoyo y el taxi ya dejan elegir el día** (arriba de la hoja).
+- **Tocar un apoyo o un taxi abre su detalle**: horas, tarifa y cuenta; en un
+  apoyo por tramos, cada pedido con su tramo. Desde ahí se **corrige** o se quita.
+- **El «+» ahora se ve** (blanco sobre el azul).
+- **«Cargar» (barra de abajo) ofrece también «Carrera de taxi» y «Apoyo a otra
+  tienda»**, con el día a la vista.
+- **«Subir más»**: todas las opciones son filas del mismo tamaño y están en tres
+  pestañas por tipo: **Pedidos**, **Rutas** y **Taxi y apoyo**.
+- **Por tramo**: nueva pestaña en el detalle del día y nuevo bloque en Pagos
+  (semana o día). Cada tramo muestra sus pedidos; tocar uno abre su hoja con
+  la captura/comanda como evidencia y permite cambiarle el tramo.
+- **Desglose por fuente** en Inicio, Pagos y Estadísticas: tu tienda, cada
+  tienda de apoyo (con sus horas) y el taxi (carreras y km), con su porcentaje.
+- Los días de la barra y «Otras semanas» en Pagos ahora muestran el total
+  (antes dejaban fuera apoyo y taxi). En Estadísticas, «Generado» suma todo; el
+  promedio por pedido sigue siendo solo de la tienda.
+
 ### v47 — 03/10/2026
 Apoyo a otra tienda y taxi libre, con un botón "+" en Inicio.
 - **Nuevo: botón flotante "+"** en Inicio, abajo a la derecha. Al tocarlo,
