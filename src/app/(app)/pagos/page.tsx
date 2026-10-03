@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { AccionesSemana } from "@/components/AccionesSemana";
 import { Acordeon } from "@/components/Acordeon";
+import { DesgloseDeCategorias } from "@/components/DesgloseDeCategorias";
 import { DueloDePago } from "@/components/DueloDePago";
 import { Alerta, Calendario, Check, Flecha, Luna, Reloj } from "@/components/iconos";
 import { PanelDeDescansos } from "@/components/PanelDeDescansos";
@@ -198,12 +199,19 @@ export default function PaginaPagos() {
           <EstadoDeLaSemana semana={elegida} termino={semana.fin < hoy} />
         </div>
         <span className="font-display text-[42px] leading-none font-bold tracking-tight text-acento tabular-nums [zoom:var(--zoom-titulo,1)]">
-          {formatearSoles(liquidacion.montoCalculadoCentimos)}
+          {formatearSoles(liquidacion.montoTotalCentimos)}
         </span>
         <span className="text-sm text-tinta-2">
           {liquidacion.totalOrdenes} pedidos · {liquidacion.totalRutas} rutas
           {fueraTramo1 > 0 && ` · ${fueraTramo1} fuera del tramo 1`}
         </span>
+        {(liquidacion.montoApoyoCentimos > 0 || liquidacion.montoTaxiCentimos > 0) && (
+          <DesgloseDeCategorias
+            tienda={liquidacion.montoCalculadoCentimos}
+            apoyo={liquidacion.montoApoyoCentimos}
+            taxi={liquidacion.montoTaxiCentimos}
+          />
+        )}
         <div className="mt-1.5 grid grid-cols-7 gap-1" aria-label={`${cargados} de 7 días cargados`}>
           {diasDeLaSemana.map((f) => (
             <i
@@ -298,6 +306,13 @@ export default function PaginaPagos() {
               cerrar la semana.
             </p>
           </Aviso>
+        )}
+
+        {(liquidacion.montoApoyoCentimos > 0 || liquidacion.montoTaxiCentimos > 0) && (
+          <p className="text-xs text-tinta-3">
+            No incluye tus {formatearSoles(liquidacion.montoApoyoCentimos + liquidacion.montoTaxiCentimos)} de apoyo y
+            taxi: no los deposita la tienda.
+          </p>
         )}
 
         <AccionesSemana
@@ -472,7 +487,7 @@ function FilaDeDia({
           {texto}
         </span>
         <span className="flex items-center gap-1.5 font-mono text-[13px] font-bold">
-          {detalle ? formatearSoles(detalle.montoCentimos) : "—"}
+          {detalle ? formatearSoles(detalle.montoDiaCentimos) : "—"}
           {!futuro && (
             <Flecha className={`size-4 text-tinta-3 transition-transform ${elegido ? "-rotate-90" : "rotate-90"}`} />
           )}
@@ -496,6 +511,13 @@ function FilaDeDia({
                 />
               ) : (
                 <p className="text-xs text-tinta-3">Sin horario en tienda ese día: se cobra por pedidos.</p>
+              )}
+              {(detalle.montoApoyoCentimos > 0 || detalle.montoTaxiCentimos > 0) && (
+                <DesgloseDeCategorias
+                  tienda={detalle.montoCentimos}
+                  apoyo={detalle.montoApoyoCentimos}
+                  taxi={detalle.montoTaxiCentimos}
+                />
               )}
               <Link href={`/?dia=${fecha}`} className="inline-flex min-h-11 items-center gap-2 self-start text-sm font-semibold text-acento">
                 Abrir este día en Inicio
