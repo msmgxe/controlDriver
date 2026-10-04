@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Control Driver · 5 estilos profesionales de auto y moto</title>
+<style>
+:root{--pg:#eceef3;--card:#fff;--ink:#14161d;--mut:#586071;--line:#d8dce6;
+ --acento:#1f5cff;--acento-t:#fff;--amar:#ffc800;--tinta:#0a2260;--papel:#e6eef8;--sup2:#d9e5f4;--linea:#c4d5ec}
+body[data-tema="violeta"]{--acento:#6b4cf0;--papel:#f0ecff;--sup2:#e4dcff;--tinta:#241660;--linea:#d5ccf5}
+body[data-tema="menta"]{--acento:#0b857b;--papel:#eef4f2;--sup2:#d3eeea;--tinta:#0c1a18;--linea:#c9dedb}
+body[data-tema="avispa"]{--acento:#eab308;--acento-t:#09090b;--papel:#fffdf2;--sup2:#fbefba;--tinta:#09090b;--linea:#efe2a8}
+@media(prefers-color-scheme:dark){:root{--pg:#111318;--card:#191c23;--ink:#eceef3;--mut:#9aa2b2;--line:#2b303b}}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--pg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:0 clamp(16px,4vw,40px) 80px}
+.w{max-width:1320px;margin:auto}h1,h2,h3,p{margin:0}
+h1{font-size:clamp(30px,5vw,50px);line-height:1.05;letter-spacing:-.03em;padding-top:40px;max-width:21ch}
+.lead{color:var(--mut);max-width:74ch;margin-top:12px}
+.barra{position:sticky;top:0;z-index:30;display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:10px 0;margin-top:18px;background:color-mix(in srgb,var(--pg) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.seg{display:inline-flex;background:var(--line);border-radius:99px;padding:3px}.seg button{border:0;background:none;color:var(--ink);font:700 14px system-ui;padding:8px 18px;border-radius:99px;cursor:pointer;display:flex;gap:7px;align-items:center}.seg button.on{background:var(--ink);color:var(--pg)}
+.barra .t{font-size:12px;font-weight:700;color:var(--mut)}.barra .sp{flex:1}
+.sw{width:26px;height:26px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px #0004;cursor:pointer;padding:0}.sw.on{box-shadow:0 0 0 3px var(--ink)}
+.pausa{border:0;border-radius:99px;padding:8px 14px;font-weight:700;background:var(--line);color:var(--ink);cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px;margin-top:26px}
+.op{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:18px;display:grid;gap:14px;align-content:start}
+.op header{display:flex;gap:12px;align-items:center}.op .l{width:44px;height:44px;border-radius:13px;background:var(--ink);color:var(--pg);display:grid;place-items:center;font-weight:900;font-size:22px;flex:none}
+.op h2{font-size:19px;letter-spacing:-.02em;line-height:1.1}.op header p{color:var(--mut);font-size:13px;margin-top:3px}
+.tags{display:flex;gap:6px;flex-wrap:wrap}.tags span{font-size:11.5px;border:1px solid var(--line);border-radius:99px;padding:2px 9px;color:var(--mut)}
+.rot{font:700 10.5px/1 ui-monospace,monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--mut);margin-bottom:6px;display:block}
+/* contextos */
+.ctx{border-radius:16px;overflow:hidden}
+.ic svg{display:block;width:100%;height:auto;overflow:visible}
+/* variables de color de cada icono */
+.v{--v1:var(--acento);--v2:#fff;--vt:var(--tinta);--fondo:var(--card)}
+.mono{--v1:currentColor;--v2:var(--fondo);--vt:currentColor}
+.sobreAcento{--v1:#fff;--v2:var(--acento);--vt:var(--tinta)}
+.amarillo{--v1:var(--amar);--v2:#fff;--vt:var(--tinta)}
+/* 1 cabecera */
+.cab{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--papel);color:var(--tinta);--fondo:var(--papel)}.cab .ic{width:50px;flex:none}.cab b{font-size:16px;letter-spacing:-.01em}.cab .chip{margin-left:auto;background:var(--sup2);border-radius:99px;padding:4px 10px;font-weight:800;font-size:12px}
+/* 2 barra inferior */
+.nav{display:grid;grid-template-columns:repeat(5,1fr);align-items:end;background:#fff;color:#52658f;padding:8px 2px 8px;font-size:9.5px;font-weight:700;text-align:center;--fondo:#fff;border:1px solid var(--linea);border-radius:16px}
+.nav div{display:grid;gap:2px;justify-items:center}.nav i{font-style:normal;font-size:18px;line-height:1.2}.nav .ic{width:42px}
+.nav .on{color:var(--tinta)}.nav .on .pas{background:var(--amar);border-radius:12px;padding:0 6px;display:block}
+/* 3 tarjeta */
+.hero{position:relative;background:var(--acento);color:var(--acento-t);padding:14px;min-height:150px;overflow:hidden;border:2px solid var(--tinta);border-radius:20px;box-shadow:3px 3px 0 var(--tinta)}
+.hero small{font-weight:700;opacity:.9}.hero .n{font:900 36px/1 ui-monospace,monospace;margin:4px 0}.hero .pill{display:inline-block;background:var(--amar);color:var(--tinta);border:2px solid var(--tinta);border-radius:99px;padding:2px 10px;font:800 13px ui-monospace,monospace}
+.hero .ic{position:absolute;right:-6px;bottom:8px;width:52%;transform:rotate(-3deg)}
+/* 4 carretera */
+.via{position:relative;height:88px;background:var(--sup2);border-radius:16px;overflow:hidden}
+.via .calle{position:absolute;left:0;right:0;bottom:8px;height:38px;background:#1c2740;border-radius:10px}.via .raya{position:absolute;left:8px;right:8px;top:50%;height:3px;background:repeating-linear-gradient(90deg,#ffd84d 0 14px,transparent 14px 26px);animation:raya .7s linear infinite}
+@keyframes raya{to{background-position-x:-26px}}
+.via .ic{position:absolute;bottom:10px;left:0;width:70px;animation:recorre 5s cubic-bezier(.4,.1,.3,1) infinite}
+@keyframes recorre{0%{left:-10px}70%,100%{left:calc(100% - 78px)}}
+.via .fl{position:absolute;top:6px;font-size:10px;font-weight:800;color:#52658f}
+/* 5 mapa */
+.mapa{position:relative;height:130px;border-radius:16px;background:#dfe9f5;background-image:linear-gradient(#ffffff99 2px,transparent 2px),linear-gradient(90deg,#ffffff99 2px,transparent 2px);background-size:30px 30px;overflow:hidden}
+.mapa svg.ruta{position:absolute;inset:0;width:100%;height:100%}
+.pin{position:absolute;width:58px;transform:translate(-50%,-50%);filter:drop-shadow(0 6px 8px #0005);animation:pinbota 1.6s ease-in-out infinite}
+@keyframes pinbota{50%{transform:translate(-50%,-56%)}}
+.mapa .circ{background:#fff;border-radius:50%;padding:8px;border:3px solid var(--acento)}
+/* 6 selector */
+.sel{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:var(--papel);border-radius:16px;padding:10px;color:var(--tinta);--fondo:#fff}
+.sel button{border:2px solid var(--linea);background:#fff;border-radius:16px;padding:8px 6px 10px;font:800 13px system-ui;color:var(--tinta);cursor:pointer;display:grid;gap:4px;justify-items:center;transition:transform .2s,border-color .2s}
+.sel button .ic{width:84px}.sel button.on{border-color:var(--acento);background:color-mix(in srgb,var(--acento) 10%,#fff);transform:translateY(-2px)}.sel button:not(.on) .ic{opacity:.45;filter:grayscale(.6)}
+.sel button.on::after{content:"✓ Elegido";font-size:10.5px;color:var(--acento)}
+/* animaciones de los iconos */
+.anim .bota{animation:bota .5s ease-in-out infinite alternate}
+@keyframes bota{to{transform:translateY(-1.8px)}}
+.anim .gira{animation:giraR .6s linear infinite;transform-box:fill-box;transform-origin:center}
+@keyframes giraR{to{transform:rotate(360deg)}}
+.anim .estela path{animation:estela .5s linear infinite}
+@keyframes estela{0%{opacity:.2;transform:translateX(6px)}50%{opacity:.7}100%{opacity:.1;transform:translateX(-8px)}}
+.pausado *{animation-play-state:paused!important}
+.vote{margin-top:44px;background:var(--card);border:2px solid var(--ink);border-radius:18px;padding:20px 22px}.vote p{color:var(--mut);margin-top:8px;max-width:78ch}
+
+/* contraste según el lugar (cada estilo decide cuáles de sus colores cambian) */
+.sobreAcento{--v1:#fff;--vt:#1c2230;--vg:var(--tinta)}
+.sobreAcento.estH{--vt:#fff;--v1:#fff}
+.sobreAcento.estJ{--v1:var(--amar);--vg:var(--tinta)}
+.sobreAcento.estF{--v1:#fff}
+.amarillo{--v1:var(--amar);--vt:#1c2230;--vg:var(--tinta)}
+.amarillo.estH{--vt:#fff}
+.v{--vg:#fff;--caja:#ffc800;--casco:#fff}
+.mono{--v1:currentColor}
+.mono.estH{--vt:currentColor}
+/* los estilos cuadrados (marcador, insignia) se acotan; el marcador, en horizontal, mira a la derecha */
+.cab .estF,.cab .estJ{width:40px}.nav .estF,.nav .estJ{width:34px}.sel .estF,.sel .estJ{width:68px}
+.hero .ic.estF{width:30%;right:10px;bottom:6px;transform:rotate(90deg)}
+.hero .ic.estJ{width:30%;right:12px;bottom:10px}
+.via .ic.estF{width:46px;bottom:5px;transform:rotate(90deg)}
+.via .ic.estJ{width:46px;bottom:5px}
+.estH .glifo{stroke-width:1.7}
+.cab .estH{width:38px}.nav .estH{width:34px}.sel .estH{width:62px}
+.hero .ic.estH{width:25%;right:16px;bottom:14px}
+.via .ic.estH{width:44px;bottom:6px}
+.pulso{transform-box:fill-box;transform-origin:center;animation:pulsa 2s ease-out infinite}
+@keyframes pulsa{0%{transform:scale(.7);opacity:.5}100%{transform:scale(1.25);opacity:0}}
+.destello{animation:destella 3s ease-in-out infinite}@keyframes destella{0%,70%,100%{opacity:.0}85%{opacity:.7}}
+</style></head><body data-tema="azul">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<linearGradient id="gl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".5" stop-color="#fff" stop-opacity=".06"/><stop offset="1" stop-color="#000" stop-opacity=".34"/></linearGradient>
+<linearGradient id="gv" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eaf7ff"/><stop offset="1" stop-color="#6ea6dc"/></linearGradient>
+<radialGradient id="gr" cx=".38" cy=".34" r=".85"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#8d96a6"/></radialGradient>
+<radialGradient id="gs"><stop offset="0" stop-color="#000" stop-opacity=".42"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+<linearGradient id="gb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".3"/></linearGradient>
+</defs></svg>
+<div class="w">
+<h1>Auto y moto con acabado profesional</h1>
+<p class="lead">Cinco estilos más modernos, inspirados en los que usan hoy las apps de transporte y de reparto. Mismos seis lugares de la app que en la comparación anterior. Elige <b>Auto</b> o <b>Moto</b> (o ambos) y prueba los colores. Todo son dibujos vectoriales propios, sin imágenes externas, así que pesan casi nada y se ven nítidos en cualquier pantalla.</p>
+<div class="barra">
+ <span class="t">Tu transporte:</span>
+ <div class="seg" id="segV"><button data-v="auto" class="on">🚗 Auto</button><button data-v="moto">🛵 Moto</button><button data-v="ambos">Ambos</button></div>
+ <span class="t" style="margin-left:8px">Color:</span><span id="sws" style="display:flex;gap:8px"></span>
+ <span class="sp"></span><button class="pausa" id="bPausa">⏸ Pausar movimiento</button>
+</div>
+<div class="grid" id="grid"></div>
+<div class="vote"><h3>Mi recomendación</h3><p><b>I (3D suave) para la tarjeta del día y la carretera</b>, donde el vehículo es protagonista, y <b>H (glifo)</b> para la cabecera y la barra de abajo, donde manda la legibilidad. El tablero <b>F</b> solo vale si algún día se muestra un mapa en vivo, y <b>J</b> si quieres un avatar o marcador reconocible. Si prefieres una imagen más cálida y de reparto, <b>G</b> es la que mejor transmite «delivery». Dime la letra (o la mezcla) y la construyo.</p></div>
+</div>
+<script>
+/* ================= Los dibujos ================= */
+const BODY='M10 54C10 47 13 44 20 43L38 40C44 27 55 19 71 19H98C112 19 122 28 128 40L144 44C151 46 153 50 153 57V63H10Z';
+const GLASS='M48 40C52 29 60 24 71 24H80V40ZM86 24H98C108 24 115 30 120 40H86Z';
+const llanta=(x,y,r,gloss)=>`<g><circle cx="${x}" cy="${y}" r="${r+2.6}" fill="#141824"/><circle cx="${x}" cy="${y}" r="${r}" fill="#262c3a"/><g class="gira"><circle cx="${x}" cy="${y}" r="${r*.62}" fill="${gloss?'url(#gr)':'#dfe3ea'}"/><path d="M${x} ${y-r*.55}V${y+r*.55}M${x-r*.55} ${y}H${x+r*.55}M${x-r*.39} ${y-r*.39}L${x+r*.39} ${y+r*.39}M${x+r*.39} ${y-r*.39}L${x-r*.39} ${y+r*.39}" stroke="#8d96a6" stroke-width="1.4" stroke-linecap="round"/></g><circle cx="${x}" cy="${y}" r="2.4" fill="#5a6372"/></g>`;
+const sombra=(rx)=>`<ellipse cx="82" cy="74" rx="${rx}" ry="5.5" fill="url(#gs)"/>`;
+const ESTELA2='<g class="estela" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none" opacity=".5"><path d="M0 34h14"/><path d="M-2 44h18"/><path d="M2 54h10"/></g>';
+/* G (plano) e I (3D suave) comparten forma: cambia el acabado */
+function carro(g){return `<svg viewBox="0 0 160 80" role="img" aria-label="Auto">${sombra(72)}${ESTELA2.replace(/#fff/g,'var(--vt)')}<g class="bota"><path d="${BODY}" fill="var(--v1)"/>${g?`<path d="${BODY}" fill="url(#gl)"/><path d="M52 31C60 22 72 20 88 20" stroke="#fff" stroke-opacity=".55" stroke-width="2.2" stroke-linecap="round" fill="none"/>`:`<path d="M10 56H153V63H10Z" fill="#000" opacity=".14"/>`}<path d="${GLASS}" fill="${g?'url(#gv)':'var(--cristal,#cfe6fb)'}"/>${g?'':`<path d="M92 24L84 40H96L104 24Z" fill="#fff" opacity=".28"/>`}<path d="M83 24V45" stroke="#000" stroke-opacity=".2" stroke-width="1.6"/><rect x="88" y="42" width="9" height="2.6" rx="1.3" fill="#000" opacity=".25"/><path d="M146 46L153 48V53H147Z" fill="#fff6c8"/>${g?'<ellipse cx="152" cy="50" rx="7" ry="4" fill="#fff6c8" opacity=".45"/>':''}<rect x="9" y="47" width="5.5" height="7" rx="2" fill="#ff4d5a"/></g>${llanta(40,63,13,g)}${llanta(118,63,13,g)}</svg>`}
+function moto(g){const f=g?'<path d="M24 56C24 44 32 40 44 40H82L92 54H28Z" fill="url(#gl)"/><path d="M94 56L104 28C105 25 108 24 111 24H119L122 28L116 56Z" fill="url(#gl)"/>':'';
+ return `<svg viewBox="0 0 160 80" role="img" aria-label="Moto">${sombra(64)}${ESTELA2.replace(/#fff/g,'var(--vt)')}<g class="bota"><rect x="3" y="10" width="48" height="31" rx="8" fill="var(--caja)"/>${g?'<rect x="3" y="10" width="48" height="31" rx="8" fill="url(#gb)"/>':''}<path d="M3 21H51" stroke="#000" stroke-opacity=".16" stroke-width="3"/><circle cx="27" cy="31" r="5" fill="#fff" opacity=".85"/><path d="M24.4 31.2l1.8 1.8 3.4-3.6" stroke="var(--v1)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+ <path d="M66 40C72 43 82 47 93 49L97 55" stroke="#2b3550" stroke-width="10" stroke-linecap="round" fill="none"/>
+ <path d="M24 56C24 44 32 40 44 40H82L92 54H28Z" fill="var(--v1)"/><path d="M40 40H80L85 46H38Z" fill="#1c2230"/>${f}
+ <path d="M64 38C62 28 66 22 74 23L86 29L108 24" stroke="${g?'#2b3550':'#2b3550'}" stroke-width="10.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+ <path d="M94 56L104 28C105 25 108 24 111 24H119L122 28L116 56Z" fill="var(--v1)"/><rect x="85" y="52" width="14" height="5" rx="2.5" fill="#1c2230"/>
+ <path d="M118 30L128 58" stroke="#1c2230" stroke-width="4.4" stroke-linecap="round"/><path d="M108 22H127" stroke="#1c2230" stroke-width="4.4" stroke-linecap="round"/><circle cx="124" cy="35" r="4.6" fill="#fff6c8"/>${g?'<ellipse cx="129" cy="35" rx="7" ry="4" fill="#fff6c8" opacity=".4"/>':''}
+ <circle cx="76" cy="13" r="9.5" fill="var(--casco)"/><path d="M76 6A9.5 9.5 0 0 1 85.5 13H76Z" fill="#1c2230"/>${g?'<path d="M69 9Q72 6 76 6" stroke="#fff" stroke-opacity=".7" stroke-width="1.8" fill="none" stroke-linecap="round"/>':''}</g>${llanta(36,62,12,g)}${llanta(126,62,12,g)}</svg>`}
+
+/* F · marcador de mapa, visto desde arriba */
+const carF=()=>`<svg viewBox="0 0 64 64" role="img" aria-label="Auto desde arriba"><circle class="pulso" cx="32" cy="32" r="28" fill="var(--v1)" opacity=".35"/><ellipse cx="35" cy="36" rx="15" ry="27" fill="url(#gs)"/><g class="bota"><rect x="19" y="4" width="26" height="56" rx="13" fill="var(--v1)"/><rect x="19" y="4" width="26" height="56" rx="13" fill="url(#gb)"/><path d="M23.5 20Q32 14.5 40.5 20L39 29H25Z" fill="url(#gv)"/><rect x="25" y="29" width="14" height="13" rx="3.5" fill="#000" opacity=".1"/><path d="M25.5 42H38.5L40 49Q32 52.5 24 49Z" fill="url(#gv)"/><ellipse cx="17.6" cy="23" rx="2.8" ry="2" fill="var(--v1)" stroke="#0003" stroke-width=".6"/><ellipse cx="46.4" cy="23" rx="2.8" ry="2" fill="var(--v1)" stroke="#0003" stroke-width=".6"/><circle cx="24.5" cy="9" r="2.3" fill="#fff6c8"/><circle cx="39.5" cy="9" r="2.3" fill="#fff6c8"/><rect x="22" y="55" width="6" height="2" rx="1" fill="#ff4d5a"/><rect x="36" y="55" width="6" height="2" rx="1" fill="#ff4d5a"/><path d="M26 6Q32 3 38 6" stroke="#fff" stroke-opacity=".6" stroke-width="1.4" fill="none" stroke-linecap="round"/></g></svg>`;
+const motoF=()=>`<svg viewBox="0 0 64 64" role="img" aria-label="Moto desde arriba"><circle class="pulso" cx="32" cy="32" r="28" fill="var(--v1)" opacity=".35"/><ellipse cx="34" cy="36" rx="13" ry="26" fill="url(#gs)"/><g class="bota"><rect x="30" y="2" width="4" height="12" rx="2" fill="#1c2230"/><rect x="12" y="15" width="40" height="4.4" rx="2.2" fill="#1c2230"/><circle cx="32" cy="12.5" r="2.6" fill="#fff6c8"/><ellipse cx="32" cy="29" rx="9.5" ry="13" fill="var(--v1)"/><ellipse cx="32" cy="29" rx="9.5" ry="13" fill="url(#gb)"/><ellipse cx="32" cy="36" rx="10" ry="4.6" fill="#2b3550"/><circle cx="32" cy="27" r="6.4" fill="var(--casco)"/><path d="M32 21A6.4 6.4 0 0 1 38.4 27H32Z" fill="#1c2230"/><rect x="21" y="40" width="22" height="19" rx="5.5" fill="var(--caja)"/><rect x="21" y="40" width="22" height="19" rx="5.5" fill="url(#gb)"/><path d="M21 48H43" stroke="#000" stroke-opacity=".18" stroke-width="2.2"/><rect x="30" y="58" width="4" height="6" rx="2" fill="#1c2230"/></g></svg>`;
+
+/* H · glifo de interfaz duotono (rejilla de 24, trazo uniforme) */
+const carH=()=>`<svg viewBox="0 0 24 24" class="glifo" fill="none" stroke="var(--vt)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Auto"><g class="bota"><path d="M5 17H3a1 1 0 0 1-1-1v-4c0-.8.4-1.5 1-2l1.4-2.9C4.9 6.4 5.4 6 6 6h6c.7 0 1.3.3 1.8.7L16 10s2.7.6 4.5 1.1c.8.2 1.5 1 1.5 1.9v3a1 1 0 0 1-1 1h-2" fill="var(--v1)" fill-opacity=".25" stroke="none"/><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><path d="M9 17h6"/><path d="M6 10.5h7.2M13.8 7.2v3.3" stroke-opacity=".6"/></g><g class="gira"><circle cx="7" cy="17" r="2" fill="var(--fondo)"/></g><g class="gira"><circle cx="17" cy="17" r="2" fill="var(--fondo)"/></g></svg>`;
+const motoH=()=>`<svg viewBox="0 0 24 24" class="glifo" fill="none" stroke="var(--vt)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Moto"><g class="bota"><rect x="1.6" y="4.6" width="8" height="6.4" rx="1.8" fill="var(--v1)" fill-opacity=".25"/><path d="M7 13.4h5.6l2.2 3.6M9 17h5.4M14.4 17l1.5-5.4h2.3M15.9 11.6L14.6 8.6h-2.2M5.2 11v2.4"/><circle cx="12" cy="6.6" r="1.7" fill="var(--v1)" fill-opacity=".25"/></g><g class="gira"><circle cx="5.2" cy="17" r="2.9" fill="var(--fondo)"/></g><g class="gira"><circle cx="18.8" cy="17" r="2.9" fill="var(--fondo)"/></g></svg>`;
+
+/* J · insignia circular con degradado y glifo blanco */
+function insignia(glifo){return `<svg viewBox="0 0 80 80" role="img"><circle class="pulso" cx="40" cy="40" r="35" fill="var(--v1)" opacity=".4"/><circle cx="40" cy="44" r="33" fill="url(#gs)"/><circle cx="40" cy="38" r="33" fill="var(--v1)"/><circle cx="40" cy="38" r="33" fill="url(#gb)"/><circle cx="40" cy="38" r="31" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="1.6"/><ellipse cx="31" cy="20" rx="17" ry="8" fill="#fff" opacity=".28" transform="rotate(-18 31 20)"/><g transform="translate(17 15) scale(1.9)" style="color:var(--vg)">${glifo.replace('stroke="var(--vt)"','stroke="var(--vg)"').replace(/<svg[^>]*>/,'<g fill="none" stroke="var(--vg)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">').replace('</svg>','</g>').replace(/var\(--fondo\)/g,'var(--v1)')}</g></svg>`}
+
+const ICONOS={
+ F:{auto:carF,moto:motoF},
+ G:{auto:()=>carro(false),moto:()=>moto(false)},
+ H:{auto:carH,moto:motoH},
+ I:{auto:()=>carro(true),moto:()=>moto(true)},
+ J:{auto:()=>insignia(carH()),moto:()=>insignia(motoH())},
+};
+const ESTILOS=[
+ ['F','Marcador de mapa','Visto desde arriba, con sombra, parabrisas de cristal y luces. Es el tipo de marcador que usan las apps de transporte.',['como Uber · Bolt · Cabify','ideal para GPS']],
+ ['G','Plano moderno de delivery','Ilustración plana, sin contornos, con 3 tonos, conductor con casco y caja trasera.',['como Glovo · Rappi','limpio y alegre']],
+ ['H','Glifo de interfaz','Icono lineal de trazo uniforme con relleno suave, como los sets Lucide, Phosphor o Material.',['sobrio y profesional','nítido a 20 px']],
+ ['I','3D suave (brillante)','Mismo dibujo con brillos, reflejos de cristal, llantas con radios y sombra de contacto.',['como las apps de movilidad','el más "premium"']],
+ ['J','Insignia circular','Círculo con degradado, brillo y pulso, y el glifo en blanco al centro. Sirve de avatar y de marcador.',['como Bolt · inDrive','reconocible al instante']],
+];
+let V='auto';
+const SW=[['azul','#1f5cff'],['violeta','#6b4cf0'],['menta','#0b857b'],['avispa','#eab308']];
+const $sws=document.getElementById('sws');
+$sws.innerHTML=SW.map((x,i)=>`<button class="sw ${i?'':'on'}" data-t="${x[0]}" style="background:${x[1]}" title="${x[0]}"></button>`).join('');
+$sws.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{document.body.dataset.tema=b.dataset.t;$sws.querySelectorAll('.sw').forEach(x=>x.classList.toggle('on',x===b))});
+const vehiculos=()=>V==='ambos'?['auto','moto']:[V];
+const ic=(e,v,clase='')=>`<span class="ic v anim est${e} ${clase}">${ICONOS[e][v]()}</span>`;
+function tarjeta([e,nombre,desc,tags]){
+ const vs=vehiculos();
+ const filas=(f)=>vs.map(v=>f(v)).join('');
+ return `<article class="op" id="op-${e}">
+  <header><div class="l">${e}</div><div><h2>${nombre}</h2><p>${desc}</p></div></header>
+  <div class="tags">${tags.map(t=>`<span>${t}</span>`).join('')}</div>
+  <div><span class="rot">Cabecera</span><div class="ctx">${filas(v=>`<div class="cab">${ic(e,v)}<b>Control Driver</b><span class="chip">⌂ Hoy</span></div>`)}</div></div>
+  <div><span class="rot">Barra de abajo · «Cargar»</span>${filas(v=>`<div class="nav" style="margin-bottom:${vs.length>1?8:0}px"><div><i>⌂</i>Inicio</div><div class="on"><span class="pas">${ic(e,v,'mono')}</span>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div>`)}</div>
+  <div><span class="rot">Tarjeta del día</span>${filas(v=>`<div class="hero" style="margin-bottom:${vs.length>1?8:0}px"><small>Hoy cargaste</small><div class="n">S/ 332.50</div><span class="pill">3 pedidos</span>${ic(e,v,'sobreAcento')}</div>`)}</div>
+  <div><span class="rot">Carretera de la meta</span>${filas(v=>`<div class="via" style="margin-bottom:${vs.length>1?8:0}px"><span class="fl" style="left:24%">⚑ 25%</span><span class="fl" style="left:50%">⚑ 50%</span><span class="fl" style="left:76%">⚑ 75%</span><div class="calle"><i class="raya"></i></div>${ic(e,v,'amarillo')}</div>`)}</div>
+  <div><span class="rot">Mapa del taxi</span>${filas(v=>`<div class="mapa" style="margin-bottom:${vs.length>1?8:0}px"><svg class="ruta" viewBox="0 0 280 130" preserveAspectRatio="none"><path d="M20 105 C70 100 80 50 130 58 S200 95 250 25" fill="none" stroke="var(--acento)" stroke-width="5" stroke-dasharray="9 8" stroke-linecap="round"/></svg><div class="pin" style="left:76%;top:36%;width:${e==='F'||e==='J'?54:(e==='H'?46:84)}px"><div class="${e==='H'?'circ':''}"><span class="ic v anim est${e}" style="display:block;transform:${e==='F'?'rotate(35deg)':'none'}">${ICONOS[e][v]()}</span></div></div></div>`)}</div>
+  <div><span class="rot">Ajustes › Tipo de transporte</span><div class="sel" data-e="${e}">
+   <button data-v="auto" class="${V==='auto'?'on':''}">${ic(e,'auto')}Auto</button>
+   <button data-v="moto" class="${V==='moto'?'on':''}">${ic(e,'moto')}Moto</button></div></div>
+ </article>`}
+function pintar(){
+ document.getElementById('grid').innerHTML=ESTILOS.map(tarjeta).join('');
+ document.querySelectorAll('.sel button').forEach(b=>b.onclick=()=>fijar(b.dataset.v));
+ document.querySelectorAll('.sel').forEach(s=>{if(V==='ambos')s.querySelectorAll('button').forEach(b=>b.classList.add('on'))});
+}
+function fijar(v){V=v;document.querySelectorAll('#segV button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));pintar()}
+document.querySelectorAll('#segV button').forEach(b=>b.onclick=()=>fijar(b.dataset.v));
+document.getElementById('bPausa').onclick=e=>{const p=document.body.classList.toggle('pausado');e.target.textContent=p?'▶ Reanudar movimiento':'⏸ Pausar movimiento'};
+pintar();
+</script></body></html>
