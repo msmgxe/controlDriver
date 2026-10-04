@@ -82,7 +82,7 @@ export function CarreteraDeMeta({
             transition: "transform 2.4s cubic-bezier(.3,.9,.3,1)",
           }}
         >
-          <Auto vehiculo={vehiculo} className="carretera-bota w-[72px]" />
+          <Auto vehiculo={vehiculo} sobreAcento className="carretera-bota w-[78px]" />
         </span>
         {[0, 1, 2].map((i) => (
           <span key={i} className="carretera-moneda absolute top-9 text-[15px]" style={{ left: `${18 + i * 28}%`, animationDelay: `${i * 0.7}s` }}>

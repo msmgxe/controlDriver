@@ -814,6 +814,30 @@ div:has(> [role="dialog"]) {
   animation: pop 0.6s cubic-bezier(0.3, 1.4, 0.5, 1) 0.35s both;
 }
 
+/* El vehículo (ver `Auto.tsx`): 3D suave y glifo. Los colores salen de la cara. */
+.veh {
+  --v1: var(--acento);
+  --caja: var(--acento-2);
+  --casco: #ffffff;
+  overflow: visible;
+}
+.veh--sobre-acento {
+  --v1: var(--acento-2);
+  --caja: var(--acento-texto);
+}
+.veh--apagado {
+  filter: grayscale(1);
+  opacity: 0.5;
+}
+.veh-bota { animation: veh-bota 0.5s ease-in-out infinite alternate; }
+@keyframes veh-bota { to { transform: translateY(-1.8px); } }
+.veh-gira { transform-box: fill-box; transform-origin: center; animation: veh-gira 0.7s linear infinite; }
+@keyframes veh-gira { to { transform: rotate(360deg); } }
+.veh-estela path { animation: veh-estela 0.6s linear infinite; }
+@keyframes veh-estela { 0% { opacity: 0.2; transform: translateX(6px); } 50% { opacity: 0.7; } 100% { opacity: 0.1; transform: translateX(-8px); } }
+.veh--anima { animation: auto-llega 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.veh-glifo circle[fill] { transition: fill 0.2s; }
+
 /* Mini animaciones de las fichas del día (ver `TarjetaViva`). */
 @keyframes llama {
   from { transform: scale(1) rotate(-6deg); }

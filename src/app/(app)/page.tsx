@@ -611,7 +611,7 @@ function DiaSinCarga({
 
   return (
     <section className="tarjeta grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-2" aria-label="Sin cargar">
-      <Auto vehiculo={vehiculo} mono className="w-[74px] text-tinta-3 [--auto-fondo:var(--sup)]" />
+      <Auto vehiculo={vehiculo} mono className="w-[96px]" />
       <div>
         <b className="text-base font-bold">
           {fecha === hoy ? "Hoy" : esFuturo ? "Ese día todavía no llega" : "Ese día"}

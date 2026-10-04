@@ -237,7 +237,7 @@ function ArmazonInterno({
                 pastilla con el icono de la pantalla. En escritorio la marca ya está
                 en la barra lateral y el título vuelve a la izquierda. */}
             <Link href="/" aria-label="Control Driver, ir a Inicio" className="flex min-w-0 items-center gap-2 lg:hidden">
-              <Auto vehiculo={vehiculo} className="w-11 shrink-0" />
+              <Auto vehiculo={vehiculo} glifo className="size-9 shrink-0 text-acento-tinta" />
               <span className="truncate font-display text-[17px] leading-none font-bold tracking-tight [zoom:var(--zoom-titulo,1)]">
                 Control Driver
               </span>

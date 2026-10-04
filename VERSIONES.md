@@ -37,6 +37,14 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 1.10 — 04/10/2026
+- **Auto y moto con acabado profesional.** El vehículo ahora tiene dos acabados:
+  **3D suave** (brillos, cristal, llantas con radios y sombra de contacto) en la
+  tarjeta del día, la carretera de la meta, el selector de transporte y el día
+  sin cargar; y un **glifo** de una sola tinta en la cabecera y en la barra de
+  abajo, donde manda la legibilidad. Sirve para el auto y para la moto de
+  reparto (con su caja y su conductor), y toma los colores de cada cara.
+
 ### 1.09 — 04/10/2026
 - **Tarjeta del día**: el centro del anillo dice «Total del día» y ya no «3 pedidos»,
   que hacía pensar que el monto era de esos pedidos. Los pedidos y las rutas se
