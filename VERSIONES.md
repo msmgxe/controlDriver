@@ -37,6 +37,13 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 1.07 — 04/10/2026
+- **Barra de arriba**: ahora lleva **la marca a la izquierda** (el logo y «Control
+  Driver», que al tocarlos llevan a Inicio) y **dónde estás a la derecha**, en una
+  pastilla con el icono de la pantalla («Hoy», «Pagos», «Estadísticas»…), que
+  entra con un pequeño movimiento al cambiar de pantalla. La navegación sigue
+  abajo, a un pulgar de distancia, sin duplicarla arriba.
+
 ### 1.06 — 04/10/2026
 - **Arreglo importante en Estadísticas**: el «Generado», el velocímetro y las barras
   de cada día sumaban **solo la tienda** en los teléfonos que ya tenían la app

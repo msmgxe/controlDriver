@@ -232,10 +232,26 @@ function ArmazonInterno({
 
         <div className="flex min-w-0 flex-col">
           <header className="sticky top-[env(safe-area-inset-top,0px)] z-20 flex items-center gap-3 border-b border-linea bg-papel/85 px-4 py-3 backdrop-blur-md lg:border-transparent">
-            {/* La marca, en el móvil: el vehículo y el nombre de la pantalla. En
-                escritorio la marca ya está en la barra lateral. */}
-            <Auto vehiculo={vehiculo} className="w-11 shrink-0 lg:hidden" />
-            <h1 className="min-w-0 flex-1 truncate text-[22px]">{titulo}</h1>
+            {/* Como en cualquier barra de app: **la marca a la izquierda** —el logo y el
+                nombre, que llevan a Inicio— y **dónde estás a la derecha**, en una
+                pastilla con el icono de la pantalla. En escritorio la marca ya está
+                en la barra lateral y el título vuelve a la izquierda. */}
+            <Link href="/" aria-label="Control Driver, ir a Inicio" className="flex min-w-0 items-center gap-2 lg:hidden">
+              <Auto vehiculo={vehiculo} className="w-11 shrink-0" />
+              <span className="truncate font-display text-[17px] leading-none font-bold tracking-tight [zoom:var(--zoom-titulo,1)]">
+                Control Driver
+              </span>
+            </Link>
+            <h1
+              key={ruta}
+              className="entra ml-auto flex min-w-0 items-center gap-1.5 rounded-chip bg-acento-suave px-3 py-1.5 text-[15px] leading-tight font-bold text-acento-tinta lg:ml-0 lg:bg-transparent lg:p-0 lg:text-[22px] lg:text-tinta"
+            >
+              {(() => {
+                const Icono = ICONOS[activa];
+                return Icono ? <Icono className="size-[17px] shrink-0 lg:hidden" /> : null;
+              })()}
+              <span className="truncate">{titulo}</span>
+            </h1>
             {conPin && (
               <button
                 type="button"
