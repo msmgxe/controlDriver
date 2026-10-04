@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 
 import { Acordeon } from "@/components/Acordeon";
 import { BarraDeSemana } from "@/components/BarraDeSemana";
@@ -12,6 +12,7 @@ import { GraficoDias } from "@/components/GraficoDias";
 import { GraficoSemanas } from "@/components/GraficoSemanas";
 import { Flecha, Reloj, Subir, Trofeo } from "@/components/iconos";
 import { Pestanas } from "@/components/Pestanas";
+import { TourDePantalla } from "@/components/TourDePantalla";
 import { VelocimetroDeMeta } from "@/components/VelocimetroDeMeta";
 import { ResumenDelPeriodo } from "@/components/ResumenDelPeriodo";
 import { SelectorDeMes } from "@/components/SelectorDeMes";
@@ -126,7 +127,7 @@ export default function PaginaEstadisticas() {
   const { filas, jornadas, perfil, regla, descansos } = datos;
 
   const encabezado = (
-    <div className="flex flex-col gap-3">
+    <div id="est-vistas" className="flex flex-col gap-3">
       <Pestanas
         etiqueta="Qué mirar"
         actual={vista}
@@ -210,22 +211,30 @@ export default function PaginaEstadisticas() {
 
   return (
     <div className="mx-auto flex max-w-[880px] flex-col gap-2.5">
+      <Suspense fallback={null}>
+        <TourDePantalla pantalla="estadisticas" />
+      </Suspense>
       {encabezado}
 
-      {vista === "semana" ? (
-        <BarraDeSemana semana={semana} alCambiar={setSemana} />
-      ) : (
-        <SelectorDeMes mes={mes} alCambiar={setMes} />
-      )}
+      <div id="est-semana">
+        {vista === "semana" ? (
+          <BarraDeSemana semana={semana} alCambiar={setSemana} />
+        ) : (
+          <SelectorDeMes mes={mes} alCambiar={setMes} />
+        )}
+      </div>
 
-      <ResumenDelPeriodo
-        titulo={vista === "semana" ? "Resumen semanal" : "Resumen mensual"}
-        rango={rangoLegible(detalleDesde, detalleHasta)}
-        pedidos={t.pedidos}
-        centimos={t.centimos}
-      />
+      <div id="est-resumen">
+        <ResumenDelPeriodo
+          titulo={vista === "semana" ? "Resumen semanal" : "Resumen mensual"}
+          rango={rangoLegible(detalleDesde, detalleHasta)}
+          pedidos={t.pedidos}
+          centimos={t.centimos}
+        />
+      </div>
 
       {/* El velocímetro: cuánto llevas de la meta, con los colores de cada fuente. */}
+      <div id="est-meta">
       <VelocimetroDeMeta
         titulo={vista === "semana" ? "Tu meta de la semana" : "Tu meta del mes"}
         // La meta del mes son las semanas que caben en él, a la meta semanal.
@@ -236,8 +245,10 @@ export default function PaginaEstadisticas() {
           { categoria: "taxi", centimos: t.centimosTaxi },
         ]}
       />
+      </div>
 
       {/* El total repartido por fuente, a la vista y no escondido más abajo. */}
+      <div id="est-fuentes">
       <DesgloseDeIngresos
         titulo={vista === "semana" ? "De dónde viene la semana" : "De dónde viene el mes"}
         filas={desglosePorFuente({
@@ -248,6 +259,7 @@ export default function PaginaEstadisticas() {
         })}
         siempre
       />
+      </div>
 
       {vista === "semana" ? (
         <GraficoDeLaSemana dias={dias} />

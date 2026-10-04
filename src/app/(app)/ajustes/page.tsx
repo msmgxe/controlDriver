@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { Suspense, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 
 import { Acordeon } from "@/components/Acordeon";
 import { DialogoConfirmar } from "@/components/DialogoConfirmar";
 import { IconoDeSeccion } from "@/components/IconoDeSeccion";
+import { TourDePantalla } from "@/components/TourDePantalla";
 import { SeccionApariencia } from "@/components/SeccionApariencia";
 import { SeccionComandas } from "@/components/SeccionComandas";
 import { SeccionMetasYSonido } from "@/components/SeccionMetasYSonido";
@@ -90,19 +91,29 @@ export default function PaginaAjustes() {
 
   return (
     <div className="mx-auto flex max-w-[880px] flex-col gap-4">
+      <Suspense fallback={null}>
+        <TourDePantalla pantalla="ajustes" />
+      </Suspense>
       <h2 className="text-[30px] leading-tight">Ajustes</h2>
 
       <SeccionVersion />
 
       <SeccionApariencia />
 
-      <SeccionMetasYSonido />
+      <div id="aj-metas">
+        <SeccionMetasYSonido />
+      </div>
 
-      <SeccionModalidad />
+      <div id="aj-tienda">
+        <SeccionModalidad />
+      </div>
 
-      <ComandasYClientes />
+      <div id="aj-comandas">
+        <ComandasYClientes />
+      </div>
 
       <Acordeon
+        id="aj-pin"
         titulo="Bloqueo del dispositivo"
       icono="candado"
         resumen={configurado ? `PIN activo${conHuella ? " · con huella" : ""}` : "Sin PIN"}
@@ -212,7 +223,9 @@ export default function PaginaAjustes() {
 
       <SeccionTerminos />
 
-      <SeccionRespaldo />
+      <div id="aj-respaldo">
+        <SeccionRespaldo />
+      </div>
 
       <SeccionCapturas />
 

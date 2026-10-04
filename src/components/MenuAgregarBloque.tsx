@@ -41,6 +41,7 @@ export function MenuAgregarBloque({
       )}
       <button
         type="button"
+        id="recorrido-fab"
         aria-label={abierto ? "Cerrar" : "Agregar al día"}
         aria-expanded={abierto}
         disabled={disabled}

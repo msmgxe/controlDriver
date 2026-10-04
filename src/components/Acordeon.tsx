@@ -29,6 +29,7 @@ export function Acordeon({
   icono,
   abierto: controlado,
   alCambiar,
+  id: idPropio,
   children,
 }: {
   titulo: React.ReactNode;
@@ -48,6 +49,8 @@ export function Acordeon({
   icono?: ClaveDeIcono;
   abierto?: boolean;
   alCambiar?: (abierto: boolean) => void;
+  /** Para señalarlo desde un recorrido guiado. */
+  id?: string;
   children: React.ReactNode;
 }) {
   const [interno, setInterno] = useState(false);
@@ -62,7 +65,7 @@ export function Acordeon({
   }
 
   return (
-    <section className="acordeon">
+    <section className="acordeon" id={idPropio}>
       <button
         type="button"
         onClick={alternar}

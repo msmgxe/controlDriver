@@ -94,7 +94,7 @@ export function TarjetaViva({
   }
 
   return (
-    <section className="tarjeta-dia" aria-label={`${encabezado} ${formatearSoles(totalCentimos)}`}>
+    <section id="recorrido-tarjeta" className="tarjeta-dia" aria-label={`${encabezado} ${formatearSoles(totalCentimos)}`}>
       <div className="flex items-start justify-between gap-2">
         <p className="text-[13px] font-semibold opacity-90">{encabezado}</p>
         <div className="flex gap-1.5">

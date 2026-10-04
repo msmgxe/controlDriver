@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 
 import { AccionesSemana } from "@/components/AccionesSemana";
@@ -12,6 +12,7 @@ import { Alerta, Calendario, Check, Flecha, Luna, Reloj } from "@/components/ico
 import { PanelDeDescansos } from "@/components/PanelDeDescansos";
 import { PedidosPorTramo } from "@/components/PedidosPorTramo";
 import { TarjetaBloqueExtra } from "@/components/TarjetaBloqueExtra";
+import { TourDePantalla } from "@/components/TourDePantalla";
 import { TiraDeSemanas } from "@/components/TiraDeSemanas";
 import { Aviso } from "@/components/ui";
 import { useDatos } from "@/hooks/useDatos";
@@ -143,6 +144,9 @@ export default function PaginaPagos() {
 
   return (
     <div className="mx-auto flex max-w-[880px] flex-col gap-4">
+      <Suspense fallback={null}>
+        <TourDePantalla pantalla="pagos" alAbrir={(clave) => abrir(clave)} />
+      </Suspense>
       <div className="flex flex-col gap-3">
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
@@ -194,6 +198,7 @@ export default function PaginaPagos() {
           </div>
         </div>
 
+        <div id="pagos-tira">
         <TiraDeSemanas
           semana={semana.inicio}
           dia={dia}
@@ -209,10 +214,11 @@ export default function PaginaPagos() {
             setDia(null);
           }}
         />
+        </div>
       </div>
 
       {/* El total de la semana elegida. */}
-      <section className="tarjeta entra flex flex-col gap-1.5" aria-label="Total de la semana">
+      <section id="pagos-total" className="tarjeta entra flex flex-col gap-1.5" aria-label="Total de la semana">
         <div className="flex items-center justify-between gap-2">
           <span className="rotulo !text-tinta-2">
             Sem. {Number(semana.inicio.slice(8, 10))}–{Number(semana.fin.slice(8, 10))}
@@ -226,12 +232,15 @@ export default function PaginaPagos() {
           {liquidacion.totalOrdenes} pedidos · {liquidacion.totalRutas} rutas
           {fueraTramo1 > 0 && ` · ${fueraTramo1} fuera del tramo 1`}
         </span>
+        <div id="pagos-carretera">
         <CarreteraDeMeta
           totalCentimos={liquidacion.montoTotalCentimos}
           metaCentimos={metas.semanaCentimos}
           vehiculo={vehiculo}
           porHoraCentimos={horasTrabajadas > 0 ? liquidacion.montoTotalCentimos / horasTrabajadas : null}
         />
+        </div>
+        <div id="pagos-desglose">
         <DesgloseDeIngresos
           titulo="De dónde viene"
           filas={desglosePorFuente({
@@ -241,6 +250,7 @@ export default function PaginaPagos() {
             bloques: [...bloques.values()].flat(),
           })}
         />
+        </div>
         <div className="mt-1.5 grid grid-cols-7 gap-1" aria-label={`${cargados} de 7 días cargados`}>
           {diasDeLaSemana.map((f) => (
             <i
@@ -276,6 +286,7 @@ export default function PaginaPagos() {
       )}
 
       <Acordeon
+        id="pagos-dias"
         titulo="Día por día"
         resumen={`${cargados} de 7 días${faltan.length > 0 ? ` · faltan ${faltan.length}` : ""}`}
         aviso={faltan.length > 0}
@@ -305,6 +316,7 @@ export default function PaginaPagos() {
       </Acordeon>
 
       <Acordeon
+        id="pagos-tramos"
         titulo="Por tramo"
         resumen={
           dia
@@ -325,6 +337,7 @@ export default function PaginaPagos() {
       </Acordeon>
 
       <Acordeon
+        id="pagos-cobro"
         titulo="Cobro"
         resumen={
           elegida.estado === "pagada"

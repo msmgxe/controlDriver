@@ -9,6 +9,7 @@ import { Acordeon } from "@/components/Acordeon";
 import { BotonesExportar } from "@/components/BotonesExportar";
 import { FilaPedidoSimple } from "@/components/FilaPedidoSimple";
 import { Pestanas } from "@/components/Pestanas";
+import { TourDePantalla } from "@/components/TourDePantalla";
 import { SelectorDeMes } from "@/components/SelectorDeMes";
 import { SelectorDeSemana } from "@/components/SelectorDeSemana";
 import { Aviso, EstadoPedido, Vacio } from "@/components/ui";
@@ -83,6 +84,7 @@ function Contenido() {
   const vista = params.get("vista") === "pedidos" ? "pedidos" : "dia";
   const buscado = (params.get("buscar") ?? "").trim();
   const router = useRouter();
+  const [exportarAbierto, setExportarAbierto] = useState(false);
   const irA = (cambios: { tipo?: Tipo; f?: FechaISO; vista?: "dia" | "pedidos" }) =>
     router.replace(
       `/historial?tipo=${cambios.tipo ?? tipo}&f=${cambios.f ?? f}&vista=${cambios.vista ?? vista}`,
@@ -186,6 +188,12 @@ function Contenido() {
 
   return (
     <div className="mx-auto flex max-w-[880px] flex-col gap-4">
+      <TourDePantalla
+        pantalla="historial"
+        alAbrir={(clave) => {
+          if (clave === "exportar") setExportarAbierto(true);
+        }}
+      />
       <h2 className="text-[30px] leading-tight">Historial</h2>
 
       <Pestanas
@@ -210,11 +218,13 @@ function Contenido() {
         ]}
       />
 
+      <div id="hist-rango">
       {tipo === "semana" ? (
         <SelectorDeSemana semana={lunesDeLaSemana(f)} alCambiar={(lunes) => irA({ f: lunes })} />
       ) : (
         <SelectorDeMes mes={primerDiaDelMes(f)} alCambiar={(mes) => irA({ f: mes })} />
       )}
+      </div>
 
       {/* §10, utilidades — la consulta de "la tienda me pregunta por este
           pedido": dice en qué fecha fue, en qué ruta y con qué horario. Para
@@ -317,6 +327,9 @@ function Contenido() {
       )}
 
       <Acordeon
+        id="hist-exportar"
+        abierto={exportarAbierto}
+        alCambiar={setExportarAbierto}
         titulo="Exportar"
         resumen={`Excel o PDF de ${formatearFecha(desde).slice(0, 5)} a ${formatearFecha(hasta).slice(0, 5)}`}
       >

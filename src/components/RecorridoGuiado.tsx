@@ -32,22 +32,37 @@ export function RecorridoGuiado({ pasos, alTerminar }: { pasos: PasoDeRecorrido[
     const paso = pasos[i];
     paso.antes?.();
     let vigente = true;
+    let intentos = 0;
+    let reloj: ReturnType<typeof setTimeout>;
 
-    // Un instante para que `antes()` —p. ej. abrir un acordeón— ya se haya
-    // pintado, y para que el `scrollIntoView` suave termine antes de medir.
-    const primero = setTimeout(() => {
+    /* Se busca el elemento con paciencia: la pantalla puede estar todavía leyendo
+       sus datos o desplegando un acordeón. Si tras unos segundos no aparece —un
+       día sin apoyo no tiene fila de apoyo—, el paso se salta en vez de quedarse
+       colgado. */
+    const buscar = () => {
+      if (!vigente) return;
       const el = document.querySelector(paso.selector);
-      if (!el) return;
+      if (!el) {
+        if (++intentos < 25) reloj = setTimeout(buscar, 150);
+        else if (i < pasos.length - 1) setI(i + 1);
+        else alTerminar();
+        return;
+      }
       el.scrollIntoView({ block: "center", behavior: "smooth" });
-      const segundo = setTimeout(() => {
-        if (vigente) setRect(el.getBoundingClientRect());
-      }, 260);
-      return () => clearTimeout(segundo);
-    }, 60);
+      // Se mide dos veces: el desplazamiento suave y un acordeón que se despliega siguen moviendo el elemento un rato.
+      reloj = setTimeout(() => {
+        if (!vigente) return;
+        setRect(el.getBoundingClientRect());
+        reloj = setTimeout(() => {
+          if (vigente) setRect(el.getBoundingClientRect());
+        }, 500);
+      }, 450);
+    };
+    reloj = setTimeout(buscar, 80);
 
     return () => {
       vigente = false;
-      clearTimeout(primero);
+      clearTimeout(reloj);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `pasos` es estable, solo importa el paso `i`.
   }, [i]);
@@ -67,7 +82,7 @@ export function RecorridoGuiado({ pasos, alTerminar }: { pasos: PasoDeRecorrido[
 
   const paso = pasos[i];
   const esUltimo = i === pasos.length - 1;
-  const globo = ubicarGlobo(rect);
+  const globo = ubicarGlobo(rect, paso.texto.length);
 
   return (
     <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-label="Recorrido guiado">
@@ -117,15 +132,23 @@ export function RecorridoGuiado({ pasos, alTerminar }: { pasos: PasoDeRecorrido[
   );
 }
 
-/** Al lado del botón resaltado, sin salirse de la pantalla. */
-function ubicarGlobo(rect: DOMRect): React.CSSProperties {
+/**
+ * Al lado del elemento resaltado, sin salirse de la pantalla ni quedar bajo la
+ * barra de abajo. La altura de la burbuja se estima por el largo del texto.
+ */
+function ubicarGlobo(rect: DOMRect, largoDelTexto: number): React.CSSProperties {
   const alto = window.innerHeight;
   const ancho = window.innerWidth;
   const anchoGlobo = Math.min(280, ancho - 24);
-
-  let top = rect.bottom + 12;
-  if (top + 170 > alto) top = Math.max(12, rect.top - 178);
-
+  const altoGlobo = 128 + Math.ceil(largoDelTexto / 34) * 20;
+  const barraDeAbajo = 84; // la navegación fija de la app
+  const libre = alto - barraDeAbajo;
   const left = Math.min(Math.max(12, rect.left), ancho - anchoGlobo - 12);
-  return { top, left };
+
+  // Debajo del elemento, si cabe.
+  if (rect.bottom + 12 + altoGlobo <= libre) return { top: rect.bottom + 12, left };
+  // Encima, si cabe.
+  if (rect.top - 12 - altoGlobo >= 12) return { top: rect.top - 12 - altoGlobo, left };
+  // Un elemento casi tan alto como la pantalla (un acordeón abierto): abajo, sobre él.
+  return { top: Math.max(12, libre - altoGlobo), left: Math.max(12, (ancho - anchoGlobo) / 2) };
 }

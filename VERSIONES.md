@@ -37,6 +37,18 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 1.12 — 05/10/2026
+**Tutoriales y recorridos guiados de todas las pantallas.**
+- **Tutoriales** ahora tiene once temas, por pantalla: registrar pedidos, la tarjeta
+  del día, cambiar de día y marcar descansos, la foto de la comanda, apoyo y taxi,
+  tu semana y tu meta (Pagos), por tramo / evidencia / cobro, Estadísticas,
+  exportar a PDF y Excel, y Ajustes (metas, transporte, PIN, respaldo). Cada uno
+  con sus pasos y su botón **▶ Ver el recorrido guiado**.
+- **Recorridos guiados**: el botón te lleva a la pantalla real y oscurece todo menos
+  lo que explica, un paso a la vez («Siguiente», «Atrás», «Saltar»). Si una cosa no
+  existe ese día —por ejemplo, la fila de apoyo cuando no hay apoyo— el paso se
+  salta solo. Los pasos esperan a que la pantalla termine de cargar.
+
 ### 1.11 — 05/10/2026
 - **Marcar un día de descanso, como se esperaba: manteniéndolo presionado.**
   Mantén presionado cualquier día de la barra de fechas de Inicio y se abre su

@@ -19,6 +19,7 @@ import { RecorridoGuiado, type PasoDeRecorrido } from "@/components/RecorridoGui
 import { SubirMas } from "@/components/SubirMas";
 import { TiraDeSemanas, type DatosDelDia } from "@/components/TiraDeSemanas";
 import { Auto } from "@/components/Auto";
+import { TourDePantalla } from "@/components/TourDePantalla";
 import { TarjetaViva } from "@/components/TarjetaViva";
 import { useDatos } from "@/hooks/useDatos";
 import { useTiraDeSemanas } from "@/hooks/useTiraDeSemanas";
@@ -141,6 +142,7 @@ function Contenido() {
 
   return (
     <div className="mx-auto flex max-w-[880px] flex-col gap-4">
+      <TourDePantalla pantalla="inicio" />
       <div className="flex flex-col gap-3">
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
@@ -164,7 +166,7 @@ function Contenido() {
                 Volver a hoy
               </button>
             )}
-            <label className="relative grid size-11 place-items-center rounded-btn border border-linea-fuerte bg-sup">
+            <label id="recorrido-calendario" className="relative grid size-11 place-items-center rounded-btn border border-linea-fuerte bg-sup">
               <span className="sr-only">Elegir otra fecha</span>
               <Calendario className="size-5" />
               <input
@@ -205,7 +207,7 @@ function Contenido() {
         </div>
       </div>
 
-      <p className="-mt-2 px-1 text-[11.5px] text-tinta-3">
+      <p id="recorrido-pista" className="-mt-2 px-1 text-[11.5px] text-tinta-3">
         Mantén presionado un día para marcarlo como descanso.
       </p>
 
