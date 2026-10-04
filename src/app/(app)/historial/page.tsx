@@ -13,6 +13,7 @@ import { SelectorDeMes } from "@/components/SelectorDeMes";
 import { SelectorDeSemana } from "@/components/SelectorDeSemana";
 import { Aviso, EstadoPedido, Vacio } from "@/components/ui";
 import { useDatos } from "@/hooks/useDatos";
+import { bloquesPorRango } from "@/lib/db/sqlite/bloques-extra";
 import { buscarPedidos, esCodigoPendiente, jornadasPorRango, reglaVigente } from "@/lib/db/sqlite/jornadas";
 import { listarTiendas, perfilActual } from "@/lib/db/sqlite/perfil";
 import { horasDePermanencia } from "@/lib/pagos/reglas";
@@ -89,18 +90,22 @@ function Contenido() {
   const [desde, hasta] = limites(tipo, f);
 
   const { datos } = useDatos(async () => {
-    const [jornadas, perfil, tiendas] = await Promise.all([
+    const [jornadas, perfil, tiendas, bloques] = await Promise.all([
       jornadasPorRango(desde, hasta),
       perfilActual(),
       listarTiendas(),
+      bloquesPorRango(desde, hasta),
     ]);
     const { regla } = await reglaVigente(hasta, perfil?.tiendaId ?? null, perfil?.vehiculo);
     const nombreTienda = tiendas.find((x) => x.id === perfil?.tiendaId)?.nombre ?? null;
-    return { jornadas, perfil, regla, nombreTienda };
+    return { jornadas, perfil, regla, nombreTienda, bloques };
   }, [desde, hasta]);
 
   if (!datos) return <Esqueleto />;
-  const { jornadas, perfil, regla, nombreTienda } = datos;
+  const { jornadas, perfil, regla, nombreTienda, bloques } = datos;
+
+  /* Apoyo y taxi de un día. Suman al total del día, aparte de lo de la tienda. */
+  const extrasDe = (fecha: FechaISO) => (bloques.get(fecha) ?? []).reduce((s, b) => s + b.montoCentimos, 0);
 
   /* Lo que se cobra por un día: el mayor entre los pedidos y el piso de
      permanencia. La misma función que usa la liquidación, para que el
@@ -120,6 +125,7 @@ function Contenido() {
     tienda: nombreTienda,
     desde,
     hasta,
+    bloques: [...bloques].flatMap(([fecha, lista]) => lista.map((bloque) => ({ fecha, bloque }))),
     jornadas: jornadas.map((j) => {
       const horarios = new Map(
         j.rutas.map((r) => [r.numero, `${r.horaInicio ?? "--:--"}–${r.horaFin ?? "--:--"}`]),
@@ -164,7 +170,7 @@ function Contenido() {
     (acc, j) => ({
       pedidos: acc.pedidos + j.ordenes.length,
       rutas: acc.rutas + j.rutas.length,
-      centimos: acc.centimos + cobroDe(j).pagadoCentimos,
+      centimos: acc.centimos + cobroDe(j).pagadoCentimos + extrasDe(j.fecha),
     }),
     { pedidos: 0, rutas: 0, centimos: 0 },
   );
@@ -261,7 +267,7 @@ function Contenido() {
           {todosLosDias.map((fecha) => {
             const j = porFecha.get(fecha);
             return j ? (
-              <FilaDeDia key={fecha} fecha={fecha} j={j} monto={cobroDe(j).pagadoCentimos} />
+              <FilaDeDia key={fecha} fecha={fecha} j={j} monto={cobroDe(j).pagadoCentimos + extrasDe(fecha)} />
             ) : (
               <FilaDeDiaVacio key={fecha} fecha={fecha} futuro={diasEntre(hoy, fecha) > 0} />
             );
@@ -272,7 +278,7 @@ function Contenido() {
           {semanas.map((sem) => {
             const delaSemana = sem.dias.map((f) => porFecha.get(f)).filter((j) => j !== undefined);
             const pedidos = delaSemana.reduce((s, j) => s + j.ordenes.length, 0);
-            const monto = delaSemana.reduce((s, j) => s + cobroDe(j).pagadoCentimos, 0);
+            const monto = delaSemana.reduce((s, j) => s + cobroDe(j).pagadoCentimos + extrasDe(j.fecha), 0);
             const fin = sem.dias[sem.dias.length - 1];
             return (
               <Acordeon
@@ -288,7 +294,7 @@ function Contenido() {
                   {sem.dias.map((fecha) => {
                     const j = porFecha.get(fecha);
                     return j ? (
-                      <FilaDeDia key={fecha} fecha={fecha} j={j} monto={cobroDe(j).pagadoCentimos} />
+                      <FilaDeDia key={fecha} fecha={fecha} j={j} monto={cobroDe(j).pagadoCentimos + extrasDe(fecha)} />
                     ) : (
                       <FilaDeDiaVacio key={fecha} fecha={fecha} futuro={diasEntre(hoy, fecha) > 0} />
                     );
@@ -305,7 +311,7 @@ function Contenido() {
             const r = j.rutas.find((x) => x.numero === ruta);
             return r?.horaInicio ?? null;
           }}
-          montoDe={(j) => cobroDe(j).pagadoCentimos}
+          montoDe={(j) => cobroDe(j).pagadoCentimos + extrasDe(j.fecha)}
           alAbrir={(fecha) => router.push(`/?dia=${fecha}`)}
         />
       )}

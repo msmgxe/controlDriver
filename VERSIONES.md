@@ -37,6 +37,18 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 1.02 — 04/10/2026
+- **Datos de prueba de taxi y apoyo**: en **Ajustes › Datos de ejemplo** eliges el
+  día y cargas 3 carreras de taxi o un apoyo por hora. Son registros normales
+  (se tocan, se corrigen y se quitan); «Quitar los de prueba» borra solo esos.
+- **PDF y Excel con el detalle por tipo**: además de los pedidos, llevan una tabla
+  de **apoyo y taxi** (fecha, tienda o carrera, horas/km, horario, monto), el
+  reparto **por tramo** y el **total por fuente** (tu tienda, cada apoyo, taxi),
+  del rango de fechas elegido en Historial. El Excel trae las hojas nuevas
+  «Apoyo y taxi» y «Por fuente».
+- **Historial**: los montos de cada día, semana y el total del rango ahora
+  incluyen apoyo y taxi.
+
 ### 1.01 — 04/10/2026
 **Nueva numeración**: desde aquí la versión empieza en **1.00** y cada cambio sube
 una centésima (1.01, 1.02…). Todo lo anterior (v1 a v51) fue el contador

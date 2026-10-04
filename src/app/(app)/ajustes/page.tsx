@@ -14,7 +14,8 @@ import { useDatos } from "@/hooks/useDatos";
 import { useVersion } from "@/hooks/useVersion";
 import { leerAjustesDeComandas } from "@/lib/db/sqlite/ajustes";
 import { espacioOcupado } from "@/lib/db/sqlite/pruebas";
-import { formatearFecha } from "@/lib/fechas";
+import { avisarDeCambios } from "@/lib/cambios";
+import { formatearFecha, hoyEnLima, type FechaISO } from "@/lib/fechas";
 import { intentarSalir } from "@/lib/salir";
 import {
   instantaneaFechaAceptacion,
@@ -283,6 +284,37 @@ function SeccionEjemplo() {
   const router = useRouter();
   const [ocupado, setOcupado] = useState<"cargando" | "borrando" | null>(null);
   const [mensaje, setMensaje] = useState<string | null>(null);
+  const [fechaPrueba, setFechaPrueba] = useState<FechaISO>(hoyEnLima());
+
+  async function cargarPrueba(taxis: boolean, apoyo: boolean) {
+    setOcupado("cargando");
+    setMensaje(null);
+    try {
+      const { cargarBloquesDePrueba } = await import("@/lib/db/sqlite/ejemplo");
+      const n = await cargarBloquesDePrueba(fechaPrueba, { taxis, apoyo });
+      setMensaje(`Listo: ${n} ${n === 1 ? "registro" : "registros"} de prueba el ${fechaPrueba.split("-").reverse().join("/")}. Míralos en Inicio, Pagos y Estadísticas.`);
+      avisarDeCambios();
+    } catch {
+      setMensaje("No se pudieron cargar los datos de prueba.");
+    } finally {
+      setOcupado(null);
+    }
+  }
+
+  async function quitarPrueba() {
+    setOcupado("borrando");
+    setMensaje(null);
+    try {
+      const { borrarBloquesDePrueba } = await import("@/lib/db/sqlite/ejemplo");
+      await borrarBloquesDePrueba();
+      setMensaje("Quité los taxis y apoyos de prueba.");
+      avisarDeCambios();
+    } catch {
+      setMensaje("No se pudo quitar.");
+    } finally {
+      setOcupado(null);
+    }
+  }
 
   async function cargar() {
     setOcupado("cargando");
@@ -339,6 +371,35 @@ function SeccionEjemplo() {
         >
           {ocupado === "borrando" ? "Borrando…" : "Borrar todo"}
         </button>
+      </div>
+
+      <div className="flex flex-col gap-2 border-t border-linea pt-4">
+        <b className="text-sm">Taxi y apoyo de prueba</b>
+        <p className="text-xs text-tinta-3">
+          Elige el día y carga tres carreras de taxi (y, si quieres, un apoyo por hora) para probar las pantallas, las
+          sumas y el PDF. Son normales: se pueden tocar, corregir y quitar.
+        </p>
+        <label className="flex flex-col gap-1">
+          <span className="text-sm font-semibold">Día</span>
+          <input
+            type="date"
+            value={fechaPrueba}
+            max={hoyEnLima()}
+            onChange={(e) => e.target.value && setFechaPrueba(e.target.value as FechaISO)}
+            className="min-h-11 rounded-btn border border-linea-fuerte bg-sup px-3 text-base"
+          />
+        </label>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" disabled={ocupado !== null} onClick={() => void cargarPrueba(true, false)} className="boton-secundario min-h-11 px-4">
+            Cargar 3 taxis
+          </button>
+          <button type="button" disabled={ocupado !== null} onClick={() => void cargarPrueba(false, true)} className="boton-secundario min-h-11 px-4">
+            Cargar un apoyo
+          </button>
+          <button type="button" disabled={ocupado !== null} onClick={() => void quitarPrueba()} className="min-h-11 rounded-btn px-4 text-sm font-semibold text-mal">
+            Quitar los de prueba
+          </button>
+        </div>
       </div>
 
       {mensaje && <p className="text-sm text-tinta-2">{mensaje}</p>}

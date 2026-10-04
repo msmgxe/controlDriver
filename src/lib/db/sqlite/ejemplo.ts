@@ -14,6 +14,7 @@
  */
 import { hoyEnLima, sumarDias, type FechaISO } from "@/lib/fechas";
 
+import { guardarApoyoHora, guardarTaxi } from "./bloques-extra";
 import { ejecutar } from "./conexion";
 import { guardarJornada } from "./jornadas";
 import { perfilActual } from "./perfil";
@@ -121,4 +122,60 @@ export async function borrarTodasLasJornadas(): Promise<void> {
   await ejecutar(`delete from jornadas`);
   await ejecutar(`delete from liquidaciones`);
   await ejecutar(`delete from cargas`);
+}
+
+/** Marca de los bloques de prueba, para poder quitarlos sin tocar los de verdad. */
+const NOTA_DE_PRUEBA = "prueba";
+
+/**
+ * Carreras de taxi (y un apoyo) de prueba, en la fecha elegida, para probar la
+ * pantalla, las sumas y la exportación. Son bloques normales: se tocan, se
+ * corrigen y se quitan como cualquier otro. Llevan la nota «prueba» solo para
+ * poder borrarlos todos de una vez (`borrarBloquesDePrueba`).
+ */
+export async function cargarBloquesDePrueba(
+  fecha: FechaISO,
+  que: { taxis: boolean; apoyo: boolean },
+): Promise<number> {
+  let creados = 0;
+  if (que.taxis) {
+    const carreras = [
+      { ini: "08:10", fin: "08:35", km: 6.4, monto: 1800 },
+      { ini: "13:20", fin: "13:55", km: 9.8, monto: 2650 },
+      { ini: "19:05", fin: "19:40", km: 12.3, monto: 3400 },
+    ];
+    for (const c of carreras) {
+      await guardarTaxi({
+        fecha,
+        horaInicio: c.ini,
+        horaFin: c.fin,
+        origen: null,
+        destino: null,
+        km: c.km,
+        kmFuente: "manual",
+        montoCentimos: c.monto,
+        notas: NOTA_DE_PRUEBA,
+      });
+      creados++;
+    }
+  }
+  if (que.apoyo) {
+    await guardarApoyoHora({
+      fecha,
+      horaInicio: "10:00",
+      horaFin: "16:30",
+      tiendaNombre: "Tienda de prueba",
+      tarifaHoraCentimos: 1800,
+      horas: 6.5,
+      motivo: "Apoyo de prueba",
+      notas: NOTA_DE_PRUEBA,
+    });
+    creados++;
+  }
+  return creados;
+}
+
+/** Quita solo los bloques cargados con `cargarBloquesDePrueba`. */
+export async function borrarBloquesDePrueba(): Promise<void> {
+  await ejecutar(`delete from bloques_extra where notas = ?`, [NOTA_DE_PRUEBA]);
 }

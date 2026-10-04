@@ -1,4 +1,4 @@
-import { totalesDe, type DatosExportacion } from "./datos";
+import { describirBloque, fuentesDe, totalesDe, tramosDe, type DatosExportacion } from "./datos";
 import { formatearDuracion, formatearFecha, nombreDelDia } from "@/lib/fechas";
 import { formatearSoles } from "@/lib/pagos/reglas";
 
@@ -43,7 +43,9 @@ export async function generarPdf(datos: DatosExportacion): Promise<Blob> {
     align: "right",
   });
   doc.text(
-    `${totales.pedidos} pedidos · ${totales.rutas} rutas · ${datos.jornadas.length} días`,
+    `${totales.pedidos} pedidos · ${totales.rutas} rutas · ${datos.jornadas.length} días${
+      datos.bloques.length > 0 ? ` · ${datos.bloques.length} apoyo/taxi` : ""
+    }`,
     ancho - 14,
     28,
     { align: "right" },
@@ -100,25 +102,69 @@ export async function generarPdf(datos: DatosExportacion): Promise<Blob> {
     margin: { top: 16, bottom: 18, left: 14, right: 14 },
   });
 
-  /* ------------------------------- totales ------------------------------ */
-  const finTabla =
+  /* --------------------- apoyo a otras tiendas y taxi --------------------- */
+  const ultimaY = () =>
     (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 40;
 
+  if (datos.bloques.length > 0) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text("Apoyo a otras tiendas y taxi", 14, ultimaY() + 10);
+    autoTabla(doc, {
+      startY: ultimaY() + 12,
+      head: [["Fecha", "Tipo", "Tienda / carrera", "Detalle", "Horario", "Monto"]],
+      body: datos.bloques.map((x) => {
+        const d = describirBloque(x.bloque);
+        return [formatearFecha(x.fecha), d.tipo, d.titulo, d.detalle, d.horario, formatearSoles(x.bloque.montoCentimos)];
+      }),
+      theme: "grid",
+      styles: { fontSize: 7.5, cellPadding: 1.6, lineColor: [210, 210, 210], lineWidth: 0.1 },
+      headStyles: { fillColor: [245, 245, 245], textColor: [30, 30, 30], fontStyle: "bold" },
+      columnStyles: { 5: { halign: "right", cellWidth: 22 } },
+      showHead: "everyPage",
+      margin: { top: 16, bottom: 18, left: 14, right: 14 },
+    });
+  }
+
+  /* ------------------------------- por tramo ------------------------------ */
+  const tramos = tramosDe(datos);
+  if (tramos.length > 0) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text("Pedidos de la tienda por tramo", 14, ultimaY() + 10);
+    autoTabla(doc, {
+      startY: ultimaY() + 12,
+      head: [["Tramo", "Pedidos", "Monto"]],
+      body: tramos.map((t) => [t.tramo === 6 ? "Más de 12 km" : `Tramo ${t.tramo}`, String(t.pedidos), formatearSoles(t.centimos)]),
+      theme: "grid",
+      styles: { fontSize: 8, cellPadding: 1.4, lineColor: [210, 210, 210], lineWidth: 0.1 },
+      headStyles: { fillColor: [245, 245, 245], textColor: [30, 30, 30], fontStyle: "bold" },
+      columnStyles: { 1: { halign: "right" }, 2: { halign: "right" } },
+      tableWidth: 90,
+      margin: { left: 14, right: 14 },
+    });
+  }
+
+  /* ------------------------------- totales ------------------------------ */
+  const fuentes = fuentesDe(datos);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text("Total del rango por fuente", 14, ultimaY() + 10);
   autoTabla(doc, {
-    startY: finTabla + 4,
+    startY: ultimaY() + 12,
+    head: [["Fuente", "Detalle", "Monto"]],
     body: [
-      ["Días trabajados", String(datos.jornadas.length)],
-      ["Pedidos", String(totales.pedidos)],
-      ["Rutas", String(totales.rutas)],
-      ["Tiempo en ruta", formatearDuracion(totales.minutos)],
-      ["Total del rango", formatearSoles(totales.centimos)],
+      ...fuentes.map((f) => [f.etiqueta, f.detalle, formatearSoles(f.centimos)]),
+      [
+        { content: "TOTAL", styles: { fontStyle: "bold" as const } } as unknown as string,
+        `${datos.jornadas.length} días · ${formatearDuracion(totales.minutos)} en ruta`,
+        { content: formatearSoles(totales.centimos), styles: { fontStyle: "bold" as const } } as unknown as string,
+      ],
     ],
-    theme: "plain",
-    styles: { fontSize: 9, cellPadding: 1.2 },
-    columnStyles: {
-      0: { cellWidth: 45, textColor: [90, 90, 90] },
-      1: { fontStyle: "bold" },
-    },
+    theme: "grid",
+    styles: { fontSize: 8.5, cellPadding: 1.6, lineColor: [210, 210, 210], lineWidth: 0.1 },
+    headStyles: { fillColor: [245, 245, 245], textColor: [30, 30, 30], fontStyle: "bold" },
+    columnStyles: { 2: { halign: "right", cellWidth: 28 } },
     margin: { left: 14, right: 14 },
   });
 

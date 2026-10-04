@@ -1,4 +1,6 @@
 import type { FechaISO } from "@/lib/fechas";
+import type { BloqueExtraFila } from "@/lib/db/tipos";
+import { desglosePorFuente, type FilaDeDesglose } from "@/lib/pagos/desglose";
 
 /**
  * Datos que viajan del servidor al navegador para exportar (§11).
@@ -40,24 +42,89 @@ interface JornadaExportable {
   pagaPor: "pedidos" | "permanencia";
 }
 
+/** Un apoyo o una carrera de taxi, con su día, para el archivo. */
+export interface BloqueExportable {
+  fecha: FechaISO;
+  bloque: BloqueExtraFila;
+}
+
 export interface DatosExportacion {
   driver: string;
   tienda: string | null;
   desde: FechaISO;
   hasta: FechaISO;
   jornadas: JornadaExportable[];
+  /** Apoyo a otras tiendas y taxi del rango, por día. */
+  bloques: BloqueExportable[];
 }
 
+/**
+ * Los totales del rango. `centimos` es **todo** lo que produjo (tienda + apoyo +
+ * taxi); `centimosTienda`, `centimosApoyo` y `centimosTaxi` dicen cuánto fue de
+ * cada fuente.
+ */
 export function totalesDe(datos: DatosExportacion) {
-  return datos.jornadas.reduce(
+  const base = datos.jornadas.reduce(
     (acc, j) => ({
       pedidos: acc.pedidos + j.pedidos.length,
       rutas: acc.rutas + j.rutas.length,
       minutos: acc.minutos + j.minutosEnRuta,
-      centimos: acc.centimos + j.montoCentimos,
+      centimosTienda: acc.centimosTienda + j.montoCentimos,
     }),
-    { pedidos: 0, rutas: 0, minutos: 0, centimos: 0 },
+    { pedidos: 0, rutas: 0, minutos: 0, centimosTienda: 0 },
   );
+  const centimosApoyo = datos.bloques.filter((x) => x.bloque.tipo !== "taxi").reduce((s, x) => s + x.bloque.montoCentimos, 0);
+  const centimosTaxi = datos.bloques.filter((x) => x.bloque.tipo === "taxi").reduce((s, x) => s + x.bloque.montoCentimos, 0);
+  return {
+    ...base,
+    centimosApoyo,
+    centimosTaxi,
+    centimos: base.centimosTienda + centimosApoyo + centimosTaxi,
+  };
+}
+
+/** Las fuentes del rango: tu tienda, cada tienda de apoyo y el taxi. */
+export function fuentesDe(datos: DatosExportacion): FilaDeDesglose[] {
+  const t = totalesDe(datos);
+  return desglosePorFuente({
+    tiendaNombre: datos.tienda,
+    pedidosTienda: t.pedidos,
+    centimosTienda: t.centimosTienda,
+    bloques: datos.bloques.map((x) => x.bloque),
+  });
+}
+
+/** Cuántos pedidos y cuánto sumó cada tramo en todo el rango. */
+export function tramosDe(datos: DatosExportacion): Array<{ tramo: number; pedidos: number; centimos: number }> {
+  const mapa = new Map<number, { pedidos: number; centimos: number }>();
+  for (const j of datos.jornadas)
+    for (const p of j.pedidos) {
+      const t = mapa.get(p.tramo) ?? { pedidos: 0, centimos: 0 };
+      t.pedidos += 1;
+      t.centimos += p.montoCentimos;
+      mapa.set(p.tramo, t);
+    }
+  return [...mapa].sort((a, b) => a[0] - b[0]).map(([tramo, v]) => ({ tramo, ...v }));
+}
+
+/** Qué se muestra de un bloque en una tabla: tipo, detalle y horario. */
+export function describirBloque(b: BloqueExtraFila): { tipo: string; titulo: string; detalle: string; horario: string } {
+  const horario = b.horaInicio ? `${b.horaInicio}${b.horaFin ? `–${b.horaFin}` : ""}` : "—";
+  if (b.tipo === "apoyo_hora")
+    return {
+      tipo: "Apoyo por hora",
+      titulo: b.tiendaNombre,
+      detalle: `${b.horas} h × S/ ${(b.tarifaHoraCentimos / 100).toFixed(2)}${b.motivo ? ` · ${b.motivo}` : ""}`,
+      horario,
+    };
+  if (b.tipo === "apoyo_tramos")
+    return {
+      tipo: "Apoyo por tramos",
+      titulo: b.tiendaNombre,
+      detalle: `${b.pedidos.length} pedido${b.pedidos.length === 1 ? "" : "s"} (tramos ${b.pedidos.map((p) => p.tramo).join(", ")})`,
+      horario,
+    };
+  return { tipo: "Taxi libre", titulo: "Carrera de taxi", detalle: b.km !== null ? `${b.km} km` : "—", horario };
 }
 
 /**

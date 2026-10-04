@@ -2,8 +2,11 @@ import {
   comoFechaExcel,
   comoHoraExcel,
   comoTexto,
+  describirBloque,
+  fuentesDe,
   horaAFraccion,
   totalesDe,
+  tramosDe,
   type DatosExportacion,
 } from "./datos";
 import { formatearFecha, nombreDelDia } from "@/lib/fechas";
@@ -69,7 +72,7 @@ export async function generarExcel(datos: DatosExportacion): Promise<Blob> {
   const totales = totalesDe(datos);
   const filaTotalPedidos = pedidos.addRow({
     codigo: `TOTAL · ${totales.pedidos} pedidos`,
-    monto: totales.centimos / 100,
+    monto: totales.centimosTienda / 100,
   });
   filaTotalPedidos.font = { bold: true };
 
@@ -141,10 +144,57 @@ export async function generarExcel(datos: DatosExportacion): Promise<Blob> {
     pedidos: totales.pedidos,
     rutas: totales.rutas,
     tiempo: comoHoraExcel(totales.minutos),
-    cobra: totales.centimos / 100,
+    cobra: totales.centimosTienda / 100,
   });
   filaTotalResumen.font = { bold: true };
   resumen.getRow(1).font = { bold: true };
+
+  /* ---------------------------- Apoyo y taxi ---------------------------- */
+  const extras = libro.addWorksheet("Apoyo y taxi", { views: [{ state: "frozen", ySplit: 1 }] });
+  extras.columns = [
+    { header: "Fecha", key: "fecha", width: 12, style: { numFmt: FECHA } },
+    { header: "Día", key: "dia", width: 11 },
+    { header: "Tipo", key: "tipo", width: 17 },
+    { header: "Tienda / carrera", key: "titulo", width: 22 },
+    { header: "Detalle", key: "detalle", width: 34 },
+    { header: "Horario", key: "horario", width: 14 },
+    { header: "Km", key: "km", width: 7 },
+    { header: "Monto", key: "monto", width: 12, style: { numFmt: MONEDA } },
+  ];
+  for (const x of datos.bloques) {
+    const d = describirBloque(x.bloque);
+    extras.addRow({
+      fecha: comoFechaExcel(x.fecha),
+      dia: nombreDelDia(x.fecha),
+      tipo: d.tipo,
+      titulo: comoTexto(d.titulo),
+      detalle: comoTexto(d.detalle),
+      horario: d.horario,
+      km: x.bloque.tipo === "taxi" ? x.bloque.km : null,
+      monto: x.bloque.montoCentimos / 100,
+    });
+  }
+  extras.addRow({ titulo: "TOTAL", monto: (totales.centimosApoyo + totales.centimosTaxi) / 100 }).font = { bold: true };
+  extras.getRow(1).font = { bold: true };
+
+  /* ------------------------- Por fuente y por tramo ------------------------- */
+  const fuentesHoja = libro.addWorksheet("Por fuente");
+  fuentesHoja.columns = [
+    { header: "Fuente", key: "fuente", width: 30 },
+    { header: "Detalle", key: "detalle", width: 26 },
+    { header: "Monto", key: "monto", width: 14, style: { numFmt: MONEDA } },
+  ];
+  for (const f of fuentesDe(datos)) fuentesHoja.addRow({ fuente: comoTexto(f.etiqueta), detalle: f.detalle, monto: f.centimos / 100 });
+  fuentesHoja.addRow({ fuente: "TOTAL", monto: totales.centimos / 100 }).font = { bold: true };
+  fuentesHoja.addRow({});
+  fuentesHoja.addRow({ fuente: "Pedidos de la tienda por tramo" }).font = { bold: true };
+  for (const t of tramosDe(datos))
+    fuentesHoja.addRow({
+      fuente: t.tramo === 6 ? "Más de 12 km" : `Tramo ${t.tramo}`,
+      detalle: `${t.pedidos} pedidos`,
+      monto: t.centimos / 100,
+    });
+  fuentesHoja.getRow(1).font = { bold: true };
 
   /* ------------------------------ Portada ------------------------------ */
   const portada = libro.addWorksheet("Datos");
@@ -158,6 +208,7 @@ export async function generarExcel(datos: DatosExportacion): Promise<Blob> {
     { campo: "Desde", valor: formatearFecha(datos.desde) },
     { campo: "Hasta", valor: formatearFecha(datos.hasta) },
     { campo: "Días trabajados", valor: datos.jornadas.length },
+    { campo: "Total del rango", valor: `S/ ${(totales.centimos / 100).toFixed(2)}` },
     { campo: "Generado", valor: new Date() },
   ]);
   portada.getColumn("campo").font = { bold: true };
