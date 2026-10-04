@@ -102,7 +102,7 @@ h1{font-size:clamp(30px,5vw,52px);line-height:1.05;letter-spacing:-.03em;padding
 @media(prefers-color-scheme:dark){.barraC{background:#111318e6;border-color:#2b303b}}
 .barraC button,.rep{border:0;border-radius:99px;padding:7px 14px;font-weight:700;cursor:pointer;font-family:inherit;background:#d8dce6;color:#14161d;font-size:13px}
 .barraC .sw{width:26px;height:26px;padding:0;border:3px solid #fff;box-shadow:0 0 0 1px #0004}.barraC .sw.on{box-shadow:0 0 0 3px #14161d}
-.barraC .sp{flex:1}.barraC span.t{font-size:12px;font-weight:700;color:#586071}
+.segV{display:inline-flex;background:#d8dce6;border-radius:99px;padding:3px}.segV button{background:none!important;padding:6px 14px}.segV button.on{background:#14161d!important;color:#fff}.barraC .sp{flex:1}.barraC span.t{font-size:12px;font-weight:700;color:#586071}
 .galeria{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:48px 28px;margin-top:34px;justify-items:center}
 .item{display:grid;gap:18px;justify-items:center;max-width:340px}
 .item figcaption{display:grid;gap:6px;width:100%}.item figcaption h3{font-size:20px;letter-spacing:-.02em}.item figcaption p{color:#586071;font-size:14px}
@@ -121,19 +121,42 @@ h1{font-size:clamp(30px,5vw,52px);line-height:1.05;letter-spacing:-.03em;padding
 .m-balanceo{transform-origin:top center;animation:bal 2.4s ease-in-out infinite}@keyframes bal{0%,100%{transform:rotate(-9deg)}50%{transform:rotate(9deg)}}
 .m-flota{animation:flo 2.6s ease-in-out infinite}@keyframes flo{0%,100%{transform:translateY(2px)}50%{transform:translateY(-4px)}}
 .m-destello{animation:des 2.8s ease-in-out infinite}@keyframes des{0%,85%,100%{filter:none;transform:scale(1)}92%{filter:brightness(2.2);transform:scale(1.15)}}
+
+/* vehículos (3D suave y glifo), con los colores de cada pantalla */
+.ve,.veGl{--v1:var(--acento);--caja:#ffc800;--casco:#fff;--vt:#1c2230;--sup:#fff}
+.ve svg{width:100%;height:auto;display:block;overflow:visible}
+.veGl{display:block}.veGl svg{width:100%;height:100%;display:block;overflow:visible}
+.veGl{--vt:currentColor;--v1:currentColor;--fondo:#fff;color:var(--tinta)}
+.cab .veGl{width:30px;height:30px;color:var(--azul-t);--fondo:var(--papel);font-size:0}
+.barra i.veGl{width:27px;height:27px;margin:0 auto;font-size:0}
+.barra .on i.veGl{background:var(--amarillo);border-radius:11px;width:46px;padding:2px 9px}
+.barra div:not(.on) i.veGl{color:var(--tinta2)}
+.fila .ic.veGl{width:34px;height:34px;--vt:#fff;--v1:#fff;--fondo:#5b2bd6;color:#fff}
+.veHero{position:absolute;right:12px;top:134px;width:80px;--v1:var(--amarillo);--caja:#fff;pointer-events:none}
+.carr .coche.veRoad{transform:none;font-size:0;width:78px;bottom:6px;--v1:var(--amarillo);--caja:#fff}
+.veMini{display:block;width:44px;margin:auto}
+.ve .bota{animation:botaV .5s ease-in-out infinite alternate}@keyframes botaV{to{transform:translateY(-1.8px)}}
+.ve .gira,.veGl .gira{transform-box:fill-box;transform-origin:center;animation:giraV .7s linear infinite}@keyframes giraV{to{transform:rotate(360deg)}}
+.ve .estela path{animation:estelaV .6s linear infinite}@keyframes estelaV{0%{opacity:.2;transform:translateX(6px)}50%{opacity:.7}100%{opacity:.1;transform:translateX(-8px)}}
 /* detalle de fuente (inicio) */
 .det{background:#fff;color:var(--tinta);border-radius:14px;padding:9px 12px;margin-top:8px;font-size:11.5px;animation:ent .4s both}.det b{font-size:12.5px}.det div{display:flex;justify-content:space-between;border-bottom:1px dashed var(--linea);padding:3px 0}
 .leg div,.ficha,.carr,.vel,.fab,.dlg .bt span,.teclas b{cursor:pointer}
 .fab{z-index:4}.fan{z-index:4}
 .fan{transition:opacity .35s}
 .ev{cursor:pointer}
-</style></head><body><div class="w">
+</style></head><body><svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<linearGradient id="gl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".5" stop-color="#fff" stop-opacity=".06"/><stop offset="1" stop-color="#000" stop-opacity=".34"/></linearGradient>
+<linearGradient id="gv" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eaf7ff"/><stop offset="1" stop-color="#6ea6dc"/></linearGradient>
+<radialGradient id="gr" cx=".38" cy=".34" r=".85"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#8d96a6"/></radialGradient>
+<radialGradient id="gs"><stop offset="0" stop-color="#000" stop-opacity=".42"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+<linearGradient id="gb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".3"/></linearGradient>
+</defs></svg><div class="w">
 <h1>Las pantallas de Control Driver, en movimiento</h1>
 <p class="lead">Diez pantallas de la app móvil con sus características principales y los gráficos animados. Se mueven al llegar a ellas; toca los círculos de colores, el «+», la carretera, el velocímetro y las filas para probar. Arriba cambias el estilo de color y el sonido. Todo con datos de ejemplo.</p>
-<div class="barraC"><span class="t">Estilo:</span><span id="sws"></span><span class="sp"></span><button id="bSon">🔊 Sonido: sí</button><button id="bTodo">↺ Repetir todas</button></div>
+<div class="barraC"><span class="t">Estilo:</span><span id="sws"></span><span class="t" style="margin-left:10px">Transporte:</span><span class="segV"><button data-v="auto" class="on">🚗 Auto</button><button data-v="moto">🛵 Moto</button></span><span class="sp"></span><button id="bSon">🔊 Sonido: sí</button><button id="bTodo">↺ Repetir todas</button></div>
 <div class="galeria">
 <figure class="item" id="p-inicio"><div class="ph"><div class="pantalla"><section class="vista" data-v="inicio">
-   <div class="cab a" style="--d:0"><span class="logo">🚕</span><b>Control Driver</b><span class="chip">⌂ Hoy</span></div>
+   <div class="cab a" style="--d:0"><span class="logo veGl"></span><b>Control Driver</b><span class="chip">⌂ Hoy</span></div>
    <div class="cuerpo">
     <div class="dias a" style="--d:.1"><i class="cur"></i><span>Lun<br>28</span><span>Mar<br>29</span><span>Mié<br>30</span><span>Jue<br>1</span><span>Vie<br>2</span><span id="dS">Sáb<br>3</span><span class="f">Dom<br>4</span></div>
     <div class="hero a" style="--d:.25">
@@ -143,7 +166,7 @@ h1{font-size:clamp(30px,5vw,52px);line-height:1.05;letter-spacing:-.03em;padding
        <div class="c"><span class="num" id="tot1" style="font-size:16px">S/ 0.00</span><span style="font-size:10px;opacity:.85;font-weight:700">Total del día</span></div></div>
       <div class="leg" style="flex:1"><div><i style="background:#fff"></i>Tienda<b class="num">S/ 51.50</b></div><div><i style="background:#ffc800"></i>Apoyo<b class="num">S/ 202.50</b></div><div><i style="background:#9fb9ff"></i>Taxi<b class="num">S/ 78.50</b></div></div>
      </div>
-     <div class="fichas">
+     <span class="veHero ve"></span><div class="fichas">
       <div class="ficha a" style="--d:1.2"><svg viewBox="0 0 60 26"><g fill="#1244cc"><rect class="barraM" x="0" y="14" width="8" height="12" rx="2"/><rect class="barraM" style="animation-delay:.1s" x="12" y="8" width="8" height="18" rx="2"/><rect class="barraM" style="animation-delay:.2s" x="24" y="11" width="8" height="15" rx="2"/><rect class="barraM" style="animation-delay:.3s" x="36" y="2" width="8" height="24" rx="2"/><rect class="barraM" style="animation-delay:.4s" x="48" y="7" width="8" height="19" rx="2"/></g></svg>Tienda<b>S/ 51.50</b></div>
       <div class="ficha a" style="--d:1.35"><svg viewBox="0 0 30 26"><circle cx="15" cy="13" r="10" fill="none" stroke="#d9e5f4" stroke-width="3.5"/><circle cx="15" cy="13" r="10" fill="none" stroke="#a87800" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="46 63" transform="rotate(-90 15 13)"/><line class="giraM" x1="15" y1="13" x2="15" y2="7" stroke="#0a2260" stroke-width="2" stroke-linecap="round"/></svg>Apoyo<b>S/ 202.50</b></div>
       <div class="ficha a" style="--d:1.5"><svg viewBox="0 0 60 26"><path class="rutaM" d="M2,22 C14,20 14,5 27,9 S45,23 58,4" fill="none" stroke="#5b2bd6" stroke-width="3" stroke-linecap="round"/><circle cx="58" cy="4" r="3" fill="#5b2bd6"/></svg>Taxi<b>S/ 78.50</b></div>
@@ -151,7 +174,7 @@ h1{font-size:clamp(30px,5vw,52px);line-height:1.05;letter-spacing:-.03em;padding
     </div>
     <div class="fila a" style="--d:1.9"><div class="ic" style="background:#dce6ff">🏪</div><div><b>Pedidos de mi tienda</b><small>3 pedidos · 2 rutas</small></div><em>S/ 51.50</em><span class="ok">✓</span></div>
    </div>
-   <div class="barra"><div class="on"><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div>
+   <div class="barra"><div class="on"><i>⌂</i>Inicio</div><div><i class="veGl nv"></i>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div>
   </section></div></div>
  <figcaption><span class="rot">Inicio</span><h3>La tarjeta del día, con vida</h3><p>Un anillo reparte lo de hoy entre tienda, apoyo y taxi. Toca un color o una ficha para ver el detalle de esa fuente.</p><ul><li>Total que cuenta hacia arriba</li><li>Racha de días y ¡Récord!</li><li>Fichas animadas por fuente</li></ul><button class="rep" data-k="inicio">↺ Repetir animación</button></figcaption></figure>
 <figure class="item" id="p-comanda"><div class="ph"><div class="pantalla"><section class="vista" data-v="comanda">
@@ -164,20 +187,20 @@ h1{font-size:clamp(30px,5vw,52px);line-height:1.05;letter-spacing:-.03em;padding
     <div class="campo a" style="--d:3.7"><div><small>Teléfono</small><b class="escribe" style="--w:120px;--d:3.8">+51 987 654 321</b></div><span class="ok" style="margin-left:auto">✓</span></div>
     <div class="campo pop" style="--d:4.6;background:#dff5e6;border-color:#9bd9b4"><div><small>Ruta según el horario de la hoja</small><b>17:00–18:00 · Ruta 3 creada</b></div><span class="ok" style="margin-left:auto">★</span></div>
    </div>
-   <div class="barra"><div><i>⌂</i>Inicio</div><div class="on"><i>🚗</i>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div>
+   <div class="barra"><div><i>⌂</i>Inicio</div><div class="on"><i class="veGl nv"></i>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div>
   </section></div></div>
  <figcaption><span class="rot">Cargar</span><h3>Una foto y listo</h3><p>La app lee la hoja de despacho: cliente, dirección, teléfono y el horario de la ruta, que se crea si es la primera vez.</p><ul><li>Funciona con comandas de Wong y Metro</li><li>Teléfono cortado: lo marca para completar</li><li>La foto queda como evidencia</li></ul><button class="rep" data-k="comanda">↺ Repetir animación</button></figcaption></figure>
 <figure class="item" id="p-taxi"><div class="ph"><div class="pantalla"><section class="vista" data-v="taxi">
-   <div class="cab a" style="--d:0"><span class="logo">🚕</span><b>Control Driver</b><span class="chip">⌂ Hoy</span></div>
+   <div class="cab a" style="--d:0"><span class="logo veGl"></span><b>Control Driver</b><span class="chip">⌂ Hoy</span></div>
    <div class="cuerpo">
     <div class="fila a" style="--d:.2"><div class="ic" style="background:#dce6ff">🏪</div><div><b>Pedidos de mi tienda</b><small>3 pedidos</small></div><em>S/ 51.50</em></div>
     <div class="mapa a" style="--d:2.2"><svg viewBox="0 0 280 170"><path class="traz" d="M30,140 C70,130 80,70 130,80 S200,120 250,34" fill="none" stroke="#5b2bd6" stroke-width="6" stroke-linecap="round"/><circle cx="30" cy="140" r="8" fill="#0b7a4d" stroke="#fff" stroke-width="3"/><circle class="pop" style="--d:5.2" cx="250" cy="34" r="9" fill="#b3261e" stroke="#fff" stroke-width="3"/></svg>
      <span class="pill pop" style="--d:2.6;position:absolute;left:10px;top:10px;background:#fff">📍 Inicio 19:05</span><span class="pill pop" style="--d:5;position:absolute;right:10px;bottom:10px;background:#fff">🏁 Fin 19:40</span></div>
-    <div class="fila pop" style="--d:5.5;background:#ece7ff"><div class="ic" style="background:#5b2bd6;color:#fff">🚕</div><div><b>Taxi libre</b><small><span class="num" id="km">0.0</span> km · carrera suelta</small></div><em>S/ 22.00</em><span class="ok">✓</span></div>
+    <div class="fila pop" style="--d:5.5;background:#ece7ff"><div class="ic veGl" style="background:#5b2bd6;color:#fff;padding:6px"></div><div><b>Taxi libre</b><small><span class="num" id="km">0.0</span> km · carrera suelta</small></div><em>S/ 22.00</em><span class="ok">✓</span></div>
    </div>
    <div class="fan" id="fan"><span class="a" style="--d:.9"><i style="background:#5b2bd6">🚕</i>Taxi libre</span><span class="a" style="--d:.75"><i style="background:#c99700">⏱</i>Apoyo a otra tienda</span><span class="a" style="--d:.6"><i style="background:#1f5cff">🏪</i>Pedidos de mi tienda</span></div>
    <div class="fab" id="fab">+</div>
-   <div class="barra"><div class="on"><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div>
+   <div class="barra"><div class="on"><i>⌂</i>Inicio</div><div><i class="veGl nv"></i>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div>
   </section></div></div>
  <figcaption><span class="rot">Agregar</span><h3>El «+» y el taxi libre</h3><p>Un toque en «+» abre pedidos, apoyo o taxi. En el taxi marcas inicio y fin con el GPS y se calculan los km.</p><ul><li>Abanico animado</li><li>Ruta dibujada en el mapa</li><li>Eliges el día de cada registro</li></ul><button class="rep" data-k="taxi">↺ Repetir animación</button></figcaption></figure>
 <figure class="item" id="p-apoyo"><div class="ph"><div class="pantalla"><section class="vista" data-v="apoyo">
@@ -189,17 +212,17 @@ h1{font-size:clamp(30px,5vw,52px);line-height:1.05;letter-spacing:-.03em;padding
     <div class="fila a" style="--d:1.2"><div><b>Cuenta</b><small>11.25 h × S/ 18.00 por hora</small></div><em>S/ 202.50</em></div>
     <div class="fila a" style="--d:1.6"><div class="ic" style="background:#fff1c7">✏️</div><div><b>Corregir o quitar</b><small>Siempre con una pregunta de seguridad</small></div></div>
    </div>
-   <div class="barra"><div class="on"><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div>
+   <div class="barra"><div class="on"><i>⌂</i>Inicio</div><div><i class="veGl nv"></i>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div>
   </section></div></div>
  <figcaption><span class="rot">Apoyo</span><h3>Apoyo por hora</h3><p>Cubriste otra tienda: entrada, salida y tarifa. La cuenta sale sola y la cinta de horas muestra tu jornada.</p><ul><li>Cursor luminoso de horas</li><li>Se corrige o se quita con confirmación</li><li>Apoyo por tramos también</li></ul><button class="rep" data-k="apoyo">↺ Repetir animación</button></figcaption></figure>
 <figure class="item" id="p-pagos"><div class="ph"><div class="pantalla"><section class="vista" data-v="pagos">
-   <div class="cab a" style="--d:0"><span class="logo">🚕</span><b>Control Driver</b><span class="chip">👛 Pagos</span></div>
+   <div class="cab a" style="--d:0"><span class="logo veGl"></span><b>Control Driver</b><span class="chip">👛 Pagos</span></div>
    <div class="cuerpo">
     <div class="a" style="--d:.1;background:#fff;border-radius:20px;padding:12px;display:flex;flex-direction:column;gap:8px">
      <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:var(--tinta2)"><span>SEM. 28–4</span><span class="pill" style="background:#dce6ff;color:var(--azul-t)">EN CURSO</span></div>
      <div class="num" id="pt" style="font-size:34px;color:var(--azul)">S/ 0.00</div>
      <div class="carr"><span class="fl" style="left:21%">⚑<br>25%</span><span class="fl" style="left:46%">⚑<br>50%</span><span class="fl" id="f75" style="left:71%">⚑<br>75%</span><span class="fl" style="right:3px">⚑<br>100%</span>
-      <div class="via"><i class="raya"></i></div><div class="recorr"></div><div class="coche">🚕</div><span class="mon" style="left:18%;animation-delay:0s">S/</span><span class="mon" style="left:40%;animation-delay:.7s">S/</span></div>
+      <div class="via"><i class="raya"></i></div><div class="recorr"></div><div class="coche veRoad"></div><span class="mon" style="left:18%;animation-delay:0s">S/</span><span class="mon" style="left:40%;animation-delay:.7s">S/</span></div>
      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--tinta2);font-weight:700"><span>63 % de la meta</span><span>meta S/ 1,500</span></div>
     </div>
     <div class="a" style="--d:.5;background:#d9e5f4;border-radius:18px;padding:11px 12px">
@@ -209,11 +232,11 @@ h1{font-size:clamp(30px,5vw,52px);line-height:1.05;letter-spacing:-.03em;padding
     </div>
     <div class="fila a" style="--d:1.6"><span style="font-size:18px">🕒</span><div><b>Se paga el viernes 09/10</b><small>Rindes S/ 22.79 por hora trabajada</small></div></div>
    </div>
-   <div class="barra"><div><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div class="on"><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div>
+   <div class="barra"><div><i>⌂</i>Inicio</div><div><i class="veGl nv"></i>Cargar</div><div class="on"><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div>
   </section></div></div>
  <figcaption><span class="rot">Pagos</span><h3>La carretera de tu meta</h3><p>El vehículo avanza hasta donde vas de la meta semanal, con el desglose por fuente y lo que rindes por hora.</p><ul><li>Banderines al 25 · 50 · 75 · 100 %</li><li>Desglose tienda / apoyo / taxi</li><li>Se paga el viernes: siempre claro</li></ul><button class="rep" data-k="pagos">↺ Repetir animación</button></figcaption></figure>
 <figure class="item" id="p-stats"><div class="ph"><div class="pantalla"><section class="vista" data-v="stats">
-   <div class="cab a" style="--d:0"><span class="logo">🚕</span><b>Control Driver</b><span class="chip">📊 Estadísticas</span></div>
+   <div class="cab a" style="--d:0"><span class="logo veGl"></span><b>Control Driver</b><span class="chip">📊 Estadísticas</span></div>
    <div class="cuerpo">
     <div class="vel a" style="--d:.1"><div style="font-weight:900;font-size:14px">Tu meta de la semana</div>
      <svg viewBox="0 0 300 170"><path d="M50,150 A100,100 0 0 1 250,150" fill="none" stroke="#d9e5f4" stroke-width="20"/>
@@ -224,11 +247,11 @@ h1{font-size:clamp(30px,5vw,52px);line-height:1.05;letter-spacing:-.03em;padding
      <div class="barrasG"><div style="--i:0;height:30%"></div><div style="--i:1;height:20%"></div><div style="--i:2;height:48%"></div><div style="--i:3;height:100%;background:#ffc800"></div><div style="--i:4;height:62%"></div><div style="--i:5;height:75%"></div><div style="--i:6;height:12%;background:#c4d5ec"></div></div>
      <div style="display:flex;gap:7px;font-size:9.5px;font-weight:800;color:var(--tinta2);padding:3px 4px 0"><span style="flex:1;text-align:center">L</span><span style="flex:1;text-align:center">M</span><span style="flex:1;text-align:center">M</span><span style="flex:1;text-align:center">J</span><span style="flex:1;text-align:center">V</span><span style="flex:1;text-align:center">S</span><span style="flex:1;text-align:center">D</span></div></div>
    </div>
-   <div class="barra"><div><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div><i>👛</i>Pagos</div><div class="on"><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div>
+   <div class="barra"><div><i>⌂</i>Inicio</div><div><i class="veGl nv"></i>Cargar</div><div><i>👛</i>Pagos</div><div class="on"><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div>
   </section></div></div>
  <figcaption><span class="rot">Estadísticas</span><h3>Velocímetro de meta</h3><p>La aguja rebota hasta tu avance de la semana o el mes, con los colores de cada fuente, y debajo los pedidos por día.</p><ul><li>Semana, comparar y mes</li><li>Mejor día resaltado</li><li>Exporta PDF y Excel con el detalle</li></ul><button class="rep" data-k="stats">↺ Repetir animación</button></figcaption></figure>
 <figure class="item" id="p-tramos"><div class="ph"><div class="pantalla"><section class="vista" data-v="tramos">
-   <div class="cab a" style="--d:0"><span class="logo">🚕</span><b>Control Driver</b><span class="chip">👛 Pagos</span></div>
+   <div class="cab a" style="--d:0"><span class="logo veGl"></span><b>Control Driver</b><span class="chip">👛 Pagos</span></div>
    <div class="cuerpo">
     <div style="font-weight:900;font-size:15px" class="a">Por tramo</div>
     <div class="tr a" style="--d:.2"><div class="t"><span>Tramo 1 <small style="color:var(--tinta2)">0–2 km</small></span><span class="num">S/ 380.00</span></div><div class="bb"><i data-w="90" style="--d:.5s"></i></div><div style="font-size:10.5px;color:var(--tinta2);margin-top:4px">38 pedidos</div></div>
@@ -239,7 +262,7 @@ h1{font-size:clamp(30px,5vw,52px);line-height:1.05;letter-spacing:-.03em;padding
    <div class="ev"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:15px">Evidencia del pedido</b><span class="pill" style="background:#dff5e6;color:var(--bien)">📷 Comanda ✓</span></div>
     <div class="foto" style="margin-top:8px"><b style="font-size:11px">Hoja de despacho Nº 12287402</b><span class="sello">FACTURADO</span><div class="ln" style="width:60%"></div><div class="ln" style="width:80%"></div><div class="ln" style="width:45%"></div><div class="ln" style="width:70%"></div></div>
     <div style="font-size:11px;color:var(--tinta2);margin-top:8px;font-weight:700">Cambia el tramo si hace falta · la foto respalda cada pago</div></div>
-   <div class="barra"><div><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div class="on"><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div>
+   <div class="barra"><div><i>⌂</i>Inicio</div><div><i class="veGl nv"></i>Cargar</div><div class="on"><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div>
   </section></div></div>
  <figcaption><span class="rot">Por tramo</span><h3>Comprueba cada pago</h3><p>Los pedidos agrupados por tramo de distancia. Tocas uno y ves su foto de comanda como evidencia; puedes cambiarle el tramo.</p><ul><li>Barras por tramo</li><li>Evidencia a un toque</li><li>Corrección con pregunta de seguridad</li></ul><button class="rep" data-k="tramos">↺ Repetir animación</button></figcaption></figure>
 <figure class="item" id="p-seguro"><div class="ph"><div class="pantalla"><section class="vista" data-v="seguro">
@@ -262,12 +285,13 @@ h1{font-size:clamp(30px,5vw,52px);line-height:1.05;letter-spacing:-.03em;padding
     <div class="etiquetaTema" id="nomT" style="position:static;color:var(--tinta);text-shadow:none;margin-top:12px;font-size:20px">Mapa</div>
     <div style="display:flex;gap:10px;justify-content:center;margin-top:6px" id="pts"></div><div style="text-align:center;font-size:11px;color:var(--tinta2);font-weight:700;margin-top:6px">Toca un color</div>
    </div>
-   <div class="barra"><div class="on"><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div>
+   <div class="barra"><div class="on"><i>⌂</i>Inicio</div><div><i class="veGl nv"></i>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div>
   </section></div></div>
  <figcaption><span class="rot">Estilos</span><h3>Hazla tuya</h3><p>Seis caras para elegir. Cambia el color de toda la app; prueba tocando los círculos.</p><ul><li>Mapa · Asfalto · Turbo</li><li>Menta · Arcilla · Avispa</li><li>Contraste cuidado en todas</li></ul><button class="rep" data-k="temas">↺ Repetir animación</button></figcaption></figure>
 <figure class="item" id="p-ajustes"><div class="ph"><div class="pantalla"><section class="vista" data-v="ajustes">
-   <div class="cab a" style="--d:0"><span class="logo">🚕</span><b>Control Driver</b><span class="chip">⋯ Ajustes</span></div>
+   <div class="cab a" style="--d:0"><span class="logo veGl"></span><b>Control Driver</b><span class="chip">⋯ Ajustes</span></div>
    <div class="cuerpo" style="gap:8px">
+    <div class="acc a" style="--d:.05" id="selVeh"><span class="ico fondo3" style="width:52px;border-radius:14px"><span class="veMini ve"></span></span><div><b>Tipo de transporte</b><small id="vehTxt">Auto · toca para cambiar</small></div><span class="chev">⇄</span></div>
     <div class="acc a" style="--d:.1"><span class="ico fondo1"><i class="m-colores">🎨</i></span><div><b>Apariencia</b><small>Mapa · 6 estilos</small></div><span class="chev">⌄</span></div>
     <div class="acc a" style="--d:.2"><span class="ico fondo2"><i class="m-pulso">🎯</i></span><div><b>Mis metas y sonidos</b><small>Día S/ 250 · semana S/ 1,500</small></div><span class="chev">⌄</span></div>
     <div class="acc a" style="--d:.3"><span class="ico fondo3"><i class="m-bota">📍</i></span><div><b>Tienda, ubicación y tarifa</b><small>Wong · Auto · desde S/ 10.00</small></div><span class="chev">⌄</span></div>
@@ -276,7 +300,7 @@ h1{font-size:clamp(30px,5vw,52px);line-height:1.05;letter-spacing:-.03em;padding
     <div class="acc a" style="--d:.6"><span class="ico fondo6"><i class="m-flota">☁️</i></span><div><b>Respaldo de tus datos</b><small>Crear una copia o restaurarla</small></div><span class="chev">⌄</span></div>
     <div class="acc a" style="--d:.7"><span class="ico fondo7"><i class="m-destello">📷</i></span><div><b>Capturas y evidencias</b><small>12 fotos · 4.1 MB</small></div><span class="chev">⌄</span></div>
    </div>
-   <div class="barra"><div><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div class="on"><i>⋯</i>Más</div></div>
+   <div class="barra"><div><i>⌂</i>Inicio</div><div><i class="veGl nv"></i>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div class="on"><i>⋯</i>Más</div></div>
 </section></div></div>
  <figcaption><span class="rot">Ajustes</span><h3>Cada opción, con su imagen</h3><p>Cada sección tiene un icono animado que se mueve como lo que representa, para encontrarla de un vistazo.</p><ul><li>La paleta cambia de color</li><li>El pin rebota, el candado se balancea</li><li>Metas y sonidos a tu medida</li></ul><button class="rep" data-k="ajustes">↺ Repetir animación</button></figcaption></figure></div></div>
 <script>
@@ -334,5 +358,39 @@ $$('.vista').forEach(v=>io.observe(v));
 $$('.rep').forEach(b=>b.onclick=()=>reiniciar($(`.vista[data-v="${b.dataset.k}"]`)));
 $('#bTodo').onclick=()=>{$$('.vista').forEach(v=>reiniciar(v))};
 aplicarTema(0);
+
+/* ---------- vehículos ---------- */
+const BODY='M10 54C10 47 13 44 20 43L38 40C44 27 55 19 71 19H98C112 19 122 28 128 40L144 44C151 46 153 50 153 57V63H10Z';
+const GLASS='M48 40C52 29 60 24 71 24H80V40ZM86 24H98C108 24 115 30 120 40H86Z';
+const llanta=(x,y,r,gloss)=>`<g><circle cx="${x}" cy="${y}" r="${r+2.6}" fill="#141824"/><circle cx="${x}" cy="${y}" r="${r}" fill="#262c3a"/><g class="gira"><circle cx="${x}" cy="${y}" r="${r*.62}" fill="${gloss?'url(#gr)':'#dfe3ea'}"/><path d="M${x} ${y-r*.55}V${y+r*.55}M${x-r*.55} ${y}H${x+r*.55}M${x-r*.39} ${y-r*.39}L${x+r*.39} ${y+r*.39}M${x+r*.39} ${y-r*.39}L${x-r*.39} ${y+r*.39}" stroke="#8d96a6" stroke-width="1.4" stroke-linecap="round"/></g><circle cx="${x}" cy="${y}" r="2.4" fill="#5a6372"/></g>`;
+const sombra=(rx)=>`<ellipse cx="82" cy="74" rx="${rx}" ry="5.5" fill="url(#gs)"/>`;
+const ESTELA2='<g class="estela" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none" opacity=".5"><path d="M0 34h14"/><path d="M-2 44h18"/><path d="M2 54h10"/></g>';
+/* G (plano) e I (3D suave) comparten forma: cambia el acabado */
+function carro(g){return `<svg viewBox="0 0 160 80" role="img" aria-label="Auto">${sombra(72)}${ESTELA2.replace(/#fff/g,'var(--vt)')}<g class="bota"><path d="${BODY}" fill="var(--v1)"/>${g?`<path d="${BODY}" fill="url(#gl)"/><path d="M52 31C60 22 72 20 88 20" stroke="#fff" stroke-opacity=".55" stroke-width="2.2" stroke-linecap="round" fill="none"/>`:`<path d="M10 56H153V63H10Z" fill="#000" opacity=".14"/>`}<path d="${GLASS}" fill="${g?'url(#gv)':'var(--cristal,#cfe6fb)'}"/>${g?'':`<path d="M92 24L84 40H96L104 24Z" fill="#fff" opacity=".28"/>`}<path d="M83 24V45" stroke="#000" stroke-opacity=".2" stroke-width="1.6"/><rect x="88" y="42" width="9" height="2.6" rx="1.3" fill="#000" opacity=".25"/><path d="M146 46L153 48V53H147Z" fill="#fff6c8"/>${g?'<ellipse cx="152" cy="50" rx="7" ry="4" fill="#fff6c8" opacity=".45"/>':''}<rect x="9" y="47" width="5.5" height="7" rx="2" fill="#ff4d5a"/></g>${llanta(40,63,13,g)}${llanta(118,63,13,g)}</svg>`}
+function moto(g){const f=g?'<path d="M24 56C24 44 32 40 44 40H82L92 54H28Z" fill="url(#gl)"/><path d="M94 56L104 28C105 25 108 24 111 24H119L122 28L116 56Z" fill="url(#gl)"/>':'';
+ return `<svg viewBox="0 0 160 80" role="img" aria-label="Moto">${sombra(64)}${ESTELA2.replace(/#fff/g,'var(--vt)')}<g class="bota"><rect x="3" y="10" width="48" height="31" rx="8" fill="var(--caja)"/>${g?'<rect x="3" y="10" width="48" height="31" rx="8" fill="url(#gb)"/>':''}<path d="M3 21H51" stroke="#000" stroke-opacity=".16" stroke-width="3"/><circle cx="27" cy="31" r="5" fill="#fff" opacity=".85"/><path d="M24.4 31.2l1.8 1.8 3.4-3.6" stroke="var(--v1)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+ <path d="M66 40C72 43 82 47 93 49L97 55" stroke="#2b3550" stroke-width="10" stroke-linecap="round" fill="none"/>
+ <path d="M24 56C24 44 32 40 44 40H82L92 54H28Z" fill="var(--v1)"/><path d="M40 40H80L85 46H38Z" fill="#1c2230"/>${f}
+ <path d="M64 38C62 28 66 22 74 23L86 29L108 24" stroke="${g?'#2b3550':'#2b3550'}" stroke-width="10.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+ <path d="M94 56L104 28C105 25 108 24 111 24H119L122 28L116 56Z" fill="var(--v1)"/><rect x="85" y="52" width="14" height="5" rx="2.5" fill="#1c2230"/>
+ <path d="M118 30L128 58" stroke="#1c2230" stroke-width="4.4" stroke-linecap="round"/><path d="M108 22H127" stroke="#1c2230" stroke-width="4.4" stroke-linecap="round"/><circle cx="124" cy="35" r="4.6" fill="#fff6c8"/>${g?'<ellipse cx="129" cy="35" rx="7" ry="4" fill="#fff6c8" opacity=".4"/>':''}
+ <circle cx="76" cy="13" r="9.5" fill="var(--casco)"/><path d="M76 6A9.5 9.5 0 0 1 85.5 13H76Z" fill="#1c2230"/>${g?'<path d="M69 9Q72 6 76 6" stroke="#fff" stroke-opacity=".7" stroke-width="1.8" fill="none" stroke-linecap="round"/>':''}</g>${llanta(36,62,12,g)}${llanta(126,62,12,g)}</svg>`}
+
+/* H · glifo de interfaz duotono (rejilla de 24, trazo uniforme) */
+const carH=()=>`<svg viewBox="0 0 24 24" class="glifo" fill="none" stroke="var(--vt)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Auto"><g class="bota"><path d="M5 17H3a1 1 0 0 1-1-1v-4c0-.8.4-1.5 1-2l1.4-2.9C4.9 6.4 5.4 6 6 6h6c.7 0 1.3.3 1.8.7L16 10s2.7.6 4.5 1.1c.8.2 1.5 1 1.5 1.9v3a1 1 0 0 1-1 1h-2" fill="var(--v1)" fill-opacity=".25" stroke="none"/><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><path d="M9 17h6"/><path d="M6 10.5h7.2M13.8 7.2v3.3" stroke-opacity=".6"/></g><g class="gira"><circle cx="7" cy="17" r="2" fill="var(--fondo)"/></g><g class="gira"><circle cx="17" cy="17" r="2" fill="var(--fondo)"/></g></svg>`;
+const motoH=()=>`<svg viewBox="0 0 24 24" class="glifo" fill="none" stroke="var(--vt)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Moto"><g class="bota"><rect x="1.6" y="4.6" width="8" height="6.4" rx="1.8" fill="var(--v1)" fill-opacity=".25"/><path d="M7 13.4h5.6l2.2 3.6M9 17h5.4M14.4 17l1.5-5.4h2.3M15.9 11.6L14.6 8.6h-2.2M5.2 11v2.4"/><circle cx="12" cy="6.6" r="1.7" fill="var(--v1)" fill-opacity=".25"/></g><g class="gira"><circle cx="5.2" cy="17" r="2.9" fill="var(--fondo)"/></g><g class="gira"><circle cx="18.8" cy="17" r="2.9" fill="var(--fondo)"/></g></svg>`;
+
+
+let VEH='auto';
+function pintarVeh(){
+ $$('.veGl').forEach(e=>e.innerHTML=VEH==='moto'?motoH():carH());
+ $$('.veHero,.veRoad,.veMini').forEach(e=>e.innerHTML=VEH==='moto'?moto(true):carro(true));
+ const t=$('#vehTxt');if(t)t.textContent=(VEH==='moto'?'Moto':'Auto')+' · toca para cambiar';
+ $$('.segV button').forEach(b=>b.classList.toggle('on',b.dataset.v===VEH));
+}
+function fijarVeh(v){VEH=v;pintarVeh();sfx(v==='moto'?'motor':'clic')}
+$$('.segV button').forEach(b=>b.onclick=()=>fijarVeh(b.dataset.v));
+const selV=$('#selVeh');if(selV)selV.onclick=()=>fijarVeh(VEH==='auto'?'moto':'auto');
+pintarVeh();
 </script>
 </body></html>
