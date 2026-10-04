@@ -65,6 +65,14 @@ describe("marcar y quitar descansos", () => {
     expect(await descansosPorRango(F(14), F(20))).toEqual([F(15)]);
   });
 
+  it("una jornada que quedó vacía no impide marcar el descanso", async () => {
+    // Se cargó un día y luego se borró todo lo que tenía: queda la jornada sin pedidos.
+    await guardarJornada({ ...jornada(F(16)), rutas: [], ordenes: [] }, "reemplazar");
+
+    expect(await marcarDescanso([F(16)])).toEqual([F(16)]);
+    expect(await descansosPorRango(F(14), F(20))).toEqual([F(16)]);
+  });
+
   it("se puede quitar", async () => {
     await marcarDescanso([F(15), F(17)]);
     await quitarDescanso([F(15)]);

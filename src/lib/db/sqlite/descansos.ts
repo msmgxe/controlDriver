@@ -18,7 +18,7 @@ const ahora = () => new Date().toISOString();
 /**
  * Marca esos días como de descanso.
  *
- * Un día que ya tiene jornada **no se marca**: tiene pedidos, así que se
+ * Un día con pedidos, rutas, apoyo o taxi **no se marca**: se
  * trabajó, y una marca de descanso encima sería una contradicción que luego
  * nadie sabría resolver. Devuelve las fechas que sí se marcaron, para poder
  * decir «marqué 2» y no «marqué 3» cuando una no procedía.
@@ -30,11 +30,20 @@ export async function marcarDescanso(fechas: readonly FechaISO[]): Promise<Fecha
      no tienen por qué deshacerse. */
   const marcadas: FechaISO[] = [];
   for (const fecha of new Set(fechas)) {
-    const cargada = await consultar<{ id: string }>(
-      `select id from jornadas where fecha = ? limit 1`,
+    const cargada = await consultar<{ id: string; contenido: number }>(
+      `select j.id as id,
+              (select count(*) from ordenes o where o.jornada_id = j.id)
+            + (select count(*) from rutas r where r.jornada_id = j.id)
+            + (select count(*) from bloques_extra b where b.jornada_id = j.id) as contenido
+         from jornadas j where j.fecha = ? limit 1`,
       [fecha],
     );
-    if (cargada.length > 0) continue;
+    if (cargada.length > 0) {
+      // Con pedidos, rutas, apoyo o taxi se trabajó: no se marca. Una jornada que quedó
+      // vacía (se borró todo lo que tenía) no cuenta como trabajo: se limpia y se marca.
+      if (cargada[0].contenido > 0) continue;
+      await ejecutar(`delete from jornadas where id = ?`, [cargada[0].id]);
+    }
 
     await ejecutar(
       `insert into dias_descanso (fecha, creado_en) values (?, ?)

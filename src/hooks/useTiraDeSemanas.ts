@@ -25,6 +25,7 @@ export function useTiraDeSemanas(semanaInicio: FechaISO, hoy: FechaISO) {
 
       const mapa = new Map<FechaISO, DatosDelDia>();
       for (const f of filas) {
+        if (f.pedidos === 0 && f.rutas === 0 && f.montoApoyoCentimos === 0 && f.montoTaxiCentimos === 0) continue; // una jornada vacía no es un día trabajado
         mapa.set(f.fecha, { cargado: true, descanso: false, centimos: f.montoCentimos + f.montoApoyoCentimos + f.montoTaxiCentimos, pedidos: f.pedidos });
       }
       for (const d of descansos) if (!mapa.has(d)) mapa.set(d, { cargado: false, descanso: true });

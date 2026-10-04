@@ -37,6 +37,15 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 1.11 — 05/10/2026
+- **Marcar un día de descanso, como se esperaba: manteniéndolo presionado.**
+  Mantén presionado cualquier día de la barra de fechas de Inicio y se abre su
+  hoja: «Marcar como día de descanso» (o «Quitar el día de descanso») e «Ir a este
+  día». Con una vibración corta al abrirse. Un día con pedidos, rutas, apoyo o
+  taxi no se puede marcar, y la hoja lo explica. Hay una pista bajo la barra.
+- **Un día que quedó vacío** (se borró todo lo que tenía) ya no se ve como «con
+  carga» ni impide el descanso: vuelve a mostrar «No trabajé este día».
+
 ### 1.10 — 04/10/2026
 - **Auto y moto con acabado profesional.** El vehículo ahora tiene dos acabados:
   **3D suave** (brillos, cristal, llantas con radios y sombra de contacto) en la

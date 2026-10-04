@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { BloquesDelDia } from "@/components/BloquesDelDia";
 import { CargarCapturas } from "@/components/CargarCapturas";
 import { FilaDeLista } from "@/components/ListaDelDia";
+import { HojaDeDia } from "@/components/HojaDeDia";
 import { HojaSubirMas } from "@/components/HojaSubirMas";
 import { DetalleDelDia } from "@/components/DetalleDelDia";
 import { HojaDeBloqueExtra } from "@/components/HojaDeBloqueExtra";
@@ -22,6 +23,7 @@ import { TarjetaViva } from "@/components/TarjetaViva";
 import { useDatos } from "@/hooks/useDatos";
 import { useTiraDeSemanas } from "@/hooks/useTiraDeSemanas";
 import { useVehiculo } from "@/hooks/useVehiculo";
+import { avisarDeCambios } from "@/lib/cambios";
 import { publicarDiaElegido } from "@/lib/diaElegido";
 import { sonar } from "@/lib/sonidos";
 import { marcarRecorridoVisto, recorridoYaVisto } from "@/lib/recorrido";
@@ -89,6 +91,8 @@ function Contenido() {
   }, [dia]);
 
   const deslizar = useRef<{ x: number; y: number } | null>(null);
+  /** El día cuyas opciones se abrieron manteniéndolo presionado. */
+  const [menuDia, setMenuDia] = useState<FechaISO | null>(null);
   const semana = semanaDe(dia);
   const esSemanaActual = semana.inicio === semanaDe(hoy).inicio;
 
@@ -189,6 +193,7 @@ function Contenido() {
             modo="inicio"
             datos={tira}
             alElegirDia={setDia}
+            alMantener={(f) => setMenuDia(f)}
             alMoverSemana={(delta) =>
               setDia((d) => {
                 // Mismo día de la semana en la semana nueva, sin pasar de hoy.
@@ -199,6 +204,24 @@ function Contenido() {
           />
         </div>
       </div>
+
+      <p className="-mt-2 px-1 text-[11.5px] text-tinta-3">
+        Mantén presionado un día para marcarlo como descanso.
+      </p>
+
+      {menuDia && (
+        <HojaDeDia
+          fecha={menuDia}
+          cargado={tira.get(menuDia)?.cargado ?? false}
+          descanso={tira.get(menuDia)?.descanso ?? false}
+          alElegir={() => setDia(menuDia)}
+          alCambiar={() => {
+            recargar();
+            avisarDeCambios();
+          }}
+          alCerrar={() => setMenuDia(null)}
+        />
+      )}
 
       {detalle ? (
         <div
@@ -355,7 +378,7 @@ function DelDia({
 
   return (
     <>
-      {jornada ? (
+      {jornada && (hayPedidos || bloques.length > 0) ? (
         <TarjetaViva
           encabezado={dia === hoy ? "Hoy cargaste" : `El ${nombreDelDia(dia)} cargaste`}
           pedidos={jornada.ordenes.length}

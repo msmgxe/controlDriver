@@ -53,6 +53,7 @@ export function TiraDeSemanas({
   modo,
   datos,
   alElegirDia,
+  alMantener,
   alMoverSemana,
   interactivo = true,
 }: {
@@ -65,6 +66,8 @@ export function TiraDeSemanas({
   /** Lo que se sabe de cada día de las tres semanas visibles. */
   datos: ReadonlyMap<FechaISO, DatosDelDia>;
   alElegirDia: (fecha: FechaISO) => void;
+  /** Mantener presionado un día: abre sus opciones (marcar descanso…). */
+  alMantener?: (fecha: FechaISO) => void;
   alMoverSemana: (delta: -1 | 1) => void;
   /**
    * Falso cuando la tira solo sirve para **elegir la semana** —Estadísticas e
@@ -195,6 +198,7 @@ export function TiraDeSemanas({
                 elegido={fecha === dia}
                 datos={datos.get(fecha)}
                 interactivo={interactivo}
+                alMantener={alMantener ? () => alMantener(fecha) : undefined}
                 alElegir={() => {
                   // Un arrastre no debe, además, elegir el día que haya quedado bajo el dedo.
                   if (!arrastrando) alElegirDia(fecha);
@@ -215,6 +219,7 @@ function Ficha({
   elegido,
   datos,
   alElegir,
+  alMantener,
   interactivo,
 }: {
   fecha: FechaISO;
@@ -223,8 +228,12 @@ function Ficha({
   elegido: boolean;
   datos: DatosDelDia | undefined;
   alElegir: () => void;
+  alMantener?: () => void;
   interactivo: boolean;
 }) {
+  const largo = useRef(false);
+  const inicio = useRef<{ x: number; y: number } | null>(null);
+  const reloj = useRef<ReturnType<typeof setTimeout> | null>(null);
   const futuro = fecha > hoy;
   const cargado = datos?.cargado ?? false;
   const descanso = datos?.descanso ?? false;
@@ -293,7 +302,39 @@ function Ficha({
   }
 
   return (
-    <button type="button" onClick={alElegir} aria-pressed={elegido} aria-label={etiqueta} className={clases}>
+    <button
+      type="button"
+      onClick={() => {
+        // Si fue una pulsación larga, ya se abrió el menú: el toque que la suelta no elige el día.
+        if (largo.current) {
+          largo.current = false;
+          return;
+        }
+        alElegir();
+      }}
+      onPointerDown={(e) => {
+        inicio.current = { x: e.clientX, y: e.clientY };
+        largo.current = false;
+        if (!alMantener || futuro) return;
+        reloj.current = setTimeout(() => {
+          largo.current = true;
+          if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate(18);
+          alMantener();
+        }, 550);
+      }}
+      onPointerMove={(e) => {
+        // Si el dedo se mueve, es un arrastre de semanas, no una pulsación larga.
+        const a = inicio.current;
+        if (a && reloj.current && Math.hypot(e.clientX - a.x, e.clientY - a.y) > 8) clearTimeout(reloj.current);
+      }}
+      onPointerUp={() => reloj.current && clearTimeout(reloj.current)}
+      onPointerLeave={() => reloj.current && clearTimeout(reloj.current)}
+      onPointerCancel={() => reloj.current && clearTimeout(reloj.current)}
+      onContextMenu={(e) => alMantener && e.preventDefault()}
+      aria-pressed={elegido}
+      aria-label={etiqueta}
+      className={clases}
+    >
       {contenido}
     </button>
   );
