@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 
 import { Acordeon } from "@/components/Acordeon";
 import { DialogoConfirmar } from "@/components/DialogoConfirmar";
+import { IconoDeSeccion } from "@/components/IconoDeSeccion";
 import { SeccionApariencia } from "@/components/SeccionApariencia";
 import { SeccionComandas } from "@/components/SeccionComandas";
+import { SeccionMetasYSonido } from "@/components/SeccionMetasYSonido";
 import { SeccionModalidad } from "@/components/SeccionModalidad";
 import { SeccionLicencia } from "@/components/SeccionLicencia";
 import { SeccionRespaldo } from "@/components/SeccionRespaldo";
@@ -94,12 +96,15 @@ export default function PaginaAjustes() {
 
       <SeccionApariencia />
 
+      <SeccionMetasYSonido />
+
       <SeccionModalidad />
 
       <ComandasYClientes />
 
       <Acordeon
         titulo="Bloqueo del dispositivo"
+      icono="candado"
         resumen={configurado ? `PIN activo${conHuella ? " · con huella" : ""}` : "Sin PIN"}
         aviso={!configurado}
       >
@@ -232,6 +237,7 @@ function ComandasYClientes() {
   return (
     <Acordeon
       titulo="Comandas y clientes"
+      icono="comanda"
       resumen={
         !a
           ? "…"
@@ -255,6 +261,7 @@ function SeccionCapturas() {
   return (
     <Acordeon
       titulo="Capturas y evidencias"
+      icono="camara"
       resumen={
         !uso
           ? "…"
@@ -350,7 +357,8 @@ function SeccionEjemplo() {
   }
 
   return (
-    <Acordeon titulo="Datos de ejemplo" resumen="Para enseñar la aplicación">
+    <Acordeon titulo="Datos de ejemplo"
+      icono="probeta" resumen="Para enseñar la aplicación">
       <p className="text-sm text-tinta-2">
         Llena tres semanas con jornadas inventadas para poder enseñar la aplicación. Incluye un
         día flojo donde se ve pagar la permanencia en vez de los pedidos.
@@ -475,7 +483,8 @@ function SeccionDiagnostico() {
   }
 
   return (
-    <Acordeon titulo="Si algo no se leyó bien" resumen="Ver el texto que sacó el lector">
+    <Acordeon titulo="Si algo no se leyó bien"
+      icono="lupa" resumen="Ver el texto que sacó el lector">
       <p className="text-sm text-tinta-2">
         Aquí está el texto que sacó el lector de la última carga. Cópialo y mándalo para que se
         pueda corregir. Puede contener nombres y teléfonos de clientes: mándalo solo a quien lo
@@ -529,7 +538,8 @@ function SeccionTerminos() {
   );
 
   return (
-    <Acordeon titulo="Términos y privacidad" resumen={fecha ? `Aceptado el ${formatearFecha(fecha)}` : "…"}>
+    <Acordeon titulo="Términos y privacidad"
+      icono="escudo" resumen={fecha ? `Aceptado el ${formatearFecha(fecha)}` : "…"}>
       <TextoLegal />
       <LineaCopyright className="border-t border-linea pt-3 text-xs text-tinta-3" />
     </Acordeon>
@@ -578,15 +588,14 @@ function SeccionVersion() {
   const datos = useVersion();
 
   return (
-    <section className="tarjeta flex items-center justify-between gap-3">
-      <div className="flex flex-col">
+    <section className="tarjeta flex items-center gap-3">
+      <IconoDeSeccion clave="version" />
+      <div className="flex min-w-0 flex-1 flex-col">
         <h3 className="text-lg">Control Driver</h3>
-        <span className="text-sm text-tinta-2">
-          {datos ? `Versión ${datos.version}` : "…"}
-        </span>
+        <span className="text-sm text-tinta-2">{datos ? `Versión ${datos.version}` : "…"}</span>
       </div>
       <span className="rounded-chip bg-acento-suave px-3 py-1 font-mono text-sm font-bold text-acento-tinta">
-        v{datos?.build ?? "?"}
+        {datos && /^\d/.test(datos.version) ? `v${datos.version}` : (datos?.version ?? "?")}
       </span>
     </section>
   );

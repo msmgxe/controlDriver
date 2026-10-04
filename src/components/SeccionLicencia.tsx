@@ -72,6 +72,7 @@ export function SeccionLicencia() {
   return (
     <Acordeon
       titulo="Licencia"
+      icono="llave"
       resumen={resumenDeLicencia(licencia)}
       aviso={licencia?.estado === "gracia" || licencia?.estado === "vencida" || licencia?.estado === "sin_licencia"}
     >

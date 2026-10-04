@@ -182,6 +182,7 @@ export function SeccionModalidad() {
   return (
     <Acordeon
       titulo="Tienda, ubicación y tarifa"
+      icono="ubicacion"
       resumen={
         tienda
           ? `${tienda.nombre} · ${vehiculo === "moto" ? "Moto" : "Auto"} · ${cobro}`

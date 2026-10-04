@@ -12,10 +12,12 @@ import { GraficoDias } from "@/components/GraficoDias";
 import { GraficoSemanas } from "@/components/GraficoSemanas";
 import { Flecha, Reloj, Subir, Trofeo } from "@/components/iconos";
 import { Pestanas } from "@/components/Pestanas";
+import { VelocimetroDeMeta } from "@/components/VelocimetroDeMeta";
 import { ResumenDelPeriodo } from "@/components/ResumenDelPeriodo";
 import { SelectorDeMes } from "@/components/SelectorDeMes";
 import { Aviso, Cifras, Vacio } from "@/components/ui";
 import { useDatos } from "@/hooks/useDatos";
+import { leerMetas } from "@/lib/db/sqlite/ajustes";
 import { bloquesPorRango } from "@/lib/db/sqlite/bloques-extra";
 import { descansosPorRango } from "@/lib/db/sqlite/descansos";
 import { jornadasPorRango, resumenPorRango, reglaVigente } from "@/lib/db/sqlite/jornadas";
@@ -94,13 +96,14 @@ export default function PaginaEstadisticas() {
 
   const { datos } = useDatos(
     async () => {
-      const [filas, jornadas, perfil, descansos, bloquesPorDia, tiendas] = await Promise.all([
+      const [filas, jornadas, perfil, descansos, bloquesPorDia, tiendas, metas] = await Promise.all([
         resumenPorRango(resumenDesde, detalleHasta),
         vista === "comparar" ? Promise.resolve([] as JornadaCompleta[]) : jornadasPorRango(detalleDesde, detalleHasta),
         perfilActual(),
         descansosPorRango(resumenDesde, detalleHasta),
         bloquesPorRango(detalleDesde, detalleHasta),
         listarTiendas(),
+        leerMetas(),
       ]);
       const { regla } = await reglaVigente(detalleHasta, perfil?.tiendaId ?? null, perfil?.vehiculo);
       return {
@@ -110,6 +113,7 @@ export default function PaginaEstadisticas() {
         regla,
         descansos: new Set<FechaISO>(descansos),
         bloques: [...bloquesPorDia.values()].flat(),
+        metas,
         tiendaNombre: tiendas.find((t) => t.id === perfil?.tiendaId)?.nombre ?? null,
       };
     },
@@ -219,6 +223,18 @@ export default function PaginaEstadisticas() {
         rango={rangoLegible(detalleDesde, detalleHasta)}
         pedidos={t.pedidos}
         centimos={t.centimos}
+      />
+
+      {/* El velocímetro: cuánto llevas de la meta, con los colores de cada fuente. */}
+      <VelocimetroDeMeta
+        titulo={vista === "semana" ? "Tu meta de la semana" : "Tu meta del mes"}
+        // La meta del mes son las semanas que caben en él, a la meta semanal.
+        metaCentimos={Math.round((datos.metas.semanaCentimos * dias.length) / 7)}
+        porFuente={[
+          { categoria: "tienda", centimos: t.centimosTienda },
+          { categoria: "apoyo", centimos: t.centimosApoyo },
+          { categoria: "taxi", centimos: t.centimosTaxi },
+        ]}
       />
 
       {/* El total repartido por fuente, a la vista y no escondido más abajo. */}

@@ -787,6 +787,80 @@ div:has(> [role="dialog"]) {
   animation: pop 0.6s cubic-bezier(0.3, 1.4, 0.5, 1) 0.35s both;
 }
 
+/* Mini animaciones de las fichas del día (ver `TarjetaViva`). */
+@keyframes llama {
+  from { transform: scale(1) rotate(-6deg); }
+  to { transform: scale(1.2) rotate(6deg); }
+}
+.barra-sube {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: barra-sube 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 0.1s + 0.5s);
+}
+@keyframes barra-sube { from { transform: scaleY(0); } }
+.aguja-gira {
+  transform-box: view-box;
+  transform-origin: 15px 14px;
+  animation: gira-aguja 6s linear infinite;
+}
+@keyframes gira-aguja { to { transform: rotate(360deg); } }
+.ruta-traza {
+  stroke-dasharray: 90;
+  stroke-dashoffset: 90;
+  animation: ruta-traza 2.6s ease-in-out infinite;
+}
+@keyframes ruta-traza { 60%, 100% { stroke-dashoffset: 0; } }
+
+/* La carretera de la meta (ver `CarreteraDeMeta`). `cqw` mide el ancho del botón. */
+.carretera { container-type: inline-size; }
+.carretera-raya {
+  background-image: repeating-linear-gradient(90deg, #ffd84d 0 14px, transparent 14px 26px);
+  background-size: 26px 3px;
+  animation: carretera-corre 0.8s linear infinite;
+}
+@keyframes carretera-corre { to { background-position-x: -26px; } }
+.carretera-bota { animation: carretera-bota 0.45s ease-in-out infinite alternate; }
+@keyframes carretera-bota { to { transform: translateY(-1.5px); } }
+.carretera-moneda { opacity: 0; animation: carretera-moneda 2.4s ease-in-out infinite; }
+@keyframes carretera-moneda {
+  0% { opacity: 0; transform: translateY(10px) scale(0.5); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-22px) scale(1.1); }
+}
+
+/* La cinta de horas de un apoyo o un taxi (ver `LineaDeHorario`). */
+.linea-crece {
+  transform-origin: left center;
+  animation: linea-crece 1s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s backwards;
+}
+@keyframes linea-crece { from { transform: scaleX(0); } }
+.linea-cursor {
+  box-shadow: 0 0 12px 2px #fff;
+  animation: linea-cursor 2.6s cubic-bezier(0.3, 0.8, 0.3, 1) 0.2s both;
+}
+@keyframes linea-cursor { from { left: 0; } to { left: var(--fin); } }
+
+/* Iconos animados de Ajustes (ver `IconoDeSeccion`). Cada uno se mueve como lo que representa. */
+.icono-colores { animation: icono-colores 4s linear infinite; }
+@keyframes icono-colores { to { filter: hue-rotate(360deg); } }
+.icono-bota { animation: icono-bota 1.4s ease-in-out infinite; }
+@keyframes icono-bota { 0%, 100% { transform: translateY(2px); } 50% { transform: translateY(-4px); } }
+.icono-menea { animation: icono-menea 2.2s ease-in-out infinite; }
+@keyframes icono-menea { 0%, 60%, 100% { transform: rotate(0); } 70% { transform: rotate(-12deg); } 85% { transform: rotate(12deg); } }
+.icono-balanceo { transform-origin: top center; animation: icono-balanceo 2.4s ease-in-out infinite; }
+@keyframes icono-balanceo { 0%, 100% { transform: rotate(-9deg); } 50% { transform: rotate(9deg); } }
+.icono-pulso { animation: icono-pulso 1.8s ease-in-out infinite; }
+@keyframes icono-pulso { 50% { transform: scale(1.2); } }
+.icono-flota { animation: icono-flota 2.6s ease-in-out infinite; }
+@keyframes icono-flota { 0%, 100% { transform: translateY(2px); } 50% { transform: translateY(-4px); } }
+.icono-destello { animation: icono-destello 2.8s ease-in-out infinite; }
+@keyframes icono-destello { 0%, 85%, 100% { filter: none; transform: scale(1); } 92% { filter: brightness(2.2); transform: scale(1.15); } }
+.icono-barre { animation: icono-barre 2.4s ease-in-out infinite; }
+@keyframes icono-barre { 0%, 100% { transform: translateX(-4px); } 50% { transform: translateX(4px); } }
+.icono-avanza { animation: icono-avanza 2.6s ease-in-out infinite; }
+@keyframes icono-avanza { 0% { transform: translateX(-26px); } 45%, 100% { transform: translateX(0); } }
+
 /* La puerta encendida de la barra de abajo: una pastilla detrás del icono, del
    segundo color de la marca (amarillo en claro y en turbo, ámbar en oscuro). Lo
    que se está mirando es lo que lleva el color, no un botón fijo. */

@@ -79,3 +79,40 @@ export async function guardarAjusteDeComandas(
     [CLAVES[nombre], valor ? "1" : "0"],
   );
 }
+
+/**
+ * Las metas: cuánto se quiere ganar en un día y en una semana. Alimentan la
+ * carretera de Pagos y el velocímetro de Estadísticas. En céntimos.
+ */
+export interface Metas {
+  diaCentimos: number;
+  semanaCentimos: number;
+}
+
+export const METAS_POR_DEFECTO: Metas = { diaCentimos: 25000, semanaCentimos: 150000 };
+
+export async function leerMetas(): Promise<Metas> {
+  const filas = await consultar<{ clave: string; valor: string }>(
+    `select clave, valor from ajustes where clave in ('meta.dia', 'meta.semana')`,
+  );
+  const mapa = new Map(filas.map((f) => [f.clave, Number(f.valor)]));
+  const dia = mapa.get("meta.dia");
+  const semana = mapa.get("meta.semana");
+  return {
+    diaCentimos: dia && dia > 0 ? dia : METAS_POR_DEFECTO.diaCentimos,
+    semanaCentimos: semana && semana > 0 ? semana : METAS_POR_DEFECTO.semanaCentimos,
+  };
+}
+
+export async function guardarMetas(metas: Metas): Promise<void> {
+  for (const [clave, valor] of [
+    ["meta.dia", metas.diaCentimos],
+    ["meta.semana", metas.semanaCentimos],
+  ] as const) {
+    await ejecutar(
+      `insert into ajustes (clave, valor) values (?, ?)
+       on conflict (clave) do update set valor = excluded.valor`,
+      [clave, String(Math.max(0, Math.round(valor)))],
+    );
+  }
+}

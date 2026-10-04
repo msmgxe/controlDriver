@@ -8,6 +8,7 @@ import { Pestanas } from "@/components/Pestanas";
 import { RadarDeTramos } from "@/components/RadarDeTramos";
 import { Aviso } from "@/components/ui";
 import { useCapa } from "@/hooks/useCapa";
+import { sonar } from "@/lib/sonidos";
 import { codigoDeDespacho, type CampoDeComanda } from "@/lib/comanda/interpretar";
 import { guardarComanda, type ResultadoDeGuardado } from "@/lib/comanda/guardar";
 import { leerFotoDeComandas, type HojaLeida } from "@/lib/comanda/leer";
@@ -357,6 +358,7 @@ export function HojaDeComandas({
         ajustes,
       );
       actualizar(item.id, { guardada: resultado });
+      sonar("moneda");
       return true;
     } catch (e) {
       actualizar(item.id, { error: e instanceof Error ? e.message : "No se pudo guardar la comanda." });

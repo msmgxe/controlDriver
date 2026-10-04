@@ -80,6 +80,7 @@ export function SeccionApariencia() {
   return (
     <Acordeon
       titulo="Apariencia"
+      icono="paleta"
       resumen={
         preferencia === "auto"
           ? "Automático · Mapa de día, Asfalto de noche"

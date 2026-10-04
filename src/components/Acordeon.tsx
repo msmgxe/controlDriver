@@ -3,6 +3,8 @@
 import { useId, useState } from "react";
 
 import { Flecha } from "@/components/iconos";
+import { IconoDeSeccion, type ClaveDeIcono } from "@/components/IconoDeSeccion";
+import { sonar } from "@/lib/sonidos";
 
 /**
  * Sección plegable.
@@ -24,6 +26,7 @@ export function Acordeon({
   resumen,
   aviso = false,
   destacado = false,
+  icono,
   abierto: controlado,
   alCambiar,
   children,
@@ -41,6 +44,8 @@ export function Acordeon({
    * en la única sección que de verdad conviene que salte a la vista.
    */
   destacado?: boolean;
+  /** Un icono animado a la izquierda, para encontrar la sección por su imagen (Ajustes). */
+  icono?: ClaveDeIcono;
   abierto?: boolean;
   alCambiar?: (abierto: boolean) => void;
   children: React.ReactNode;
@@ -51,6 +56,7 @@ export function Acordeon({
 
   function alternar() {
     const siguiente = !abierto;
+    if (icono) sonar("toque", false);
     setInterno(siguiente);
     alCambiar?.(siguiente);
   }
@@ -66,7 +72,8 @@ export function Acordeon({
           destacado ? "bg-neutral-800" : ""
         }`}
       >
-        <span className="flex min-w-0 flex-col">
+        {icono && <IconoDeSeccion clave={icono} />}
+        <span className="flex min-w-0 flex-1 flex-col">
           <b
             className={`font-display text-[17px] leading-tight font-bold [zoom:var(--zoom-titulo,1)] ${
               destacado ? "text-white" : ""

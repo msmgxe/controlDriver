@@ -24,7 +24,8 @@ import {
  */
 export function SeccionRespaldo() {
   return (
-    <Acordeon titulo="Respaldo de tus datos" resumen="Crear una copia o restaurarla">
+    <Acordeon titulo="Respaldo de tus datos"
+      icono="respaldo" resumen="Crear una copia o restaurarla">
       <p className="text-sm text-tinta-2">
         Tus jornadas, rutas, pedidos y liquidaciones. No incluye las fotos de tus capturas ni tu
         licencia —esa está atada a este teléfono—. Los datos de tus clientes solo van si lo

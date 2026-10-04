@@ -37,6 +37,32 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 1.05 — 04/10/2026
+La tarjeta del día y los gráficos, con vida y con sonido.
+- **Inicio**: la tarjeta del día ahora es un **anillo** que se dibuja solo y reparte
+  lo de hoy entre tienda, apoyo y taxi, con el total que cuenta hacia arriba. Si
+  hay más de una fuente, debajo salen **fichas** con su propia animación (barras
+  que suben, reloj que gira, ruta que se dibuja). Tocar un color o una ficha
+  despliega ese detalle. Si solo hay tienda, queda limpia.
+- **Racha** (🔥 días seguidos cargados) y **¡Récord!** (⭐ cuando hoy supera a
+  los demás días cercanos) en la tarjeta. **Deslizar a los lados** cambia de día.
+- **Pagos**: **carretera de la meta de la semana**. El vehículo avanza de
+  izquierda a derecha hasta tu avance, con banderines al 25/50/75/100 %, monedas
+  y cuánto rindes **por hora trabajada**. Tocarla la repite.
+- **Estadísticas**: **velocímetro** de la meta (semana o mes) con los colores de
+  cada fuente y una aguja que rebota.
+- **Detalle de un apoyo o un taxi**: cinta de horas con un **cursor luminoso**
+  que recorre el día de la entrada a la salida.
+- **Ajustes**: cada sección lleva su **icono animado** (la paleta cambia de color,
+  el pin rebota, el candado se balancea, la cámara destella…) para encontrarla por
+  su imagen. Nueva sección **Mis metas y sonidos**: pones tu meta del día y de la
+  semana, y activas o apagas sonidos y vibración.
+- **Sonidos de acuerdo al gráfico**: un sonido distinto al tocar tienda, apoyo y
+  taxi; el «tin» de moneda al guardar; el motor y la bocina de la carretera; el
+  acelerón del velocímetro; el barrido de la cinta de horas; un clic suave en los
+  iconos de Ajustes.
+- La versión que se ve ahora es la 1.0x también en Ajustes.
+
 ### 1.04 — 04/10/2026
 - **La ruta sale del horario de la hoja.** La ventana de entrega que trae la
   comanda («17:00:00 – 18:00:59») es el horario de la ruta: al guardar, el

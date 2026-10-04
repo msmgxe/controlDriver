@@ -7,6 +7,7 @@ import { eliminarBloque } from "@/app/(app)/jornada/acciones";
 import { FONDO_DE_BLOQUE, ICONO_DE_BLOQUE, tituloYDetalleDeBloque } from "@/components/bloques-visual";
 import { HojaDeBloqueExtraAutonoma } from "@/components/HojaDeBloqueExtra";
 import { Equis } from "@/components/iconos";
+import { LineaDeHorario } from "@/components/LineaDeHorario";
 import { useCapa } from "@/hooks/useCapa";
 import type { BloqueExtraFila } from "@/lib/db/tipos";
 import { formatearFechaLarga, type FechaISO } from "@/lib/fechas";
@@ -120,6 +121,15 @@ export function HojaDeDetalleBloque({
             {formatearSoles(bloque.montoCentimos)}
           </b>
         </div>
+
+        {bloque.tipo !== "apoyo_tramos" && bloque.horaInicio && (
+          <LineaDeHorario
+            inicio={bloque.horaInicio}
+            fin={bloque.horaFin}
+            color={bloque.tipo === "taxi" ? "#5b2bd6" : "#c99700"}
+            etiqueta={bloque.tipo === "apoyo_hora" ? `${bloque.horas} h` : undefined}
+          />
+        )}
 
         <dl className="flex flex-col">
           {horario && <Fila etiqueta="Horario" valor={horario} />}

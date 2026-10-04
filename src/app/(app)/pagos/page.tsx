@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { AccionesSemana } from "@/components/AccionesSemana";
 import { Acordeon } from "@/components/Acordeon";
+import { CarreteraDeMeta } from "@/components/CarreteraDeMeta";
 import { DesgloseDeIngresos } from "@/components/DesgloseDeIngresos";
 import { DueloDePago } from "@/components/DueloDePago";
 import { Alerta, Calendario, Check, Flecha, Luna, Reloj } from "@/components/iconos";
@@ -15,7 +16,8 @@ import { TiraDeSemanas } from "@/components/TiraDeSemanas";
 import { Aviso } from "@/components/ui";
 import { useDatos } from "@/hooks/useDatos";
 import { useTiraDeSemanas } from "@/hooks/useTiraDeSemanas";
-import { leerAjustesDeComandas } from "@/lib/db/sqlite/ajustes";
+import { useVehiculo } from "@/hooks/useVehiculo";
+import { leerAjustesDeComandas, leerMetas } from "@/lib/db/sqlite/ajustes";
 import { bloquesPorRango } from "@/lib/db/sqlite/bloques-extra";
 import { marcarDescanso, quitarDescanso } from "@/lib/db/sqlite/descansos";
 import { jornadasPorRango, reglaVigente } from "@/lib/db/sqlite/jornadas";
@@ -52,6 +54,7 @@ import { formatearSoles } from "@/lib/pagos/reglas";
 const NUMERO_DE_SEMANAS = 9;
 
 export default function PaginaPagos() {
+  const vehiculo = useVehiculo();
   const hoy = hoyEnLima();
   const actual = semanaDe(hoy).inicio;
 
@@ -72,14 +75,15 @@ export default function PaginaPagos() {
       const s = await liquidacionDeSemana(semana.inicio, esActual ? hoy : undefined);
       const { regla } = await reglaVigente(semana.fin, perfil?.tiendaId ?? null, perfil?.vehiculo);
       // Para el desglose por fuente y el detalle por tramo, con su evidencia.
-      const [jornadas, bloques, tiendas, ajustes] = await Promise.all([
+      const [jornadas, bloques, tiendas, ajustes, metas] = await Promise.all([
         jornadasPorRango(semana.inicio, semana.fin),
         bloquesPorRango(semana.inicio, semana.fin),
         listarTiendas(),
         leerAjustesDeComandas(),
+        leerMetas(),
       ]);
       const tienda = tiendas.find((t) => t.id === perfil?.tiendaId) ?? null;
-      return { s, regla, jornadas, bloques, tienda, ajustes };
+      return { s, regla, jornadas, bloques, tienda, ajustes, metas };
     },
     [semana.inicio],
     // Marcar un descanso recarga la pantalla; sin conservar, pasaría por el
@@ -121,7 +125,11 @@ export default function PaginaPagos() {
   }
 
   if (!tira || !datos || !otras) return <Esqueleto />;
-  const { s: elegida, regla, jornadas, bloques, tienda, ajustes } = datos;
+  const { s: elegida, regla, jornadas, bloques, tienda, ajustes, metas } = datos;
+  /* Horas trabajadas de la semana: en ruta + las de los apoyos por hora. */
+  const horasTrabajadas =
+    elegida.liquidacion.minutosEnRuta / 60 +
+    [...bloques.values()].flat().reduce((h, b) => h + (b.tipo === "apoyo_hora" ? b.horas : 0), 0);
   const liquidacion = elegida.liquidacion;
 
   const porDia = new Map(liquidacion.detalle.porDia.map((d) => [d.fecha, d]));
@@ -218,6 +226,12 @@ export default function PaginaPagos() {
           {liquidacion.totalOrdenes} pedidos · {liquidacion.totalRutas} rutas
           {fueraTramo1 > 0 && ` · ${fueraTramo1} fuera del tramo 1`}
         </span>
+        <CarreteraDeMeta
+          totalCentimos={liquidacion.montoTotalCentimos}
+          metaCentimos={metas.semanaCentimos}
+          vehiculo={vehiculo}
+          porHoraCentimos={horasTrabajadas > 0 ? liquidacion.montoTotalCentimos / horasTrabajadas : null}
+        />
         <DesgloseDeIngresos
           titulo="De dónde viene"
           filas={desglosePorFuente({

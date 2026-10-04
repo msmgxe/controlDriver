@@ -1,12 +1,11 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { BloquesDelDia } from "@/components/BloquesDelDia";
 import { CargarCapturas } from "@/components/CargarCapturas";
-import { BarraDeFuentes } from "@/components/BarraDeFuentes";
 import { FilaDeLista } from "@/components/ListaDelDia";
 import { HojaSubirMas } from "@/components/HojaSubirMas";
 import { DetalleDelDia } from "@/components/DetalleDelDia";
@@ -17,13 +16,14 @@ import { usePuedeEscribir } from "@/components/Licencia";
 import { MenuAgregarBloque } from "@/components/MenuAgregarBloque";
 import { RecorridoGuiado, type PasoDeRecorrido } from "@/components/RecorridoGuiado";
 import { SubirMas } from "@/components/SubirMas";
-import { TiraDeSemanas } from "@/components/TiraDeSemanas";
+import { TiraDeSemanas, type DatosDelDia } from "@/components/TiraDeSemanas";
 import { Auto } from "@/components/Auto";
-import { TarjetaDelDia } from "@/components/ui";
+import { TarjetaViva } from "@/components/TarjetaViva";
 import { useDatos } from "@/hooks/useDatos";
 import { useTiraDeSemanas } from "@/hooks/useTiraDeSemanas";
 import { useVehiculo } from "@/hooks/useVehiculo";
 import { publicarDiaElegido } from "@/lib/diaElegido";
+import { sonar } from "@/lib/sonidos";
 import { marcarRecorridoVisto, recorridoYaVisto } from "@/lib/recorrido";
 import { leerAjustesDeComandas, type AjustesDeComandas } from "@/lib/db/sqlite/ajustes";
 import { listarBloquesDelDia } from "@/lib/db/sqlite/bloques-extra";
@@ -88,6 +88,7 @@ function Contenido() {
     return () => publicarDiaElegido(null);
   }, [dia]);
 
+  const deslizar = useRef<{ x: number; y: number } | null>(null);
   const semana = semanaDe(dia);
   const esSemanaActual = semana.inicio === semanaDe(hoy).inicio;
 
@@ -200,7 +201,28 @@ function Contenido() {
       </div>
 
       {detalle ? (
-        <DelDia dia={dia} hoy={hoy} detalle={detalle} alCambiar={recargar} />
+        <div
+          className="flex flex-col gap-4"
+          onTouchStart={(e) => {
+            deslizar.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+          }}
+          onTouchEnd={(e) => {
+            // Arrastrar de lado cambia de día, como pasar fotos en la galería.
+            const ini = deslizar.current;
+            deslizar.current = null;
+            if (!ini) return;
+            const dx = e.changedTouches[0].clientX - ini.x;
+            const dy = e.changedTouches[0].clientY - ini.y;
+            if (Math.abs(dx) < 80 || Math.abs(dy) > 45) return;
+            const siguiente = sumarDias(dia, dx < 0 ? 1 : -1);
+            if (siguiente <= hoy) {
+              sonar("toque");
+              setDia(siguiente);
+            }
+          }}
+        >
+        <DelDia dia={dia} hoy={hoy} detalle={detalle} tira={tira} alCambiar={recargar} />
+        </div>
       ) : (
         <div className="flex animate-pulse flex-col gap-4" aria-hidden>
           <div className="h-[150px] rounded-card bg-sup-2" />
@@ -230,11 +252,14 @@ function DelDia({
   dia,
   hoy,
   detalle,
+  tira,
   alCambiar,
 }: {
   dia: FechaISO;
   hoy: FechaISO;
   detalle: Detalle;
+  /** Lo cargado y lo cobrado de las tres semanas cercanas, para la racha y el récord. */
+  tira: Map<FechaISO, DatosDelDia>;
   alCambiar: () => void;
 }) {
   const vehiculo = useVehiculo();
@@ -308,6 +333,16 @@ function DelDia({
   /* Con apoyo o taxi, la pastilla del día es el total de todo —lo que de verdad
      produjo—, y debajo se reparte por fuente. Sin ellos, queda como siempre. */
   const extrasCentimos = bloques.reduce((s, b) => s + b.montoCentimos, 0);
+  /* La racha: días seguidos cargados hasta este (un descanso no la corta). El
+     récord: este día supera a todos los demás cargados de las tres semanas. */
+  let racha = 0;
+  for (let f = dia, n = 0; n < 21; f = sumarDias(f, -1), n++) {
+    const d = tira.get(f);
+    if (d?.cargado || (f === dia && cobrado + extrasCentimos > 0)) racha += 1;
+    else if (!d?.descanso) break;
+  }
+  const otros = [...tira].filter(([f, d]) => f !== dia && d.cargado && (d.centimos ?? 0) > 0).map(([, d]) => d.centimos ?? 0);
+  const record = otros.length >= 3 && cobrado + extrasCentimos > Math.max(...otros);
   const apoyos = bloques.filter((b) => b.tipo !== "taxi");
   const taxis = bloques.filter((b) => b.tipo === "taxi");
   const hayPedidos = (jornada?.ordenes.length ?? 0) > 0 || (jornada?.rutas.length ?? 0) > 0;
@@ -321,18 +356,23 @@ function DelDia({
   return (
     <>
       {jornada ? (
-        <TarjetaDelDia
+        <TarjetaViva
           encabezado={dia === hoy ? "Hoy cargaste" : `El ${nombreDelDia(dia)} cargaste`}
-          cifra={String(jornada.ordenes.length)}
-          pie={`pedidos · ${jornada.rutas.length} ruta${jornada.rutas.length === 1 ? "" : "s"}`}
-          monto={formatearSoles(cobrado + extrasCentimos)}
+          pedidos={jornada.ordenes.length}
+          rutas={jornada.rutas.length}
+          filas={desglose}
+          totalCentimos={cobrado + extrasCentimos}
           vehiculo={vehiculo}
+          racha={racha}
+          record={record}
+          alElegir={(c) => {
+            setFilaAbierta(c);
+            document.getElementById("recorrido-lista")?.scrollIntoView({ behavior: "smooth", block: "center" });
+          }}
         />
       ) : (
         <DiaSinCarga fecha={dia} hoy={hoy} descanso={descanso} puedeEscribir={puedeCargar} alCambiar={alCambiar} />
       )}
-
-      <BarraDeFuentes filas={desglose} alElegir={(c) => abrirFila(c === "tienda" ? "tienda" : c)} />
 
       {/* ¿Qué hiciste hoy? Tres preguntas con su respuesta: lo hecho se
           despliega al tocarlo; lo que falta empieza a anotarse al tocarlo. */}
@@ -507,6 +547,7 @@ function DelDia({
           factorCalles={tienda?.factorCalles ?? 1.3}
           alCerrar={() => setBloqueAbierto(null)}
           alGuardar={() => {
+            sonar("moneda");
             setBloqueAbierto(null);
             alCambiar();
           }}
