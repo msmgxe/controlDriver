@@ -8,7 +8,7 @@
 import { DatabaseSync } from "node:sqlite";
 import { describe, expect, it } from "vitest";
 
-import { ESQUEMA, migrar } from "./esquema";
+import { ESQUEMA, VISTAS_A_REFRESCAR, migrar } from "./esquema";
 
 function baseDe(db: DatabaseSync) {
   return {
@@ -78,5 +78,18 @@ describe("la migración nunca deja fuera", () => {
       },
     };
     await expect(migrar(base)).resolves.toEqual([]);
+  });
+});
+
+describe("la vista del resumen por día", () => {
+  it("una vista vieja, sin apoyo ni taxi, se rehace al abrir la base", async () => {
+    const db = new DatabaseSync(":memory:");
+    for (const s of ESQUEMA) db.exec(s);
+    // La vista tal como estaba antes de apoyo y taxi.
+    db.exec(`drop view v_resumen_diario; create view v_resumen_diario as select j.fecha as fecha from jornadas j;`);
+    expect(() => db.prepare(`select monto_apoyo_centimos from v_resumen_diario`).all()).toThrow();
+
+    for (const s of VISTAS_A_REFRESCAR) db.exec(s);
+    expect(() => db.prepare(`select monto_apoyo_centimos, monto_taxi_centimos from v_resumen_diario`).all()).not.toThrow();
   });
 });

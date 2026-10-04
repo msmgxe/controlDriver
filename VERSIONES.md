@@ -37,6 +37,15 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 1.06 — 04/10/2026
+- **Arreglo importante en Estadísticas**: el «Generado», el velocímetro y las barras
+  de cada día sumaban **solo la tienda** en los teléfonos que ya tenían la app
+  (el desglose de abajo sí mostraba apoyo y taxi, por eso no cuadraba). Causa: la
+  vista guardada del resumen por día no se actualizaba con las versiones nuevas.
+  Ahora se rehace en cada arranque. Con esto el velocímetro reparte la meta en los
+  colores de tienda, apoyo y taxi, y el total coincide en Inicio, Pagos y
+  Estadísticas.
+
 ### 1.05 — 04/10/2026
 La tarjeta del día y los gráficos, con vida y con sonido.
 - **Inicio**: la tarjeta del día ahora es un **anillo** que se dibuja solo y reparte

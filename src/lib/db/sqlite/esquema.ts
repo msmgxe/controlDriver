@@ -36,6 +36,65 @@ export const NOMBRE_BASE = "rutas-a";
  *
  * Van todas con `if not exists` para que arrancar dos veces no rompa nada.
  */
+/**
+ * La vista del resumen por día (Inicio, Pagos, Estadísticas).
+ *
+ * Una vista guardada en el teléfono **no se actualiza sola** cuando el código
+ * cambia: `create view if not exists` deja la vieja. Fue lo que hizo que, tras
+ * añadir apoyo y taxi, las Estadísticas siguieran sumando solo la tienda en los
+ * teléfonos que ya tenían la app. Por eso `VISTAS_A_REFRESCAR` la borra y la
+ * vuelve a crear en cada arranque, después de migrar las columnas.
+ */
+export const VISTA_RESUMEN_DIARIO = `create view if not exists v_resumen_diario as
+     select
+       j.fecha                                          as fecha,
+       j.validacion_ok                                  as validacion_ok,
+       j.entregado                                      as entregado,
+       j.parcial                                        as parcial,
+       j.no_entregado                                   as no_entregado,
+       j.hora_entrada                                   as hora_entrada,
+       j.hora_salida                                    as hora_salida,
+       j.vehiculo                                       as vehiculo,
+       coalesce(r.rutas, 0)                             as rutas,
+       coalesce(r.minutos_en_ruta, 0)                   as minutos_en_ruta,
+       r.primera_salida                                 as primera_salida,
+       r.ultimo_regreso                                 as ultimo_regreso,
+       coalesce(o.pedidos, 0)                           as pedidos,
+       coalesce(o.monto_centimos, 0)                    as monto_centimos,
+       coalesce(o.pedidos_fuera_tramo_1, 0)             as pedidos_fuera_tramo_1,
+       coalesce(b.monto_apoyo_centimos, 0)              as monto_apoyo_centimos,
+       coalesce(b.monto_taxi_centimos, 0)               as monto_taxi_centimos
+     from jornadas j
+     left join (
+       select jornada_id,
+              count(*)             as rutas,
+              min(hora_inicio)     as primera_salida,
+              max(hora_fin)        as ultimo_regreso,
+              sum(
+                case when hora_inicio is null or hora_fin is null then 0
+                     else (strftime('%s', '2000-01-01 ' || hora_fin)
+                         - strftime('%s', '2000-01-01 ' || hora_inicio)) / 60
+                end
+              )                    as minutos_en_ruta
+       from rutas group by jornada_id
+     ) r on r.jornada_id = j.id
+     left join (
+       select jornada_id,
+              count(*)                                   as pedidos,
+              sum(coalesce(monto_centimos, 0))           as monto_centimos,
+              sum(case when tramo <> 1 then 1 else 0 end) as pedidos_fuera_tramo_1
+       from ordenes group by jornada_id
+     ) o on o.jornada_id = j.id
+     /* Ídem en subconsulta aparte: un tercer join directo volvería a
+        multiplicar filas, igual que pasaría si rutas y órdenes se unieran
+        juntas (ver el comentario de arriba). */
+     left join (
+       select jornada_id,
+              sum(case when tipo <> 'taxi' then monto_centimos else 0 end) as monto_apoyo_centimos,
+              sum(case when tipo = 'taxi' then monto_centimos else 0 end)  as monto_taxi_centimos
+       from bloques_extra group by jornada_id
+     ) b on b.jornada_id = j.id;`;
+
 export const ESQUEMA: string[] = [
   `pragma foreign_keys = on;`,
 
@@ -309,55 +368,7 @@ export const ESQUEMA: string[] = [
      rutas y órdenes en la misma consulta multiplica las filas (12 pedidos × 6
      rutas = 72) e infla todos los totales. Es un error fácil de cometer y
      difícil de ver, porque el resultado parece plausible. */
-  `create view if not exists v_resumen_diario as
-     select
-       j.fecha                                          as fecha,
-       j.validacion_ok                                  as validacion_ok,
-       j.entregado                                      as entregado,
-       j.parcial                                        as parcial,
-       j.no_entregado                                   as no_entregado,
-       j.hora_entrada                                   as hora_entrada,
-       j.hora_salida                                    as hora_salida,
-       j.vehiculo                                       as vehiculo,
-       coalesce(r.rutas, 0)                             as rutas,
-       coalesce(r.minutos_en_ruta, 0)                   as minutos_en_ruta,
-       r.primera_salida                                 as primera_salida,
-       r.ultimo_regreso                                 as ultimo_regreso,
-       coalesce(o.pedidos, 0)                           as pedidos,
-       coalesce(o.monto_centimos, 0)                    as monto_centimos,
-       coalesce(o.pedidos_fuera_tramo_1, 0)             as pedidos_fuera_tramo_1,
-       coalesce(b.monto_apoyo_centimos, 0)              as monto_apoyo_centimos,
-       coalesce(b.monto_taxi_centimos, 0)               as monto_taxi_centimos
-     from jornadas j
-     left join (
-       select jornada_id,
-              count(*)             as rutas,
-              min(hora_inicio)     as primera_salida,
-              max(hora_fin)        as ultimo_regreso,
-              sum(
-                case when hora_inicio is null or hora_fin is null then 0
-                     else (strftime('%s', '2000-01-01 ' || hora_fin)
-                         - strftime('%s', '2000-01-01 ' || hora_inicio)) / 60
-                end
-              )                    as minutos_en_ruta
-       from rutas group by jornada_id
-     ) r on r.jornada_id = j.id
-     left join (
-       select jornada_id,
-              count(*)                                   as pedidos,
-              sum(coalesce(monto_centimos, 0))           as monto_centimos,
-              sum(case when tramo <> 1 then 1 else 0 end) as pedidos_fuera_tramo_1
-       from ordenes group by jornada_id
-     ) o on o.jornada_id = j.id
-     /* Ídem en subconsulta aparte: un tercer join directo volvería a
-        multiplicar filas, igual que pasaría si rutas y órdenes se unieran
-        juntas (ver el comentario de arriba). */
-     left join (
-       select jornada_id,
-              sum(case when tipo <> 'taxi' then monto_centimos else 0 end) as monto_apoyo_centimos,
-              sum(case when tipo = 'taxi' then monto_centimos else 0 end)  as monto_taxi_centimos
-       from bloques_extra group by jornada_id
-     ) b on b.jornada_id = j.id;`,
+  VISTA_RESUMEN_DIARIO,
 ];
 
 /**
@@ -440,3 +451,9 @@ export async function migrar(base: BaseMigrable): Promise<string[]> {
   }
   return anadidas;
 }
+
+/** Se ejecuta al abrir la base, **después** de `migrar`: las vistas se rehacen para que nunca queden viejas. */
+export const VISTAS_A_REFRESCAR: readonly string[] = [
+  `drop view if exists v_resumen_diario;`,
+  VISTA_RESUMEN_DIARIO.replace("create view if not exists", "create view"),
+];

@@ -18,7 +18,7 @@
  *     verdad —el mismo esquema, las mismas consultas— en vez de un simulacro
  *     que siempre dice que sí.
  */
-import { ESQUEMA, NOMBRE_BASE, VERSION_ESQUEMA, migrar } from "./esquema";
+import { ESQUEMA, NOMBRE_BASE, VERSION_ESQUEMA, VISTAS_A_REFRESCAR, migrar } from "./esquema";
 
 /** Lo mínimo que tiene que saber hacer una base para esta aplicación. */
 export interface Motor {
@@ -161,6 +161,15 @@ async function motorDeCapacitor(): Promise<Motor> {
     consultar: async <T,>(sql: string) => ((await db.query(sql)).values ?? []) as T[],
     ejecutar: (sql: string) => db.execute(sql),
   }).catch(() => []);
+  /* Las vistas se rehacen en cada arranque: una guardada de una versión anterior
+     no se actualiza sola y dejaba fuera columnas nuevas (apoyo y taxi). */
+  for (const sentencia of VISTAS_A_REFRESCAR) {
+    try {
+      await db.execute(sentencia);
+    } catch {
+      /* Si no se puede, queda la que había. */
+    }
+  }
 
   /* En el navegador no hay disco: lo escrito vive en memoria hasta que se
      vuelca a IndexedDB a mano. En el celular esto no hace nada. */
