@@ -422,7 +422,7 @@ function DelDia({
         <FilaDeLista
           indice={1}
           Icono={Reloj}
-          fondo="bg-[#fff4d6] text-[#8a6200]"
+          fondo="bg-[var(--apoyo-suave)] text-[var(--apoyo-tinta)]"
           titulo="Apoyé a otra tienda"
           resumen={
             apoyos.length > 0
@@ -450,7 +450,7 @@ function DelDia({
         <FilaDeLista
           indice={2}
           Icono={Taxi}
-          fondo="bg-[#ece7ff] text-[#5b2bd6]"
+          fondo="bg-[var(--taxi-suave)] text-[var(--taxi-tinta)]"
           titulo="Hice taxi"
           resumen={
             taxis.length > 0

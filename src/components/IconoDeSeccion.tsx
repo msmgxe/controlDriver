@@ -22,17 +22,17 @@ export type ClaveDeIcono =
 const ICONOS: Record<ClaveDeIcono, { emoji: string; fondo: string; movimiento: string }> = {
   paleta: { emoji: "🎨", fondo: "bg-[#ffe4f1]", movimiento: "icono-colores" },
   ubicacion: { emoji: "📍", fondo: "bg-[#dff5e6]", movimiento: "icono-bota" },
-  comanda: { emoji: "🧾", fondo: "bg-[#fff4d6]", movimiento: "icono-menea" },
+  comanda: { emoji: "🧾", fondo: "bg-[var(--apoyo-suave)]", movimiento: "icono-menea" },
   candado: { emoji: "🔒", fondo: "bg-[#e1e8ff]", movimiento: "icono-balanceo" },
-  llave: { emoji: "🔑", fondo: "bg-[#fff4d6]", movimiento: "icono-balanceo" },
+  llave: { emoji: "🔑", fondo: "bg-[var(--apoyo-suave)]", movimiento: "icono-balanceo" },
   escudo: { emoji: "🛡️", fondo: "bg-[#dff5e6]", movimiento: "icono-pulso" },
   respaldo: { emoji: "☁️", fondo: "bg-[#dff1ff]", movimiento: "icono-flota" },
-  camara: { emoji: "📷", fondo: "bg-[#ece7ff]", movimiento: "icono-destello" },
+  camara: { emoji: "📷", fondo: "bg-[var(--taxi-suave)]", movimiento: "icono-destello" },
   probeta: { emoji: "🧪", fondo: "bg-[#e7f9d9]", movimiento: "icono-menea" },
   lupa: { emoji: "🔍", fondo: "bg-[#e1e8ff]", movimiento: "icono-barre" },
   meta: { emoji: "🎯", fondo: "bg-[#ffe1e1]", movimiento: "icono-pulso" },
-  sonido: { emoji: "🔊", fondo: "bg-[#ece7ff]", movimiento: "icono-pulso" },
-  version: { emoji: "🚕", fondo: "bg-[#fff4d6]", movimiento: "icono-avanza" },
+  sonido: { emoji: "🔊", fondo: "bg-[var(--taxi-suave)]", movimiento: "icono-pulso" },
+  version: { emoji: "🚕", fondo: "bg-[var(--apoyo-suave)]", movimiento: "icono-avanza" },
 };
 
 export function IconoDeSeccion({ clave, className = "" }: { clave: ClaveDeIcono; className?: string }) {

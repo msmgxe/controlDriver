@@ -6,7 +6,7 @@ import { sonar } from "@/lib/sonidos";
 import type { CategoriaIngreso } from "@/lib/pagos/bloques-extra";
 import { formatearSoles } from "@/lib/pagos/reglas";
 
-const COLOR: Record<CategoriaIngreso, string> = { tienda: "var(--acento)", apoyo: "#c99700", taxi: "#5b2bd6" };
+const COLOR: Record<CategoriaIngreso, string> = { tienda: "var(--acento)", apoyo: "var(--f-apoyo)", taxi: "var(--f-taxi)" };
 const R = 100;
 const MEDIO = Math.PI * R;
 

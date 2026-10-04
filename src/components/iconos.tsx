@@ -220,6 +220,13 @@ export const Suma = (p: Props) => (
   </Base>
 );
 
+/** Una estrella llena, del color del texto: el récord. */
+export const Estrella = (p: Props) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...p}>
+    <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.5l-5.9 3.2 1.2-6.6L2.5 9.5l6.6-.9z" />
+  </svg>
+);
+
 /** Una tienda, para el apoyo tarifado por tramos. */
 export const Tienda = (p: Props) => (
   <Base {...p}>

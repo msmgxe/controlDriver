@@ -40,7 +40,7 @@ export function LineaDeHorario({
         setVuelta((v) => v + 1);
       }}
       aria-label={`Horario de ${inicio} a ${fin ?? "—"}. Toca para repetir la animación`}
-      className="relative h-[84px] w-full overflow-hidden rounded-[14px] bg-tinta text-left"
+      className="relative h-[84px] w-full overflow-hidden rounded-[14px] bg-[var(--asfalto)] text-left"
     >
       {[6, 9, 12, 15, 18, 21].map((h) => (
         <span key={h} className="absolute inset-y-0 border-l border-dashed border-white/20 pl-1 text-[10px] font-semibold text-white/60" style={{ left: `${x(h)}%` }}>

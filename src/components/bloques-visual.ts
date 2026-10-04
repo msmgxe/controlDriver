@@ -9,9 +9,9 @@ export const ICONO_DE_BLOQUE: Record<TipoBloqueExtra, typeof Tienda> = {
 };
 
 export const FONDO_DE_BLOQUE: Record<TipoBloqueExtra, string> = {
-  apoyo_hora: "bg-[#fff4d6] text-[#8a6200]",
+  apoyo_hora: "bg-[var(--apoyo-suave)] text-[var(--apoyo-tinta)]",
   apoyo_tramos: "bg-acento-suave text-acento-tinta",
-  taxi: "bg-[#ece7ff] text-[#5b2bd6]",
+  taxi: "bg-[var(--taxi-suave)] text-[var(--taxi-tinta)]",
 };
 
 export function tituloYDetalleDeBloque(b: BloqueExtraFila): { titulo: string; detalle: string } {

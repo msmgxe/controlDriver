@@ -62,12 +62,12 @@ export function CarreteraDeMeta({
             className="absolute top-2 flex flex-col items-center text-[10px] font-bold"
             style={{ left: `calc(${f * 100}% - ${f === 1 ? 34 : 10}px)` }}
           >
-            <span className={`transition-colors duration-500 ${p >= f ? "text-[#c99700]" : "text-tinta-3"}`}>⚑</span>
+            <span className={`transition-colors duration-500 ${p >= f ? "text-[var(--f-apoyo)]" : "text-tinta-3"}`}>⚑</span>
             <span className="text-tinta-3">{f * 100}%</span>
           </span>
         ))}
         {/* La carretera, con su raya de eje corriendo. */}
-        <span className="absolute inset-x-0 bottom-2 h-10 rounded-[10px] bg-tinta/90">
+        <span className="absolute inset-x-0 bottom-2 h-10 rounded-[10px] bg-[var(--asfalto)]">
           <span className="carretera-raya absolute inset-x-2 top-1/2 h-[3px] -translate-y-1/2" />
         </span>
         {/* Lo recorrido, por debajo del vehículo. */}
@@ -86,7 +86,7 @@ export function CarreteraDeMeta({
         </span>
         {[0, 1, 2].map((i) => (
           <span key={i} className="carretera-moneda absolute top-9 text-[15px]" style={{ left: `${18 + i * 28}%`, animationDelay: `${i * 0.7}s` }}>
-            <span className="grid size-[18px] place-items-center rounded-full border-2 border-[#8a6200] bg-[#ffc800] text-[9px] font-bold text-[#6b4a00]">S/</span>
+            <span className="grid size-[18px] place-items-center rounded-full border-2 border-[var(--apoyo-tinta)] bg-[var(--f-apoyo)] text-[9px] font-bold text-[var(--apoyo-suave)]">S/</span>
           </span>
         ))}
       </button>

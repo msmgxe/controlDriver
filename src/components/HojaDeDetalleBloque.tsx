@@ -126,7 +126,7 @@ export function HojaDeDetalleBloque({
           <LineaDeHorario
             inicio={bloque.horaInicio}
             fin={bloque.horaFin}
-            color={bloque.tipo === "taxi" ? "#5b2bd6" : "#c99700"}
+            color={bloque.tipo === "taxi" ? "var(--f-taxi)" : "var(--f-apoyo)"}
             etiqueta={bloque.tipo === "apoyo_hora" ? `${bloque.horas} h` : undefined}
           />
         )}

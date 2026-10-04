@@ -3,15 +3,16 @@
 import { useEffect, useState } from "react";
 
 import { Auto } from "@/components/Auto";
+import { Estrella } from "@/components/iconos";
 import { useCifraAnimada } from "@/hooks/useCifraAnimada";
 import { sonar } from "@/lib/sonidos";
 import type { CategoriaIngreso } from "@/lib/pagos/bloques-extra";
 import type { FilaDeDesglose } from "@/lib/pagos/desglose";
 import { formatearSoles, type TipoVehiculo } from "@/lib/pagos/reglas";
 
-/* Colores de cada fuente SOBRE la tarjeta azul (la tienda es blanca, el apoyo el
-   amarillo de la marca, el taxi un cian): distintos entre sí en todas las caras. */
-const COLOR: Record<CategoriaIngreso, string> = { tienda: "#ffffff", apoyo: "#ffc800", taxi: "#7ee0ff" };
+/* Colores de cada fuente SOBRE la tarjeta, sacados de la cara activa (ver `--h-*`
+   en globals.css): se leen contra el color de la tarjeta en las seis caras. */
+const COLOR: Record<CategoriaIngreso, string> = { tienda: "var(--h-tienda)", apoyo: "var(--h-apoyo)", taxi: "var(--h-taxi)" };
 const NOMBRE: Record<CategoriaIngreso, string> = { tienda: "Tienda", apoyo: "Apoyo", taxi: "Taxi" };
 const R = 44;
 const C = 2 * Math.PI * R;
@@ -22,7 +23,7 @@ function Mini({ c }: { c: CategoriaIngreso }) {
     return (
       <svg viewBox="0 0 60 28" className="h-7 w-full overflow-visible" aria-hidden>
         {[10, 17, 13, 24, 19].map((h, i) => (
-          <rect key={i} className="barra-sube" style={{ "--i": i } as React.CSSProperties} x={i * 12} y={28 - h} width="8" height={h} rx="2.5" fill="var(--acento)" />
+          <rect key={i} className="barra-sube" style={{ "--i": i } as React.CSSProperties} x={i * 12} y={28 - h} width="8" height={h} rx="2.5" fill="var(--acento-tinta)" />
         ))}
       </svg>
     );
@@ -30,14 +31,14 @@ function Mini({ c }: { c: CategoriaIngreso }) {
     return (
       <svg viewBox="0 0 30 28" className="h-7 w-full overflow-visible" aria-hidden>
         <circle cx="15" cy="14" r="11" fill="none" stroke="var(--sup-2)" strokeWidth="3.5" />
-        <circle cx="15" cy="14" r="11" fill="none" stroke="#c99700" strokeWidth="3.5" strokeLinecap="round" strokeDasharray="52 70" transform="rotate(-90 15 14)" />
+        <circle cx="15" cy="14" r="11" fill="none" stroke="var(--f-apoyo)" strokeWidth="3.5" strokeLinecap="round" strokeDasharray="52 70" transform="rotate(-90 15 14)" />
         <line className="aguja-gira" x1="15" y1="14" x2="15" y2="7" stroke="var(--tinta)" strokeWidth="2" strokeLinecap="round" />
       </svg>
     );
   return (
     <svg viewBox="0 0 60 28" className="h-7 w-full overflow-visible" aria-hidden>
-      <path className="ruta-traza" d="M2,23 C14,21 14,6 27,10 S45,24 58,5" fill="none" stroke="#5b2bd6" strokeWidth="3" strokeLinecap="round" />
-      <circle cx="58" cy="5" r="3" fill="#5b2bd6" />
+      <path className="ruta-traza" d="M2,23 C14,21 14,6 27,10 S45,24 58,5" fill="none" stroke="var(--f-taxi)" strokeWidth="3" strokeLinecap="round" />
+      <circle cx="58" cy="5" r="3" fill="var(--f-taxi)" />
     </svg>
   );
 }
@@ -98,10 +99,13 @@ export function TarjetaViva({
         <p className="text-[13px] font-semibold opacity-90">{encabezado}</p>
         <div className="flex gap-1.5">
           {record && (
-            <span className="pop rounded-chip bg-acento-2 px-2 py-0.5 text-[11px] font-bold text-acento-2-tinta">⭐ ¡Récord!</span>
+            <span className="pop inline-flex items-center gap-1 rounded-chip bg-acento-texto px-2 py-0.5 text-[11px] font-bold text-acento">
+              <Estrella className="size-3" />
+              ¡Récord!
+            </span>
           )}
           {racha >= 2 && (
-            <span className="pop rounded-chip bg-white/20 px-2 py-0.5 text-[11px] font-bold" style={{ "--i": 1 } as React.CSSProperties}>
+            <span className="pop rounded-chip border border-acento-texto/40 px-2 py-0.5 text-[11px] font-bold" style={{ "--i": 1 } as React.CSSProperties}>
               <span className="inline-block animate-[llama_1.2s_ease-in-out_infinite_alternate]">🔥</span> {racha} días
             </span>
           )}

@@ -3,8 +3,8 @@ import { formatearSoles } from "@/lib/pagos/reglas";
 
 const COLOR = {
   tienda: "bg-acento",
-  apoyo: "bg-[#c99700] dark:bg-[#e6b400]",
-  taxi: "bg-[#5b2bd6] dark:bg-[#8f6bf0]",
+  apoyo: "bg-[var(--f-apoyo)]",
+  taxi: "bg-[var(--f-taxi)]",
 } as const;
 
 /**

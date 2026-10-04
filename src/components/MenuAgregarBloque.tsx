@@ -34,8 +34,8 @@ export function MenuAgregarBloque({
       {abierto && <Abanico alCerrar={() => setAbierto(false)} />}
       {abierto && (
         <div className="fixed right-5 bottom-[calc(150px+env(safe-area-inset-bottom,0px))] z-[45] flex flex-col items-end gap-3 sm:bottom-24">
-          <OpcionDelAbanico i={2} Icono={Taxi} texto="Taxi libre" color="#5b2bd6" onClick={() => elegir(onElegirTaxi)} />
-          <OpcionDelAbanico i={1} Icono={Reloj} texto="Apoyo a otra tienda" color="#c99700" onClick={() => elegir(onElegirApoyo)} />
+          <OpcionDelAbanico i={2} Icono={Taxi} texto="Taxi libre" color="var(--f-taxi)" onClick={() => elegir(onElegirTaxi)} />
+          <OpcionDelAbanico i={1} Icono={Reloj} texto="Apoyo a otra tienda" color="var(--f-apoyo)" onClick={() => elegir(onElegirApoyo)} />
           <OpcionDelAbanico i={0} Icono={Tienda} texto="Pedidos de mi tienda" color="var(--acento)" onClick={() => elegir(onElegirTienda)} />
         </div>
       )}

@@ -37,6 +37,16 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 1.08 — 04/10/2026
+- **Contraste en las seis caras.** La estrella de «¡Récord!» no se veía (amarillo
+  sobre amarillo). Ahora el récord es una pastilla del color del texto de la cara
+  con una estrella dibujada del color del acento, que se lee en todas. Los colores
+  del anillo (tienda, apoyo, taxi) salen de cada cara —en Avispa, que es amarilla,
+  el apoyo es blanco y el taxi violeta, porque el naranja se perdía—, y los de
+  apoyo y taxi sobre fondo claro u oscuro (fichas, barras, carretera, velocímetro,
+  cinta de horas, abanico del «+») tienen su versión de día y de noche. La
+  carretera y la cinta de horas ya no se vuelven claras en el modo oscuro.
+
 ### 1.07 — 04/10/2026
 - **Barra de arriba**: ahora lleva **la marca a la izquierda** (el logo y «Control
   Driver», que al tocarlos llevan a Inicio) y **dónde estás a la derecha**, en una

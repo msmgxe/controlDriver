@@ -42,6 +42,23 @@
   --acento-2: #ffc800;
   --acento-2-tinta: #0a2260;
 
+  /* — las fuentes de ingreso (apoyo y taxi) y la carretera: en cada cara con
+       contraste suficiente sobre su superficie (≥ 4.5:1 el texto, ≥ 3:1 las
+       formas). Tienda es siempre el acento de la cara. — */
+  --f-apoyo: #a87800;
+  --f-taxi: #5b2bd6;
+  --apoyo-suave: #fff1c7;
+  --apoyo-tinta: #6b4a00;
+  --taxi-suave: #ece7ff;
+  --taxi-tinta: #4a1fb8;
+  --asfalto: #1c2740;
+  /* Los colores de las fuentes sobre la TARJETA DEL DÍA (que es del color del
+     acento de la cara): el texto de la cara para la tienda, el segundo color
+     para el apoyo y un punto medio para el taxi. */
+  --h-tienda: var(--acento-texto);
+  --h-apoyo: var(--acento-2);
+  --h-taxi: color-mix(in srgb, var(--acento-texto) 55%, var(--acento));
+
   /* — gráfico: rampa ordinal de un solo tono. — */
   --barra: #1f5cff;
   --barra-extra: #8aa9ff;
@@ -85,6 +102,13 @@
 }
 
 :root[data-modo="oscuro"] {
+  --f-apoyo: #f2b705;
+  --f-taxi: #a98bff;
+  --apoyo-suave: #3a3014;
+  --apoyo-tinta: #f2c94c;
+  --taxi-suave: #2c2447;
+  --taxi-tinta: #c4b0ff;
+  --asfalto: #3b4456;
   --papel: #0e1116;
   --sup: #161b22;
   --sup-2: #1e252e;
@@ -273,6 +297,9 @@
 }
 
 :root[data-modo="avispa"] {
+  /* La tarjeta es amarilla: el segundo color de la cara (naranja) se perdería. */
+  --h-apoyo: #ffffff;
+  --h-taxi: #7c3aed;
   /* Blanco, amarillo y negro de avispero: el fondo es blanco —no oscuro—,
      los gadgets (botones, chips, la tarjeta del día) van en amarillo con
      letra negra, y un borde negro grueso más sombra dura los hace resaltar,
