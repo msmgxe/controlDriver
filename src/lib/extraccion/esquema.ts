@@ -20,15 +20,22 @@ import { z } from "zod";
  *
  * En los dos hay un número de despacho de 8 dígitos y un sufijo de 2 (el bulto).
  */
-export const RE_CODIGO_PEDIDO = /^(?:v\d{7,8}wofp-\d{2}|wpet-\d{8}-\d{2})$/;
+export const RE_CODIGO_PEDIDO = /^(?:v\d{7,8}wofp-\d{2}|wpet-\d{8}-\d{2}|\d{7})$/;
+
+/* El último formato es el de una comanda física de otra tienda (Metro): el número
+   de despacho tal como está impreso, de 7 cifras, sin prefijo. Se guarda como se
+   lee; el pedido registra de dónde salió (`origen`). */
 
 /** El texto que dice cómo es un código, para los mensajes de error. */
-export const FORMATO_DE_CODIGO = "v12238726wofp-01 o wpet-12268585-01";
+export const FORMATO_DE_CODIGO = "v12238726wofp-01, wpet-12268585-01 o 7106635";
 
 /** El número de despacho de un código —sus 8 dígitos—, sea cual sea su formato. */
 export function numeroDeDespacho(codigo: string): string | null {
   return (
-    /^v(\d{7,8})wofp-\d{2}$/.exec(codigo)?.[1] ?? /^wpet-(\d{8})-\d{2}$/.exec(codigo)?.[1] ?? null
+    /^v(\d{7,8})wofp-\d{2}$/.exec(codigo)?.[1] ??
+    /^wpet-(\d{8})-\d{2}$/.exec(codigo)?.[1] ??
+    /^(\d{7})$/.exec(codigo)?.[1] ??
+    null
   );
 }
 

@@ -309,6 +309,17 @@ function TabPedido({
             Cambiar
           </button>
         </div>
+        <p className="text-xs text-tinta-3">
+          Código registrado desde{" "}
+          <b>
+            {orden.origen === "comanda"
+              ? "la comanda física (tal como está impreso)"
+              : orden.origen === "manual"
+                ? "lo escrito a mano"
+                : "las capturas de la app de reparto"}
+          </b>
+          .
+        </p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">

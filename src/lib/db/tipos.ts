@@ -102,7 +102,11 @@ export interface OrdenFila {
   tramoAuto: boolean;
   /** Cuántas fotos de comanda tiene este pedido (una como mucho, hoy). */
   fotos: number;
+  /** De dónde salió el pedido y su código. */
+  origen: OrigenDePedido;
 }
+
+export type OrigenDePedido = "captura" | "comanda" | "manual";
 
 /**
  * Un ingreso del día que no es un pedido de la tienda principal (§ plan de

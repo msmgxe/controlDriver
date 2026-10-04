@@ -68,7 +68,7 @@ describe("hojas de despacho de Metro", () => {
   it("lee el número de 7 cifras de la hoja y arma su código", () => {
     const [c] = interpretarComandas(ALEXIS, TAM);
     expect(c.numero.valor).toBe("7106635");
-    expect(codigoDeDespacho(c.numero.valor!)).toBe("v7106635wofp-01");
+    expect(codigoDeDespacho(c.numero.valor!)).toBe("7106635");
   });
 
   it("encuentra el nombre y la dirección aunque no empiece por Av. o Jr.", () => {

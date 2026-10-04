@@ -448,6 +448,11 @@ export function interpretarComandas(
   });
 }
 
-/** El código de pedido que corresponde a un número de despacho, para el primer bulto. */
+/**
+ * El código de pedido que corresponde a un número de despacho, para el primer
+ * bulto, **según de dónde viene**: el de 8 cifras es de Wong y su código en la
+ * app es `v12264655wofp-01`; el de 7 es de Metro y se guarda tal cual está
+ * impreso en la hoja, `7106635`.
+ */
 export const codigoDeDespacho = (numero: string, bulto = 1): string =>
-  `v${numero}wofp-${String(bulto).padStart(2, "0")}`;
+  numero.length === 7 ? numero : `v${numero}wofp-${String(bulto).padStart(2, "0")}`;

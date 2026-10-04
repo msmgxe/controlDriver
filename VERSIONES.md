@@ -37,6 +37,20 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 1.04 — 04/10/2026
+- **La ruta sale del horario de la hoja.** La ventana de entrega que trae la
+  comanda («17:00:00 – 18:00:59») es el horario de la ruta: al guardar, el
+  pedido se pone en la ruta de esa hora; si no existe, **se crea** y el día se
+  renumera por hora de salida, así queda en su orden lógico (la de las 17:00
+  entre la de las 15:00 y la de las 19:00). Si el pedido ya tenía ruta, no se
+  toca. Al revisar, la hoja avisa qué horario leyó, y al guardar dice «Ruta 3
+  (nueva)» si hubo que crearla.
+- **El código se guarda como se lee, según su origen.** Una hoja de Metro de 7
+  cifras queda como está impresa (`7106635`); una de Wong de 8 sigue siendo
+  `v12289138wofp-01`. Cada pedido **registra de dónde viene su código** (las
+  capturas, la comanda física o lo escrito a mano) y se ve en su hoja, bajo el
+  código. Un pedido de 7 cifras se encuentra por su número como cualquier otro.
+
 ### 1.03 — 04/10/2026
 - **Toda eliminación pide confirmación.** Se revisó la app entera: quitar una
   **ruta** (la «×» de la lista), quitar la **foto de evidencia** de un pedido,

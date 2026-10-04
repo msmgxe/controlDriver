@@ -142,6 +142,11 @@ export const ESQUEMA: string[] = [
      /* El tramo lo puso el cálculo por distancia, no la persona. Si la persona
         lo cambia a mano, vuelve a 0 y el cálculo ya no lo pisa. */
      tramo_auto       integer not null default 0,
+     /* De dónde salió el pedido y su código: 'captura' (el resumen de la app de
+        reparto), 'comanda' (la hoja de despacho física, con el número tal como
+        está impreso) o 'manual' (escrito a mano). Se guarda para poder decir,
+        cuando un pago se discute, de dónde viene cada código. */
+     origen           text not null default 'captura',
      /* La misma razón que en rutas, y además lo que permite el modo
         "combinar": un pedido ya registrado se actualiza, no se repite. */
      unique (jornada_id, codigo)
@@ -387,6 +392,7 @@ const COLUMNAS_ANADIDAS: ReadonlyArray<[tabla: string, columna: string, definici
   ["ordenes", "lng", "real"],
   ["ordenes", "km_fuente", "text"],
   ["ordenes", "tramo_auto", "integer not null default 0"],
+  ["ordenes", "origen", "text not null default 'captura'"],
 ];
 
 /** Lo mínimo que necesita `migrar` de una base, sea cual sea el motor. */

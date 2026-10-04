@@ -31,6 +31,7 @@ import {
   reglaVigente,
 } from "@/lib/db/sqlite/jornadas";
 import { perfilActual } from "@/lib/db/sqlite/perfil";
+import { asignarRutaPorHorario } from "@/lib/db/sqlite/rutas";
 import type { AjustesDeComandas } from "@/lib/db/sqlite/ajustes";
 import type { DatosDeCliente } from "@/lib/db/tipos";
 import { hoyEnLima, type FechaISO } from "@/lib/fechas";
@@ -57,6 +58,11 @@ export interface ComandaParaGuardar {
   moverAFecha: boolean;
   /** Solo para un pedido nuevo. */
   ruta: number | null;
+  /**
+   * El horario de la ruta que dice la hoja (`17:00–18:00`). Si el pedido no
+   * tiene ruta, va a la del mismo horario, y se crea si es la primera vez.
+   */
+  ventana?: string | null;
   nombre: string;
   telefono: string;
   direccion: string;
@@ -88,6 +94,8 @@ export interface ResultadoDeGuardado {
   montoCentimos: number;
   km: number | null;
   tramoDe: Tramo;
+  /** La ruta a la que quedó por su horario, si se asignó; `creada` si hubo que crearla. */
+  ruta: { numero: number; creada: boolean } | null;
 }
 
 interface Dependencias {
@@ -138,6 +146,7 @@ export async function guardarComanda(
       km: null,
       montoCentimos: pagoDelTramo(regla, 1) ?? 1000,
       tiendaId: perfil?.tiendaId ?? null,
+      origen: "comanda",
       vehiculo: perfil?.vehiculo,
       horaEntrada: perfil?.horaEntrada ?? null,
       horaSalida: perfil?.horaSalida ?? null,
@@ -158,6 +167,14 @@ export async function guardarComanda(
   const jornada = await jornadaPorFecha(d.fecha);
   const actual = jornada?.ordenes.find((o) => o.id === ordenId);
   if (!actual) throw new Error("Ese pedido ya no existe. Recarga el día y vuelve a intentarlo.");
+
+  /* La ruta, por el horario de la hoja: solo si el pedido no la tiene ya. Una
+     ruta que viene de las capturas manda; esto solo completa lo que falta. */
+  let ruta: ResultadoDeGuardado["ruta"] = null;
+  const ventana = /^(\d{2}:\d{2})–(\d{2}:\d{2})$/.exec(d.ventana ?? "");
+  if (ventana && actual.ruta === null) {
+    ruta = await asignarRutaPorHorario(d.fecha, ordenId, ventana[1], ventana[2]);
+  }
 
   /* El cliente: solo lo que Ajustes deja guardar y lo que se leyó. */
   const cliente: Partial<DatosDeCliente> = {};
@@ -217,5 +234,6 @@ export async function guardarComanda(
     montoCentimos,
     km: d.distancia?.km ?? null,
     tramoDe,
+    ruta,
   };
 }

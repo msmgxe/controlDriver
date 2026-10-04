@@ -175,3 +175,60 @@ export async function reordenarRutasDelDia(fecha: FechaISO): Promise<number> {
 
   return cambios.length;
 }
+
+/**
+ * Pone un pedido en la ruta cuyo horario es el de su comanda, y la crea si es
+ * la primera vez.
+ *
+ * La hoja de despacho trae la ventana de entrega (`17:00–18:00`) y esa es el
+ * horario de la ruta. Se busca, en el día del pedido, una ruta que salga a esa
+ * hora: si existe, el pedido va a ella; si no, se crea una nueva y se renumera
+ * el día por hora de salida, para que las rutas queden en su orden lógico (la de
+ * las 17:00 entre la de las 15:00 y la de las 19:00, no al final). Si la ruta
+ * ya existía sin hora de fin, se completa.
+ *
+ * Devuelve el número que quedó (después de renumerar) y si hubo que crearla.
+ */
+export async function asignarRutaPorHorario(
+  fecha: FechaISO,
+  ordenId: string,
+  inicio: string,
+  fin: string | null,
+): Promise<{ numero: number; creada: boolean }> {
+  const hInicio = horaValida(inicio);
+  const hFin = horaValida(fin);
+  if (!hInicio) throw new Error("La hora de inicio de la ruta no es válida.");
+
+  const dia = await consultar<{ id: string }>(`select id from jornadas where fecha = ?`, [fecha]);
+  const jornadaId = dia[0]?.id;
+  if (!jornadaId) throw new Error("Ese día no tiene jornada.");
+
+  let rutaId = "";
+  let creada = false;
+
+  await enTransaccion(async () => {
+    const rutas = await consultar<{ id: string; numero: number; hora_inicio: string | null; hora_fin: string | null }>(
+      `select id, numero, hora_inicio, hora_fin from rutas where jornada_id = ?`,
+      [jornadaId],
+    );
+    const igual = rutas.find((r) => r.hora_inicio?.slice(0, 5) === hInicio.slice(0, 5));
+    if (igual) {
+      rutaId = igual.id;
+      if (!igual.hora_fin && hFin) await ejecutar(`update rutas set hora_fin = ? where id = ?`, [hFin, igual.id]);
+    } else {
+      rutaId = nuevoId();
+      creada = true;
+      const numero = Math.max(0, ...rutas.map((r) => r.numero)) + 1;
+      await ejecutar(
+        `insert into rutas (id, jornada_id, numero, estado, hora_inicio, hora_fin) values (?, ?, ?, 'Finalizado', ?, ?)`,
+        [rutaId, jornadaId, numero, hInicio, hFin],
+      );
+    }
+    await ejecutar(`update ordenes set ruta_id = ? where id = ?`, [rutaId, ordenId]);
+    await ejecutar(`update jornadas set actualizado_en = ?, sincronizado = 0 where id = ?`, [ahora(), jornadaId]);
+  });
+
+  if (creada) await reordenarRutasDelDia(fecha);
+  const [final] = await consultar<{ numero: number }>(`select numero from rutas where id = ?`, [rutaId]);
+  return { numero: final?.numero ?? 0, creada };
+}

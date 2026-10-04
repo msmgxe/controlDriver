@@ -266,7 +266,8 @@ export function HojaDeComandas({
             // Solo se sugiere ruta para un pedido nuevo que va al día de hoy,
             // recién fotografiado en el momento: es cuando la hora dice algo.
             ruta:
-              opciones.desdeCamara && existentes.length === 0 && fechaDelItem === fecha
+              // Si la hoja trae su horario de ruta, manda ese y no la hora de ahora.
+              opciones.desdeCamara && existentes.length === 0 && fechaDelItem === fecha && !c.ventana.valor
                 ? rutaSegunHoraActual(rutas)
                 : null,
             ubicacion: { estado: "pendiente", candidatos: [], etiqueta: null, mensaje: null },
@@ -344,6 +345,7 @@ export function HojaDeComandas({
           fecha: elegido ? (mover ? fecha : elegido.fecha) : item.fecha,
           moverAFecha: mover,
           ruta: item.ruta,
+          ventana: item.hoja.comanda.ventana.valor,
           nombre: item.nombre,
           telefono: item.telefono,
           direccion: item.direccion,
@@ -653,7 +655,7 @@ function FilaDeComanda({ item, alAbrir }: { item: Item; alAbrir: () => void }) {
             ? `${item.origen} · vuelve a tomarla o complétala a mano`
             : `${elegido ? "Ya cargado" : "Pedido nuevo"} · ${
                 item.guardada
-                  ? `${formatearSoles(item.guardada.montoCentimos)}${item.guardada.km !== null ? ` · ${item.guardada.km.toFixed(1)} km` : ""}`
+                  ? `${formatearSoles(item.guardada.montoCentimos)}${item.guardada.km !== null ? ` · ${item.guardada.km.toFixed(1)} km` : ""}${item.guardada.ruta ? ` · Ruta ${item.guardada.ruta.numero}${item.guardada.ruta.creada ? " (nueva)" : ""}` : ""}`
                   : km !== null
                     ? `${km.toFixed(1)} km`
                     : item.ubicacion.estado === "buscando"
@@ -917,6 +919,15 @@ function Revision({
                   </select>
                 </label>
               </div>
+            )}
+
+            {item.hoja.comanda.ventana.valor && (
+              <p className="text-xs text-tinta-2">
+                Horario de la ruta, según la hoja: <b>{item.hoja.comanda.ventana.valor}</b>.
+                {item.ruta === null
+                  ? " Si no eliges ruta, el pedido irá a la de ese horario, y se crea si todavía no existe."
+                  : ""}
+              </p>
             )}
 
             <p className="text-xs text-tinta-3">

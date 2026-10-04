@@ -38,6 +38,7 @@ import type {
   JornadaParaGuardar,
   ModoDeGuardado,
   OrdenFila,
+  OrigenDePedido,
   PedidoEncontrado,
   RutaFila,
 } from "../tipos";
@@ -193,9 +194,10 @@ export async function jornadasPorRango(
     lng: number | null;
     km_fuente: string | null;
     tramo_auto: number;
+    origen: string | null;
     fotos: number;
   }>(
-    `select id, jornada_id, ruta_id, codigo, estado, posicion, tramo, km, monto_centimos, manual,
+    `select id, jornada_id, ruta_id, codigo, estado, posicion, tramo, km, monto_centimos, manual, origen,
             cliente_nombre, cliente_telefono, direccion, lat, lng, km_fuente, tramo_auto,
             (select count(*) from pruebas p where p.orden_id = ordenes.id) as fotos
        from ordenes where jornada_id in (${huecos})`,
@@ -238,6 +240,7 @@ export async function jornadasPorRango(
         cliente: aCliente(o),
         tramoAuto: aBool(o.tramo_auto),
         fotos: o.fotos ?? 0,
+        origen: (o.origen as OrigenDePedido | null) ?? "captura",
       }))
       /* En el orden en que se hicieron: por la hora de salida de su ruta, y
          dentro de cada ruta en el orden de la lista. Ordenar solo por la
@@ -634,6 +637,8 @@ export async function agregarPedidoManual(
     vehiculo?: TipoVehiculo;
     horaEntrada?: string | null;
     horaSalida?: string | null;
+    /** De dónde sale el pedido: lo escrito a mano (por defecto) o una comanda física. */
+    origen?: OrigenDePedido;
   },
 ): Promise<{ ordenId: string }> {
   const momento = ahora();
@@ -680,8 +685,8 @@ export async function agregarPedidoManual(
     const ordenId = nuevoId();
     await ejecutar(
       `insert into ordenes
-         (id, jornada_id, ruta_id, codigo, estado, posicion, tramo, km, monto_centimos, manual)
-       values (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+         (id, jornada_id, ruta_id, codigo, estado, posicion, tramo, km, monto_centimos, manual, origen)
+       values (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
        on conflict (jornada_id, codigo) do update set
          ruta_id        = excluded.ruta_id,
          estado         = excluded.estado,
@@ -691,7 +696,7 @@ export async function agregarPedidoManual(
          manual         = 1`,
       [
         ordenId, jornadaId, rutaId, datos.codigo, datos.estado,
-        posicion, datos.tramo, datos.km, datos.montoCentimos,
+        posicion, datos.tramo, datos.km, datos.montoCentimos, datos.origen ?? "manual",
       ],
     );
 
