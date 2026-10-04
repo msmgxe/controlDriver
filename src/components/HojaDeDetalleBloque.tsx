@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 
 import { eliminarBloque } from "@/app/(app)/jornada/acciones";
 import { FONDO_DE_BLOQUE, ICONO_DE_BLOQUE, tituloYDetalleDeBloque } from "@/components/bloques-visual";
@@ -62,7 +63,7 @@ export function HojaDeDetalleBloque({
   }
 
   if (corrigiendo) {
-    return (
+    return createPortal(
       <HojaDeBloqueExtraAutonoma
         tipo={bloque.tipo === "taxi" ? "taxi" : "apoyo"}
         fecha={fecha}
@@ -72,11 +73,13 @@ export function HojaDeDetalleBloque({
           alCambiar();
           alCerrar();
         }}
-      />
+      />,
+      document.body,
     );
   }
 
-  return (
+  // En un portal, fuera de la fila que la abre: una hoja `fixed` no debe depender de sus ancestros.
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center sm:p-5"
       onClick={(e) => {
@@ -201,7 +204,8 @@ export function HojaDeDetalleBloque({
           <p className="text-xs text-tinta-3">Esta semana ya está pagada: solo se puede mirar.</p>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

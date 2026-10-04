@@ -37,6 +37,14 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 1.01 — 04/10/2026
+**Nueva numeración**: desde aquí la versión empieza en **1.00** y cada cambio sube
+una centésima (1.01, 1.02…). Todo lo anterior (v1 a v51) fue el contador
+interno de compilaciones; la 1.00 es el punto de partida.
+- **Arreglo**: el detalle de un apoyo o un taxi (y su corrección) se abría
+  encogido dentro de la fila de «¿Qué hiciste hoy?» y casi no se veía. Ahora
+  cubre la pantalla como cualquier otra hoja.
+
 ### v51 — 04/10/2026
 - **El «+» flotante ahora es amarillo con el «+» oscuro y grueso**, con borde
   oscuro como la pastilla del día: sobre el azul de «Cargar resumen del día»

@@ -682,6 +682,11 @@
 }
 
 /* ---- Movimiento suave de la app (v49) ------------------------------------
+   Ojo: las animaciones de entrada usan `backwards`, no `both`. Con `both` el
+   elemento se queda con un `transform` «activo» para siempre, y eso hace de él
+   el bloque contenedor de todo `position: fixed` que tenga dentro: las hojas
+   que se abrían desde una fila de «¿Qué hiciste hoy?» salían encogidas dentro
+   de la fila en vez de cubrir la pantalla.
    Todo respeta `prefers-reduced-motion` (regla al final de este archivo).
 
    · `.entra`: algo aparece subiendo y desvaneciéndose. `--i` escalona una
@@ -701,7 +706,7 @@
   }
 }
 .entra {
-  animation: entra-sube 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: entra-sube 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
   animation-delay: calc(var(--i, 0) * 70ms);
 }
 @keyframes hoja-sube {
@@ -739,7 +744,7 @@ div:has(> [role="dialog"]) {
   }
 }
 .pop {
-  animation: pop 0.5s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+  animation: pop 0.5s cubic-bezier(0.3, 1.4, 0.5, 1) backwards;
   animation-delay: calc(var(--i, 0) * 70ms + 150ms);
 }
 @keyframes barra-crece {

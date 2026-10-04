@@ -34,6 +34,14 @@ VERSION_FILE="android/version.properties"
 ANTERIOR="$(grep -E '^build=' "$VERSION_FILE" | cut -d= -f2)"
 VERSION=$(( ANTERIOR + 1 ))
 sed -i '' "s/^build=.*/build=$VERSION/" "$VERSION_FILE"
+# El número que se ve: 1.00 → 1.01 → … (una centésima por compilación).
+NOMBRE_ANTERIOR="$(grep -E '^nombre=' "$VERSION_FILE" | cut -d= -f2)"
+NOMBRE="$(awk -v v="${NOMBRE_ANTERIOR:-1.00}" 'BEGIN { printf "%.2f", v + 0.01 }')"
+if grep -q '^nombre=' "$VERSION_FILE"; then
+  sed -i '' "s/^nombre=.*/nombre=$NOMBRE/" "$VERSION_FILE"
+else
+  echo "nombre=$NOMBRE" >> "$VERSION_FILE"
+fi
 
 # --- SDK de Android -------------------------------------------------------
 export ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
@@ -99,12 +107,12 @@ fi
 # El anterior se borra: tener seis APK viejos en la carpeta solo sirve para
 # instalar el equivocado.
 rm -f Rutas-A-v*.apk Control-Driver-v*.apk
-APK="Control-Driver-v$VERSION.apk"
+APK="Control-Driver-v$NOMBRE.apk"
 cp "$SALIDA" "$APK"
 
 echo
 echo "────────────────────────────────────────────────────────────"
-echo " Versión $VERSION lista"
+echo " Versión $NOMBRE lista"
 echo
 echo "     $(pwd)/$APK   ($(du -h "$APK" | cut -f1))"
 echo
@@ -119,7 +127,7 @@ if [ "${1:-}" = "--instalar" ]; then
     echo "Conéctalo por USB y activa la depuración USB (ver README-ANDROID.md)."
     exit 1
   fi
-  echo "▸ Instalando la versión $VERSION en el celular…"
+  echo "▸ Instalando la versión $NOMBRE en el celular…"
   if ! SALIDA_ADB=$("$ANDROID_HOME/platform-tools/adb" install -r "$APK" 2>&1); then
     echo "$SALIDA_ADB"
     if echo "$SALIDA_ADB" | grep -q "UPDATE_INCOMPATIBLE"; then
