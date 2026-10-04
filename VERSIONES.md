@@ -37,6 +37,11 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 1.09 — 04/10/2026
+- **Tarjeta del día**: el centro del anillo dice «Total del día» y ya no «3 pedidos»,
+  que hacía pensar que el monto era de esos pedidos. Los pedidos y las rutas se
+  leen ahora junto a **Tienda** («3 pedidos · 2 rutas»), que es de donde son.
+
 ### 1.08 — 04/10/2026
 - **Contraste en las seis caras.** La estrella de «¡Récord!» no se veía (amarillo
   sobre amarillo). Ahora el récord es una pastilla del color del texto de la cara

@@ -142,20 +142,24 @@ export function TarjetaViva({
           </svg>
           <div className="pointer-events-none absolute inset-0 grid place-content-center text-center">
             <span className="font-mono text-[19px] leading-none font-bold tabular-nums">{formatearSoles(Math.round(total))}</span>
-            <span className="mt-1 text-[10.5px] font-semibold opacity-85">
-              {pedidos} pedido{pedidos === 1 ? "" : "s"}
-            </span>
+            <span className="mt-1 text-[10.5px] font-semibold opacity-85">Total del día</span>
           </div>
         </div>
 
         <div className="relative flex min-w-0 flex-1 flex-col gap-1">
-          <span className="text-[12px] font-semibold opacity-90">
-            {rutas} ruta{rutas === 1 ? "" : "s"} · toca un color
-          </span>
+          <span className="text-[12px] font-semibold opacity-90">Toca un color</span>
           {porCategoria.map((x) => (
-            <button key={x.c} type="button" onClick={() => tocar(x.c)} className="flex min-h-7 items-center gap-1.5 text-left text-[12.5px]">
+            <button key={x.c} type="button" onClick={() => tocar(x.c)} className="flex min-h-8 items-center gap-1.5 text-left text-[12.5px]">
               <span className="size-2.5 shrink-0 rounded-full" style={{ background: COLOR[x.c] }} />
-              <span className="opacity-90">{NOMBRE[x.c]}</span>
+              <span className="flex min-w-0 flex-col leading-tight">
+                <span className="opacity-90">{NOMBRE[x.c]}</span>
+                {/* Los pedidos y las rutas son solo de la tienda: se dicen junto a ella, no bajo el total. */}
+                {x.c === "tienda" && pedidos > 0 && (
+                  <span className="text-[10.5px] opacity-75">
+                    {pedidos} pedido{pedidos === 1 ? "" : "s"} · {rutas} ruta{rutas === 1 ? "" : "s"}
+                  </span>
+                )}
+              </span>
               <b className="ml-auto font-mono tabular-nums">{formatearSoles(x.centimos)}</b>
             </button>
           ))}
