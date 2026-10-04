@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Control Driver · Pantallas de la app</title>
+<style>:root{--azul:#1f5cff;--azul-t:#1244cc;--amarillo:#ffc800;--tinta:#0a2260;--tinta2:#3e5183;--papel:#e6eef8;--sup2:#d9e5f4;--linea:#c4d5ec;--apoyo:#a87800;--taxi:#5b2bd6;--bien:#0b7a4d;--acento:var(--azul);--acento-texto:#fff}.vista{position:absolute;inset:0;display:flex;flex-direction:column}
+.cab{display:flex;align-items:center;gap:8px;padding:14px 14px 6px}.cab .logo{font-size:20px}.cab b{font-size:15px;letter-spacing:-.01em}.cab .chip{margin-left:auto;background:#dce6ff;color:var(--azul-t);border-radius:99px;padding:5px 11px;font-weight:800;font-size:12px}
+.cuerpo{padding:4px 12px 0;display:flex;flex-direction:column;gap:9px;flex:1;overflow:hidden}
+.barra{display:grid;grid-template-columns:repeat(5,1fr);background:#fff;border-radius:18px 18px 0 0;padding:7px 2px 10px;font-size:9.5px;font-weight:700;text-align:center;color:var(--tinta2);box-shadow:0 -6px 14px -10px #0a2260}
+.barra i{display:block;font-style:normal;font-size:18px}.barra .on i{background:var(--amarillo);border-radius:11px;margin:0 9px}
+.dias{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;position:relative}
+.dias span{background:var(--sup2);border-radius:10px;text-align:center;padding:5px 0;font-size:10px;font-weight:800;line-height:1.25}
+.dias .cur{position:absolute;top:0;bottom:0;width:calc((100% - 24px)/7);background:var(--azul);border-radius:10px;left:0;transition:left .9s cubic-bezier(.3,1.2,.4,1);z-index:0}
+.dias span{position:relative;z-index:1;background:none}.dias span.f{background:var(--sup2);z-index:0}
+.dias span.act{color:#fff}
+.hero{position:relative;background:var(--acento);color:var(--acento-texto);border-radius:22px;border:2px solid var(--tinta);box-shadow:3px 3px 0 var(--tinta);padding:13px;overflow:hidden;transition:background .5s,color .5s}
+.fila{background:#fff;border:1px solid var(--linea);border-radius:16px;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.fila .ic{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:16px;flex:none}
+.fila b{display:block;font-size:13px}.fila small{color:var(--tinta2);font-size:11px}.fila em{margin-left:auto;font-style:normal;font-weight:800;font-family:ui-monospace,monospace}
+.ok{width:22px;height:22px;border-radius:50%;background:var(--bien);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:900;flex:none}
+/* animaciones comunes: se reinician al entrar a cada escena (.go) */
+.a{opacity:0}.go .a{animation:ent .55s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--d,0)*1s)}
+@keyframes ent{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+.go .pop{animation:pop .5s cubic-bezier(.3,1.5,.5,1) both;animation-delay:calc(var(--d,0)*1s)}.pop{opacity:0}
+@keyframes pop{0%{opacity:0;transform:scale(.3)}70%{opacity:1;transform:scale(1.15)}100%{opacity:1;transform:scale(1)}}
+.num{font-variant-numeric:tabular-nums;font-family:ui-monospace,monospace;font-weight:900}
+/* anillo */
+.anillo{position:relative;width:128px;height:128px;flex:none}.anillo svg{width:100%;height:100%;transform:rotate(-90deg);overflow:visible}
+.anillo circle{fill:none;stroke-width:11;stroke-linecap:round;transition:stroke-dashoffset 1.4s cubic-bezier(.2,.8,.2,1) var(--d,0s)}
+.anillo .c{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.leg div{display:flex;align-items:center;gap:6px;font-size:11.5px;min-height:26px;white-space:nowrap}.leg i{width:10px;height:10px;border-radius:50%;flex:none}.leg b{margin-left:auto;font-size:11px}
+.fichas{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}
+.ficha{background:#fff;color:var(--tinta);border-radius:15px;padding:8px;font-size:10px;font-weight:700}.ficha b{display:block;font-size:11px;white-space:nowrap;font-family:ui-monospace,monospace}
+.ficha svg{width:100%;height:26px;overflow:visible}
+.barraM{transform-origin:bottom;animation:crecey .9s cubic-bezier(.2,.8,.2,1) both}@keyframes crecey{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.rutaM{stroke-dasharray:90;stroke-dashoffset:90}.go .rutaM{animation:traza 2.4s ease-in-out infinite}@keyframes traza{60%,100%{stroke-dashoffset:0}}
+.giraM{transform-origin:15px 14px;animation:gira 5s linear infinite}@keyframes gira{to{transform:rotate(360deg)}}
+.pill{display:inline-flex;align-items:center;gap:4px;border-radius:99px;padding:3px 9px;font-weight:800;font-size:11px}
+/* cámara */
+.camara{position:relative;flex:1;margin:6px 12px 0;border-radius:20px;background:#1a1c24;overflow:hidden}
+.papel{position:absolute;left:34px;right:34px;top:40px;bottom:70px;background:#fff;border-radius:6px;transform:rotate(-2deg);padding:14px;box-shadow:0 10px 30px #0008}
+.papel p{margin:0 0 8px;font-size:11px;color:#222}.papel .ln{height:6px;border-radius:4px;background:#dcdfe6;margin:7px 0}.papel b{font-size:12px}
+.marcos i{position:absolute;width:22px;height:22px;border:3px solid var(--amarillo)}.marcos i:nth-child(1){left:22px;top:28px;border-right:0;border-bottom:0}.marcos i:nth-child(2){right:22px;top:28px;border-left:0;border-bottom:0}.marcos i:nth-child(3){left:22px;bottom:58px;border-right:0;border-top:0}.marcos i:nth-child(4){right:22px;bottom:58px;border-left:0;border-top:0}
+.scan{position:absolute;left:26px;right:26px;height:3px;background:#7dffb2;box-shadow:0 0 18px 6px #7dffb2aa;top:30px}.go .scan{animation:barre 2s ease-in-out 0.4s both}
+@keyframes barre{0%{top:30px;opacity:1}85%{top:calc(100% - 66px);opacity:1}100%{top:calc(100% - 66px);opacity:0}}
+.disp{width:56px;height:56px;border-radius:50%;border:4px solid #fff;margin:auto;display:grid;place-items:center}.disp i{width:40px;height:40px;border-radius:50%;background:#fff}
+.go .disp i{animation:flash .5s ease 0.2s both}@keyframes flash{50%{transform:scale(.8)}}
+.campo{background:#fff;border:1px solid var(--linea);border-radius:13px;padding:7px 10px;display:flex;align-items:center;gap:8px;font-size:12px}.campo small{color:var(--tinta2);display:block;font-size:10px}.campo b{font-size:12.5px}
+.escribe{display:inline-block;overflow:hidden;white-space:nowrap;width:0}.go .escribe{animation:escribe var(--t,1.2s) steps(24,end) both;animation-delay:calc(var(--d,0)*1s)}@keyframes escribe{to{width:var(--w,160px)}}
+/* abanico */
+.fab{position:absolute;right:16px;bottom:78px;width:50px;height:50px;border-radius:50%;background:var(--amarillo);border:2px solid var(--tinta);display:grid;place-items:center;font-size:30px;font-weight:300;color:var(--tinta);transition:transform .4s}
+.fab.x{transform:rotate(45deg)}
+.fan{position:absolute;right:16px;bottom:140px;display:grid;gap:8px;justify-items:end}.fan span{background:#fff;border-radius:99px;padding:5px 14px 5px 5px;font-weight:800;font-size:12px;display:flex;align-items:center;gap:7px;box-shadow:0 6px 18px #0004}.fan span i{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-style:normal;color:#fff;font-size:14px}
+/* mapa */
+.mapa{position:relative;height:170px;border-radius:16px;background:#dfe9f5;overflow:hidden;background-image:linear-gradient(#ffffff99 2px,transparent 2px),linear-gradient(90deg,#ffffff99 2px,transparent 2px);background-size:34px 34px}
+.mapa svg{position:absolute;inset:0;width:100%;height:100%}
+.traz{stroke-dasharray:420;stroke-dashoffset:420}.go .traz{animation:dib 2.6s ease-in-out .3s forwards}@keyframes dib{to{stroke-dashoffset:0}}
+/* cinta de horas */
+.cinta{position:relative;height:96px;border-radius:14px;background:#1c2740;overflow:hidden}
+.cinta .h{position:absolute;top:0;bottom:0;border-left:1px dashed #fff3;color:#fff9;font-size:9px;padding-left:3px;font-weight:700}
+.cinta .bl{position:absolute;top:32px;height:34px;left:25%;width:62%;border-radius:10px;background:#d9a400;transform-origin:left;transform:scaleX(0);color:#fff;font-weight:800;font-size:11px;display:grid;place-items:center}
+.go .cinta .bl{animation:crece 1.2s cubic-bezier(.2,.8,.2,1) .3s forwards}@keyframes crece{to{transform:scaleX(1)}}
+.cinta .cur{position:absolute;top:0;bottom:0;width:2px;background:#fff;box-shadow:0 0 14px 3px #fff;left:0;opacity:0}
+.go .cinta .cur{animation:corre 3s cubic-bezier(.3,.8,.3,1) .4s forwards}@keyframes corre{0%{left:0;opacity:1}100%{left:87%;opacity:1}}
+/* carretera */
+.carr{position:relative;height:96px;border-radius:16px;background:var(--sup2);overflow:hidden}
+.carr .via{position:absolute;left:0;right:0;bottom:8px;height:40px;background:#1c2740;border-radius:10px}
+.carr .raya{position:absolute;left:8px;right:8px;top:50%;height:3px;background:repeating-linear-gradient(90deg,#ffd84d 0 14px,transparent 14px 26px);animation:rayaM .7s linear infinite}@keyframes rayaM{to{background-position-x:-26px}}
+.carr .recorr{position:absolute;left:0;bottom:8px;height:40px;width:0;background:#1f5cff66;border-radius:10px 0 0 10px}.go .carr .recorr{animation:avanza 3.2s cubic-bezier(.3,.9,.3,1) .4s forwards}
+.carr .coche{position:absolute;bottom:12px;left:0;font-size:34px;transform:scaleX(-1)}.go .carr .coche{animation:mueve 3.2s cubic-bezier(.3,.9,.3,1) .4s forwards}
+@keyframes avanza{to{width:63%}}@keyframes mueve{to{left:calc(63% - 40px)}}
+.carr .fl{position:absolute;top:8px;font-size:10px;font-weight:800;text-align:center;color:#52658f}.carr .fl.on{color:#a87800}
+.mon{position:absolute;top:30px;width:18px;height:18px;border-radius:50%;background:#ffc800;border:2px solid #8a6200;font-size:8px;font-weight:900;display:grid;place-items:center;color:#6b4a00;opacity:0;animation:monM 2.2s ease-in-out infinite}@keyframes monM{0%{opacity:0;transform:translateY(8px) scale(.5)}30%{opacity:1}100%{opacity:0;transform:translateY(-24px)}}
+.bd{height:8px;border-radius:9px;background:#fff;overflow:hidden;margin:3px 0 7px}.bd i{display:block;height:100%;border-radius:9px;width:0;transition:width 1.3s cubic-bezier(.2,.8,.2,1) var(--d,0s)}
+/* velocímetro */
+.vel{position:relative;background:#fff;border-radius:18px;padding:10px 10px 6px}.vel svg{width:100%;display:block}
+.vel .arc{fill:none;stroke-width:20;stroke-dasharray:314;stroke-dashoffset:314;transition:stroke-dashoffset 1.6s cubic-bezier(.2,.8,.2,1) var(--d,0s)}
+.aguja{transform-origin:150px 150px;transform:rotate(-90deg);transition:transform 2s cubic-bezier(.3,1.5,.4,1) .5s}
+.barrasG{display:flex;gap:7px;align-items:flex-end;height:84px;padding:0 4px}.barrasG div{flex:1;border-radius:8px 8px 3px 3px;background:var(--azul);transform-origin:bottom;transform:scaleY(0)}
+.go .barrasG div{animation:crecey 1s cubic-bezier(.2,.8,.2,1) calc(.4s + var(--i)*.1s) forwards}
+/* tramos */
+.tr{background:#fff;border:1px solid var(--linea);border-radius:14px;padding:9px 11px}.tr .t{display:flex;justify-content:space-between;font-weight:800;font-size:12.5px}
+.tr .bb{height:7px;border-radius:9px;background:var(--sup2);margin-top:6px;overflow:hidden}.tr .bb i{display:block;height:100%;width:0;background:var(--azul);border-radius:9px;transition:width 1.2s cubic-bezier(.2,.8,.2,1) var(--d,0s)}
+.ev{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:22px 22px 0 0;padding:12px 14px 16px;box-shadow:0 -14px 40px #0006;transform:translateY(105%)}
+.go .ev{animation:sheet .7s cubic-bezier(.2,.8,.2,1) 3s forwards}@keyframes sheet{to{transform:none}}
+.foto{height:130px;border-radius:12px;background:#fff;border:1px solid var(--linea);padding:10px;position:relative;overflow:hidden}
+.foto .ln{height:5px;border-radius:3px;background:#dcdfe6;margin:6px 0}.sello{position:absolute;right:10px;top:14px;border:2px solid #3b6bd0;color:#3b6bd0;font-weight:900;font-size:10px;padding:2px 6px;transform:rotate(-8deg)}
+/* seguridad */
+.pin{display:flex;gap:12px;justify-content:center;margin:12px 0}.pin i{width:16px;height:16px;border-radius:50%;border:2px solid var(--tinta);display:block}
+.go .pin i{animation:llena .3s ease forwards;animation-delay:calc(.5s + var(--k)*.45s)}@keyframes llena{to{background:var(--tinta)}}
+.teclas{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 24px}.teclas b{background:#fff;border-radius:14px;padding:11px 0;text-align:center;font-size:16px;border:1px solid var(--linea)}
+.dlg{position:absolute;left:18px;right:18px;top:38%;background:#fff;border-radius:20px;padding:16px;box-shadow:0 20px 60px #0007;z-index:5}
+.dlg .bt{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.dlg .bt span{border-radius:12px;padding:10px;text-align:center;font-weight:800;font-size:12px;border:1px solid var(--linea)}.dlg .bt .r{background:#b3261e;color:#fff;border:0}
+.share{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:22px 22px 0 0;padding:14px;box-shadow:0 -14px 40px #0006}
+.share .ap{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px;text-align:center;font-size:10px;font-weight:700}.share .ap i{display:grid;place-items:center;width:46px;height:46px;border-radius:14px;margin:0 auto 4px;font-style:normal;font-size:24px;color:#fff}
+
+html{scroll-behavior:smooth}
+body{margin:0;background:#eceef3;color:#14161d;font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:0 clamp(16px,4vw,40px) 80px}
+@media(prefers-color-scheme:dark){body{background:#111318;color:#eceef3}}
+.w{max-width:1280px;margin:auto}h1,h2,h3,p,ul,figure{margin:0}
+h1{font-size:clamp(30px,5vw,52px);line-height:1.05;letter-spacing:-.03em;padding-top:40px;max-width:20ch}
+.lead{color:#586071;max-width:74ch;margin-top:12px}
+.barraC{position:sticky;top:0;z-index:30;display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 0;margin-top:18px;background:color-mix(in srgb,#eceef3 90%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid #d8dce6}
+@media(prefers-color-scheme:dark){.barraC{background:#111318e6;border-color:#2b303b}}
+.barraC button,.rep{border:0;border-radius:99px;padding:7px 14px;font-weight:700;cursor:pointer;font-family:inherit;background:#d8dce6;color:#14161d;font-size:13px}
+.barraC .sw{width:26px;height:26px;padding:0;border:3px solid #fff;box-shadow:0 0 0 1px #0004}.barraC .sw.on{box-shadow:0 0 0 3px #14161d}
+.barraC .sp{flex:1}.barraC span.t{font-size:12px;font-weight:700;color:#586071}
+.galeria{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:48px 28px;margin-top:34px;justify-items:center}
+.item{display:grid;gap:18px;justify-items:center;max-width:340px}
+.item figcaption{display:grid;gap:6px;width:100%}.item figcaption h3{font-size:20px;letter-spacing:-.02em}.item figcaption p{color:#586071;font-size:14px}
+.item ul{margin:4px 0 6px;padding-left:18px;font-size:13.5px;color:#586071}.rot{font:700 11px/1 ui-monospace,monospace;letter-spacing:.09em;text-transform:uppercase;color:#6b4cf0}
+.rep{justify-self:start}
+.ph{width:318px;height:640px;border-radius:44px;background:#0b0d12;padding:10px;box-shadow:0 30px 60px -24px #0009,0 0 0 2px #2a2f3d}
+.pantalla{width:100%;height:100%;border-radius:34px;background:var(--papel);overflow:hidden;position:relative;color:var(--tinta);font-size:13px}
+/* ajustes */
+.acc{background:#fff;border:1px solid var(--linea);border-radius:16px;padding:9px 11px;display:flex;align-items:center;gap:10px}.acc b{display:block;font-size:12.5px}.acc small{color:var(--tinta2);font-size:10.5px}.acc .chev{margin-left:auto;color:#52658f}
+.ico{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;overflow:hidden;flex:none}.ico i{font-style:normal;font-size:19px;display:block}
+.fondo1{background:#ffe4f1}.fondo2{background:#ffe1e1}.fondo3{background:#dff5e6}.fondo4{background:#fff1c7}.fondo5{background:#e1e8ff}.fondo6{background:#dff1ff}.fondo7{background:#ece7ff}
+.m-colores{animation:hue 4s linear infinite}@keyframes hue{to{filter:hue-rotate(360deg)}}
+.m-pulso{animation:pul 1.8s ease-in-out infinite}@keyframes pul{50%{transform:scale(1.2)}}
+.m-bota{animation:bot 1.4s ease-in-out infinite}@keyframes bot{0%,100%{transform:translateY(2px)}50%{transform:translateY(-4px)}}
+.m-menea{animation:men 2.2s ease-in-out infinite}@keyframes men{0%,60%,100%{transform:rotate(0)}70%{transform:rotate(-12deg)}85%{transform:rotate(12deg)}}
+.m-balanceo{transform-origin:top center;animation:bal 2.4s ease-in-out infinite}@keyframes bal{0%,100%{transform:rotate(-9deg)}50%{transform:rotate(9deg)}}
+.m-flota{animation:flo 2.6s ease-in-out infinite}@keyframes flo{0%,100%{transform:translateY(2px)}50%{transform:translateY(-4px)}}
+.m-destello{animation:des 2.8s ease-in-out infinite}@keyframes des{0%,85%,100%{filter:none;transform:scale(1)}92%{filter:brightness(2.2);transform:scale(1.15)}}
+/* detalle de fuente (inicio) */
+.det{background:#fff;color:var(--tinta);border-radius:14px;padding:9px 12px;margin-top:8px;font-size:11.5px;animation:ent .4s both}.det b{font-size:12.5px}.det div{display:flex;justify-content:space-between;border-bottom:1px dashed var(--linea);padding:3px 0}
+.leg div,.ficha,.carr,.vel,.fab,.dlg .bt span,.teclas b{cursor:pointer}
+.fab{z-index:4}.fan{z-index:4}
+.fan{transition:opacity .35s}
+.ev{cursor:pointer}
+</style></head><body><div class="w">
+<h1>Las pantallas de Control Driver, en movimiento</h1>
+<p class="lead">Diez pantallas de la app móvil con sus características principales y los gráficos animados. Se mueven al llegar a ellas; toca los círculos de colores, el «+», la carretera, el velocímetro y las filas para probar. Arriba cambias el estilo de color y el sonido. Todo con datos de ejemplo.</p>
+<div class="barraC"><span class="t">Estilo:</span><span id="sws"></span><span class="sp"></span><button id="bSon">🔊 Sonido: sí</button><button id="bTodo">↺ Repetir todas</button></div>
+<div class="galeria">
+<figure class="item" id="p-inicio"><div class="ph"><div class="pantalla"><section class="vista" data-v="inicio">
+   <div class="cab a" style="--d:0"><span class="logo">🚕</span><b>Control Driver</b><span class="chip">⌂ Hoy</span></div>
+   <div class="cuerpo">
+    <div class="dias a" style="--d:.1"><i class="cur"></i><span>Lun<br>28</span><span>Mar<br>29</span><span>Mié<br>30</span><span>Jue<br>1</span><span>Vie<br>2</span><span id="dS">Sáb<br>3</span><span class="f">Dom<br>4</span></div>
+    <div class="hero a" style="--d:.25">
+     <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700"><span>Hoy cargaste</span><span><span class="pill pop" style="--d:1.6;background:#fff;color:var(--azul)">★ ¡Récord!</span> <span class="pill pop" style="--d:1.8;border:1px solid #fff8">🔥 6 días</span></span></div>
+     <div style="display:flex;gap:10px;align-items:center;margin-top:4px">
+      <div class="anillo"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" stroke="#ffffff33"/><circle id="r1" cx="50" cy="50" r="44" stroke="#fff"/><circle id="r2" cx="50" cy="50" r="44" stroke="#ffc800"/><circle id="r3" cx="50" cy="50" r="44" stroke="#9fb9ff"/></svg>
+       <div class="c"><span class="num" id="tot1" style="font-size:16px">S/ 0.00</span><span style="font-size:10px;opacity:.85;font-weight:700">Total del día</span></div></div>
+      <div class="leg" style="flex:1"><div><i style="background:#fff"></i>Tienda<b class="num">S/ 51.50</b></div><div><i style="background:#ffc800"></i>Apoyo<b class="num">S/ 202.50</b></div><div><i style="background:#9fb9ff"></i>Taxi<b class="num">S/ 78.50</b></div></div>
+     </div>
+     <div class="fichas">
+      <div class="ficha a" style="--d:1.2"><svg viewBox="0 0 60 26"><g fill="#1244cc"><rect class="barraM" x="0" y="14" width="8" height="12" rx="2"/><rect class="barraM" style="animation-delay:.1s" x="12" y="8" width="8" height="18" rx="2"/><rect class="barraM" style="animation-delay:.2s" x="24" y="11" width="8" height="15" rx="2"/><rect class="barraM" style="animation-delay:.3s" x="36" y="2" width="8" height="24" rx="2"/><rect class="barraM" style="animation-delay:.4s" x="48" y="7" width="8" height="19" rx="2"/></g></svg>Tienda<b>S/ 51.50</b></div>
+      <div class="ficha a" style="--d:1.35"><svg viewBox="0 0 30 26"><circle cx="15" cy="13" r="10" fill="none" stroke="#d9e5f4" stroke-width="3.5"/><circle cx="15" cy="13" r="10" fill="none" stroke="#a87800" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="46 63" transform="rotate(-90 15 13)"/><line class="giraM" x1="15" y1="13" x2="15" y2="7" stroke="#0a2260" stroke-width="2" stroke-linecap="round"/></svg>Apoyo<b>S/ 202.50</b></div>
+      <div class="ficha a" style="--d:1.5"><svg viewBox="0 0 60 26"><path class="rutaM" d="M2,22 C14,20 14,5 27,9 S45,23 58,4" fill="none" stroke="#5b2bd6" stroke-width="3" stroke-linecap="round"/><circle cx="58" cy="4" r="3" fill="#5b2bd6"/></svg>Taxi<b>S/ 78.50</b></div>
+     </div>
+    </div>
+    <div class="fila a" style="--d:1.9"><div class="ic" style="background:#dce6ff">🏪</div><div><b>Pedidos de mi tienda</b><small>3 pedidos · 2 rutas</small></div><em>S/ 51.50</em><span class="ok">✓</span></div>
+   </div>
+   <div class="barra"><div class="on"><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div>
+  </section></div></div>
+ <figcaption><span class="rot">Inicio</span><h3>La tarjeta del día, con vida</h3><p>Un anillo reparte lo de hoy entre tienda, apoyo y taxi. Toca un color o una ficha para ver el detalle de esa fuente.</p><ul><li>Total que cuenta hacia arriba</li><li>Racha de días y ¡Récord!</li><li>Fichas animadas por fuente</li></ul><button class="rep" data-k="inicio">↺ Repetir animación</button></figcaption></figure>
+<figure class="item" id="p-comanda"><div class="ph"><div class="pantalla"><section class="vista" data-v="comanda">
+   <div class="cab a" style="--d:0"><span class="logo">🧾</span><b>Foto de la comanda</b></div>
+   <div class="camara a" style="--d:.1"><div class="papel"><b>Hoja de despacho Nº 7106635</b><div class="ln" style="width:70%"></div><p style="margin-top:12px"><b>Alexis Vizcarra</b><br>Algeciras 181, SAN LUIS<br>Teléfono: +51 987 654 321</p><div class="ln"></div><div class="ln" style="width:55%"></div><p>Ventana: 17:00 – 18:00</p></div><div class="marcos"><i></i><i></i><i></i><i></i></div><div class="scan"></div>
+    <div style="position:absolute;left:0;right:0;bottom:8px"><div class="disp"><i></i></div></div></div>
+   <div class="cuerpo" style="padding-top:10px">
+    <div class="campo a" style="--d:2.4"><div><small>Cliente</small><b class="escribe" style="--w:150px;--d:2.5">Alexis Vizcarra</b></div><span class="ok" style="margin-left:auto">✓</span></div>
+    <div class="campo a" style="--d:3.0"><div><small>Dirección</small><b class="escribe" style="--w:190px;--d:3.1;--t:1.4s">Algeciras 181, San Luis</b></div><span class="ok" style="margin-left:auto">✓</span></div>
+    <div class="campo a" style="--d:3.7"><div><small>Teléfono</small><b class="escribe" style="--w:120px;--d:3.8">+51 987 654 321</b></div><span class="ok" style="margin-left:auto">✓</span></div>
+    <div class="campo pop" style="--d:4.6;background:#dff5e6;border-color:#9bd9b4"><div><small>Ruta según el horario de la hoja</small><b>17:00–18:00 · Ruta 3 creada</b></div><span class="ok" style="margin-left:auto">★</span></div>
+   </div>
+   <div class="barra"><div><i>⌂</i>Inicio</div><div class="on"><i>🚗</i>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div>
+  </section></div></div>
+ <figcaption><span class="rot">Cargar</span><h3>Una foto y listo</h3><p>La app lee la hoja de despacho: cliente, dirección, teléfono y el horario de la ruta, que se crea si es la primera vez.</p><ul><li>Funciona con comandas de Wong y Metro</li><li>Teléfono cortado: lo marca para completar</li><li>La foto queda como evidencia</li></ul><button class="rep" data-k="comanda">↺ Repetir animación</button></figcaption></figure>
+<figure class="item" id="p-taxi"><div class="ph"><div class="pantalla"><section class="vista" data-v="taxi">
+   <div class="cab a" style="--d:0"><span class="logo">🚕</span><b>Control Driver</b><span class="chip">⌂ Hoy</span></div>
+   <div class="cuerpo">
+    <div class="fila a" style="--d:.2"><div class="ic" style="background:#dce6ff">🏪</div><div><b>Pedidos de mi tienda</b><small>3 pedidos</small></div><em>S/ 51.50</em></div>
+    <div class="mapa a" style="--d:2.2"><svg viewBox="0 0 280 170"><path class="traz" d="M30,140 C70,130 80,70 130,80 S200,120 250,34" fill="none" stroke="#5b2bd6" stroke-width="6" stroke-linecap="round"/><circle cx="30" cy="140" r="8" fill="#0b7a4d" stroke="#fff" stroke-width="3"/><circle class="pop" style="--d:5.2" cx="250" cy="34" r="9" fill="#b3261e" stroke="#fff" stroke-width="3"/></svg>
+     <span class="pill pop" style="--d:2.6;position:absolute;left:10px;top:10px;background:#fff">📍 Inicio 19:05</span><span class="pill pop" style="--d:5;position:absolute;right:10px;bottom:10px;background:#fff">🏁 Fin 19:40</span></div>
+    <div class="fila pop" style="--d:5.5;background:#ece7ff"><div class="ic" style="background:#5b2bd6;color:#fff">🚕</div><div><b>Taxi libre</b><small><span class="num" id="km">0.0</span> km · carrera suelta</small></div><em>S/ 22.00</em><span class="ok">✓</span></div>
+   </div>
+   <div class="fan" id="fan"><span class="a" style="--d:.9"><i style="background:#5b2bd6">🚕</i>Taxi libre</span><span class="a" style="--d:.75"><i style="background:#c99700">⏱</i>Apoyo a otra tienda</span><span class="a" style="--d:.6"><i style="background:#1f5cff">🏪</i>Pedidos de mi tienda</span></div>
+   <div class="fab" id="fab">+</div>
+   <div class="barra"><div class="on"><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div>
+  </section></div></div>
+ <figcaption><span class="rot">Agregar</span><h3>El «+» y el taxi libre</h3><p>Un toque en «+» abre pedidos, apoyo o taxi. En el taxi marcas inicio y fin con el GPS y se calculan los km.</p><ul><li>Abanico animado</li><li>Ruta dibujada en el mapa</li><li>Eliges el día de cada registro</li></ul><button class="rep" data-k="taxi">↺ Repetir animación</button></figcaption></figure>
+<figure class="item" id="p-apoyo"><div class="ph"><div class="pantalla"><section class="vista" data-v="apoyo">
+   <div class="cab a" style="--d:0"><span class="logo">⏱</span><b>Apoyo a otra tienda</b></div>
+   <div class="cuerpo">
+    <div class="hero a" style="--d:.15;background:#fff;color:var(--tinta);box-shadow:none;border-color:var(--linea)"><span style="font-size:11px;color:var(--tinta2);font-weight:700">APOYO POR HORA · LIMATAMBO</span><div class="num" style="font-size:34px;color:var(--azul)" id="ap">S/ 0.00</div></div>
+    <div class="cinta a" style="--d:.4"><span class="h" style="left:5%">6</span><span class="h" style="left:21%">9</span><span class="h" style="left:37%">12</span><span class="h" style="left:53%">15</span><span class="h" style="left:68%">18</span><span class="h" style="left:84%">21</span><div class="bl">11.25 h</div><div class="cur"></div>
+     <span style="position:absolute;right:8px;bottom:5px;color:#fffc;font-size:11px;font-weight:700" class="num">10:15 → 21:30</span></div>
+    <div class="fila a" style="--d:1.2"><div><b>Cuenta</b><small>11.25 h × S/ 18.00 por hora</small></div><em>S/ 202.50</em></div>
+    <div class="fila a" style="--d:1.6"><div class="ic" style="background:#fff1c7">✏️</div><div><b>Corregir o quitar</b><small>Siempre con una pregunta de seguridad</small></div></div>
+   </div>
+   <div class="barra"><div class="on"><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div>
+  </section></div></div>
+ <figcaption><span class="rot">Apoyo</span><h3>Apoyo por hora</h3><p>Cubriste otra tienda: entrada, salida y tarifa. La cuenta sale sola y la cinta de horas muestra tu jornada.</p><ul><li>Cursor luminoso de horas</li><li>Se corrige o se quita con confirmación</li><li>Apoyo por tramos también</li></ul><button class="rep" data-k="apoyo">↺ Repetir animación</button></figcaption></figure>
+<figure class="item" id="p-pagos"><div class="ph"><div class="pantalla"><section class="vista" data-v="pagos">
+   <div class="cab a" style="--d:0"><span class="logo">🚕</span><b>Control Driver</b><span class="chip">👛 Pagos</span></div>
+   <div class="cuerpo">
+    <div class="a" style="--d:.1;background:#fff;border-radius:20px;padding:12px;display:flex;flex-direction:column;gap:8px">
+     <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:var(--tinta2)"><span>SEM. 28–4</span><span class="pill" style="background:#dce6ff;color:var(--azul-t)">EN CURSO</span></div>
+     <div class="num" id="pt" style="font-size:34px;color:var(--azul)">S/ 0.00</div>
+     <div class="carr"><span class="fl" style="left:21%">⚑<br>25%</span><span class="fl" style="left:46%">⚑<br>50%</span><span class="fl" id="f75" style="left:71%">⚑<br>75%</span><span class="fl" style="right:3px">⚑<br>100%</span>
+      <div class="via"><i class="raya"></i></div><div class="recorr"></div><div class="coche">🚕</div><span class="mon" style="left:18%;animation-delay:0s">S/</span><span class="mon" style="left:40%;animation-delay:.7s">S/</span></div>
+     <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--tinta2);font-weight:700"><span>63 % de la meta</span><span>meta S/ 1,500</span></div>
+    </div>
+    <div class="a" style="--d:.5;background:#d9e5f4;border-radius:18px;padding:11px 12px">
+     <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:800"><span>Tienda Wong</span><b class="num">S/ 752.00</b></div><div class="bd"><i style="background:#1f5cff;--d:.8s" data-w="79"></i></div>
+     <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:800"><span>Apoyo · Limatambo</span><b class="num">S/ 117.00</b></div><div class="bd"><i style="background:#c99700;--d:1.1s" data-w="12"></i></div>
+     <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:800"><span>Taxi libre</span><b class="num">S/ 78.50</b></div><div class="bd"><i style="background:#7a4df0;--d:1.4s" data-w="9"></i></div>
+    </div>
+    <div class="fila a" style="--d:1.6"><span style="font-size:18px">🕒</span><div><b>Se paga el viernes 09/10</b><small>Rindes S/ 22.79 por hora trabajada</small></div></div>
+   </div>
+   <div class="barra"><div><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div class="on"><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div>
+  </section></div></div>
+ <figcaption><span class="rot">Pagos</span><h3>La carretera de tu meta</h3><p>El vehículo avanza hasta donde vas de la meta semanal, con el desglose por fuente y lo que rindes por hora.</p><ul><li>Banderines al 25 · 50 · 75 · 100 %</li><li>Desglose tienda / apoyo / taxi</li><li>Se paga el viernes: siempre claro</li></ul><button class="rep" data-k="pagos">↺ Repetir animación</button></figcaption></figure>
+<figure class="item" id="p-stats"><div class="ph"><div class="pantalla"><section class="vista" data-v="stats">
+   <div class="cab a" style="--d:0"><span class="logo">🚕</span><b>Control Driver</b><span class="chip">📊 Estadísticas</span></div>
+   <div class="cuerpo">
+    <div class="vel a" style="--d:.1"><div style="font-weight:900;font-size:14px">Tu meta de la semana</div>
+     <svg viewBox="0 0 300 170"><path d="M50,150 A100,100 0 0 1 250,150" fill="none" stroke="#d9e5f4" stroke-width="20"/>
+      <path class="arc" id="v1" d="M50,150 A100,100 0 0 1 150,50" stroke="#1f5cff" style="--d:.3s"/><path class="arc" id="v2" d="M150,50 A100,100 0 0 1 187,56" stroke="#c99700" style="--d:1.1s"/><path class="arc" id="v3" d="M187,56 A100,100 0 0 1 208,69" stroke="#7a4df0" style="--d:1.5s"/>
+      <g class="aguja" id="ag"><line x1="150" y1="150" x2="150" y2="56" stroke="#0a2260" stroke-width="5" stroke-linecap="round"/><circle cx="150" cy="150" r="9" fill="#ffc800" stroke="#0a2260" stroke-width="3"/></g></svg>
+     <div style="text-align:center"><b class="num" id="vt" style="font-size:24px">S/ 0.00</b><div style="font-size:11px;color:var(--tinta2);font-weight:700">63 % de tu meta de S/ 1,500</div></div></div>
+    <div class="a" style="--d:.6;background:#fff;border-radius:18px;padding:10px 10px 6px"><div style="font-weight:900;font-size:13px;margin-bottom:6px">Pedidos por día</div>
+     <div class="barrasG"><div style="--i:0;height:30%"></div><div style="--i:1;height:20%"></div><div style="--i:2;height:48%"></div><div style="--i:3;height:100%;background:#ffc800"></div><div style="--i:4;height:62%"></div><div style="--i:5;height:75%"></div><div style="--i:6;height:12%;background:#c4d5ec"></div></div>
+     <div style="display:flex;gap:7px;font-size:9.5px;font-weight:800;color:var(--tinta2);padding:3px 4px 0"><span style="flex:1;text-align:center">L</span><span style="flex:1;text-align:center">M</span><span style="flex:1;text-align:center">M</span><span style="flex:1;text-align:center">J</span><span style="flex:1;text-align:center">V</span><span style="flex:1;text-align:center">S</span><span style="flex:1;text-align:center">D</span></div></div>
+   </div>
+   <div class="barra"><div><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div><i>👛</i>Pagos</div><div class="on"><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div>
+  </section></div></div>
+ <figcaption><span class="rot">Estadísticas</span><h3>Velocímetro de meta</h3><p>La aguja rebota hasta tu avance de la semana o el mes, con los colores de cada fuente, y debajo los pedidos por día.</p><ul><li>Semana, comparar y mes</li><li>Mejor día resaltado</li><li>Exporta PDF y Excel con el detalle</li></ul><button class="rep" data-k="stats">↺ Repetir animación</button></figcaption></figure>
+<figure class="item" id="p-tramos"><div class="ph"><div class="pantalla"><section class="vista" data-v="tramos">
+   <div class="cab a" style="--d:0"><span class="logo">🚕</span><b>Control Driver</b><span class="chip">👛 Pagos</span></div>
+   <div class="cuerpo">
+    <div style="font-weight:900;font-size:15px" class="a">Por tramo</div>
+    <div class="tr a" style="--d:.2"><div class="t"><span>Tramo 1 <small style="color:var(--tinta2)">0–2 km</small></span><span class="num">S/ 380.00</span></div><div class="bb"><i data-w="90" style="--d:.5s"></i></div><div style="font-size:10.5px;color:var(--tinta2);margin-top:4px">38 pedidos</div></div>
+    <div class="tr a" style="--d:.4"><div class="t"><span>Tramo 2 <small style="color:var(--tinta2)">2–4 km</small></span><span class="num">S/ 276.00</span></div><div class="bb"><i data-w="55" style="--d:.7s"></i></div><div style="font-size:10.5px;color:var(--tinta2);margin-top:4px">24 pedidos</div></div>
+    <div class="tr a" style="--d:.6"><div class="t"><span>Tramo 3 <small style="color:var(--tinta2)">4–6 km</small></span><span class="num">S/ 96.00</span></div><div class="bb"><i data-w="22" style="--d:.9s"></i></div></div>
+    <div class="fila a" style="--d:1.2;border-color:var(--azul)"><b class="num" style="font-size:11px">v12287402wofp-01</b><small>Ruta 1 · 1.2 km</small><em>S/ 10.00</em></div>
+   </div>
+   <div class="ev"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:15px">Evidencia del pedido</b><span class="pill" style="background:#dff5e6;color:var(--bien)">📷 Comanda ✓</span></div>
+    <div class="foto" style="margin-top:8px"><b style="font-size:11px">Hoja de despacho Nº 12287402</b><span class="sello">FACTURADO</span><div class="ln" style="width:60%"></div><div class="ln" style="width:80%"></div><div class="ln" style="width:45%"></div><div class="ln" style="width:70%"></div></div>
+    <div style="font-size:11px;color:var(--tinta2);margin-top:8px;font-weight:700">Cambia el tramo si hace falta · la foto respalda cada pago</div></div>
+   <div class="barra"><div><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div class="on"><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div>
+  </section></div></div>
+ <figcaption><span class="rot">Por tramo</span><h3>Comprueba cada pago</h3><p>Los pedidos agrupados por tramo de distancia. Tocas uno y ves su foto de comanda como evidencia; puedes cambiarle el tramo.</p><ul><li>Barras por tramo</li><li>Evidencia a un toque</li><li>Corrección con pregunta de seguridad</li></ul><button class="rep" data-k="tramos">↺ Repetir animación</button></figcaption></figure>
+<figure class="item" id="p-seguro"><div class="ph"><div class="pantalla"><section class="vista" data-v="seguro">
+   <div class="cab a" style="--d:0"><span class="logo">🔒</span><b>Seguro y tuyo</b></div>
+   <div class="cuerpo" style="gap:0">
+    <div class="a" style="--d:.1;text-align:center;font-weight:900;font-size:16px;margin-top:6px">Ingresa tu PIN</div>
+    <div class="pin a" style="--d:.2"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i style="--k:3"></i></div>
+    <div class="teclas a" style="--d:.3"><b>1</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b><b>7</b><b>8</b><b>9</b></div>
+    <div class="pop" style="--d:2.7;margin:14px 12px 0;background:#dff5e6;border-radius:14px;padding:9px 12px;font-weight:800;font-size:12px;color:var(--bien)">🔓 Tus datos viven en tu teléfono</div>
+   </div>
+   <div class="dlg pop" style="--d:3.6"><b style="font-size:15px">¿Quitar la ruta 3?</b><div style="font-size:12px;color:var(--tinta2);margin-top:5px">Sus pedidos no se borran: se quedan sin ruta.</div><div class="bt"><span>Cancelar</span><span class="r">Sí, quitar</span></div></div>
+   <div class="share pop" style="--d:4.4;z-index:7"><b style="font-size:14px">Respaldar mis datos</b><div style="font-size:11px;color:var(--tinta2)">Mándalo por WhatsApp o guárdalo en Drive</div><div class="ap"><div><i style="background:#25d366">💬</i>WhatsApp</div><div><i style="background:#4285f4">☁️</i>Drive</div><div><i style="background:#ea4335">✉️</i>Correo</div><div><i style="background:#6b4cf0">📁</i>Archivos</div></div></div>
+  </section></div></div>
+ <figcaption><span class="rot">Seguridad</span><h3>Seguro y tuyo</h3><p>PIN al abrir, pregunta antes de quitar cualquier cosa y respaldo de tus datos por WhatsApp, Drive o correo.</p><ul><li>Tus datos viven en tu teléfono</li><li>Toda eliminación se confirma</li><li>Respaldo para cambiar de teléfono</li></ul><button class="rep" data-k="seguro">↺ Repetir animación</button></figcaption></figure>
+<figure class="item" id="p-temas"><div class="ph"><div class="pantalla"><section class="vista" data-v="temas">
+   <div class="cab a" style="--d:0"><span class="logo">🎨</span><b>Tu app, a tu estilo</b></div>
+   <div class="cuerpo">
+    <div class="hero" id="heroT"><div style="font-size:12px;font-weight:700">Hoy cargaste</div><div class="num" style="font-size:38px;margin:6px 0">S/ 332.50</div><span class="pill" style="background:var(--amarillo);color:var(--tinta);border:2px solid var(--tinta)">3 pedidos · 2 rutas</span></div>
+    <div class="fila"><div class="ic" id="icT" style="background:#dce6ff">🏪</div><div><b>Pedidos de mi tienda</b><small>Toca para anotarlos</small></div><span class="ok">✓</span></div>
+    <div class="etiquetaTema" id="nomT" style="position:static;color:var(--tinta);text-shadow:none;margin-top:12px;font-size:20px">Mapa</div>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:6px" id="pts"></div><div style="text-align:center;font-size:11px;color:var(--tinta2);font-weight:700;margin-top:6px">Toca un color</div>
+   </div>
+   <div class="barra"><div class="on"><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div>
+  </section></div></div>
+ <figcaption><span class="rot">Estilos</span><h3>Hazla tuya</h3><p>Seis caras para elegir. Cambia el color de toda la app; prueba tocando los círculos.</p><ul><li>Mapa · Asfalto · Turbo</li><li>Menta · Arcilla · Avispa</li><li>Contraste cuidado en todas</li></ul><button class="rep" data-k="temas">↺ Repetir animación</button></figcaption></figure>
+<figure class="item" id="p-ajustes"><div class="ph"><div class="pantalla"><section class="vista" data-v="ajustes">
+   <div class="cab a" style="--d:0"><span class="logo">🚕</span><b>Control Driver</b><span class="chip">⋯ Ajustes</span></div>
+   <div class="cuerpo" style="gap:8px">
+    <div class="acc a" style="--d:.1"><span class="ico fondo1"><i class="m-colores">🎨</i></span><div><b>Apariencia</b><small>Mapa · 6 estilos</small></div><span class="chev">⌄</span></div>
+    <div class="acc a" style="--d:.2"><span class="ico fondo2"><i class="m-pulso">🎯</i></span><div><b>Mis metas y sonidos</b><small>Día S/ 250 · semana S/ 1,500</small></div><span class="chev">⌄</span></div>
+    <div class="acc a" style="--d:.3"><span class="ico fondo3"><i class="m-bota">📍</i></span><div><b>Tienda, ubicación y tarifa</b><small>Wong · Auto · desde S/ 10.00</small></div><span class="chev">⌄</span></div>
+    <div class="acc a" style="--d:.4"><span class="ico fondo4"><i class="m-menea">🧾</i></span><div><b>Comandas y clientes</b><small>Guarda nombre, dirección, teléfono</small></div><span class="chev">⌄</span></div>
+    <div class="acc a" style="--d:.5"><span class="ico fondo5"><i class="m-balanceo">🔒</i></span><div><b>Bloqueo del dispositivo</b><small>PIN activo · con huella</small></div><span class="chev">⌄</span></div>
+    <div class="acc a" style="--d:.6"><span class="ico fondo6"><i class="m-flota">☁️</i></span><div><b>Respaldo de tus datos</b><small>Crear una copia o restaurarla</small></div><span class="chev">⌄</span></div>
+    <div class="acc a" style="--d:.7"><span class="ico fondo7"><i class="m-destello">📷</i></span><div><b>Capturas y evidencias</b><small>12 fotos · 4.1 MB</small></div><span class="chev">⌄</span></div>
+   </div>
+   <div class="barra"><div><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div class="on"><i>⋯</i>Más</div></div>
+</section></div></div>
+ <figcaption><span class="rot">Ajustes</span><h3>Cada opción, con su imagen</h3><p>Cada sección tiene un icono animado que se mueve como lo que representa, para encontrarla de un vistazo.</p><ul><li>La paleta cambia de color</li><li>El pin rebota, el candado se balancea</li><li>Metas y sonidos a tu medida</li></ul><button class="rep" data-k="ajustes">↺ Repetir animación</button></figcaption></figure></div></div>
+<script>
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
+const FMT=n=>'S/ '+n.toFixed(2);
+/* ---------- sonido ---------- */
+let AC=null,SON=true;
+function ac(){if(!SON)return null;if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){return null}}if(AC.state==='suspended')AC.resume();return AC}
+function nota(f,t0,d,tipo='sine',v=.12,f2){const a=ac();if(!a)return;const o=a.createOscillator(),g=a.createGain(),T=a.currentTime+t0;o.type=tipo;o.frequency.setValueAtTime(f,T);if(f2)o.frequency.exponentialRampToValueAtTime(f2,T+d);g.gain.setValueAtTime(.0001,T);g.gain.exponentialRampToValueAtTime(v,T+.02);g.gain.exponentialRampToValueAtTime(.0001,T+d);o.connect(g).connect(a.destination);o.start(T);o.stop(T+d+.05)}
+function ruido(d,f0,f1,v=.08){const a=ac();if(!a)return;const n=a.createBuffer(1,a.sampleRate*d,a.sampleRate),b=n.getChannelData(0);for(let i=0;i<b.length;i++)b[i]=Math.random()*2-1;const s=a.createBufferSource();s.buffer=n;const f=a.createBiquadFilter();f.type='bandpass';f.Q.value=2;f.frequency.setValueAtTime(f0,a.currentTime);f.frequency.exponentialRampToValueAtTime(f1,a.currentTime+d);const g=a.createGain();g.gain.setValueAtTime(v,a.currentTime);g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+d);s.connect(f).connect(g).connect(a.destination);s.start()}
+const SFX={tienda:()=>{nota(523,0,.18,'triangle',.14);nota(784,.07,.22,'triangle',.1)},apoyo:()=>{nota(440,0,.14,'sine',.14);nota(554,.1,.14,'sine',.12);nota(659,.2,.3,'sine',.1)},taxi:()=>{nota(196,0,.2,'sawtooth',.05,330);nota(330,.16,.22,'sawtooth',.04)},moneda:()=>{nota(988,0,.09,'square',.05);nota(1319,.08,.3,'square',.05)},whoosh:()=>ruido(.7,300,2400,.09),motor:()=>{nota(90,0,.9,'sawtooth',.04,170);ruido(.8,150,600,.04)},bocina:()=>{nota(392,0,.3,'square',.04);nota(494,0,.3,'square',.04)},acelera:()=>{nota(180,0,1.4,'sawtooth',.04,520);ruido(1.2,200,1800,.04)},clic:()=>nota(660,0,.08,'sine',.1,990),foto:()=>{ruido(.12,2000,800,.12);nota(1200,0,.05,'square',.04)},tecla:()=>nota(520,0,.06,'triangle',.1)};
+const sfx=n=>{try{SON&&SFX[n]()}catch(e){}};
+$('#bSon').onclick=e=>{SON=!SON;e.target.textContent=SON?'🔊 Sonido: sí':'🔇 Sonido: no';sfx('moneda')};
+/* ---------- temas ---------- */
+const TEMAS=[['Mapa','#1f5cff','#ffffff','#dce6ff'],['Asfalto','#ff9f1c','#1a0f00','#fde7c8'],['Turbo','#6b4cf0','#ffffff','#e4dcff'],['Menta','#0b857b','#ffffff','#d3eeea'],['Arcilla','#d97757','#2a1509','#fbe3d8'],['Avispa','#eab308','#09090b','#fbefba']];
+let tema=0;
+function aplicarTema(k){tema=k;const x=TEMAS[k],r=document.documentElement.style;r.setProperty('--acento',x[1]);r.setProperty('--acento-texto',x[2]);r.setProperty('--azul',x[1]);$$('#sws .sw').forEach((b,i)=>b.classList.toggle('on',i===k));$$('#pts i').forEach((p,i)=>p.style.transform=i===k?'scale(1.5)':'scale(1)');const n=$('#nomT');if(n)n.textContent=x[0]}
+$('#sws').innerHTML=TEMAS.map((x,i)=>`<button class="sw" title="${x[0]}" data-i="${i}" style="background:${x[1]}"></button>`).join('');
+$$('#sws .sw').forEach(b=>b.onclick=()=>{aplicarTema(+b.dataset.i);sfx('clic')});
+const pts=$('#pts');pts.innerHTML=TEMAS.map((x,i)=>`<i data-i="${i}" style="width:22px;height:22px;border-radius:50%;background:${x[1]};display:block;border:2px solid #0a2260;cursor:pointer;transition:transform .25s"></i>`).join('');
+$$('#pts i').forEach(p=>p.onclick=()=>{aplicarTema(+p.dataset.i);sfx('clic')});
+/* ---------- utilidades ---------- */
+const vivos=new WeakMap();
+function tween(el,a,b,delay,dur,fmt){if(!el)return;const id={};vivos.set(el,id);setTimeout(()=>{const t0=performance.now();(function f(t){if(vivos.get(el)!==id)return;const p=Math.min(1,(t-t0)/(dur*1000)),e=1-Math.pow(1-p,3);el.textContent=fmt(a+(b-a)*e);if(p<1)requestAnimationFrame(f)})(t0)},delay*1000)}
+function reset(el,prop,v0,v1,ms=40){el.style.transition='none';el.style[prop]=v0;void el.getBoundingClientRect();el.style.transition='';setTimeout(()=>el.style[prop]=v1,ms)}
+const una=(v,f)=>{if(v.dataset.b)return;v.dataset.b=1;f()};
+/* ---------- cada pantalla ---------- */
+const SETUP={
+ inicio(v){
+  const C=2*Math.PI*44,F=[51.5,202.5,78.5].map(x=>x/332.5);let ac=0;
+  ['#r1','#r2','#r3'].forEach((s,i)=>{const el=$(s,v),len=Math.max(F[i]*C-4,3);el.style.strokeDasharray=`${len} ${C}`;el.style.setProperty('--d',(.6+i*.25)+'s');const off=-ac;ac+=F[i]*C;reset(el,'strokeDashoffset',len,off)});
+  const cur=$('.dias .cur',v);reset(cur,'left','0','calc(5 * (100% - 24px) / 7 + 5 * 4px)',500);$('#dS',v).classList.remove('act');setTimeout(()=>$('#dS',v).classList.add('act'),500);
+  tween($('#tot1',v),0,332.5,.9,1.6,FMT);
+  const D={tienda:['🏪 Tienda',[['Pedidos','3'],['Rutas','2'],['En ruta','1 h 08 min'],['Por pedido','S/ 17.17']]],apoyo:['⏱ Apoyo · Limatambo',[['Horario','10:15 → 21:30'],['Horas','11.25 h'],['Tarifa','S/ 18.00 / h']]],taxi:['🚕 Taxi libre',[['Carreras','3'],['Distancia','28.5 km'],['Promedio','S/ 26.17']]]};
+  una(v,()=>{const mostrar=k=>{sfx(k);$('.det',v)?.remove();const x=D[k];const d=document.createElement('div');d.className='det';d.innerHTML=`<b>${x[0]}</b>`+x[1].map(r=>`<div><span>${r[0]}</span><b>${r[1]}</b></div>`).join('');$('.hero',v).after(d)};
+   $$('.leg div',v).forEach((e,i)=>e.onclick=()=>mostrar(['tienda','apoyo','taxi'][i]));$$('.ficha',v).forEach((e,i)=>e.onclick=()=>mostrar(['tienda','apoyo','taxi'][i]));
+   $$('#r1,#r2,#r3',v).forEach((e,i)=>{e.style.cursor='pointer';e.onclick=()=>mostrar(['tienda','apoyo','taxi'][i])})});
+ },
+ comanda(v){setTimeout(()=>sfx('foto'),600)},
+ taxi(v){const fab=$('#fab',v),fan=$('#fan',v);fab.classList.add('x');fan.style.opacity=1;setTimeout(()=>{fab.classList.remove('x');fan.style.opacity=0},2000);tween($('#km',v),0,8.2,2.4,2.8,n=>n.toFixed(1));
+  una(v,()=>{fab.onclick=()=>{const abre=!fab.classList.contains('x');fab.classList.toggle('x',abre);fan.style.opacity=abre?1:0;sfx('clic')};$$('#fan span',v).forEach((s,i)=>s.onclick=()=>{sfx(['tienda','apoyo','taxi'][2-i]);fab.classList.remove('x');fan.style.opacity=0})})},
+ apoyo(v){tween($('#ap',v),0,202.5,.5,1.8,FMT);setTimeout(()=>sfx('whoosh'),700)},
+ pagos(v){$$('.bd i',v).forEach(i=>reset(i,'width','0',i.dataset.w+'%'));$$('.fl',v).forEach((f,i)=>{f.classList.remove('on');if(i<3)setTimeout(()=>f.classList.add('on'),[900,1700,2500][i])});tween($('#pt',v),0,947.5,.3,2.2,FMT);setTimeout(()=>sfx('motor'),400);setTimeout(()=>sfx('bocina'),3600);
+  una(v,()=>{$('.carr',v).onclick=()=>reiniciar(v)})},
+ stats(v){['#v1','#v2','#v3'].forEach(s=>reset($(s,v),'strokeDashoffset','314','0'));const ag=$('#ag',v);reset(ag,'transform','rotate(-90deg)','rotate(18deg)',60);tween($('#vt',v),0,947.5,.5,2.2,FMT);setTimeout(()=>sfx('acelera'),500);una(v,()=>{$('.vel',v).onclick=()=>reiniciar(v)})},
+ tramos(v){$$('.tr .bb i',v).forEach(i=>reset(i,'width','0',i.dataset.w+'%'));const ev=$('.ev',v);ev.style.transition='transform .6s cubic-bezier(.2,.8,.2,1)';ev.style.animation='';ev.style.transform='';
+  una(v,()=>{ev.onclick=()=>{ev.style.animation='none';ev.style.transform=ev.style.transform==='translateY(105%)'?'none':'translateY(105%)';sfx('clic')};$$('.tr,.cuerpo .fila',v).forEach(e=>e.onclick=ev.onclick&&(()=>{ev.style.animation='none';ev.style.transform='none';sfx('clic')}))});setTimeout(()=>sfx('whoosh'),3100)},
+ seguro(v){[0,1,2,3].forEach(k=>setTimeout(()=>sfx('tecla'),600+k*450));setTimeout(()=>sfx('moneda'),2700);const d=$('.dlg',v);d.style.transition='';d.style.opacity='';d.style.pointerEvents='';setTimeout(()=>{d.style.transition='opacity .4s';d.style.opacity=0;d.style.pointerEvents='none'},4300);una(v,()=>{$$('.dlg .bt span',v).forEach(b=>b.onclick=()=>{d.style.transition='opacity .3s';d.style.opacity=0;d.style.pointerEvents='none';sfx('clic')})})},
+ temas(v){for(let k=0;k<6;k++)setTimeout(()=>{aplicarTema(k);},k*500+200);setTimeout(()=>aplicarTema(0),3300)},
+ ajustes(v){una(v,()=>{$$('.acc',v).forEach(a=>a.onclick=()=>{sfx('clic');const c=$('.chev',a);c.style.transition='transform .3s';c.style.transform=c.style.transform==='rotate(180deg)'?'':'rotate(180deg)'})})},
+};
+function reiniciar(v){v.classList.remove('go');void v.offsetWidth;v.classList.add('go');(SETUP[v.dataset.v]||(()=>{}))(v)}
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting&&!e.target.dataset.visto){e.target.dataset.visto=1;reiniciar(e.target)}}),{threshold:.45});
+$$('.vista').forEach(v=>io.observe(v));
+$$('.rep').forEach(b=>b.onclick=()=>reiniciar($(`.vista[data-v="${b.dataset.k}"]`)));
+$('#bTodo').onclick=()=>{$$('.vista').forEach(v=>reiniciar(v))};
+aplicarTema(0);
+</script>
+</body></html>
