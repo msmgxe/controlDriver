@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Control Driver · 5 estilos de icono: auto y moto</title>
+<style>
+:root{--pg:#eceef3;--card:#fff;--ink:#14161d;--mut:#586071;--line:#d8dce6;
+ --acento:#1f5cff;--acento-t:#fff;--amar:#ffc800;--tinta:#0a2260;--papel:#e6eef8;--sup2:#d9e5f4;--linea:#c4d5ec}
+body[data-tema="violeta"]{--acento:#6b4cf0;--papel:#f0ecff;--sup2:#e4dcff;--tinta:#241660;--linea:#d5ccf5}
+body[data-tema="menta"]{--acento:#0b857b;--papel:#eef4f2;--sup2:#d3eeea;--tinta:#0c1a18;--linea:#c9dedb}
+body[data-tema="avispa"]{--acento:#eab308;--acento-t:#09090b;--papel:#fffdf2;--sup2:#fbefba;--tinta:#09090b;--linea:#efe2a8}
+@media(prefers-color-scheme:dark){:root{--pg:#111318;--card:#191c23;--ink:#eceef3;--mut:#9aa2b2;--line:#2b303b}}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--pg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:0 clamp(16px,4vw,40px) 80px}
+.w{max-width:1320px;margin:auto}h1,h2,h3,p{margin:0}
+h1{font-size:clamp(30px,5vw,50px);line-height:1.05;letter-spacing:-.03em;padding-top:40px;max-width:21ch}
+.lead{color:var(--mut);max-width:74ch;margin-top:12px}
+.barra{position:sticky;top:0;z-index:30;display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:10px 0;margin-top:18px;background:color-mix(in srgb,var(--pg) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.seg{display:inline-flex;background:var(--line);border-radius:99px;padding:3px}.seg button{border:0;background:none;color:var(--ink);font:700 14px system-ui;padding:8px 18px;border-radius:99px;cursor:pointer;display:flex;gap:7px;align-items:center}.seg button.on{background:var(--ink);color:var(--pg)}
+.barra .t{font-size:12px;font-weight:700;color:var(--mut)}.barra .sp{flex:1}
+.sw{width:26px;height:26px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px #0004;cursor:pointer;padding:0}.sw.on{box-shadow:0 0 0 3px var(--ink)}
+.pausa{border:0;border-radius:99px;padding:8px 14px;font-weight:700;background:var(--line);color:var(--ink);cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px;margin-top:26px}
+.op{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:18px;display:grid;gap:14px;align-content:start}
+.op header{display:flex;gap:12px;align-items:center}.op .l{width:44px;height:44px;border-radius:13px;background:var(--ink);color:var(--pg);display:grid;place-items:center;font-weight:900;font-size:22px;flex:none}
+.op h2{font-size:19px;letter-spacing:-.02em;line-height:1.1}.op header p{color:var(--mut);font-size:13px;margin-top:3px}
+.tags{display:flex;gap:6px;flex-wrap:wrap}.tags span{font-size:11.5px;border:1px solid var(--line);border-radius:99px;padding:2px 9px;color:var(--mut)}
+.rot{font:700 10.5px/1 ui-monospace,monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--mut);margin-bottom:6px;display:block}
+/* contextos */
+.ctx{border-radius:16px;overflow:hidden}
+.ic svg{display:block;width:100%;height:auto;overflow:visible}
+/* variables de color de cada icono */
+.v{--v1:var(--acento);--v2:#fff;--vt:var(--tinta);--fondo:var(--card)}
+.sobreAcento.estB,.sobreAcento.estC{--vt:#fff;--v1:#fff;--fondo:var(--acento);--v2:var(--acento)}
+.sobreAcento.estC{--v1:#fff}
+.amarillo.estB,.amarillo.estC{--vt:#fff;--fondo:#1c2740;--v2:#1c2740}
+.amarillo.estE,.amarillo.estA{--vt:var(--tinta)}
+.mono{--v1:currentColor;--v2:var(--fondo);--vt:currentColor}
+.sobreAcento{--v1:#fff;--v2:var(--acento);--vt:var(--tinta)}
+.amarillo{--v1:var(--amar);--v2:#fff;--vt:var(--tinta)}
+/* 1 cabecera */
+.cab{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--papel);color:var(--tinta);--fondo:var(--papel)}.cab .ic{width:50px;flex:none}.cab b{font-size:16px;letter-spacing:-.01em}.cab .chip{margin-left:auto;background:var(--sup2);border-radius:99px;padding:4px 10px;font-weight:800;font-size:12px}
+/* 2 barra inferior */
+.nav{display:grid;grid-template-columns:repeat(5,1fr);align-items:end;background:#fff;color:#52658f;padding:8px 2px 8px;font-size:9.5px;font-weight:700;text-align:center;--fondo:#fff;border:1px solid var(--linea);border-radius:16px}
+.nav div{display:grid;gap:2px;justify-items:center}.nav i{font-style:normal;font-size:18px;line-height:1.2}.nav .ic{width:42px}
+.nav .on{color:var(--tinta)}.nav .on .pas{background:var(--amar);border-radius:12px;padding:0 6px;display:block}
+/* 3 tarjeta */
+.hero{position:relative;background:var(--acento);color:var(--acento-t);padding:14px;min-height:150px;overflow:hidden;border:2px solid var(--tinta);border-radius:20px;box-shadow:3px 3px 0 var(--tinta)}
+.hero small{font-weight:700;opacity:.9}.hero .n{font:900 36px/1 ui-monospace,monospace;margin:4px 0}.hero .pill{display:inline-block;background:var(--amar);color:var(--tinta);border:2px solid var(--tinta);border-radius:99px;padding:2px 10px;font:800 13px ui-monospace,monospace}
+.hero .ic{position:absolute;right:-6px;bottom:8px;width:52%;transform:rotate(-3deg)}
+/* 4 carretera */
+.via{position:relative;height:88px;background:var(--sup2);border-radius:16px;overflow:hidden}
+.via .calle{position:absolute;left:0;right:0;bottom:8px;height:38px;background:#1c2740;border-radius:10px}.via .raya{position:absolute;left:8px;right:8px;top:50%;height:3px;background:repeating-linear-gradient(90deg,#ffd84d 0 14px,transparent 14px 26px);animation:raya .7s linear infinite}
+@keyframes raya{to{background-position-x:-26px}}
+.via .ic{position:absolute;bottom:10px;left:0;width:70px;animation:recorre 5s cubic-bezier(.4,.1,.3,1) infinite}
+@keyframes recorre{0%{left:-10px}70%,100%{left:calc(100% - 78px)}}
+.via .fl{position:absolute;top:6px;font-size:10px;font-weight:800;color:#52658f}
+/* 5 mapa */
+.mapa{position:relative;height:130px;border-radius:16px;background:#dfe9f5;background-image:linear-gradient(#ffffff99 2px,transparent 2px),linear-gradient(90deg,#ffffff99 2px,transparent 2px);background-size:30px 30px;overflow:hidden}
+.mapa svg.ruta{position:absolute;inset:0;width:100%;height:100%}
+.pin{position:absolute;width:58px;transform:translate(-50%,-50%);filter:drop-shadow(0 6px 8px #0005);animation:pinbota 1.6s ease-in-out infinite}
+@keyframes pinbota{50%{transform:translate(-50%,-56%)}}
+.mapa .circ{background:#fff;border-radius:50%;padding:8px;border:3px solid var(--acento)}
+/* 6 selector */
+.sel{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:var(--papel);border-radius:16px;padding:10px;color:var(--tinta);--fondo:#fff}
+.sel button{border:2px solid var(--linea);background:#fff;border-radius:16px;padding:8px 6px 10px;font:800 13px system-ui;color:var(--tinta);cursor:pointer;display:grid;gap:4px;justify-items:center;transition:transform .2s,border-color .2s}
+.sel button .ic{width:84px}.sel button.on{border-color:var(--acento);background:color-mix(in srgb,var(--acento) 10%,#fff);transform:translateY(-2px)}.sel button:not(.on) .ic{opacity:.45;filter:grayscale(.6)}
+.sel button.on::after{content:"✓ Elegido";font-size:10.5px;color:var(--acento)}
+/* D es cuadrado (visto desde arriba): se acota y, en horizontal, mira a la derecha */
+.cab .estD{width:38px}.nav .estD{width:32px}.sel .estD{width:64px}
+.hero .ic.estD{width:30%;right:10px;bottom:6px;transform:rotate(90deg)}
+.via .ic.estD{width:46px;bottom:5px;transform:rotate(90deg)}
+/* animaciones de los iconos */
+.anim .bota{animation:bota .5s ease-in-out infinite alternate}
+@keyframes bota{to{transform:translateY(-1.8px)}}
+.anim .gira{animation:giraR .6s linear infinite;transform-box:fill-box;transform-origin:center}
+@keyframes giraR{to{transform:rotate(360deg)}}
+.anim .estela path{animation:estela .5s linear infinite}
+@keyframes estela{0%{opacity:.2;transform:translateX(6px)}50%{opacity:.7}100%{opacity:.1;transform:translateX(-8px)}}
+.pausado *{animation-play-state:paused!important}
+.vote{margin-top:44px;background:var(--card);border:2px solid var(--ink);border-radius:18px;padding:20px 22px}.vote p{color:var(--mut);margin-top:8px;max-width:78ch}
+</style>
+</head>
+<body data-tema="azul">
+<div class="w">
+<h1>¿Cómo se verá tu auto o tu moto?</h1>
+<p class="lead">Cinco estilos de icono para el vehículo que eliges en <b>Ajustes › Tipo de transporte</b>. Cada tarjeta lo muestra en los seis lugares donde aparece en la app: la cabecera, la barra de abajo, la tarjeta del día, la carretera de la meta, el mapa del taxi y el propio selector. Cambia entre <b>Auto</b> y <b>Moto</b> (o toca el selector dentro de cada tarjeta) y prueba los colores de la app.</p>
+
+<div class="barra">
+ <span class="t">Tu transporte:</span>
+ <div class="seg" id="segV"><button data-v="auto" class="on">🚗 Auto</button><button data-v="moto">🛵 Moto</button><button data-v="ambos">Ambos</button></div>
+ <span class="t" style="margin-left:8px">Color:</span><span id="sws" style="display:flex;gap:8px"></span>
+ <span class="sp"></span><button class="pausa" id="bPausa">⏸ Pausar movimiento</button>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="vote"><h3>Mi recomendación</h3><p><b>E (Cartoon) para la tarjeta del día, la carretera y el mapa</b> —es la que más vida tiene y se ve bien en tamaño grande— y <b>C (Pictograma) para la barra de abajo</b>, donde un icono de un solo color es lo más legible a 24 px. Si prefieres no cambiar nada de lo que ya conoces, <b>A (Perfil)</b> es el estilo actual de la app. <b>D (Cenital)</b> es ideal si algún día la app muestra un mapa en vivo. Dime la letra (o la mezcla) y la construyo.</p></div>
+</div>
+
+<script>
+/* ======================= Los dibujos =======================
+   Todos usan las variables --v1 (cuerpo), --v2 (cristal / detalle), --vt (trazo / ruedas)
+   para tomar los colores de cada lugar donde aparecen. */
+const CUERPO='M14 44V36Q14 31 20 30L30 28Q36 13 52 12H74Q88 12 94 26L104 29Q112 31 112 37V44H101A11 11 0 0 0 79 44H45A11 11 0 0 0 23 44Z';
+const VIDRIOS='M37 26Q41 16 53 15.5H60V26ZM64 15.5H73Q83 15.5 88 26H64Z';
+const ESTELA='<g class="estela" stroke="var(--vt)" stroke-width="3" stroke-linecap="round" fill="none" opacity=".45"><path d="M2 26h12"/><path d="M0 34h16"/><path d="M4 42h9"/></g>';
+const rueda=(x,y,r,extra='')=>`<g class="gira"><circle cx="${x}" cy="${y}" r="${r}" fill="var(--vt)"/><circle cx="${x}" cy="${y}" r="${r*.42}" fill="var(--v2)"/><path d="M${x} ${y-r*.8}V${y+r*.8}M${x-r*.8} ${y}H${x+r*.8}" stroke="var(--v2)" stroke-width="1.6" opacity=".7"/></g>`;
+
+
+/* ---- La moto (scooter de reparto, mirando a la derecha) ---- */
+const M={caja:'<rect x="5" y="12" width="31" height="22" rx="5"',asiento:'M36 42Q36 32 44 32H60L67 42Z',piso:'M66 42H84',col:'M84 42L91 20M87 20H101',horq:'M91 22L98 40',torso:'M47 33Q48 20 55 20Q62 20 67 27L86 22'};
+const motoA=()=>`<svg viewBox="0 0 126 62" role="img" aria-label="Moto">${ESTELA}<g class="bota">${M.caja} fill="var(--v2)" stroke="var(--vt)" stroke-width="2.6"/><path d="M11 23h19" stroke="var(--vt)" stroke-width="2.4" stroke-linecap="round"/><path d="${M.torso}" fill="none" stroke="var(--vt)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="55" cy="11" r="6.5" fill="var(--vt)"/><path d="${M.asiento}" fill="var(--v1)" stroke="var(--vt)" stroke-width="2.6" stroke-linejoin="round"/><path d="${M.piso}${M.col}${M.horq}" fill="none" stroke="var(--vt)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="104" cy="22" r="3.4" fill="#ffe27a" stroke="var(--vt)" stroke-width="1.6"/></g>${rueda(28,48,10)}${rueda(98,48,10)}</svg>`;
+const motoB=()=>`<svg viewBox="0 0 126 62" role="img" aria-label="Moto">${ESTELA}<g class="bota" fill="none" stroke="var(--vt)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">${M.caja}/><path d="${M.torso}"/><circle cx="55" cy="11" r="6.5"/><path d="${M.asiento}" fill="color-mix(in srgb,var(--v1) 14%,transparent)"/><path d="${M.piso}${M.col}${M.horq}"/><circle cx="104" cy="22" r="3.2"/></g><g class="gira"><circle cx="28" cy="48" r="10" fill="var(--v2)" stroke="var(--vt)" stroke-width="3.2"/></g><g class="gira"><circle cx="98" cy="48" r="10" fill="var(--v2)" stroke="var(--vt)" stroke-width="3.2"/></g></svg>`;
+const motoC=()=>`<svg viewBox="0 0 126 62" role="img" aria-label="Moto"><g class="bota">${M.caja} fill="var(--vt)"/><path d="M11 23h19" stroke="var(--fondo)" stroke-width="2.6" stroke-linecap="round"/><path d="${M.torso}" fill="none" stroke="var(--vt)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="55" cy="11" r="6.5" fill="var(--vt)"/><path d="${M.asiento}" fill="var(--vt)"/><path d="${M.piso}${M.col}${M.horq}" fill="none" stroke="var(--vt)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="104" cy="22" r="3.6" fill="var(--vt)"/></g><g class="gira"><circle cx="28" cy="48" r="11" fill="var(--vt)" stroke="var(--fondo)" stroke-width="3.5"/><circle cx="28" cy="48" r="3" fill="var(--fondo)"/></g><g class="gira"><circle cx="98" cy="48" r="11" fill="var(--vt)" stroke="var(--fondo)" stroke-width="3.5"/><circle cx="98" cy="48" r="3" fill="var(--fondo)"/></g></svg>`;
+const motoE=()=>`<svg viewBox="0 0 130 70" role="img" aria-label="Moto">${ESTELA}<g class="bota"><rect x="4" y="10" width="34" height="26" rx="7" fill="var(--amar)" stroke="var(--vt)" stroke-width="3"/><path d="M12 22h18M12 28h11" stroke="var(--vt)" stroke-width="2.6" stroke-linecap="round"/><path d="M46 36Q47 22 56 22Q64 22 69 29L90 24" fill="none" stroke="var(--vt)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="57" cy="12" r="10" fill="var(--v2)" stroke="var(--vt)" stroke-width="3"/><path d="M57 5Q68 5 68 13H57Z" fill="var(--vt)"/><path d="M38 46Q38 35 47 35H64L72 46Z" fill="var(--v1)" stroke="var(--vt)" stroke-width="3" stroke-linejoin="round"/><path d="M72 46H88M88 46L96 22M92 22H108M96 24L104 44" fill="none" stroke="var(--vt)" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="111" cy="24" r="4.4" fill="#ffe27a" stroke="var(--vt)" stroke-width="2"/></g>${rueda(30,56,12)}${rueda(102,56,12)}</svg>`;
+
+const ICONOS={
+/* A · Perfil: el estilo actual de la app */
+A:{auto:()=>`<svg viewBox="0 0 126 62" role="img" aria-label="Auto">${ESTELA}<g class="bota"><path d="${CUERPO}" fill="var(--v1)" stroke="var(--vt)" stroke-width="2.6" stroke-linejoin="round"/><path d="${VIDRIOS}" fill="var(--v2)"/><circle cx="72" cy="21.2" r="3.1" fill="var(--vt)"/><path d="M66.5 26Q67 24.6 72 24.6Q77 24.6 77.5 26Z" fill="var(--vt)"/><circle cx="108" cy="35" r="2.6" fill="#ffe27a"/></g>${rueda(34,44,11)}${rueda(90,44,11)}</svg>`,
+   moto:motoA},
+/* B · Línea */
+B:{auto:()=>`<svg viewBox="0 0 126 62" role="img" aria-label="Auto">${ESTELA}<g class="bota" fill="none" stroke="var(--vt)" stroke-width="3.4" stroke-linejoin="round" stroke-linecap="round"><path d="${CUERPO}" fill="color-mix(in srgb,var(--v1) 12%,transparent)"/><path d="M37 26Q41 16 53 15.5H60V26ZM64 15.5H73Q83 15.5 88 26H64Z" stroke-width="2.6"/></g>${rueda(34,44,11).replace('fill="var(--vt)"','fill="var(--v2)" stroke="var(--vt)" stroke-width="3.4"').replace('fill="var(--v2)"/><path','fill="var(--vt)"/><path')}${rueda(90,44,11).replace('fill="var(--vt)"','fill="var(--v2)" stroke="var(--vt)" stroke-width="3.4"').replace('fill="var(--v2)"/><path','fill="var(--vt)"/><path')}</svg>`,
+   moto:motoB},
+/* C · Pictograma (una sola tinta) */
+C:{auto:()=>`<svg viewBox="0 0 126 62" role="img" aria-label="Auto"><g class="bota"><path d="${CUERPO}" fill="var(--vt)"/><path d="${VIDRIOS}" fill="var(--fondo)"/><circle cx="72" cy="21.2" r="3.1" fill="var(--vt)"/><path d="M66.5 26Q67 24.6 72 24.6Q77 24.6 77.5 26Z" fill="var(--vt)"/></g><g class="gira"><circle cx="34" cy="44" r="12" fill="var(--vt)" stroke="var(--fondo)" stroke-width="3.5"/><circle cx="34" cy="44" r="3.5" fill="var(--fondo)"/></g><g class="gira"><circle cx="90" cy="44" r="12" fill="var(--vt)" stroke="var(--fondo)" stroke-width="3.5"/><circle cx="90" cy="44" r="3.5" fill="var(--fondo)"/></g></svg>`,
+   moto:motoC},
+/* D · Cenital (vista desde arriba, para mapa) */
+D:{auto:()=>`<svg viewBox="0 0 60 60" role="img" aria-label="Auto desde arriba"><g class="bota"><rect x="19" y="5" width="22" height="50" rx="11" fill="var(--v1)" stroke="var(--vt)" stroke-width="2.4"/><path d="M22.5 19Q30 14 37.5 19L36 27H24Z" fill="var(--v2)"/><rect x="23" y="32" width="14" height="10" rx="3" fill="var(--v2)"/><rect x="24" y="44" width="12" height="3" rx="1.5" fill="var(--vt)" opacity=".5"/><circle cx="23.5" cy="9" r="2.4" fill="#ffe27a" stroke="var(--vt)" stroke-width="1"/><circle cx="36.5" cy="9" r="2.4" fill="#ffe27a" stroke="var(--vt)" stroke-width="1"/><rect x="14" y="20" width="5" height="4" rx="2" fill="var(--vt)"/><rect x="41" y="20" width="5" height="4" rx="2" fill="var(--vt)"/></g></svg>`,
+   moto:()=>`<svg viewBox="0 0 60 60" role="img" aria-label="Moto desde arriba"><g class="bota"><rect x="27.5" y="3" width="5" height="13" rx="2.5" fill="var(--vt)"/><path d="M12 18H48" stroke="var(--vt)" stroke-width="3.4" stroke-linecap="round"/><ellipse cx="30" cy="33" rx="7.5" ry="13" fill="var(--v1)" stroke="var(--vt)" stroke-width="2.4"/><circle cx="30" cy="28" r="5.2" fill="var(--vt)"/><ellipse cx="30" cy="35" rx="7" ry="3.8" fill="var(--vt)"/><rect x="21" y="40" width="18" height="15" rx="4" fill="var(--v2)" stroke="var(--vt)" stroke-width="2.4"/><rect x="27.5" y="53" width="5" height="6" rx="2.5" fill="var(--vt)"/></g></svg>`},
+/* E · Cartoon con personalidad */
+E:{auto:()=>`<svg viewBox="0 0 130 70" role="img" aria-label="Auto">${ESTELA}<g class="bota"><path d="M10 50V38Q10 28 22 26L34 24Q40 8 58 8H78Q94 8 100 24L112 28Q122 30 122 40V50Z" fill="var(--v1)" stroke="var(--vt)" stroke-width="3.2" stroke-linejoin="round"/><path d="M44 24Q48 14 60 14H68V24ZM74 14H80Q90 14 94 24H74Z" fill="var(--v2)" stroke="var(--vt)" stroke-width="2"/><circle cx="82" cy="20" r="3.2" fill="var(--vt)"/><circle cx="88" cy="20" r="3.2" fill="var(--vt)"/><circle cx="83" cy="19" r="1" fill="#fff"/><circle cx="89" cy="19" r="1" fill="#fff"/><path d="M104 40Q112 44 118 40" fill="none" stroke="var(--vt)" stroke-width="2.4" stroke-linecap="round"/><circle cx="114" cy="34" r="3.6" fill="#ffe27a" stroke="var(--vt)" stroke-width="1.8"/><rect x="46" y="3" width="16" height="6" rx="3" fill="var(--amar)" stroke="var(--vt)" stroke-width="2"/></g>${rueda(38,52,13)}${rueda(94,52,13)}</svg>`,
+   moto:motoE},
+};
+const ESTILOS=[
+ ['A','Perfil lleno','El estilo actual: color con borde, conductor en la ventanilla y estela.',['conserva tu identidad','reconocible']],
+ ['B','Línea fina','Solo contornos, ligero y moderno. Se ve elegante en tamaños grandes.',['minimalista','elegante']],
+ ['C','Pictograma','Una sola tinta, con ruedas que giran. El más legible en la barra de abajo.',['monocromo','nítido a 24 px']],
+ ['D','Vista cenital','Visto desde arriba, como en un mapa GPS. Para el marcador del taxi.',['pensado para mapa','giratorio']],
+ ['E','Cartoon','Redondo y simpático: ojos, sonrisa, ruedas con radios y rebote.',['con personalidad','el más llamativo']],
+];
+let V='auto';
+const SW=[['azul','#1f5cff'],['violeta','#6b4cf0'],['menta','#0b857b'],['avispa','#eab308']];
+const $sws=document.getElementById('sws');
+$sws.innerHTML=SW.map((x,i)=>`<button class="sw ${i?'':'on'}" data-t="${x[0]}" style="background:${x[1]}" title="${x[0]}"></button>`).join('');
+$sws.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{document.body.dataset.tema=b.dataset.t;$sws.querySelectorAll('.sw').forEach(x=>x.classList.toggle('on',x===b))});
+const vehiculos=()=>V==='ambos'?['auto','moto']:[V];
+const ic=(e,v,clase='')=>`<span class="ic v anim est${e} ${clase}">${ICONOS[e][v]()}</span>`;
+function tarjeta([e,nombre,desc,tags]){
+ const vs=vehiculos();
+ const filas=(f)=>vs.map(v=>f(v)).join('');
+ return `<article class="op" id="op-${e}">
+  <header><div class="l">${e}</div><div><h2>${nombre}</h2><p>${desc}</p></div></header>
+  <div class="tags">${tags.map(t=>`<span>${t}</span>`).join('')}</div>
+  <div><span class="rot">Cabecera</span><div class="ctx">${filas(v=>`<div class="cab">${ic(e,v)}<b>Control Driver</b><span class="chip">⌂ Hoy</span></div>`)}</div></div>
+  <div><span class="rot">Barra de abajo · «Cargar»</span>${filas(v=>`<div class="nav" style="margin-bottom:${vs.length>1?8:0}px"><div><i>⌂</i>Inicio</div><div class="on"><span class="pas">${ic(e,v,'mono')}</span>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div>`)}</div>
+  <div><span class="rot">Tarjeta del día</span>${filas(v=>`<div class="hero" style="margin-bottom:${vs.length>1?8:0}px"><small>Hoy cargaste</small><div class="n">S/ 332.50</div><span class="pill">3 pedidos</span>${ic(e,v,'sobreAcento')}</div>`)}</div>
+  <div><span class="rot">Carretera de la meta</span>${filas(v=>`<div class="via" style="margin-bottom:${vs.length>1?8:0}px"><span class="fl" style="left:24%">⚑ 25%</span><span class="fl" style="left:50%">⚑ 50%</span><span class="fl" style="left:76%">⚑ 75%</span><div class="calle"><i class="raya"></i></div>${ic(e,v,'amarillo')}</div>`)}</div>
+  <div><span class="rot">Mapa del taxi</span>${filas(v=>`<div class="mapa" style="margin-bottom:${vs.length>1?8:0}px"><svg class="ruta" viewBox="0 0 280 130" preserveAspectRatio="none"><path d="M20 105 C70 100 80 50 130 58 S200 95 250 25" fill="none" stroke="var(--acento)" stroke-width="5" stroke-dasharray="9 8" stroke-linecap="round"/></svg><div class="pin" style="left:78%;top:34%;width:${e==='D'?52:60}px"><div class="${e==='D'?'circ':''}"><span class="ic v anim" style="display:block;transform:${e==='D'?'rotate(35deg)':'none'}">${ICONOS[e][v]()}</span></div></div></div>`)}</div>
+  <div><span class="rot">Ajustes › Tipo de transporte</span><div class="sel" data-e="${e}">
+   <button data-v="auto" class="${V==='auto'?'on':''}">${ic(e,'auto')}Auto</button>
+   <button data-v="moto" class="${V==='moto'?'on':''}">${ic(e,'moto')}Moto</button></div></div>
+ </article>`}
+function pintar(){
+ document.getElementById('grid').innerHTML=ESTILOS.map(tarjeta).join('');
+ document.querySelectorAll('.sel button').forEach(b=>b.onclick=()=>fijar(b.dataset.v));
+ document.querySelectorAll('.sel').forEach(s=>{if(V==='ambos')s.querySelectorAll('button').forEach(b=>b.classList.add('on'))});
+}
+function fijar(v){V=v;document.querySelectorAll('#segV button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));pintar()}
+document.querySelectorAll('#segV button').forEach(b=>b.onclick=()=>fijar(b.dataset.v));
+document.getElementById('bPausa').onclick=e=>{const p=document.body.classList.toggle('pausado');e.target.textContent=p?'▶ Reanudar movimiento':'⏸ Pausar movimiento'};
+pintar();
+</script>
+</body></html>
