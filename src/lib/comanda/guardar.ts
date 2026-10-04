@@ -41,7 +41,7 @@ import { TRAMO_MAS_DE_12_KM, pagoDelTramo } from "@/lib/pagos/reglas";
 import { codigoDeDespacho } from "./interpretar";
 
 export interface ComandaParaGuardar {
-  /** El número de despacho, 8 dígitos. */
+  /** El número de despacho, 7 u 8 dígitos. */
   numero: string;
   /** El pedido que la comanda completa; null para crear uno nuevo. */
   ordenExistenteId: string | null;
@@ -108,8 +108,8 @@ export async function guardarComanda(
   ajustes: AjustesDeComandas,
   dependencias: Dependencias = { guardarFoto: guardarFotoDePedido },
 ): Promise<ResultadoDeGuardado> {
-  if (!/^\d{8}$/.test(d.numero) && !d.ordenExistenteId) {
-    throw new Error("El número de despacho tiene que tener 8 dígitos.");
+  if (!/^\d{7,8}$/.test(d.numero) && !d.ordenExistenteId) {
+    throw new Error("El número de despacho tiene que tener 7 u 8 dígitos.");
   }
   if (d.fecha > hoyEnLima()) throw new Error("No puedes guardar un pedido con fecha futura.");
   if ((await estadoDeSemana(d.fecha)) === "pagada") {

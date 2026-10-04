@@ -11,6 +11,7 @@ import {
   guardarClienteDePedido,
   quitarClienteDePedido,
 } from "@/app/(app)/jornada/acciones";
+import { DialogoConfirmar } from "@/components/DialogoConfirmar";
 import { Alerta, Camara, Check, Equis, Ojo, Pin, Telefono, Ticket } from "@/components/iconos";
 import { Pestanas } from "@/components/Pestanas";
 import { RadarDeTramos } from "@/components/RadarDeTramos";
@@ -958,6 +959,7 @@ function TabEvidencia({
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [ampliada, setAmpliada] = useState(false);
+  const [preguntandoFoto, setPreguntandoFoto] = useState(false);
 
   useEffect(() => {
     let vigente = true;
@@ -1070,10 +1072,21 @@ function TabEvidencia({
                 type="button"
                 className="min-h-10 rounded-btn text-sm font-semibold text-mal disabled:opacity-50"
                 disabled={deshabilitado || !!ocupado}
-                onClick={() => void quitar()}
+                onClick={() => setPreguntandoFoto(true)}
               >
                 Quitar foto
               </button>
+              {preguntandoFoto && (
+                <DialogoConfirmar
+                  titulo="¿Quitar la foto de la comanda?"
+                  texto="Es la evidencia de este pedido. Si la quitas, tendrás que volver a tomarla."
+                  alCancelar={() => setPreguntandoFoto(false)}
+                  alConfirmar={() => {
+                    setPreguntandoFoto(false);
+                    void quitar();
+                  }}
+                />
+              )}
             </div>
           </div>
         ) : (

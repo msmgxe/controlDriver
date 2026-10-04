@@ -768,10 +768,10 @@ function Revision({
   const km = item.distancia?.km ?? null;
   const calculado = km !== null ? tramoPorDistancia(regla, km) : null;
   const masDe12 = calculado !== null && calculado.montoCentimos === null;
-  const numeroValido = /^\d{8}$/.test(item.numero);
+  const numeroValido = /^\d{7,8}$/.test(item.numero);
 
   async function renumerar(numero: string) {
-    const existentes = /^\d{8}$/.test(numero) ? await pedidosPorNumero(numero) : [];
+    const existentes = /^\d{7,8}$/.test(numero) ? await pedidosPorNumero(numero) : [];
     actualizar(item.id, { numero, existentes, elegido: existentes[0]?.ordenId ?? null });
   }
 
@@ -847,7 +847,7 @@ function Revision({
                 <p>
                   {numeroValido
                     ? `No estaba entre tus capturas. Se añade como ${codigoDeDespacho(item.numero)}.`
-                    : "Escribe el número de despacho de la hoja (8 dígitos) para poder guardarla."}
+                    : "Escribe el número de despacho de la hoja (7 u 8 dígitos) para poder guardarla."}
                 </p>
               </Aviso>
             )}

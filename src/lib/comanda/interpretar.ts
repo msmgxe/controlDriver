@@ -49,7 +49,7 @@ export interface CampoDeComanda {
 }
 
 export interface ComandaLeida {
-  /** El número de despacho: 8 dígitos, la parte del medio del código del pedido. */
+  /** El número de despacho: 8 dígitos en Wong, 7 en Metro; la parte del medio del código del pedido. */
   numero: CampoDeComanda;
   nombre: CampoDeComanda;
   /** La dirección completa, tal como salió (con distrito y código postal). */
@@ -58,6 +58,8 @@ export interface ComandaLeida {
   calle: string | null;
   distrito: string | null;
   telefono: CampoDeComanda;
+  /** La ventana horaria de entrega, `17:00–18:00`. Solo informativa: no se guarda con el pedido. */
+  ventana: CampoDeComanda;
   /** La fecha de la hoja, `AAAA-MM-DD`. Solo una pista: el sello sale borroso. */
   fecha: CampoDeComanda;
   /** Lo que se le pide a un buscador de direcciones, o null si no hay calle. */
@@ -79,9 +81,12 @@ const MESES: Record<string, number> = {
 };
 
 /** Un número de despacho, con las confusiones típicas de la lectura corregidas. */
-const RE_TITULO = /d?espacho\s*N\S{0,2}\s*([0-9OolIiSB]{8})\b/i;
-const RE_TITULO_FLOJO = /d?espacho\D{0,10}(\d{8})/i;
-const RE_SOLO_NUMERO = /^\s*(1[0-9]\d{6})\s*$/;
+/* «\w{0,6}cho»: la foto suele cortar la palabra por el borde izquierdo —«espacho», «pacho»—. */
+const RE_TITULO = /\w{0,6}cho\s*N\S{0,2}\s*([0-9OolIiSB]{7,8})\b/i;
+const RE_TITULO_FLOJO = /\w{0,6}cho\D{0,10}(\d{7,8})/i;
+/* Suelto, solo se acepta lo que parece un despacho —Wong: 8 cifras que empiezan en 1;
+   Metro: 7 que empiezan en 7—, no un DNI, que también son 8 cifras sueltas. */
+const RE_SOLO_NUMERO = /^\s*(1[0-9]\d{6}|7\d{6})\s*$/;
 
 /** Etiquetas del formulario: van a la izquierda y nunca son un dato. */
 const RE_ETIQUETA =
@@ -150,6 +155,47 @@ function buscarTelefono(textos: readonly string[]): string | null {
     if (m) return `${m[1]} ${m[2]} ${m[3]}`;
   }
   return null;
+}
+
+/**
+ * Un teléfono que la foto cortó por el borde derecho: «Teléfono: +51 907 508…».
+ * Se devuelve lo que alcanzó a verse, **con confianza baja**, para que la
+ * pantalla lo marque y la persona complete el resto; nunca se inventa lo que
+ * falta. Hacen falta al menos cuatro cifras después del +51, para no tomar por
+ * teléfono un «+5199» suelto.
+ */
+function buscarTelefonoParcial(textos: readonly string[]): string | null {
+  for (const t of textos) {
+    const m = /tel[eé]fono\s*:?\s*(\+?\s*(?:51)?[\s-]*9[\d\s-]{2,})/i.exec(t);
+    if (!m) continue;
+    const digitos = m[1].replace(/\D/g, "").replace(/^51(?=9)/, "");
+    if (digitos.length >= 4 && digitos.length < 9 && digitos.startsWith("9")) {
+      return digitos.replace(/(\d{3})(?=\d)/g, "$1 ").trim();
+    }
+  }
+  return null;
+}
+
+/**
+ * La ventana de entrega de la hoja: «17:00:00 - 18:00:59» → `17:00–18:00`.
+ *
+ * Los dos extremos pueden salir en líneas distintas y mezcladas con otras de
+ * la columna (el DNI, el total…), así que se buscan líneas que **solo** traen
+ * una hora —o dos con un guion—; las horas de un voucher llevan fecha y letras,
+ * y no cuentan.
+ */
+function buscarVentana(textos: readonly string[]): string | null {
+  const horas: Array<[string, string]> = [];
+  const sola = /^\s*(?:ventana\s*horaria\s*:?\s*)?(\d{1,2}):(\d{2})(?::\d{2})?\s*[-–]?\s*(?:(\d{1,2}):(\d{2})(?::\d{2})?)?\s*$/i;
+  for (const t of textos) {
+    const m = sola.exec(t);
+    if (!m) continue;
+    horas.push([m[1], m[2]]);
+    if (m[3] !== undefined) horas.push([m[3], m[4]]);
+  }
+  if (horas.length < 2) return null;
+  const f = ([h, m]: [string, string]) => `${h.padStart(2, "0")}:${m}`;
+  return `${f(horas[0])}–${f(horas[1])}`;
 }
 
 /** `24-09-26` o un sello con `24 SEP. 2026`. */
@@ -225,6 +271,27 @@ function interpretarHoja(lineas: readonly LineaLeida[], ctx: Contexto, numeroDel
   let inicio = despues.findIndex((l) => abre(l) && (!ctx.conCajas || l.x >= ctx.ancho * 0.35));
   if (inicio < 0) inicio = despues.findIndex(abre);
 
+  /* Hay direcciones que no empiezan por «Av.» ni «Jr.» —«Algeciras 181, SAN
+     LUIS (CP 150134)», «Victor Maldonado Begazo 580 903, MIRAFLORES»—. Entonces
+     se parte del código postal, que todas llevan, y se sube mientras las
+     líneas de encima no sean un nombre: la dirección es lo que hay entre el
+     nombre y ese código. */
+  if (inicio < 0) {
+    const cp = despues.findIndex(
+      (l) => RE_CP.test(l.texto) && !RE_ETIQUETA.test(l.texto) && (!ctx.conCajas || l.x >= ctx.ancho * 0.35),
+    );
+    if (cp >= 0) {
+      inicio = cp;
+      while (inicio > 0) {
+        const previa = despues[inicio - 1];
+        const alineada = !ctx.conCajas || Math.abs(previa.x - despues[cp].x) <= Math.max(40, ctx.ancho * 0.05);
+        if (!alineada || parecerNombre(previa.texto) || RE_ETIQUETA.test(previa.texto) || RE_SELLO.test(previa.texto)) break;
+        if (/^\s*\d{2}-\d{2}-\d{2}\s*$/.test(previa.texto) || RE_TITULO_FLOJO.test(previa.texto)) break;
+        inicio -= 1;
+      }
+    }
+  }
+
   let columna: LineaLeida[] = despues;
   if (inicio >= 0 && ctx.conCajas) {
     const izquierda = despues[inicio].x;
@@ -270,8 +337,12 @@ function interpretarHoja(lineas: readonly LineaLeida[], ctx: Contexto, numeroDel
      derecha de «LIMA», más lejos que la columna; y la fecha, en la columna o
      en el sello. */
   const textosHoja = ordenadas.map((l) => l.texto);
-  const telefono = buscarTelefono(textosHoja);
-  const lineaTelefono = telefono ? ordenadas.find((l) => buscarTelefono([l.texto]) === telefono) : undefined;
+  const telefonoCompleto = buscarTelefono(textosHoja);
+  // La etiqueta y la cifra a veces salen como dos líneas: se busca en el texto unido.
+  const telefonoParcial = telefonoCompleto ? null : buscarTelefonoParcial([textosHoja.join("  ")]);
+  const telefono = telefonoCompleto ?? telefonoParcial;
+  const lineaTelefono = telefonoCompleto ? ordenadas.find((l) => buscarTelefono([l.texto]) === telefonoCompleto) : undefined;
+  const ventana = buscarVentana(textosHoja);
   const fecha = buscarFecha(textosHoja);
   const lineaFecha = fecha ? ordenadas.find((l) => buscarFecha([l.texto])?.fecha === fecha.fecha) : undefined;
 
@@ -281,12 +352,14 @@ function interpretarHoja(lineas: readonly LineaLeida[], ctx: Contexto, numeroDel
   const lineaTitulo = titulo >= 0 ? ordenadas[titulo] : undefined;
 
   return {
-    numero: campo(numero, lineaTitulo ? confianzaDe([lineaTitulo]) : null, /^\d{8}$/.test(numero ?? "") ? 1 : 0.4),
+    numero: campo(numero, lineaTitulo ? confianzaDe([lineaTitulo]) : null, /^\d{7,8}$/.test(numero ?? "") ? 1 : 0.4),
     nombre: campo(nombreTexto, nombreLineas.length ? confianzaDe(nombreLineas) : null, nombreTexto && nombreLineas.length === 1 && nombreTexto.split(" ").length < 2 ? 0.7 : 1),
     direccion: campo(direccionTexto, confianzaDe(direccionLineas), formaDireccion),
     calle,
     distrito,
-    telefono: campo(telefono, lineaTelefono ? confianzaDe([lineaTelefono]) : null, 1),
+    // Un teléfono cortado por el borde sale con confianza baja: hay que completarlo.
+    telefono: campo(telefono, lineaTelefono ? confianzaDe([lineaTelefono]) : null, telefonoParcial ? 0.3 : 1),
+    ventana: campo(ventana, null, 1),
     fecha: campo(fecha?.fecha ?? null, lineaFecha ? confianzaDe([lineaFecha]) : null, fecha?.delSello ? 0.6 : 1),
     consultaDeMapa: consultaParaMapa(calle, distrito),
     franja: null,
@@ -298,7 +371,7 @@ function numeroDeTitulo(l: LineaLeida): string | null {
   const m = RE_TITULO.exec(l.texto);
   if (m) {
     const n = aDigitos(m[1]);
-    return /^\d{8}$/.test(n) ? n : null;
+    return /^\d{7,8}$/.test(n) ? n : null;
   }
   const flojo = RE_TITULO_FLOJO.exec(l.texto);
   return flojo ? flojo[1] : null;
@@ -334,7 +407,7 @@ export function interpretarComandas(
   const titulos: Array<{ indice: number; numero: string | null }> = [];
   ordenadas.forEach((l, i) => {
     const n = numeroDeTitulo(l);
-    if (n !== null || RE_TITULO_FLOJO.test(l.texto) || /d?espacho\s*N\S{0,2}\s*$/i.test(l.texto)) {
+    if (n !== null || RE_TITULO_FLOJO.test(l.texto) || /\w{0,6}cho\s*N\S{0,2}\s*$/i.test(l.texto)) {
       titulos.push({ indice: i, numero: n });
     }
   });

@@ -37,6 +37,21 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 1.03 — 04/10/2026
+- **Toda eliminación pide confirmación.** Se revisó la app entera: quitar una
+  **ruta** (la «×» de la lista), quitar la **foto de evidencia** de un pedido,
+  quitar los **datos de prueba** y **borrar todo** ahora abren una pregunta
+  en el centro de la pantalla («Cancelar» / «Sí, quitar»). Ya la pedían: quitar
+  un apoyo o taxi, borrar un pedido, quitar los datos del cliente, borrar un día,
+  borrar capturas y quitar una comanda de la lista.
+- **Comandas físicas (hoja de despacho)**: se lee el número de **7 cifras**
+  (Metro, ej. 7106635, además de las 8 de Wong) aunque la foto corte la palabra
+  «despacho»; la **dirección se encuentra aunque no empiece por Av./Jr.**
+  («Algeciras 181, SAN LUIS…»), partiendo del código postal; un **teléfono cortado
+  por el borde** («+5199…») sale parcial y marcado para completar en vez de
+  perderse, y un **DNI no se toma por teléfono**. También se lee la ventana
+  horaria de entrega (por ahora solo se detecta, no se guarda).
+
 ### 1.02 — 04/10/2026
 - **Datos de prueba de taxi y apoyo**: en **Ajustes › Datos de ejemplo** eliges el
   día y cargas 3 carreras de taxi o un apoyo por hora. Son registros normales

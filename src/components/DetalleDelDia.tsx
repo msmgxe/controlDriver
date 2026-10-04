@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 
 import { cambiarHorarioDeJornada, eliminarJornada } from "@/app/(app)/jornada/acciones";
+import { DialogoConfirmar } from "@/components/DialogoConfirmar";
 import { DueloDePago } from "@/components/DueloDePago";
 import { FilaPedidoSimple } from "@/components/FilaPedidoSimple";
 import { HojaDePedido } from "@/components/HojaDePedido";
@@ -353,6 +354,7 @@ function Parada({
   ultima: boolean;
   alBorrar?: () => void;
 }) {
+  const [preguntando, setPreguntando] = useState(false);
   return (
     <li
       className={`relative grid grid-cols-[24px_1fr_auto] items-center gap-3 py-2 before:absolute before:left-3 before:border-l-2 before:border-dashed before:border-acento/40 before:content-[''] ${
@@ -371,12 +373,23 @@ function Parada({
         {alBorrar && (
           <button
             type="button"
-            onClick={alBorrar}
+            onClick={() => setPreguntando(true)}
             aria-label={`Borrar ${titulo}`}
             className="grid size-8 place-items-center rounded-full text-mal"
           >
             <Equis className="size-4" />
           </button>
+        )}
+        {preguntando && alBorrar && (
+          <DialogoConfirmar
+            titulo={`¿Quitar ${titulo.toLowerCase()}?`}
+            texto="Sus pedidos no se borran: se quedan sin ruta y se pagan igual."
+            alCancelar={() => setPreguntando(false)}
+            alConfirmar={() => {
+              setPreguntando(false);
+              alBorrar();
+            }}
+          />
         )}
       </span>
     </li>

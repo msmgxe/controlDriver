@@ -4,6 +4,7 @@ import { useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 
 import { Acordeon } from "@/components/Acordeon";
+import { DialogoConfirmar } from "@/components/DialogoConfirmar";
 import { SeccionApariencia } from "@/components/SeccionApariencia";
 import { SeccionComandas } from "@/components/SeccionComandas";
 import { SeccionModalidad } from "@/components/SeccionModalidad";
@@ -285,6 +286,8 @@ function SeccionEjemplo() {
   const [ocupado, setOcupado] = useState<"cargando" | "borrando" | null>(null);
   const [mensaje, setMensaje] = useState<string | null>(null);
   const [fechaPrueba, setFechaPrueba] = useState<FechaISO>(hoyEnLima());
+  const [preguntandoPrueba, setPreguntandoPrueba] = useState(false);
+  const [preguntandoTodo, setPreguntandoTodo] = useState(false);
 
   async function cargarPrueba(taxis: boolean, apoyo: boolean) {
     setOcupado("cargando");
@@ -332,7 +335,6 @@ function SeccionEjemplo() {
   }
 
   async function borrar() {
-    if (!confirm("Se borrarán TODAS tus jornadas, también las de verdad. ¿Seguro?")) return;
     setOcupado("borrando");
     setMensaje(null);
     try {
@@ -365,7 +367,7 @@ function SeccionEjemplo() {
         </button>
         <button
           type="button"
-          onClick={() => void borrar()}
+          onClick={() => setPreguntandoTodo(true)}
           disabled={ocupado !== null}
           className="min-h-11 rounded-btn px-4 text-sm font-semibold text-mal"
         >
@@ -396,11 +398,36 @@ function SeccionEjemplo() {
           <button type="button" disabled={ocupado !== null} onClick={() => void cargarPrueba(false, true)} className="boton-secundario min-h-11 px-4">
             Cargar un apoyo
           </button>
-          <button type="button" disabled={ocupado !== null} onClick={() => void quitarPrueba()} className="min-h-11 rounded-btn px-4 text-sm font-semibold text-mal">
+          <button type="button" disabled={ocupado !== null} onClick={() => setPreguntandoPrueba(true)} className="min-h-11 rounded-btn px-4 text-sm font-semibold text-mal">
             Quitar los de prueba
           </button>
         </div>
       </div>
+
+      {preguntandoTodo && (
+        <DialogoConfirmar
+          titulo="¿Borrar TODAS tus jornadas?"
+          texto="Se van también las de verdad, con sus pedidos, rutas, apoyos y taxis. No se puede deshacer."
+          confirmar="Sí, borrar todo"
+          alCancelar={() => setPreguntandoTodo(false)}
+          alConfirmar={() => {
+            setPreguntandoTodo(false);
+            void borrar();
+          }}
+        />
+      )}
+
+      {preguntandoPrueba && (
+        <DialogoConfirmar
+          titulo="¿Quitar los taxis y apoyos de prueba?"
+          texto="Solo se quitan los que cargaste como prueba; tus registros de verdad no se tocan."
+          alCancelar={() => setPreguntandoPrueba(false)}
+          alConfirmar={() => {
+            setPreguntandoPrueba(false);
+            void quitarPrueba();
+          }}
+        />
+      )}
 
       {mensaje && <p className="text-sm text-tinta-2">{mensaje}</p>}
     </Acordeon>
