@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Control Driver · 5 ideas para la tarjeta del día</title>
+<style>
+:root{--pg:#eceef3;--card:#fff;--ink:#14161d;--mut:#586071;--line:#d8dce6;--stage:#e1e5ee;
+ --papel:#e6eef8;--sup:#fff;--sup2:#d9e5f4;--tinta:#0a2260;--tinta2:#3e5183;--tinta3:#52658f;--linea:#c4d5ec;
+ --ac:#1f5cff;--ac2:#ffc800;--tienda:#1f5cff;--apoyo:#d9a400;--taxi:#7a3df0;--bien:#0b7a4d;--hero:#1f5cff}
+body[data-tema="violeta"]{--papel:#f0ecff;--sup2:#e4dcff;--tinta:#241660;--tinta2:#4b3d86;--tinta3:#6a5ea0;--linea:#d5ccf5;--ac:#6b4cf0;--hero:#6b4cf0;--tienda:#6b4cf0;--taxi:#d6336c}
+@media(prefers-color-scheme:dark){:root{--pg:#111318;--card:#191c23;--ink:#eceef3;--mut:#9aa2b2;--line:#2b303b;--stage:#171a21}}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--pg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,sans-serif;padding:0 clamp(16px,4vw,40px) 90px}
+.w{max-width:1250px;margin:auto}h1,h2,h3,p{margin:0}
+h1{font-size:clamp(30px,5vw,50px);line-height:1.05;letter-spacing:-.03em;padding-top:40px;max-width:21ch}
+.lead{color:var(--mut);max-width:72ch;margin-top:12px}
+.nav{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--pg) 90%,transparent);backdrop-filter:blur(8px);padding:10px 0;margin-top:20px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--line)}
+.nav a,.nav button{padding:7px 14px;border-radius:99px;background:var(--line);color:var(--ink);text-decoration:none;font-weight:600;font-size:13.5px;border:0;cursor:pointer;font-family:inherit}
+.nav .sp{flex:1}
+.op{margin-top:64px;scroll-margin-top:70px}.op h2{font-size:clamp(25px,4vw,36px);letter-spacing:-.02em}
+.op .l{display:inline-grid;place-items:center;width:46px;height:46px;border-radius:14px;background:var(--ink);color:var(--pg);font-weight:800;margin-right:12px;vertical-align:middle}
+.pitch{color:var(--mut);max-width:72ch;margin:10px 0 6px}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 18px}.tags span{font-size:12.5px;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:3px 11px;color:var(--mut)}
+.stage{background:var(--stage);border-radius:26px;padding:26px 12px 20px;display:flex;gap:30px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+.slot{display:grid;gap:10px;justify-items:center}.slot figcaption{font-size:13px;color:var(--mut);max-width:34ch;text-align:center}.slot figcaption b{color:var(--ink);display:block}
+.replay{background:var(--ink);color:var(--pg);border:0;border-radius:99px;padding:6px 14px;font-weight:700;font-size:12.5px;cursor:pointer}
+/* teléfono */
+.ph{width:330px;border-radius:36px;background:#0b0d12;padding:9px;box-shadow:0 20px 44px -20px #0008}
+.sc{background:var(--papel);border-radius:28px;overflow:hidden;color:var(--tinta);font-size:13px;min-height:640px;display:flex;flex-direction:column;position:relative}
+.top{display:flex;align-items:center;gap:8px;padding:14px 16px 6px;font-weight:700;font-size:17px}
+.dias{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:6px 12px}.dias span{background:var(--sup2);border-radius:9px;text-align:center;padding:5px 0;font-size:10.5px;font-weight:700;line-height:1.2}.dias .s{background:var(--ac);color:#fff}
+.body{padding:6px 12px 14px;display:flex;flex-direction:column;gap:10px;flex:1}
+.fila{background:var(--sup);border:1px solid var(--linea);border-radius:16px;padding:11px 12px;display:flex;gap:10px;align-items:center;opacity:.7}
+.fila i{width:32px;height:32px;border-radius:50%;background:var(--sup2);display:grid;place-items:center;font-style:normal}.fila b{display:block;font-size:13px}.fila small{color:var(--tinta2)}
+.bar{display:grid;grid-template-columns:repeat(5,1fr);background:#fff;border-radius:16px 16px 0 0;padding:7px 2px 9px;font-size:9.5px;font-weight:600;text-align:center;color:var(--tinta2);box-shadow:0 -6px 14px -10px #0a2260;margin-top:auto}.bar i{display:block;font-style:normal;font-size:17px}.bar .on i{background:var(--ac2);border-radius:10px;margin:0 8px}
+/* ===== la tarjeta (base) ===== */
+.hero{position:relative;border-radius:22px;color:#fff;overflow:hidden;background:var(--hero);border:2px solid #0a2260;isolation:isolate}
+.aurora::before,.aurora::after{content:"";position:absolute;width:220px;height:220px;border-radius:50%;filter:blur(38px);opacity:.55;z-index:-1;animation:flota 9s ease-in-out infinite alternate}
+.aurora::before{background:#7ad1ff;left:-60px;top:-70px}.aurora::after{background:#ff8ad1;right:-70px;bottom:-90px;animation-delay:-4s}
+@keyframes flota{to{transform:translate(50px,36px) scale(1.2)}}
+.big{font:800 40px/1 system-ui;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.mut{opacity:.85;font-weight:600;font-size:12px}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:99px;padding:5px 10px;font-weight:700;font-size:11.5px;border:0;cursor:pointer;font-family:inherit;background:rgba(255,255,255,.18);color:#fff;transition:transform .15s,background .2s}
+.chip:active{transform:scale(.94)}.chip.on{background:#fff;color:var(--tinta)}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;background:var(--c)}
+.det{overflow:hidden;max-height:0;transition:max-height .45s ease;background:var(--sup);color:var(--tinta);border-radius:0 0 18px 18px;margin-top:-6px;border:1px solid var(--linea);border-top:0}
+.det.abierto{max-height:340px}
+.det .in{padding:12px 14px;display:grid;gap:6px}
+.det h4{margin:0;font-size:13.5px;display:flex;align-items:center;gap:8px}.det .r{display:flex;justify-content:space-between;font-size:12.5px;border-bottom:1px dashed var(--linea);padding:4px 0}.det .r span{color:var(--tinta2)}.det .r b{font-family:ui-monospace,monospace}
+.det .go{margin-top:4px;font-weight:700;color:var(--ac);font-size:12.5px}
+.hint{font-size:11px;opacity:.8;text-align:center;padding:0 0 8px}
+@keyframes sube{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.entra{animation:sube .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*90ms)}
+/* ===== opción 1: anillo ===== */
+.o1 .cuerpo{display:grid;place-items:center;padding:14px 10px 6px;position:relative}
+.o1 svg{width:210px;height:210px;overflow:visible}
+.o1 .anillo{transform:rotate(-90deg);transform-origin:100px 100px}
+.o1 .seg{fill:none;stroke-width:22;stroke-linecap:round;cursor:pointer;transition:stroke-width .25s,opacity .25s,stroke-dashoffset 1.3s cubic-bezier(.2,.8,.2,1)}
+.o1 .seg:hover,.o1 .seg.on{stroke-width:28}.o1 .tenue .seg:not(.on){opacity:.35}
+.o1 .orbita{transform-origin:100px 100px;animation:gira 12s linear infinite}
+@keyframes gira{to{transform:rotate(360deg)}}
+.o1 .centro{position:absolute;inset:0;display:grid;place-content:center;text-align:center;pointer-events:none}
+.o1 .chips{display:flex;gap:6px;justify-content:center;padding:6px 10px 12px;flex-wrap:wrap}
+/* ===== opción 2: carretera ===== */
+.o2 .cab{padding:14px 16px 4px;display:flex;justify-content:space-between;align-items:flex-end}
+.o2 .meta{padding:0 16px 14px}.o2 svg{width:100%;height:112px;display:block}
+.o2 .raya{stroke-dasharray:14 12;animation:raya 1s linear infinite}@keyframes raya{to{stroke-dashoffset:-26}}
+.o2 .coche{transition:transform 2.4s cubic-bezier(.3,.9,.3,1)}
+.o2 .rebote{animation:rebote .5s ease-in-out infinite alternate}@keyframes rebote{to{transform:translateY(-1.8px)}}
+.o2 .moneda{animation:moneda 2.2s ease-in-out infinite}@keyframes moneda{0%{opacity:0;transform:translateY(8px) scale(.5)}30%{opacity:1}100%{opacity:0;transform:translateY(-26px) scale(1.1)}}
+.o2 .carriles{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:0 12px 14px}
+.o2 .carril{background:rgba(255,255,255,.14);border:0;border-radius:14px;padding:8px 6px;color:#fff;text-align:left;cursor:pointer;font-family:inherit}
+.o2 .carril.on{background:#fff;color:var(--tinta)}.o2 .carril b{display:block;font-size:14px;font-variant-numeric:tabular-nums}.o2 .carril small{font-size:10.5px;opacity:.85}
+.o2 .mini{height:5px;border-radius:9px;background:var(--c);margin-top:6px;transform-origin:left;animation:crece 1.2s cubic-bezier(.2,.8,.2,1) both}
+@keyframes crece{from{transform:scaleX(0)}}
+/* ===== opción 3: fichas ===== */
+.o3 .cab{padding:16px 16px 10px}
+.o3 .riel{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 16px 14px;scrollbar-width:none}.o3 .riel::-webkit-scrollbar{display:none}
+.o3 .ficha{flex:0 0 150px;scroll-snap-align:center;background:#fff;color:var(--tinta);border-radius:20px;padding:12px;display:grid;gap:6px;border:3px solid transparent;cursor:pointer;transition:transform .25s,border-color .25s;text-align:left;font-family:inherit}
+.o3 .ficha.on{border-color:var(--c);transform:translateY(-4px)}.o3 .ficha b{font-size:19px;font-variant-numeric:tabular-nums}.o3 .ficha small{color:var(--tinta2);font-size:11px}
+.o3 svg{width:100%;height:54px;overflow:visible}
+.o3 .barra{transform-origin:bottom;animation:sube2 .9s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i)*.1s)}@keyframes sube2{from{transform:scaleY(0)}}
+.o3 .ruta{stroke-dasharray:220;stroke-dashoffset:220;animation:traza 2.4s ease-in-out infinite}@keyframes traza{60%,100%{stroke-dashoffset:0}}
+.o3 .reloj{transform-origin:25px 27px;animation:gira 6s linear infinite}
+.o3 .puntos{display:flex;justify-content:center;gap:5px;padding-bottom:12px}.o3 .puntos i{width:6px;height:6px;border-radius:50%;background:#fff6;transition:.3s}.o3 .puntos i.on{width:18px;background:#fff;border-radius:9px}
+/* ===== opción 4: velocímetro ===== */
+.o4 .cab{padding:14px 16px 0;text-align:center}
+.o4 svg{width:100%;max-width:290px;display:block;margin:0 auto}
+.o4 .arco{fill:none;stroke-width:20;stroke-linecap:butt;transition:stroke-dashoffset 1.6s cubic-bezier(.2,.8,.2,1)}
+.o4 .aguja{transform-origin:150px 150px;transition:transform 2s cubic-bezier(.3,1.5,.4,1)}
+.o4 .num{margin-top:2px;text-align:center;position:relative}
+.o1 .big{font-size:29px}.o5 .big{font-size:31px;white-space:nowrap}.o5 .cab .mut{white-space:nowrap}.o4 .k b{white-space:nowrap;font-size:12.5px}
+.o4 .fichas{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:14px 12px}
+.o4 .k{background:rgba(255,255,255,.15);border:0;border-radius:14px;padding:8px;color:#fff;text-align:center;cursor:pointer;font-family:inherit}.o4 .k.on{background:#fff;color:var(--tinta)}
+.o4 .k b{display:block;font-size:14px;font-variant-numeric:tabular-nums}.o4 .k small{font-size:10.5px;opacity:.85}.o4 .k .ico{font-size:19px;display:block;animation:bota 2s ease-in-out infinite}@keyframes bota{50%{transform:translateY(-3px)}}
+/* ===== opción 5: línea del día ===== */
+.o5 .cab{padding:14px 16px 6px;display:flex;justify-content:space-between;align-items:flex-end}
+.o5 .reloj{margin:4px 12px 0;position:relative;height:150px;background:rgba(0,0,0,.18);border-radius:16px;overflow:hidden}
+.o5 .horas{position:absolute;inset:0;display:grid;grid-template-columns:repeat(9,1fr)}.o5 .horas i{border-left:1px dashed #fff3;font:600 9px system-ui;opacity:.7;padding:3px 0 0 3px;font-style:normal}
+.o5 .bl{position:absolute;border:0;border-radius:9px;color:#fff;font:700 10px system-ui;display:flex;align-items:center;justify-content:center;cursor:pointer;transform-origin:left;animation:crece 1s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i)*.18s + .3s)}
+.o5 .bl.on{outline:3px solid #fff;z-index:3}
+.o5 .cursor{position:absolute;top:0;bottom:0;width:2px;background:#fff;box-shadow:0 0 12px 2px #fff;animation:corre 3.4s cubic-bezier(.3,.8,.3,1) both;animation-delay:.2s}
+@keyframes corre{from{left:0}to{left:var(--ahora)}}
+.o5 .leyenda{display:flex;gap:12px;padding:8px 14px 14px;font-size:11px;flex-wrap:wrap}
+/* ===== otras ideas ===== */
+.ideas{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-top:18px}
+.idea{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;display:grid;gap:8px;align-content:start}
+.idea h3{font-size:16px}.idea p{color:var(--mut);font-size:13.5px}
+.idea .viz{height:84px;border-radius:12px;background:var(--stage);display:grid;place-items:center;overflow:hidden;position:relative}
+.llama{font-size:44px;animation:llama 1.2s ease-in-out infinite alternate;transform-origin:bottom}@keyframes llama{from{transform:scale(1) rotate(-4deg)}to{transform:scale(1.15) rotate(4deg)}}
+.prog{width:80%;height:14px;border-radius:9px;background:var(--line);overflow:hidden}.prog i{display:block;height:100%;width:72%;background:linear-gradient(90deg,var(--ac),var(--ac2));border-radius:9px;animation:crece 2s ease both;transform-origin:left;background-size:200% 100%}
+.ola{position:absolute;inset:auto 0 0 0;height:40px;background:var(--ac);opacity:.3;border-radius:50% 50% 0 0/100% 100% 0 0;animation:olea 3s ease-in-out infinite alternate}@keyframes olea{to{transform:translateY(-14px) scaleX(1.1)}}
+.gran{font:800 26px system-ui}.pulso{animation:pulsa 1.6s ease-in-out infinite}@keyframes pulsa{50%{transform:scale(1.1)}}
+.vote{margin-top:64px;background:var(--card);border:2px solid var(--ink);border-radius:18px;padding:20px 22px}.vote p{color:var(--mut);margin-top:8px;max-width:78ch}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body data-tema="azul"><div class="w">
+<h1>La tarjeta del día, con vida: 5 ideas</h1>
+<p class="lead">🔊 <b>Con sonido</b>: tin de moneda al tocar, campanilla en el apoyo, «bip» en el taxi, acelerón en el velocímetro, bocina al llegar el coche y un acorde cuando termina el conteo (se activa con tu primer toque; el botón de arriba lo apaga). Ahora mismo la tarjeta azul solo dice «0 pedidos» y un total. Estas cinco propuestas muestran <b>cuánto dio cada fuente</b> (tienda, apoyo, taxi), se <b>mueven</b>, y al tocarlas abren el <b>detalle por tipo</b>. Todo es interactivo: toca los colores, las fichas y las barras. Las ilustraciones son vectoriales animadas (sin fotos, para que la app siga liviana y funcione sin internet). Los montos son de ejemplo.</p>
+<nav class="nav"><a href="#o1">1 · Anillo</a><a href="#o2">2 · Carretera</a><a href="#o3">3 · Fichas</a><a href="#o4">4 · Velocímetro</a><a href="#o5">5 · Línea del día</a><a href="#extra">+ Más ideas</a><span class="sp"></span><button id="sonido">🔊 Sonido: sí</button><button id="tema">🎨 Cambiar tema</button><button id="repetir">▶ Repetir animaciones</button></nav>
+
+<!-- ============ 1 ============ -->
+<section class="op" id="o1"><h2><span class="l">1</span>El anillo de ingresos</h2>
+<p class="pitch">Una dona que se dibuja sola, con un cochecito orbitando. El total cuenta hacia arriba en el centro. Tocas un color (o su etiqueta) y el anillo atenúa los demás y abre el detalle de ese tipo.</p>
+<div class="tags"><span>animado: dona + conteo + órbita</span><span>detalle al tocar</span><span>muy fácil de leer</span></div>
+<div class="stage"><figure class="slot"><div class="ph"><div class="sc o1" data-op="1">
+ <div class="top">🚕 Hoy</div><div class="dias"><span>L<br>28</span><span>M<br>29</span><span>M<br>30</span><span>J<br>1</span><span>V<br>2</span><span class="s">S<br>3</span><span>D<br>4</span></div>
+ <div class="body"><div class="hero aurora"><div class="cuerpo">
+  <svg viewBox="0 0 200 200"><circle cx="100" cy="100" r="70" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="22"/><g class="anillo" id="a1"></g>
+   <g class="orbita"><text x="100" y="14" font-size="20" text-anchor="middle" transform="translate(0,0)">🚕</text></g></svg>
+  <div class="centro"><span class="mut">Hoy cargaste</span><span class="big" data-total></span><span class="mut">3 pedidos · 3 carreras</span></div></div>
+  <div class="chips" data-chips></div><div class="hint">Toca un color para ver el detalle</div></div>
+ <div class="det" data-det></div>
+ <div class="fila"><i>🏪</i><div><b>Pedidos de mi tienda</b><small>Toca para anotarlos</small></div></div></div>
+ <div class="bar"><div class="on"><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div></div></div>
+<figcaption><b>Anillo + órbita</b>Se dibuja al abrir; tocar un tramo lo agranda.</figcaption></figure></div></section>
+
+<!-- ============ 2 ============ -->
+<section class="op" id="o2"><h2><span class="l">2</span>La carretera de la meta</h2>
+<p class="pitch">Un coche recorre la carretera hasta donde vas de tu <b>meta del día</b>. Lleva banderines (25 · 50 · 75 · 100 %) y suelta monedas al avanzar. Debajo, tres carriles de colores —uno por tipo— que se tocan para ver el detalle.</p>
+<div class="tags"><span>animado: coche + línea + monedas</span><span>motiva con una meta</span><span>muy «de conductor»</span></div>
+<div class="stage"><figure class="slot"><div class="ph"><div class="sc o2" data-op="2">
+ <div class="top">🚕 Hoy</div><div class="dias"><span>L<br>28</span><span>M<br>29</span><span>M<br>30</span><span>J<br>1</span><span>V<br>2</span><span class="s">S<br>3</span><span>D<br>4</span></div>
+ <div class="body"><div class="hero aurora">
+  <div class="cab"><div><span class="mut">Llevas hoy</span><br><span class="big" data-total></span></div><div style="text-align:right"><span class="mut">Meta</span><br><b>S/ 400</b></div></div>
+  <div class="meta"><svg viewBox="0 0 300 112"><rect x="0" y="62" width="300" height="34" rx="10" fill="#0b1c4d"/><line class="raya" x1="0" y1="79" x2="300" y2="79" stroke="#ffd84d" stroke-width="3"/>
+   <g id="banderas"></g>
+   <g class="coche" id="coche" style="transform:translateX(0)"><g class="rebote"><text x="0" y="82" font-size="30">🚕</text></g></g>
+   <g id="monedas"></g></svg>
+   <div class="mut" style="text-align:center" data-falta></div></div>
+  <div class="carriles" data-chips></div></div>
+ <div class="det" data-det></div>
+ <div class="fila"><i>🏪</i><div><b>Pedidos de mi tienda</b><small>Toca para anotarlos</small></div></div></div>
+ <div class="bar"><div class="on"><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div></div></div>
+<figcaption><b>Carretera animada</b>El coche avanza hasta tu %, con banderines y monedas.</figcaption></figure></div></section>
+
+<!-- ============ 3 ============ -->
+<section class="op" id="o3"><h2><span class="l">3</span>Tres fichas deslizables</h2>
+<p class="pitch">El total arriba y debajo tres fichas que se deslizan con el dedo, cada una con su <b>mini animación propia</b>: barras que suben (tienda), un reloj que gira (apoyo) y una ruta que se dibuja (taxi). La ficha tocada se levanta y abre su detalle.</p>
+<div class="tags"><span>animado: barras · reloj · ruta</span><span>deslizable</span><span>cada tipo con su personalidad</span></div>
+<div class="stage"><figure class="slot"><div class="ph"><div class="sc o3" data-op="3">
+ <div class="top">🚕 Hoy</div><div class="dias"><span>L<br>28</span><span>M<br>29</span><span>M<br>30</span><span>J<br>1</span><span>V<br>2</span><span class="s">S<br>3</span><span>D<br>4</span></div>
+ <div class="body"><div class="hero aurora">
+  <div class="cab"><span class="mut">Total de hoy</span><br><span class="big" data-total></span></div>
+  <div class="riel" data-chips></div><div class="puntos"><i class="on"></i><i></i><i></i></div></div>
+ <div class="det" data-det></div>
+ <div class="fila"><i>🏪</i><div><b>Pedidos de mi tienda</b><small>Toca para anotarlos</small></div></div></div>
+ <div class="bar"><div class="on"><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div></div></div>
+<figcaption><b>Fichas con mini-animación</b>Desliza de lado; toca para el detalle.</figcaption></figure></div></section>
+
+<!-- ============ 4 ============ -->
+<section class="op" id="o4"><h2><span class="l">4</span>El velocímetro</h2>
+<p class="pitch">Un tablero de coche: tres arcos de colores (uno por tipo) y una <b>aguja que rebota</b> hasta tu avance de la meta. Abajo, tres «testigos» con icono que se tocan para ver el detalle. Se siente como manejar.</p>
+<div class="tags"><span>animado: aguja con rebote + arcos</span><span>tema «tablero»</span><span>llama la atención</span></div>
+<div class="stage"><figure class="slot"><div class="ph"><div class="sc o4" data-op="4">
+ <div class="top">🚕 Hoy</div><div class="dias"><span>L<br>28</span><span>M<br>29</span><span>M<br>30</span><span>J<br>1</span><span>V<br>2</span><span class="s">S<br>3</span><span>D<br>4</span></div>
+ <div class="body"><div class="hero aurora">
+  <div class="cab"><span class="mut">Hoy, de tu meta de S/ 400</span></div>
+  <svg viewBox="0 0 300 170"><g id="a4"></g>
+   <g class="aguja" id="aguja" style="transform:rotate(-90deg)"><line x1="150" y1="150" x2="150" y2="52" stroke="#fff" stroke-width="5" stroke-linecap="round"/><circle cx="150" cy="150" r="9" fill="#ffc800" stroke="#fff" stroke-width="3"/></g></svg>
+  <div class="num"><span class="big" data-total></span><div class="mut" data-pct></div></div>
+  <div class="fichas" data-chips></div></div>
+ <div class="det" data-det></div>
+ <div class="fila"><i>🏪</i><div><b>Pedidos de mi tienda</b><small>Toca para anotarlos</small></div></div></div>
+ <div class="bar"><div class="on"><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div></div></div>
+<figcaption><b>Tablero con aguja</b>La aguja sube y rebota hasta tu avance.</figcaption></figure></div></section>
+
+<!-- ============ 5 ============ -->
+<section class="op" id="o5"><h2><span class="l">5</span>La línea del día</h2>
+<p class="pitch">Tu jornada como una cinta de horas: el <b>apoyo</b> es una barra larga, los <b>pedidos</b> son puntos, el <b>taxi</b> son tramos. Un cursor luminoso recorre el día hasta «ahora». Tocas cualquier bloque y se abre su detalle: se entiende <i>cuándo</i> y <i>cuánto</i> de un vistazo.</p>
+<div class="tags"><span>animado: bloques que crecen + cursor</span><span>muestra horarios</span><span>ideal para corregir</span></div>
+<div class="stage"><figure class="slot"><div class="ph"><div class="sc o5" data-op="5">
+ <div class="top">🚕 Hoy</div><div class="dias"><span>L<br>28</span><span>M<br>29</span><span>M<br>30</span><span>J<br>1</span><span>V<br>2</span><span class="s">S<br>3</span><span>D<br>4</span></div>
+ <div class="body"><div class="hero aurora">
+  <div class="cab"><div><span class="mut">Hoy cargaste</span><br><span class="big" data-total></span></div><div class="mut" style="text-align:right">3 pedidos<br>11.25 h apoyo<br>3 carreras</div></div>
+  <div class="reloj" id="reloj"><div class="horas"><i>6</i><i>8</i><i>10</i><i>12</i><i>14</i><i>16</i><i>18</i><i>20</i><i>22</i></div></div>
+  <div class="leyenda"><span><i class="dot" style="--c:var(--tienda)"></i> Tienda</span><span><i class="dot" style="--c:var(--apoyo)"></i> Apoyo</span><span><i class="dot" style="--c:var(--taxi)"></i> Taxi</span></div></div>
+ <div class="det" data-det></div>
+ <div class="fila"><i>🏪</i><div><b>Pedidos de mi tienda</b><small>Toca para anotarlos</small></div></div></div>
+ <div class="bar"><div class="on"><i>⌂</i>Inicio</div><div><i>🚗</i>Cargar</div><div><i>👛</i>Pagos</div><div><i>📊</i>Estad.</div><div><i>⋯</i>Más</div></div></div></div>
+<figcaption><b>Cinta de horas</b>Cada bloque se toca; el cursor llega a «ahora».</figcaption></figure></div></section>
+
+<!-- ============ extra ============ -->
+<section class="op" id="extra"><h2>+ Más ideas para la vista móvil</h2>
+<p class="pitch">Pequeños cambios que se pueden sumar a cualquiera de las cinco.</p>
+<div class="ideas">
+ <div class="idea"><div class="viz"><span class="llama">🔥</span></div><h3>Racha de días</h3><p>Una llama que crece por cada día seguido que cargas. Motiva a no dejar huecos.</p></div>
+ <div class="idea"><div class="viz"><div class="prog"><i></i></div></div><h3>Meta de la semana</h3><p>Barra que se llena con un brillo en movimiento: «vas en S/ 1,080 de S/ 1,500».</p></div>
+ <div class="idea"><div class="viz"><span class="gran pulso">S/ 24<small style="font-size:13px"> /hora</small></span></div><h3>Lo que ganas por hora</h3><p>Un número que late suavemente: cuánto rinde tu hora real (tienda, apoyo y taxi juntos).</p></div>
+ <div class="idea"><div class="viz"><div class="ola"></div><span style="font-size:30px;position:relative">⭐</span></div><h3>Mejor día de la semana</h3><p>Una insignia con olas cuando superas tu mejor día: «¡Récord! Jue 1: S/ 332».</p></div>
+ <div class="idea"><div class="viz"><span style="font-size:34px">⬅️ 📅 ➡️</span></div><h3>Deslizar entre días</h3><p>Pasar de un día a otro arrastrando la tarjeta de lado, como fotos en la galería.</p></div>
+ <div class="idea"><div class="viz"><span style="font-size:34px">🔊🌟</span></div><h3>Sonido y vibración suaves</h3><p>Un «tin» de moneda y una vibración corta al guardar un pedido o una carrera (se apaga en Ajustes).</p></div>
+</div></section>
+
+<div class="vote"><h3>Mi recomendación</h3><p><b>Opción 3 (fichas) para el día a día</b>, con el cursor luminoso de la <b>5</b> dentro del detalle de «Apoyo» y la <b>meta con carretera (2)</b> en Pagos para la semana. Las fichas dicen tienda / apoyo / taxi sin tocar nada, se mueven y son lo más fácil de entender. El anillo (1) es la más limpia si prefieres poco movimiento. Dime el número (o la mezcla) y la construyo.</p></div>
+</div>
+
+<script>
+const D={
+ tienda:{n:'Tienda',ico:'🏪',m:51.5,c:'var(--tienda)',sub:'3 pedidos',det:[['Pedidos','3'],['Rutas','2'],['En ruta','1 h 08 min'],['Tramo 1','2 pedidos'],['Tramo 2','1 pedido'],['Por pedido','S/ 17.17']],go:'Ver pedidos por tramo ›'},
+ apoyo:{n:'Apoyo',ico:'⏱',m:202.5,c:'var(--apoyo)',sub:'11.25 h',det:[['Tienda','Limatambo'],['Horario','10:15 → 21:30'],['Horas','11.25 h'],['Tarifa','S/ 18.00 / h'],['Cuenta','11.25 × 18 = S/ 202.50']],go:'Corregir el apoyo ›'},
+ taxi:{n:'Taxi',ico:'🚕',m:78.5,c:'var(--taxi)',sub:'3 carreras',det:[['Carreras','3'],['Distancia','28.5 km'],['08:10 · 6.4 km','S/ 18.00'],['13:20 · 9.8 km','S/ 26.50'],['19:05 · 12.3 km','S/ 34.00']],go:'Ver las carreras ›'}
+};
+const K=['tienda','apoyo','taxi'],TOT=K.reduce((s,k)=>s+D[k].m,0),META=400;
+const fmt=n=>'S/ '+n.toFixed(2);
+/* ===== Sonidos: se sintetizan al momento (sin archivos), como se haría en la app. ===== */
+let AC=null,SON=true;
+function ctx(){if(!SON)return null;if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){return null}}if(AC.state==='suspended')AC.resume();return AC}
+function nota(f,t0,dur,tipo='sine',vol=.18,f2=null){const a=ctx();if(!a)return;const o=a.createOscillator(),g=a.createGain();o.type=tipo;o.frequency.setValueAtTime(f,a.currentTime+t0);if(f2)o.frequency.exponentialRampToValueAtTime(f2,a.currentTime+t0+dur);
+ g.gain.setValueAtTime(0.0001,a.currentTime+t0);g.gain.exponentialRampToValueAtTime(vol,a.currentTime+t0+.015);g.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+t0+dur);o.connect(g).connect(a.destination);o.start(a.currentTime+t0);o.stop(a.currentTime+t0+dur+.05)}
+function ruido(t0,dur,f0,f1,vol=.12){const a=ctx();if(!a)return;const n=a.createBuffer(1,a.sampleRate*dur,a.sampleRate),d=n.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+ const s=a.createBufferSource();s.buffer=n;const f=a.createBiquadFilter();f.type='bandpass';f.Q.value=2;f.frequency.setValueAtTime(f0,a.currentTime+t0);f.frequency.exponentialRampToValueAtTime(f1,a.currentTime+t0+dur);
+ const g=a.createGain();g.gain.setValueAtTime(vol,a.currentTime+t0);g.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+t0+dur);s.connect(f).connect(g).connect(a.destination);s.start(a.currentTime+t0)}
+const SONIDO={
+ moneda:()=>{nota(988,0,.09,'square',.07);nota(1319,.08,.28,'square',.07)},                 /* «tin» de moneda */
+ tienda:()=>{nota(523,0,.18,'triangle',.2);nota(784,.07,.22,'triangle',.16)},                /* caja registradora suave */
+ apoyo:()=>{nota(440,0,.14,'sine',.2);nota(554,.1,.14,'sine',.18);nota(659,.2,.3,'sine',.16)}, /* campanilla de reloj */
+ taxi:()=>{nota(196,0,.2,'sawtooth',.07,330);nota(330,.16,.22,'sawtooth',.06)},               /* «bip-bip» de taxi */
+ whoosh:()=>ruido(0,.7,300,2400,.14),
+ subida:()=>{nota(180,0,1.4,'sawtooth',.05,520);ruido(0,1.2,200,1800,.06)},                    /* acelerón de la aguja */
+ bocina:()=>{nota(392,0,.3,'square',.05);nota(494,0,.3,'square',.05)},
+ acorde:()=>{[523,659,784,1047].forEach((f,i)=>nota(f,i*.09,.5,'sine',.13))},                 /* total terminado */
+ pop:()=>nota(660,0,.09,'sine',.18,990)};
+const sonar=n=>{try{SONIDO[n]&&SONIDO[n]()}catch(e){}};
+function count(el,to,ms=1600){const t0=performance.now();(function f(t){const p=Math.min(1,(t-t0)/ms),e=1-Math.pow(1-p,3);el.textContent=fmt(to*e);if(p<1)requestAnimationFrame(f);else sonar('acorde')})(t0)}
+function detalle(sc,k){const d=sc.querySelector('[data-det]');
+ if(!k||d.dataset.k===k&&d.classList.contains('abierto')){d.classList.remove('abierto');d.dataset.k='';return null}
+ const x=D[k];d.dataset.k=k;d.innerHTML=`<div class="in"><h4><span class="dot" style="--c:${x.c}"></span>${x.ico} ${x.n} · ${fmt(x.m)}</h4>${x.det.map(r=>`<div class="r"><span>${r[0]}</span><b>${r[1]}</b></div>`).join('')}<div class="go">${x.go}</div></div>`;
+ d.classList.add('abierto');return k}
+const marcar=(sc,k)=>sc.querySelectorAll('[data-k]').forEach(e=>e.classList.toggle('on',e.dataset.k===k));
+function pulsar(sc,k){const r=detalle(sc,k);marcar(sc,r);sonar(r?k:'pop')}
+
+function o1(sc){const g=sc.querySelector('#a1'),C=2*Math.PI*70;g.innerHTML='';let off=0;
+ K.forEach(k=>{const f=D[k].m/TOT,c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  c.setAttribute('class','seg');c.setAttribute('cx',100);c.setAttribute('cy',100);c.setAttribute('r',70);c.dataset.k=k;c.style.stroke=getComputedStyle(sc).getPropertyValue('--'+(k==='apoyo'?'apoyo':k==='taxi'?'taxi':'tienda'));
+  const len=Math.max(f*C-8,4);c.style.strokeDasharray=`${len} ${C}`;c.style.strokeDashoffset=len;g.appendChild(c);
+  const o=off;setTimeout(()=>c.style.strokeDashoffset=-o,150);off+=f*C;c.onclick=()=>pulsar(sc,k)});
+ sc.querySelector('[data-chips]').innerHTML=K.map(k=>`<button class="chip" data-k="${k}"><span class="dot" style="--c:${D[k].c}"></span>${D[k].n} ${fmt(D[k].m)}</button>`).join('');
+ sc.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{pulsar(sc,b.dataset.k);sc.querySelector('.cuerpo').classList.toggle('tenue',!!sc.querySelector('[data-det]').dataset.k)});
+ sc.querySelectorAll('.seg').forEach(s=>s.addEventListener('click',()=>sc.querySelector('.cuerpo').classList.toggle('tenue',!!sc.querySelector('[data-det]').dataset.k)))}
+
+function o2(sc){const p=Math.min(TOT/META,1);const b=sc.querySelector('#banderas');b.innerHTML=[.25,.5,.75,1].map(f=>`<g transform="translate(${12+f*270},60)"><line y1="0" y2="-26" stroke="#fff" stroke-width="2"/><path d="M0,-26 l14,5 l-14,5z" fill="${f<=p?'#ffc800':'#fff6'}"/></g>`).join('');
+ const c=sc.querySelector('#coche');c.style.transform='translateX(0)';setTimeout(()=>{c.style.transform=`translateX(${p*250}px)`;sonar('whoosh');setTimeout(()=>sonar('bocina'),2300)},200);
+ const m=sc.querySelector('#monedas');m.innerHTML='';for(let i=0;i<4;i++){m.innerHTML+=`<text class="moneda" style="animation-delay:${i*.5}s" x="${40+i*58}" y="52" font-size="16">🪙</text>`}
+ sc.querySelector('[data-falta]').textContent=`Te faltan ${fmt(META-TOT)} · ${Math.round(p*100)} % de la meta`;
+ sc.querySelector('[data-chips]').innerHTML=K.map(k=>`<button class="carril" data-k="${k}"><small>${D[k].ico} ${D[k].n}</small><b>${fmt(D[k].m)}</b><div class="mini" style="--c:${D[k].c};width:${D[k].m/TOT*100}%"></div></button>`).join('');
+ sc.querySelectorAll('.carril').forEach(b=>b.onclick=()=>pulsar(sc,b.dataset.k))}
+
+const mini={
+ tienda:'<svg viewBox="0 0 120 54"><g fill="var(--tienda)">'+[20,34,28,46,38].map((h,i)=>`<rect class="barra" style="--i:${i}" x="${i*24}" y="${54-h}" width="16" height="${h}" rx="4"/>`).join('')+'</g></svg>',
+ apoyo:'<svg viewBox="0 0 50 54"><circle cx="25" cy="27" r="21" fill="none" stroke="var(--sup2)" stroke-width="6"/><circle cx="25" cy="27" r="21" fill="none" stroke="var(--apoyo)" stroke-width="6" stroke-linecap="round" stroke-dasharray="115 132" transform="rotate(-90 25 27)"/><line class="reloj" x1="25" y1="27" x2="25" y2="13" stroke="var(--tinta)" stroke-width="3" stroke-linecap="round"/></svg>',
+ taxi:'<svg viewBox="0 0 120 54"><path class="ruta" d="M4,44 C26,40 28,12 52,20 S86,48 116,10" fill="none" stroke="var(--taxi)" stroke-width="5" stroke-linecap="round"/><circle cx="116" cy="10" r="5" fill="var(--taxi)"/></svg>'};
+function o3(sc){sc.querySelector('[data-chips]').innerHTML=K.map(k=>`<button class="ficha" data-k="${k}" style="--c:${D[k].c}">${mini[k]}<small>${D[k].ico} ${D[k].n} · ${D[k].sub}</small><b>${fmt(D[k].m)}</b></button>`).join('');
+ const riel=sc.querySelector('.riel'),pts=sc.querySelectorAll('.puntos i');
+ riel.onscroll=()=>{const i=Math.round(riel.scrollLeft/160);pts.forEach((x,j)=>x.classList.toggle('on',j===Math.min(i,2)))};
+ riel.querySelectorAll('.ficha').forEach(b=>b.onclick=()=>pulsar(sc,b.dataset.k))}
+
+function arco(cx,cy,r,a0,a1){const p=a=>[cx+r*Math.cos(a),cy+r*Math.sin(a)];const[x0,y0]=p(a0),[x1,y1]=p(a1);return `M${x0},${y0} A${r},${r} 0 ${a1-a0>Math.PI?1:0} 1 ${x1},${y1}`}
+function o4(sc){const g=sc.querySelector('#a4');g.innerHTML='<path d="'+arco(150,150,100,Math.PI,2*Math.PI)+'" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="20"/>';
+ let a=Math.PI;K.forEach((k,i)=>{const sw=D[k].m/TOT*Math.min(TOT/META,1)*Math.PI,d=arco(150,150,100,a,a+sw),L=Math.PI*100;
+  const p=document.createElementNS('http://www.w3.org/2000/svg','path');p.setAttribute('d',d);p.setAttribute('class','arco');p.style.stroke=getComputedStyle(sc).getPropertyValue('--'+k);p.style.strokeDasharray=L;p.style.strokeDashoffset=L;g.appendChild(p);setTimeout(()=>p.style.strokeDashoffset=0,200+i*350);a+=sw});
+ const pr=Math.min(TOT/META,1),ag=sc.querySelector('#aguja');ag.style.transform='rotate(-90deg)';setTimeout(()=>{ag.style.transform=`rotate(${-90+pr*180}deg)`;sonar('subida')},300);
+ sc.querySelector('[data-pct]').textContent=Math.round(pr*100)+' % de la meta';
+ sc.querySelector('[data-chips]').innerHTML=K.map(k=>`<button class="k" data-k="${k}"><span class="ico">${D[k].ico}</span><b>${fmt(D[k].m)}</b><small>${D[k].n}</small></button>`).join('');
+ sc.querySelectorAll('.k').forEach(b=>b.onclick=()=>pulsar(sc,b.dataset.k))}
+
+function o5(sc){const r=sc.querySelector('#reloj');r.querySelectorAll('.bl,.cursor').forEach(e=>e.remove());
+ const X=h=>((h-6)/18*100);const bl=[['apoyo',10.25,21.5,6,'Limatambo 11.25 h'],['taxi',8.17,8.58,38,'🚕'],['taxi',13.33,13.92,38,'🚕'],['taxi',19.08,19.67,38,'🚕'],['tienda',10.08,10.4,72,'🏪'],['tienda',12.5,12.8,72,'🏪'],['tienda',17.2,17.5,72,'🏪']];
+ bl.forEach((b,i)=>{const e=document.createElement('button');e.className='bl';e.dataset.k=b[0];e.style.cssText=`--i:${i};left:${X(b[1])}%;width:${Math.max(X(b[2])-X(b[1]),4)}%;top:${b[3]+16}px;height:${b[0]==='apoyo'?'30px':'28px'};background:${D[b[0]].c}`;e.textContent=b[4].length<6?b[4]:b[4];e.onclick=()=>pulsar(sc,b[0]);r.appendChild(e)});
+ const ahora=20.4;const c=document.createElement('div');c.className='cursor';c.style.setProperty('--ahora',X(ahora)+'%');r.appendChild(c);setTimeout(()=>sonar('whoosh'),250)}
+
+const INI={'1':o1,'2':o2,'3':o3,'4':o4,'5':o5};
+function arrancar(){document.querySelectorAll('.sc[data-op]').forEach(sc=>{const f=INI[sc.dataset.op];const d=sc.querySelector('[data-det]');d.classList.remove('abierto');d.dataset.k='';sc.querySelectorAll('.on[data-k]').forEach(e=>e.classList.remove('on'));
+ f(sc);const t=sc.querySelector('[data-total]');if(t)count(t,TOT)});
+ document.querySelectorAll('.hero').forEach(h=>{h.classList.remove('entra');void h.offsetWidth;h.classList.add('entra')})}
+document.getElementById('repetir').onclick=()=>{sonar('whoosh');arrancar()};
+document.getElementById('sonido').onclick=e=>{SON=!SON;e.target.textContent=SON?'🔊 Sonido: sí':'🔇 Sonido: no';if(SON)sonar('moneda')};
+document.getElementById('tema').onclick=()=>{document.body.dataset.tema=document.body.dataset.tema==='azul'?'violeta':'azul';arrancar()};
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting&&!e.target.dataset.v){e.target.dataset.v=1;const f=INI[e.target.dataset.op];f(e.target);const t=e.target.querySelector('[data-total]');if(t)count(t,TOT)}}),{threshold:.35});
+document.querySelectorAll('.sc[data-op]').forEach(s=>io.observe(s));
+</script>
+</body></html>
