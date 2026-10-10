@@ -102,6 +102,8 @@ export function SeccionModalidad() {
   const [ocupado, setOcupado] = useState(false);
   const [mensaje, setMensaje] = useState<string | null>(null);
   const [agregando, setAgregando] = useState(false);
+  /** Una tienda nueva solo pasa a ser «mi tienda» si se pide: puede ser para apoyar. */
+  const [comoPrincipal, setComoPrincipal] = useState(false);
   const [nombreNuevo, setNombreNuevo] = useState("");
   const [errorTienda, setErrorTienda] = useState<string | null>(null);
   const [pestana, setPestana] = useState<"tienda" | "ubicacion" | "tarifa">("tienda");
@@ -138,13 +140,20 @@ export function SeccionModalidad() {
     setErrorTienda(null);
     try {
       const id = await guardarTienda({ nombre });
-      await guardarPerfil({ nombre: perfil.nombre, tiendaId: id });
+      // Sin tienda propia todavía, la primera es la tuya; después, solo si lo pides.
+      const seraLaTuya = comoPrincipal || !tiendaId;
+      if (seraLaTuya) await guardarPerfil({ nombre: perfil.nombre, tiendaId: id });
       if (vehiculo === "moto") await asegurarTarifaMoto(id);
       recargarTiendas();
       recargarPerfil();
       setNombreNuevo("");
+      setComoPrincipal(false);
       setAgregando(false);
-      setMensaje(`Tienda: ${nombre}. Nueva, con la tarifa del código hasta que la edites.`);
+      setMensaje(
+        seraLaTuya
+          ? `Ahora tu tienda es ${nombre}. Nueva, con la tarifa del código hasta que la edites.`
+          : `Agregué ${nombre} para apoyar. Tu tienda sigue siendo ${tienda?.nombre ?? "la de antes"}.`,
+      );
     } catch (e) {
       const texto = e instanceof Error ? e.message : "";
       setErrorTienda(
@@ -224,13 +233,17 @@ export function SeccionModalidad() {
                       : "border-linea bg-sup text-tinta-2 hover:bg-sup-2"
                   }`}
                 >
+                  {t.id === tiendaId ? "✓ " : ""}
                   {t.nombre}
                 </button>
               ))}
               {!agregando && (
                 <button
                   type="button"
-                  onClick={() => setAgregando(true)}
+                  onClick={() => {
+                    setComoPrincipal(false);
+                    setAgregando(true);
+                  }}
                   className="min-h-10 rounded-chip border-2 border-dashed border-linea-fuerte px-3 text-sm font-semibold text-tinta-2 hover:bg-sup-2"
                 >
                   + Nueva tienda
@@ -271,9 +284,26 @@ export function SeccionModalidad() {
                     Cancelar
                   </button>
                 </div>
+                {tiendaId && (
+                  <label className="flex min-h-10 items-center gap-2.5 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={comoPrincipal}
+                      onChange={(e) => setComoPrincipal(e.target.checked)}
+                      className="size-5 accent-[var(--acento)]"
+                    />
+                    <span>
+                      Usarla como <b>mi tienda</b> (la de mis pedidos)
+                    </span>
+                  </label>
+                )}
                 {errorTienda && <p className="text-sm text-mal">{errorTienda}</p>}
               </div>
             )}
+            <p className="text-xs text-tinta-3">
+              La tienda marcada es <b>tu tienda</b>: de ahí salen tus pedidos y tus tarifas. Para apoyar a otra, agrégala aquí
+              <b> sin</b> marcarla como tuya y usa «+» › Apoyo a otra tienda.
+            </p>
           </div>
 
           <div className="flex flex-col gap-2">

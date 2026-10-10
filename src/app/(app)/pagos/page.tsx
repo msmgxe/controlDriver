@@ -6,6 +6,7 @@ import Link from "next/link";
 import { AccionesSemana } from "@/components/AccionesSemana";
 import { Acordeon } from "@/components/Acordeon";
 import { CarreteraDeMeta } from "@/components/CarreteraDeMeta";
+import { DesgloseDeFuentes } from "@/components/DesgloseDeFuentes";
 import { DesgloseDeIngresos } from "@/components/DesgloseDeIngresos";
 import { DueloDePago } from "@/components/DueloDePago";
 import { Alerta, Calendario, Check, Flecha, Luna, Reloj } from "@/components/iconos";
@@ -241,15 +242,23 @@ export default function PaginaPagos() {
         />
         </div>
         <div id="pagos-desglose">
-        <DesgloseDeIngresos
-          titulo="De dónde viene"
-          filas={desglosePorFuente({
-            tiendaNombre: tienda?.nombre ?? null,
-            pedidosTienda: liquidacion.totalOrdenes,
-            centimosTienda: liquidacion.montoCalculadoCentimos,
-            bloques: [...bloques.values()].flat(),
-          })}
-        />
+          <DesgloseDeFuentes
+            titulo="De dónde viene · toca una fuente"
+            filas={desglosePorFuente({
+              tiendaNombre: tienda?.nombre ?? null,
+              pedidosTienda: liquidacion.totalOrdenes,
+              centimosTienda: liquidacion.montoCalculadoCentimos,
+              bloques: [...bloques.values()].flat(),
+            })}
+            jornadas={jornadas}
+            porDia={liquidacion.detalle.porDia}
+            bloques={bloques}
+            regla={regla}
+            tienda={tienda}
+            ajustes={ajustes}
+            editable={elegida.estado !== "pagada"}
+            alCambiar={recargar}
+          />
         </div>
         <div className="mt-1.5 grid grid-cols-7 gap-1" aria-label={`${cargados} de 7 días cargados`}>
           {diasDeLaSemana.map((f) => (

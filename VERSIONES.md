@@ -37,6 +37,18 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 1.13 — 10/10/2026
+- **Pagos: cada fuente se despliega.** En «De dónde viene», toca tu tienda, un apoyo
+  o el taxi: ves los **días** en que se produjo cada monto; toca un día y ves sus
+  **pedidos** (o su apoyo o sus carreras), y de ahí abres cada uno —con su foto
+  de evidencia, para corregirlo o quitarlo— sin volver a Inicio.
+- **Agregar una tienda ya no cambia «mi tienda» sin avisar.** Antes, «+ Nueva
+  tienda» pasaba a ser tu tienda al instante (por eso «Tienda Metro Limatambo»
+  aparecía como la tuya al agregarla para apoyar). Ahora solo lo es si marcas «Usarla
+  como mi tienda»; si ya tienes una, la nueva queda para apoyar. La tienda tuya
+  lleva un ✓ y una nota lo explica. Si ya te pasó, entra a Ajustes › Tienda,
+  ubicación y tarifa y toca tu tienda de verdad.
+
 ### 1.12 — 05/10/2026
 **Tutoriales y recorridos guiados de todas las pantallas.**
 - **Tutoriales** ahora tiene once temas, por pantalla: registrar pedidos, la tarjeta
