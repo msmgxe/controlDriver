@@ -56,6 +56,7 @@ describe("leer un respaldo, sin tocar la base", () => {
       hasta: "2026-09-16",
       nombre: "Marco",
       generadoEn: respaldo.generadoEn,
+      etiqueta: null,
     });
   });
 
@@ -200,3 +201,21 @@ async function consultarTiendaPrueba(): Promise<string | null> {
   const filas = await consultar<{ id: string }>(`select id from tiendas where nombre = 'Otra'`);
   return filas[0]?.id ?? null;
 }
+
+describe("restaurar con tienda y perfil enlazados", () => {
+  it("un perfil que apunta a una tienda se restaura sin fallar por claves foráneas", async () => {
+    const { ejecutar, consultar, nuevoId } = await import("./conexion");
+    const id = nuevoId();
+    const ahora = new Date().toISOString();
+    await ejecutar(`insert into tiendas (id, nombre, creado_en, actualizado_en) values (?, 'Wong', ?, ?)`, [id, ahora, ahora]);
+    await ejecutar(`update perfil set tienda_id = ?`, [id]);
+    const respaldo = await crearRespaldo({ etiqueta: "Prueba" });
+    expect(respaldo.etiqueta).toBe("Prueba");
+
+    usarMotor(motorEnMemoria());
+    await restaurarRespaldo(respaldo);
+    const filas = await consultar<{ tienda_id: string }>(`select tienda_id from perfil`);
+    expect(filas[0].tienda_id).toBe(id);
+  });
+});
+

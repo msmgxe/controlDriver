@@ -42,12 +42,13 @@ export function SeccionRespaldo() {
 function BloqueCrear() {
   const [estado, setEstado] = useState<"reposo" | "generando" | "error">("reposo");
   const [error, setError] = useState<string | null>(null);
+  const [nombre, setNombre] = useState("");
 
   async function crear() {
     setEstado("generando");
     setError(null);
     try {
-      await crearYCompartirRespaldo();
+      await crearYCompartirRespaldo(nombre);
       setEstado("reposo");
     } catch (fallo) {
       setEstado("error");
@@ -58,6 +59,16 @@ function BloqueCrear() {
   return (
     <div className="flex flex-col gap-2">
       <span className="text-sm font-semibold">Crear un respaldo</span>
+      <label className="flex flex-col gap-1">
+        <span className="text-xs text-tinta-2">Nombre (opcional), para reconocerlo después</span>
+        <input
+          value={nombre}
+          onChange={(e) => setNombre(e.target.value)}
+          maxLength={40}
+          placeholder="Ej.: Antes de cambiar de teléfono"
+          className="min-h-11 rounded-btn border border-linea-fuerte bg-sup px-3 text-base"
+        />
+      </label>
       <button
         type="button"
         onClick={() => void crear()}
@@ -67,8 +78,9 @@ function BloqueCrear() {
         {estado === "generando" ? "Generando…" : "Crear y compartir"}
       </button>
       <p className="text-xs text-tinta-3">
-        Se abre el selector de Android: guárdalo en Google Drive, o mándatelo por WhatsApp o
-        correo. Hazlo de vez en cuando, y siempre antes de cambiar de teléfono.
+        El archivo se llamará <b>control-driver-respaldo-{nombre.trim() ? "su-nombre-" : ""}fecha.json</b>.
+        Se abre el selector de Android: guárdalo en Google Drive, o mándatelo por WhatsApp o correo
+        (así lo encuentras después en esa app, no en una carpeta del teléfono). Hazlo de vez en cuando, y siempre antes de cambiar de teléfono.
       </p>
       {error && <p className="text-xs text-mal">{error}</p>}
     </div>
@@ -151,6 +163,10 @@ function BloqueRestaurar() {
                 </>
               )}
               {estado.resumen.nombre && <> · de {estado.resumen.nombre}</>}.
+            </p>
+            <p className="mt-1">
+              Creado el {estado.resumen.generadoEn.slice(0, 10).split("-").reverse().join("/")}
+              {estado.resumen.etiqueta && <> · «{estado.resumen.etiqueta}»</>}.
             </p>
             <p className="mt-1">
               Va a <b>reemplazar todo</b> lo que tienes guardado ahora en este teléfono. Si has

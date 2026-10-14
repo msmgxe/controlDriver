@@ -34,9 +34,9 @@ export const VERSION_RESPALDO = 1;
 
 /** En orden de padres a hijos: así se insertan sin violar una clave foránea. */
 const TABLAS = [
-  "perfil",
   "tiendas",
   "reglas_pago",
+  "perfil",
   "jornadas",
   "rutas",
   "ordenes",
@@ -54,6 +54,8 @@ type NombreTabla = (typeof TABLAS)[number];
 export interface Respaldo {
   version: number;
   generadoEn: string;
+  /** El nombre que se le puso al crearlo, para reconocerlo al restaurar. */
+  etiqueta?: string;
   tablas: Record<NombreTabla, Record<string, unknown>[]>;
 }
 
@@ -72,7 +74,7 @@ const COLUMNAS_DE_CLIENTE = ["cliente_nombre", "cliente_telefono", "direccion", 
  * calculó el pago, y no dicen dónde vive nadie.
  */
 export async function crearRespaldo(
-  opciones: { incluirClientes?: boolean } = {},
+  opciones: { incluirClientes?: boolean; etiqueta?: string } = {},
 ): Promise<Respaldo> {
   const tablas = {} as Respaldo["tablas"];
   for (const tabla of TABLAS) {
@@ -86,12 +88,13 @@ export async function crearRespaldo(
           })
         : filas;
   }
-  return { version: VERSION_RESPALDO, generadoEn: new Date().toISOString(), tablas };
+  return { version: VERSION_RESPALDO, generadoEn: new Date().toISOString(), etiqueta: opciones.etiqueta?.trim() || undefined, tablas };
 }
 
 const esquemaRespaldo = z.object({
   version: z.number(),
   generadoEn: z.string(),
+  etiqueta: z.string().optional(),
   tablas: z.object({
     perfil: z.array(z.record(z.string(), z.unknown())),
     tiendas: z.array(z.record(z.string(), z.unknown())),
@@ -114,6 +117,7 @@ export interface ResumenRespaldo {
   hasta: string | null;
   nombre: string | null;
   generadoEn: string;
+  etiqueta: string | null;
 }
 
 /**
@@ -155,6 +159,7 @@ export function leerRespaldo(
         ? (respaldo.tablas.perfil[0].nombre as string)
         : null,
       generadoEn: respaldo.generadoEn,
+      etiqueta: respaldo.etiqueta ?? null,
     },
   };
 }
@@ -177,6 +182,10 @@ export function leerRespaldo(
  */
 export async function restaurarRespaldo(respaldo: Respaldo): Promise<void> {
   await enTransaccion(async () => {
+    /* Las claves foráneas se comprueban al final: así el orden de inserción no
+       importa y un respaldo con una referencia suelta (una tienda borrada) no
+       tumba toda la restauración. */
+    await ejecutar(`pragma defer_foreign_keys = on`);
     for (const tabla of [...TABLAS].reverse()) {
       await ejecutar(`delete from ${tabla}`);
     }

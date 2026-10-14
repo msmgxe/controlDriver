@@ -8,7 +8,7 @@ import { anotarRespaldoCreado, crearRespaldo } from "./respaldo";
 import { hoyEnLima } from "@/lib/fechas";
 
 /** Lanza un `Error` con un mensaje legible si no se pudo. Termina cuando la persona cierra el selector. */
-export async function crearYCompartirRespaldo(): Promise<void> {
+export async function crearYCompartirRespaldo(etiqueta = ""): Promise<void> {
   const { Capacitor } = await import("@capacitor/core");
   if (!Capacitor.isNativePlatform()) {
     throw new Error("Crear y compartir el respaldo solo funciona en la app instalada.");
@@ -16,9 +16,10 @@ export async function crearYCompartirRespaldo(): Promise<void> {
 
   // Nombres, teléfonos y direcciones de clientes: solo si la persona lo eligió.
   const { clientesEnRespaldo } = await leerAjustesDeComandas();
-  const respaldo = await crearRespaldo({ incluirClientes: clientesEnRespaldo });
+  const respaldo = await crearRespaldo({ incluirClientes: clientesEnRespaldo, etiqueta });
   const contenido = JSON.stringify(respaldo, null, 2);
-  const archivo = `control-driver-respaldo-${hoyEnLima()}.json`;
+  const limpio = etiqueta.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+  const archivo = `control-driver-respaldo${limpio ? `-${limpio}` : ""}-${hoyEnLima()}.json`;
 
   const { Filesystem, Directory, Encoding } = await import("@capacitor/filesystem");
   const { Share } = await import("@capacitor/share");

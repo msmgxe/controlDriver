@@ -37,6 +37,15 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 1.15 — 13/10/2026
+- **Arreglo al restaurar un respaldo:** fallaba con «FOREIGN KEY constraint failed».
+  Se reordenó la restauración y las referencias se comprueban al final.
+- **Los respaldos llevan nombre:** al crearlo puedes ponerle uno (se incluye en el
+  nombre del archivo) y, al restaurar, la app muestra la fecha y ese nombre antes de
+  reemplazar nada.
+- **Barras de Android (14 y 15):** el menú de arriba y la barra de abajo ya no se
+  superponen con la hora, la batería ni los botones del teléfono.
+
 ### 1.14 — 13/10/2026
 - **Arreglo: «No se pudo abrir la base de datos» en un teléfono nuevo.** Android
   restauraba del respaldo automático de Google una base a medias del teléfono
