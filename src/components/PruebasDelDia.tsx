@@ -1,5 +1,6 @@
 "use client";
 
+import { ImagenConZoom } from "@/components/ImagenConZoom";
 import { useEffect, useRef, useState } from "react";
 
 import { Flecha } from "@/components/iconos";
@@ -276,12 +277,14 @@ function Diapositiva({ prueba }: { prueba: Prueba }) {
   const { datos: fuente } = useDatos(() => contenidoDePrueba(prueba.archivo), [prueba.archivo]);
 
   return (
-    <div className="flex w-full shrink-0 snap-center items-start justify-center overflow-y-auto px-2">
+    <div className="flex w-full shrink-0 snap-center flex-col items-center justify-center gap-2 px-2">
       {fuente ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={fuente} alt="Captura guardada" className="max-w-full" />
+        <>
+          <ImagenConZoom src={fuente} alt="Captura guardada" />
+          <p className="text-xs text-white/60">Pellizca con dos dedos o toca dos veces para acercar · usa las flechas para cambiar</p>
+        </>
       ) : (
-        <span className="mt-20 text-sm text-white/50">Cargando…</span>
+        <span className="text-sm text-white/50">Cargando…</span>
       )}
     </div>
   );

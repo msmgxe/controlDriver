@@ -37,6 +37,11 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 1.18 — 14/10/2026
+- **Zoom con dos dedos en el visor de capturas** («3 de 22»): pellizca para acercar, toca
+  dos veces para alternar, arrastra para moverte. Para pasar a otra captura usa las
+  flechas de abajo.
+
 ### 1.17 — 14/10/2026
 - Al restaurar, la app dice **cuántas fotos de evidencia** devolvió («12 de 12»), o que
   el respaldo no traía fotos. Si no salen fotos, ahí se ve por qué: un respaldo hecho
