@@ -20,6 +20,7 @@ export function ImagenConZoom({ src, alt }: { src: string; alt: string }) {
 
   return (
     <div
+      data-sin-deslizar
       className="flex max-h-[80dvh] w-full touch-none items-center justify-center overflow-hidden"
       onClick={(e) => e.stopPropagation()}
       onPointerDown={(e) => {

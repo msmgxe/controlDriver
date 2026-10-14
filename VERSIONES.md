@@ -37,6 +37,11 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 1.19 — 14/10/2026
+- **Arreglo: al mover la foto con zoom ya no salta al día siguiente.** El gesto de deslizar
+  para cambiar de día de Inicio recibía también los toques hechos dentro del visor de
+  fotos y de las hojas. Ahora los ignora (y los de dos dedos).
+
 ### 1.18 — 14/10/2026
 - **Zoom con dos dedos en el visor de capturas** («3 de 22»): pellizca para acercar, toca
   dos veces para alternar, arrastra para moverte. Para pasar a otra captura usa las

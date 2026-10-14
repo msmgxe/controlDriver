@@ -229,6 +229,13 @@ function Contenido() {
         <div
           className="flex flex-col gap-4"
           onTouchStart={(e) => {
+            // Un gesto dentro de una hoja o de un visor de fotos (que viven en un portal pero
+            // propagan sus eventos hasta aquí) es del visor, no un cambio de día.
+            const destino = e.target as Element;
+            if (e.touches.length > 1 || destino.closest?.('[role="dialog"], [data-sin-deslizar]')) {
+              deslizar.current = null;
+              return;
+            }
             deslizar.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
           }}
           onTouchEnd={(e) => {

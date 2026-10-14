@@ -191,7 +191,7 @@ function Carrusel({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-black">
+    <div data-sin-deslizar className="fixed inset-0 z-50 flex flex-col bg-black">
       <div className="flex items-center justify-between gap-3 px-4 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] pb-2 text-white">
         <span className="font-mono text-sm" aria-live="polite">
           {actual + 1} de {pruebas.length}

@@ -1125,6 +1125,7 @@ function TabEvidencia({
 
       {ampliada && vista && (
         <div
+          data-sin-deslizar
           className="fixed inset-0 z-[60] flex flex-col items-center justify-center gap-3 bg-black/90 p-4"
           onClick={() => setAmpliada(false)}
         >
