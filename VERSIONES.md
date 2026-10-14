@@ -37,6 +37,12 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 1.16 — 13/10/2026
+- **El respaldo incluye las fotos de evidencia.** Hay una casilla «Incluir las fotos de
+  evidencia» (marcada por defecto; el archivo pesa más). Al restaurar, la app dice
+  cuántas fotos trae y las devuelve a cada pedido. Un respaldo sin fotos se
+  restaura como siempre.
+
 ### 1.15 — 13/10/2026
 - **Arreglo al restaurar un respaldo:** fallaba con «FOREIGN KEY constraint failed».
   Se reordenó la restauración y las referencias se comprueban al final.

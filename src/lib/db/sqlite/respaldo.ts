@@ -40,6 +40,8 @@ const TABLAS = [
   "jornadas",
   "rutas",
   "ordenes",
+  // Las fotos de evidencia: solo sus filas; los archivos van en `imagenes`.
+  "pruebas",
   "liquidaciones",
   "dias_descanso",
   // Apoyo a otra tienda y taxi libre (v48). Cuelgan de jornadas y tiendas, así
@@ -56,6 +58,8 @@ export interface Respaldo {
   generadoEn: string;
   /** El nombre que se le puso al crearlo, para reconocerlo al restaurar. */
   etiqueta?: string;
+  /** Las fotos de evidencia en base64, por su ruta. Solo si se pidió incluirlas. */
+  imagenes?: Record<string, string>;
   tablas: Record<NombreTabla, Record<string, unknown>[]>;
 }
 
@@ -74,7 +78,7 @@ const COLUMNAS_DE_CLIENTE = ["cliente_nombre", "cliente_telefono", "direccion", 
  * calculó el pago, y no dicen dónde vive nadie.
  */
 export async function crearRespaldo(
-  opciones: { incluirClientes?: boolean; etiqueta?: string } = {},
+  opciones: { incluirClientes?: boolean; etiqueta?: string; incluirImagenes?: boolean } = {},
 ): Promise<Respaldo> {
   const tablas = {} as Respaldo["tablas"];
   for (const tabla of TABLAS) {
@@ -88,13 +92,34 @@ export async function crearRespaldo(
           })
         : filas;
   }
-  return { version: VERSION_RESPALDO, generadoEn: new Date().toISOString(), etiqueta: opciones.etiqueta?.trim() || undefined, tablas };
+  let imagenes: Record<string, string> | undefined;
+  if (opciones.incluirImagenes) {
+    const { contenidoDePrueba } = await import("./pruebas");
+    imagenes = {};
+    for (const fila of tablas.pruebas) {
+      const archivo = String(fila.archivo ?? "");
+      const url = archivo ? await contenidoDePrueba(archivo) : null;
+      if (url) imagenes[archivo] = url.replace(/^data:image\/jpeg;base64,/, "");
+    }
+    // Una fila sin su archivo no sirve de nada: se queda solo lo que sí se pudo leer.
+    tablas.pruebas = tablas.pruebas.filter((f) => String(f.archivo ?? "") in imagenes!);
+  } else {
+    tablas.pruebas = [];
+  }
+  return {
+    version: VERSION_RESPALDO,
+    generadoEn: new Date().toISOString(),
+    etiqueta: opciones.etiqueta?.trim() || undefined,
+    imagenes,
+    tablas,
+  };
 }
 
 const esquemaRespaldo = z.object({
   version: z.number(),
   generadoEn: z.string(),
   etiqueta: z.string().optional(),
+  imagenes: z.record(z.string(), z.string()).optional(),
   tablas: z.object({
     perfil: z.array(z.record(z.string(), z.unknown())),
     tiendas: z.array(z.record(z.string(), z.unknown())),
@@ -103,6 +128,7 @@ const esquemaRespaldo = z.object({
     rutas: z.array(z.record(z.string(), z.unknown())),
     ordenes: z.array(z.record(z.string(), z.unknown())),
     liquidaciones: z.array(z.record(z.string(), z.unknown())),
+    pruebas: z.array(z.record(z.string(), z.unknown())).default([]),
     // Los respaldos anteriores a los días de descanso no la traen.
     dias_descanso: z.array(z.record(z.string(), z.unknown())).default([]),
     // Los respaldos anteriores a apoyo/taxi no las traen.
@@ -118,6 +144,8 @@ export interface ResumenRespaldo {
   nombre: string | null;
   generadoEn: string;
   etiqueta: string | null;
+  /** Cuántas fotos de evidencia trae. */
+  fotos: number;
 }
 
 /**
@@ -160,6 +188,7 @@ export function leerRespaldo(
         : null,
       generadoEn: respaldo.generadoEn,
       etiqueta: respaldo.etiqueta ?? null,
+      fotos: Object.keys(respaldo.imagenes ?? {}).length,
     },
   };
 }
@@ -195,7 +224,12 @@ export async function restaurarRespaldo(respaldo: Respaldo): Promise<void> {
         (await consultar<{ name: string }>(`pragma table_info(${tabla})`)).map((c) => c.name),
       );
 
-      for (const fila of respaldo.tablas[tabla]) {
+      // Una foto sin su archivo en el respaldo no se restaura: quedaría apuntando a nada.
+      const filas =
+        tabla === "pruebas"
+          ? (respaldo.tablas.pruebas ?? []).filter((f) => String(f.archivo) in (respaldo.imagenes ?? {}))
+          : respaldo.tablas[tabla];
+      for (const fila of filas) {
         const columnas = Object.keys(fila).filter((c) => columnasReales.has(c));
         if (columnas.length === 0) continue;
 
@@ -207,6 +241,19 @@ export async function restaurarRespaldo(respaldo: Respaldo): Promise<void> {
       }
     }
   });
+
+  /* Las fotos de evidencia vuelven a su sitio, ya con la base restaurada. */
+  const imagenes = respaldo.imagenes ?? {};
+  if (Object.keys(imagenes).length > 0) {
+    const { Directory, Filesystem } = await import("@capacitor/filesystem");
+    for (const [archivo, base64] of Object.entries(imagenes)) {
+      try {
+        await Filesystem.writeFile({ path: archivo, data: base64, directory: Directory.Data, recursive: true });
+      } catch {
+        /* Una foto que no se pudo escribir no debe tumbar el resto. */
+      }
+    }
+  }
 }
 
 const CLAVE_ULTIMO_RESPALDO = "respaldo.ultimo";

@@ -27,8 +27,8 @@ export function SeccionRespaldo() {
     <Acordeon titulo="Respaldo de tus datos"
       icono="respaldo" resumen="Crear una copia o restaurarla">
       <p className="text-sm text-tinta-2">
-        Tus jornadas, rutas, pedidos y liquidaciones. No incluye las fotos de tus capturas ni tu
-        licencia —esa está atada a este teléfono—. Los datos de tus clientes solo van si lo
+        Tus jornadas, rutas, pedidos, apoyo, taxi y liquidaciones y, si lo dejas marcado, las fotos
+        de evidencia. No incluye tu licencia —esa está atada a este teléfono—. Los datos de tus clientes solo van si lo
         activas en «Comandas y clientes».
       </p>
       <BloqueCrear />
@@ -43,12 +43,13 @@ function BloqueCrear() {
   const [estado, setEstado] = useState<"reposo" | "generando" | "error">("reposo");
   const [error, setError] = useState<string | null>(null);
   const [nombre, setNombre] = useState("");
+  const [conFotos, setConFotos] = useState(true);
 
   async function crear() {
     setEstado("generando");
     setError(null);
     try {
-      await crearYCompartirRespaldo(nombre);
+      await crearYCompartirRespaldo(nombre, conFotos);
       setEstado("reposo");
     } catch (fallo) {
       setEstado("error");
@@ -68,6 +69,17 @@ function BloqueCrear() {
           placeholder="Ej.: Antes de cambiar de teléfono"
           className="min-h-11 rounded-btn border border-linea-fuerte bg-sup px-3 text-base"
         />
+      </label>
+      <label className="flex min-h-11 items-center gap-2.5 text-sm">
+        <input
+          type="checkbox"
+          checked={conFotos}
+          onChange={(e) => setConFotos(e.target.checked)}
+          className="size-5 accent-[var(--acento)]"
+        />
+        <span>
+          Incluir las <b>fotos de evidencia</b> (el archivo pesa más)
+        </span>
       </label>
       <button
         type="button"
@@ -166,7 +178,8 @@ function BloqueRestaurar() {
             </p>
             <p className="mt-1">
               Creado el {estado.resumen.generadoEn.slice(0, 10).split("-").reverse().join("/")}
-              {estado.resumen.etiqueta && <> · «{estado.resumen.etiqueta}»</>}.
+              {estado.resumen.etiqueta && <> · «{estado.resumen.etiqueta}»</>}.{" "}
+              {estado.resumen.fotos > 0 ? `Trae ${estado.resumen.fotos} fotos de evidencia.` : "No trae fotos de evidencia."}
             </p>
             <p className="mt-1">
               Va a <b>reemplazar todo</b> lo que tienes guardado ahora en este teléfono. Si has

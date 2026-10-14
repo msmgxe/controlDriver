@@ -57,6 +57,7 @@ describe("leer un respaldo, sin tocar la base", () => {
       nombre: "Marco",
       generadoEn: respaldo.generadoEn,
       etiqueta: null,
+      fotos: 0,
     });
   });
 
