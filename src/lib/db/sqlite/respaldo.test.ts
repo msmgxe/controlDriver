@@ -220,3 +220,38 @@ describe("restaurar con tienda y perfil enlazados", () => {
   });
 });
 
+
+describe("fotos de evidencia en el respaldo", () => {
+  it("van y vuelven: la fila de la foto y su archivo", async () => {
+    const { vi } = await import("vitest");
+    const escritos: Record<string, string> = {};
+    vi.doMock("./pruebas", () => ({ contenidoDePrueba: async (a: string) => `data:image/jpeg;base64,FOTO-${a}` }));
+    vi.doMock("@capacitor/filesystem", () => ({
+      Directory: { Data: "DATA" },
+      Filesystem: { writeFile: async (o: { path: string; data: string }) => void (escritos[o.path] = o.data) },
+    }));
+    const { ejecutar, consultar } = await import("./conexion");
+    const orden = (await consultar<{ id: string; jornada_id: string }>(`select id, jornada_id from ordenes limit 1`))[0];
+    await ejecutar(
+      `insert into pruebas (id, fecha, orden_id, archivo, bytes, creado_en) values ('p1', '2026-09-16', ?, 'pruebas/2026-09-16/p1.jpg', 10, 'ahora')`,
+      [orden.id],
+    );
+
+    const respaldo = await crearRespaldo({ incluirImagenes: true });
+    expect(respaldo.tablas.pruebas).toHaveLength(1);
+    expect(Object.keys(respaldo.imagenes ?? {})).toEqual(["pruebas/2026-09-16/p1.jpg"]);
+
+    // Pasa por el texto, como el archivo real.
+    const leido = leerRespaldo(JSON.stringify(respaldo));
+    expect(leido.ok && leido.resumen.fotos).toBe(1);
+    if (!leido.ok) return;
+
+    usarMotor(motorEnMemoria());
+    await restaurarRespaldo(leido.respaldo);
+    const filas = await consultar<{ archivo: string }>(`select archivo from pruebas`);
+    expect(filas.map((f) => f.archivo)).toEqual(["pruebas/2026-09-16/p1.jpg"]);
+    expect(escritos["pruebas/2026-09-16/p1.jpg"]).toBe("FOTO-pruebas/2026-09-16/p1.jpg");
+    vi.doUnmock("./pruebas");
+    vi.doUnmock("@capacitor/filesystem");
+  });
+});

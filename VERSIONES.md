@@ -37,6 +37,12 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 1.17 — 14/10/2026
+- Al restaurar, la app dice **cuántas fotos de evidencia** devolvió («12 de 12»), o que
+  el respaldo no traía fotos. Si no salen fotos, ahí se ve por qué: un respaldo hecho
+  sin la casilla o con una versión anterior a la 1.16 no las lleva, y restaurarlo
+  con una versión anterior a la 1.16 las ignora aunque estén en el archivo.
+
 ### 1.16 — 13/10/2026
 - **El respaldo incluye las fotos de evidencia.** Hay una casilla «Incluir las fotos de
   evidencia» (marcada por defecto; el archivo pesa más). Al restaurar, la app dice

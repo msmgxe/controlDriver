@@ -209,7 +209,9 @@ export function leerRespaldo(
  * un respaldo de una versión distinta de la app no reviente por una columna
  * que ya no existe, o que todavía no existía cuando se generó.
  */
-export async function restaurarRespaldo(respaldo: Respaldo): Promise<void> {
+export async function restaurarRespaldo(
+  respaldo: Respaldo,
+): Promise<{ fotos: number; fotosFallidas: number }> {
   await enTransaccion(async () => {
     /* Las claves foráneas se comprueban al final: así el orden de inserción no
        importa y un respaldo con una referencia suelta (una tienda borrada) no
@@ -244,16 +246,21 @@ export async function restaurarRespaldo(respaldo: Respaldo): Promise<void> {
 
   /* Las fotos de evidencia vuelven a su sitio, ya con la base restaurada. */
   const imagenes = respaldo.imagenes ?? {};
+  let fotos = 0;
+  let fotosFallidas = 0;
   if (Object.keys(imagenes).length > 0) {
     const { Directory, Filesystem } = await import("@capacitor/filesystem");
     for (const [archivo, base64] of Object.entries(imagenes)) {
       try {
         await Filesystem.writeFile({ path: archivo, data: base64, directory: Directory.Data, recursive: true });
+        fotos += 1;
       } catch {
-        /* Una foto que no se pudo escribir no debe tumbar el resto. */
+        /* Una foto que no se pudo escribir no debe tumbar el resto, pero se cuenta. */
+        fotosFallidas += 1;
       }
     }
   }
+  return { fotos, fotosFallidas };
 }
 
 const CLAVE_ULTIMO_RESPALDO = "respaldo.ultimo";

@@ -104,7 +104,7 @@ type EstadoRestaurar =
   | { paso: "error"; mensaje: string }
   | { paso: "confirmar"; texto: string; resumen: ResumenRespaldo }
   | { paso: "restaurando" }
-  | { paso: "listo" };
+  | { paso: "listo"; fotos: number; fallidas: number; esperadas: number };
 
 function BloqueRestaurar() {
   const entrada = useRef<HTMLInputElement>(null);
@@ -130,11 +130,11 @@ function BloqueRestaurar() {
     try {
       const leido = leerRespaldo(estado.texto);
       if (!leido.ok) throw new Error(leido.error);
-      await restaurarRespaldo(leido.respaldo);
-      setEstado({ paso: "listo" });
+      const r = await restaurarRespaldo(leido.respaldo);
+      setEstado({ paso: "listo", fotos: r.fotos, fallidas: r.fotosFallidas, esperadas: leido.resumen.fotos });
       // El estado de toda la app —lo que ya se había leído de la base—
       // quedó desactualizado por la restauración: se recarga entera.
-      setTimeout(() => window.location.reload(), 1200);
+      setTimeout(() => window.location.reload(), 4500);
     } catch (fallo) {
       setEstado({
         paso: "error",
@@ -206,7 +206,15 @@ function BloqueRestaurar() {
       ) : estado.paso === "restaurando" ? (
         <p className="text-sm text-tinta-2">Restaurando…</p>
       ) : (
-        <p className="text-sm text-bien">Listo. La aplicación se va a reiniciar sola.</p>
+        <div className="flex flex-col gap-1 text-sm text-bien">
+          <p>Listo. La aplicación se va a reiniciar sola.</p>
+          <p>
+            {estado.esperadas === 0
+              ? "Este respaldo no traía fotos de evidencia (se hizo sin esa casilla o con una versión anterior)."
+              : `Fotos de evidencia restauradas: ${estado.fotos} de ${estado.esperadas}.`}
+            {estado.fallidas > 0 && ` No se pudieron escribir ${estado.fallidas}.`}
+          </p>
+        </div>
       )}
     </div>
   );
