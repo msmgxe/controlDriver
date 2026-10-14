@@ -139,8 +139,16 @@ async function motorDeCapacitor(): Promise<Motor> {
     try {
       db = await sqlite.createConnection(NOMBRE_BASE, false, "no-encryption", VERSION_ESQUEMA, false);
     } catch (fallo) {
-      if (!String(fallo).includes("already exists")) throw fallo;
-      db = await sqlite.retrieveConnection(NOMBRE_BASE, false);
+      if (String(fallo).includes("already exists")) {
+        db = await sqlite.retrieveConnection(NOMBRE_BASE, false);
+      } else {
+        /* Un fallo sin explicación («null»): suele ser una conexión a medias, o
+           un archivo que Android restauró de una copia de otro teléfono. Se
+           cierra todo lo que quedara abierto y se intenta una vez más. */
+        await sqlite.closeAllConnections().catch(() => undefined);
+        await new Promise((r) => setTimeout(r, 300));
+        db = await sqlite.createConnection(NOMBRE_BASE, false, "no-encryption", VERSION_ESQUEMA, false);
+      }
     }
   }
 

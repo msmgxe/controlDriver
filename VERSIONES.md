@@ -37,6 +37,15 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 1.14 — 13/10/2026
+- **Arreglo: «No se pudo abrir la base de datos» en un teléfono nuevo.** Android
+  restauraba del respaldo automático de Google una base a medias del teléfono
+  anterior. Ahora la app no participa en ese respaldo (tus datos se pasan con el
+  respaldo propio de Ajustes: crear y compartir, restaurar) y, si la base falla al
+  abrirse, cierra las conexiones y reintenta sola.
+- **Zoom en la evidencia**: la foto de la comanda se acerca pellizcando, o con doble
+  toque, y se mueve arrastrando.
+
 ### 1.13 — 10/10/2026
 - **Pagos: cada fuente se despliega.** En «De dónde viene», toca tu tienda, un apoyo
   o el taxi: ves los **días** en que se produjo cada monto; toca un día y ves sus

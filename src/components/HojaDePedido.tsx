@@ -16,6 +16,7 @@ import { Alerta, Camara, Check, Equis, Ojo, Pin, Telefono, Ticket } from "@/comp
 import { Pestanas } from "@/components/Pestanas";
 import { RadarDeTramos } from "@/components/RadarDeTramos";
 import { numeroDeDespacho } from "@/lib/extraccion/esquema";
+import { ImagenConZoom } from "@/components/ImagenConZoom";
 import { Aviso } from "@/components/ui";
 import { useCapa } from "@/hooks/useCapa";
 import { comprimir } from "@/lib/carga";
@@ -1127,8 +1128,8 @@ function TabEvidencia({
           className="fixed inset-0 z-[60] flex flex-col items-center justify-center gap-3 bg-black/90 p-4"
           onClick={() => setAmpliada(false)}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element -- base64 */}
-          <img src={vista} alt="Foto de la comanda" className="max-h-[80dvh] max-w-full rounded-btn object-contain" />
+          <ImagenConZoom src={vista} alt="Foto de la comanda" />
+          <p className="text-xs text-white/70">Pellizca o toca dos veces para acercar</p>
           <button type="button" className="boton-sec" onClick={() => setAmpliada(false)}>
             <Equis className="size-4" />
             Cerrar

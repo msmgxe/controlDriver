@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Alerta, Camara, Check, Equis, Flecha, Pin, Ticket } from "@/components/iconos";
 import { Pestanas } from "@/components/Pestanas";
 import { RadarDeTramos } from "@/components/RadarDeTramos";
+import { ImagenConZoom } from "@/components/ImagenConZoom";
 import { Aviso } from "@/components/ui";
 import { useCapa } from "@/hooks/useCapa";
 import { sonar } from "@/lib/sonidos";
@@ -785,8 +786,7 @@ function Revision({
         <div className="flex items-center gap-3">
           {foto ? (
             <button type="button" onClick={() => setAmpliada(true)} aria-label="Ver la foto grande" className="shrink-0">
-              {/* eslint-disable-next-line @next/next/no-img-element -- URL de objeto local */}
-              <img src={foto} alt="La foto de la comanda" className="h-[76px] w-[60px] rounded-btn border border-linea-fuerte object-cover" />
+              <ImagenConZoom src={foto} alt="La foto de la comanda" />
             </button>
           ) : null}
           <div className="flex min-w-0 flex-col gap-1">
@@ -1073,8 +1073,8 @@ function Revision({
           className="fixed inset-0 z-[60] flex flex-col items-center justify-center gap-3 bg-black/90 p-4"
           onClick={() => setAmpliada(false)}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element -- URL de objeto local */}
-          <img src={foto} alt="La foto de la comanda" className="max-h-[82dvh] max-w-full rounded-btn object-contain" />
+          <ImagenConZoom src={foto} alt="La foto de la comanda" />
+          <p className="text-xs text-white/70">Pellizca o toca dos veces para acercar</p>
           <button type="button" className="boton-sec" onClick={() => setAmpliada(false)}>
             <Equis className="size-4" />
             Cerrar
