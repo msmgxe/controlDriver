@@ -180,7 +180,7 @@ export async function procesarCapturas(
       return {
         ok: false,
         error:
-          "No se reconoció ninguna captura. Asegúrate de que son pantallazos de las pestañas Rutas u Órdenes, sin recortar.",
+          "No se reconoció ninguna captura. Asegúrate de que son pantallazos de las pestañas Rutas u Órdenes, sin recortar. Si son fotos de comandas (hojas de despacho), usa «Tomar foto de una comanda».",
       };
     }
 

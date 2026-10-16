@@ -37,6 +37,17 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 1.20 — 16/10/2026
+**Que ninguna comanda se pierda:**
+- **Salir con comandas sin guardar pregunta primero** («Tienes 2 comandas sin guardar…»),
+  tanto con la ×, tocando fuera o con el botón atrás. Antes se descartaban sin avisar.
+- **Aviso en la lista:** «N sin guardar todavía: toca cada comanda y pulsa Guardar»; el
+  botón de abajo dice «Revisar y guardar».
+- **La foto tomada con la cámara de la app también se guarda en la galería**, para poder
+  volver a cargarla siempre.
+- El error «No se reconoció ninguna captura» ahora aclara que las fotos de comandas van
+  por «Tomar foto de una comanda» (o «Cargar › Comandas»).
+
 ### 1.19 — 14/10/2026
 - **Arreglo: al mover la foto con zoom ya no salta al día siguiente.** El gesto de deslizar
   para cambiar de día de Inicio recibía también los toques hechos dentro del visor de

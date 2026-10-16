@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
+import { DialogoConfirmar } from "@/components/DialogoConfirmar";
 import { Alerta, Camara, Check, Equis, Flecha, Pin, Ticket } from "@/components/iconos";
 import { Pestanas } from "@/components/Pestanas";
 import { RadarDeTramos } from "@/components/RadarDeTramos";
@@ -83,7 +84,8 @@ async function tomarFotoConCamara(): Promise<File | null> {
       allowEditing: false,
       resultType: CameraResultType.Uri,
       source: CameraSource.Camera,
-      saveToGallery: false,
+      // La foto también queda en la galería del teléfono: si algo sale mal al registrar, nunca se pierde.
+      saveToGallery: true,
     });
     if (!foto.webPath) return null;
     const respuesta = await fetch(foto.webPath);
@@ -170,7 +172,13 @@ export function HojaDeComandas({
     tiendaRef.current = tienda;
   }, [tienda]);
 
-  useCapa(abierta ? () => setAbierta(null) : alCerrar);
+  /* Salir con comandas leídas y sin guardar las perdería (las fotos quedan en la
+     galería, pero habría que leerlas de nuevo): se pregunta antes. */
+  const sinGuardar = items.filter((i) => !i.guardada).length;
+  const [preguntandoSalir, setPreguntandoSalir] = useState(false);
+  const cerrarSeguro = () => (sinGuardar > 0 ? setPreguntandoSalir(true) : alCerrar());
+
+  useCapa(abierta ? () => setAbierta(null) : preguntandoSalir ? () => setPreguntandoSalir(false) : cerrarSeguro);
 
   const origen: Punto | null = tienda?.lat != null && tienda?.lng != null ? { lat: tienda.lat, lng: tienda.lng } : null;
 
@@ -384,7 +392,7 @@ export function HojaDeComandas({
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center sm:p-5"
       onClick={(e) => {
-        if (e.target === e.currentTarget && !item) alCerrar();
+        if (e.target === e.currentTarget && !item) cerrarSeguro();
       }}
     >
       <div
@@ -403,7 +411,7 @@ export function HojaDeComandas({
           </div>
           <button
             type="button"
-            onClick={alCerrar}
+            onClick={cerrarSeguro}
             aria-label="Cerrar"
             className="grid size-11 shrink-0 place-items-center rounded-full bg-sup-2"
           >
@@ -480,6 +488,11 @@ export function HojaDeComandas({
 
             {items.length > 0 && (
               <>
+                {sinGuardar > 0 && (
+                  <Aviso tono="atento" titulo={`${sinGuardar} sin guardar todavía`}>
+                    <p>Toca cada comanda para revisarla y pulsa <b>Guardar</b>: hasta entonces no cuenta como pedido.</p>
+                  </Aviso>
+                )}
                 <p className="text-sm text-tinta-2">
                   {items.length} comanda{items.length === 1 ? "" : "s"} · {items.filter((i) => i.guardada).length} guardada
                   {items.filter((i) => i.guardada).length === 1 ? "" : "s"}
@@ -497,6 +510,19 @@ export function HojaDeComandas({
               </>
             )}
           </div>
+        )}
+
+        {preguntandoSalir && (
+          <DialogoConfirmar
+            titulo={`Tienes ${sinGuardar} comanda${sinGuardar === 1 ? "" : "s"} sin guardar`}
+            texto="Si sales ahora no se registra ningún pedido. Las fotos siguen en la galería de tu teléfono."
+            confirmar="Salir sin guardar"
+            alCancelar={() => setPreguntandoSalir(false)}
+            alConfirmar={() => {
+              setPreguntandoSalir(false);
+              alCerrar();
+            }}
+          />
         )}
 
         {!item && items.length > 0 && (
@@ -517,7 +543,7 @@ export function HojaDeComandas({
                 disabled={!!leyendo || pendientes.length === 0}
                 onClick={() => setAbierta(pendientes.find((i) => i.calidad !== "ilegible")?.id ?? pendientes[0]?.id ?? null)}
               >
-                Revisar la siguiente
+                Revisar y guardar
               </button>
             ) : (
               <button
