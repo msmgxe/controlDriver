@@ -37,6 +37,12 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 1.21 — 16/10/2026
+- **Arreglo grave al revisar una comanda:** la foto se veía enorme y tapaba los botones
+  (Guardar), sin dejar bajar. Era un error mío de la 1.14: al añadir el zoom, también
+  se cambió la miniatura de la foto. Vuelve a ser una miniatura; tócala para verla
+  grande, con zoom.
+
 ### 1.20 — 16/10/2026
 **Que ninguna comanda se pierda:**
 - **Salir con comandas sin guardar pregunta primero** («Tienes 2 comandas sin guardar…»),

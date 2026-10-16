@@ -812,7 +812,8 @@ function Revision({
         <div className="flex items-center gap-3">
           {foto ? (
             <button type="button" onClick={() => setAmpliada(true)} aria-label="Ver la foto grande" className="shrink-0">
-              <ImagenConZoom src={foto} alt="La foto de la comanda" />
+              {/* eslint-disable-next-line @next/next/no-img-element -- URL de objeto local */}
+              <img src={foto} alt="La foto de la comanda" className="h-[76px] w-[60px] rounded-btn border border-linea-fuerte object-cover" />
             </button>
           ) : null}
           <div className="flex min-w-0 flex-col gap-1">
