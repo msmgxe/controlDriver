@@ -26,7 +26,7 @@ import {
   type ReglaPago,
   type TipoVehiculo,
 } from "@/lib/pagos/reglas";
-import { lunesDeLaSemana, type FechaISO } from "@/lib/fechas";
+import { formatearFecha, lunesDeLaSemana, type FechaISO } from "@/lib/fechas";
 import { montoDelDia } from "@/lib/pagos/calcular-liquidacion";
 import { perfilActual } from "./perfil";
 import type {
@@ -195,10 +195,11 @@ export async function jornadasPorRango(
     km_fuente: string | null;
     tramo_auto: number;
     origen: string | null;
+    contado_empresa: number;
     fotos: number;
   }>(
     `select id, jornada_id, ruta_id, codigo, estado, posicion, tramo, km, monto_centimos, manual, origen,
-            cliente_nombre, cliente_telefono, direccion, lat, lng, km_fuente, tramo_auto,
+            cliente_nombre, cliente_telefono, direccion, lat, lng, km_fuente, tramo_auto, contado_empresa,
             (select count(*) from pruebas p where p.orden_id = ordenes.id) as fotos
        from ordenes where jornada_id in (${huecos})`,
     ids,
@@ -241,6 +242,7 @@ export async function jornadasPorRango(
         tramoAuto: aBool(o.tramo_auto),
         fotos: o.fotos ?? 0,
         origen: (o.origen as OrigenDePedido | null) ?? "captura",
+        contado: aBool(o.contado_empresa),
       }))
       /* En el orden en que se hicieron: por la hora de salida de su ruta, y
          dentro de cada ruta en el orden de la lista. Ordenar solo por la
@@ -350,7 +352,7 @@ export async function reglaVigente(
   const filas = await consultar<{ id: string; parametros: string }>(
     `select id, parametros from reglas_pago
       where tienda_id = ? and vehiculo = ? and vigente_desde <= ?
-      order by vigente_desde desc limit 1`,
+      order by vigente_desde desc, actualizado_en desc, rowid desc limit 1`,
     [tiendaId, vehiculo, fecha],
   );
   if (filas.length === 0) return sinRegla;
@@ -994,19 +996,34 @@ export async function borrarPedido(ordenId: string): Promise<void> {
  * Si el día destino no existía, se crea, con la tienda y el vehículo del
  * perfil actual —igual que al añadir un pedido a mano.
  */
-export async function moverPedido(ordenId: string, fechaNueva: FechaISO): Promise<void> {
+export async function moverPedido(ordenId: string, fechaNueva: FechaISO, letra?: string): Promise<void> {
   const momento = ahora();
 
   await enTransaccion(async () => {
-    const filas = await consultar<{ jornada_id: string; fecha: string }>(
-      `select o.jornada_id, j.fecha
+    const filas = await consultar<{ jornada_id: string; fecha: string; codigo: string }>(
+      `select o.jornada_id, j.fecha, o.codigo
          from ordenes o join jornadas j on j.id = o.jornada_id
         where o.id = ?`,
       [ordenId],
     );
     const actual = filas[0];
     if (!actual) throw new Error("Ese pedido ya no existe.");
-    if (actual.fecha === fechaNueva) return; // Ya está en ese día: nada que mover.
+    if (letra !== undefined && !/^[a-z]?$/i.test(letra)) throw new Error("La letra tiene que ser una sola, de la a a la z.");
+    if (actual.fecha === fechaNueva && letra === undefined) return; // Ya está en ese día: nada que mover.
+
+    /* Con letra, el código cambia (`7106635` → `7106635b`); sin ella se queda. Si el
+       código resultante ya existe en el día destino, la base no deja repetirlo: se
+       avisa con lo que hay que hacer, en vez de dejar caer el error de SQL. */
+    const codigoNuevo = letra === undefined ? actual.codigo : actual.codigo.replace(/(?<=\d)[a-z]$/, "") + letra.toLowerCase();
+    const choque = await consultar<{ id: string }>(
+      `select o.id from ordenes o join jornadas j on j.id = o.jornada_id
+        where j.fecha = ? and lower(o.codigo) = ? and o.id <> ?`,
+      [fechaNueva, codigoNuevo.toLowerCase(), ordenId],
+    );
+    if (choque.length > 0) {
+      throw new Error(`El ${formatearFecha(fechaNueva)} ya tiene el pedido ${codigoNuevo}. Añade una letra al final para diferenciarlo.`);
+    }
+    if (actual.fecha === fechaNueva && codigoNuevo === actual.codigo) return;
 
     const destino = await consultar<{ id: string }>(`select id from jornadas where fecha = ?`, [fechaNueva]);
     let jornadaDestinoId = destino[0]?.id;
@@ -1034,9 +1051,16 @@ export async function moverPedido(ordenId: string, fechaNueva: FechaISO): Promis
     );
     const posicion = (ultimas[0]?.ultima ?? 0) + 1;
 
+    if (actual.fecha === fechaNueva) {
+      // Solo cambia la letra: el pedido no sale de su día ni pierde la ruta.
+      await ejecutar(`update ordenes set codigo = ? where id = ?`, [codigoNuevo, ordenId]);
+      await recontarEstados(actual.jornada_id, momento);
+      return;
+    }
+
     await ejecutar(
-      `update ordenes set jornada_id = ?, ruta_id = null, posicion = ? where id = ?`,
-      [jornadaDestinoId, posicion, ordenId],
+      `update ordenes set jornada_id = ?, ruta_id = null, posicion = ?, codigo = ? where id = ?`,
+      [jornadaDestinoId, posicion, codigoNuevo, ordenId],
     );
 
     await recontarEstados(actual.jornada_id, momento);
@@ -1208,4 +1232,14 @@ export async function buscarPedidos(
       montoCentimos: f.monto_centimos,
       cliente: aCliente(f),
     }));
+}
+
+/** ¿Ya hay en ese día un pedido con este código, aparte de `salvo`? Para proponer la letra antes de mover. */
+export async function codigoEnDia(fecha: FechaISO, codigo: string, salvo: string): Promise<boolean> {
+  const filas = await consultar<{ id: string }>(
+    `select o.id from ordenes o join jornadas j on j.id = o.jornada_id
+      where j.fecha = ? and lower(o.codigo) = ? and o.id <> ?`,
+    [fecha, codigo.toLowerCase(), salvo],
+  );
+  return filas.length > 0;
 }

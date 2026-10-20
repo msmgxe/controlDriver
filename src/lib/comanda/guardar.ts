@@ -37,7 +37,7 @@ import type { DatosDeCliente } from "@/lib/db/tipos";
 import { hoyEnLima, type FechaISO } from "@/lib/fechas";
 import type { Punto } from "@/lib/geo/distancia";
 import { tramoPorDistancia, type Distancia } from "@/lib/geo/tramo";
-import { TRAMO_MAS_DE_12_KM, pagoDelTramo } from "@/lib/pagos/reglas";
+import { TRAMO_MAS_DE_12_KM, esPorZona, pagoDelTramo } from "@/lib/pagos/reglas";
 
 import { codigoDeDespacho } from "./interpretar";
 
@@ -56,6 +56,11 @@ export interface ComandaParaGuardar {
    * Se ignora si no hay `ordenExistenteId`, o si ya estaba en ese día.
    */
   moverAFecha: boolean;
+  /**
+   * Una letra para el final del código, solo en un pedido nuevo: sirve para
+   * tener como pedido aparte uno cuyo número ya está cargado en otro día.
+   */
+  sufijo?: string;
   /** Solo para un pedido nuevo. */
   ruta: number | null;
   /**
@@ -133,10 +138,14 @@ export async function guardarComanda(
   let ordenId = d.ordenExistenteId;
   let creado = false;
   if (!ordenId) {
-    const codigo = codigoDeDespacho(d.numero);
+    const sufijo = (d.sufijo ?? "").toLowerCase();
+    if (!/^[a-z]?$/.test(sufijo)) throw new Error("La letra del final tiene que ser una sola, de la a a la z.");
+    const codigo = codigoDeDespacho(d.numero) + sufijo;
     const yaEsta = await codigosYaRegistrados([codigo]);
     if (yaEsta[codigo]) {
-      throw new Error(`El pedido ${codigo} ya está cargado el ${yaEsta[codigo]}. Completa ese en vez de crear otro.`);
+      throw new Error(
+        `El pedido ${codigo} ya está cargado el ${yaEsta[codigo]}. Completa ese, o elige «Es otro pedido» y ponle una letra al final.`,
+      );
     }
     ({ ordenId } = await agregarPedidoManual(d.fecha, {
       codigo,
@@ -198,7 +207,7 @@ export async function guardarComanda(
     // manda sobre el cálculo.
     const decididoAMano = !actual.tramoAuto && actual.tramo !== 1;
 
-    if (!ajustes.tramoAutomatico) {
+    if (!ajustes.tramoAutomatico || esPorZona(regla)) {
       await guardarDistancia(ordenId, { km: d.distancia.km, kmFuente: d.distancia.fuente });
       tramoDe = "apagado";
     } else if (decididoAMano) {

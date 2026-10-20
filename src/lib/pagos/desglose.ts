@@ -19,6 +19,11 @@ export interface FilaDeDesglose {
   centimos: number;
 }
 
+/** La clave con que se agrupa un adicional: «adic:<id de su tipo>», o «adic:sin» si no tiene. */
+export function claveDeAdicional(b: BloqueExtraFila): string {
+  return `adic:${(b.tipo === "taxi" && b.categoriaId) || "sin"}`;
+}
+
 function plural(n: number, uno: string, varios: string): string {
   return `${n} ${n === 1 ? uno : varios}`;
 }
@@ -75,15 +80,24 @@ export function desglosePorFuente(entrada: {
     });
   }
 
-  const taxis = entrada.bloques.filter((b) => b.tipo === "taxi");
-  if (taxis.length > 0) {
-    const km = taxis.reduce((s, b) => s + (b.tipo === "taxi" ? (b.km ?? 0) : 0), 0);
+  // Los adicionales, una fila por tipo (Taxi, Movilidad, Expo Vino…), de mayor a menor.
+  const adicionales = new Map<string, { nombre: string; veces: number; km: number; centimos: number }>();
+  for (const b of entrada.bloques) {
+    if (b.tipo !== "taxi") continue;
+    const clave = claveDeAdicional(b);
+    const a = adicionales.get(clave) ?? { nombre: b.categoriaNombre ?? "Taxi", veces: 0, km: 0, centimos: 0 };
+    a.veces += 1;
+    a.km += b.km ?? 0;
+    a.centimos += b.montoCentimos;
+    adicionales.set(clave, a);
+  }
+  for (const [clave, a] of [...adicionales].sort((x, y) => y[1].centimos - x[1].centimos)) {
     filas.push({
-      clave: "taxi",
+      clave,
       categoria: "taxi",
-      etiqueta: "Taxi libre",
-      detalle: `${plural(taxis.length, "carrera", "carreras")}${km > 0 ? ` · ${numero(km)} km` : ""}`,
-      centimos: taxis.reduce((s, b) => s + b.montoCentimos, 0),
+      etiqueta: `Adicionales · ${a.nombre}`,
+      detalle: `${plural(a.veces, "registro", "registros")}${a.km > 0 ? ` · ${numero(a.km)} km` : ""}`,
+      centimos: a.centimos,
     });
   }
 

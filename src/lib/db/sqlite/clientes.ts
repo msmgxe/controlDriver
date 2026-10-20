@@ -183,9 +183,9 @@ export async function pedidosPorNumero(numero: string): Promise<PedidoDeUnNumero
        from ordenes o
        join jornadas j on j.id = o.jornada_id
        left join rutas r on r.id = o.ruta_id
-      where o.codigo like ? or o.codigo like ? or o.codigo = ?
+      where o.codigo like ? or o.codigo like ? or o.codigo = ? or o.codigo like ?
       order by con_cliente asc, j.fecha desc, o.codigo asc`,
-    [`v${numero}wofp-%`, `wpet-${numero}-%`, numero],
+    [`v${numero}wofp-%`, `wpet-${numero}-%`, numero, `${numero}_`],
   );
 
   return filas.map((f) => ({

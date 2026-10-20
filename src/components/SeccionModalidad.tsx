@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { Acordeon } from "@/components/Acordeon";
 import { Auto } from "@/components/Auto";
+import { DialogoConfirmar } from "@/components/DialogoConfirmar";
 import { Check } from "@/components/iconos";
 import { Pestanas } from "@/components/Pestanas";
 import { SeccionUbicacion } from "@/components/SeccionUbicacion";
@@ -454,12 +455,22 @@ function EditorTarifa({
   regla: ReglaPago;
   alGuardar: () => void;
 }) {
-  const [modo, setModo] = useState<"unica" | "tramos">(regla.tramos.length <= 1 ? "unica" : "tramos");
+  const [modo, setModo] = useState<"unica" | "tramos" | "zona">(
+    regla.medida === "zona" ? "zona" : regla.tramos.length <= 1 ? "unica" : "tramos",
+  );
+  /* Las zonas: cada una con su nombre y su monto. El id (1 a 5) es el que guardan
+     los pedidos, así que se conserva al renombrar o quitar otra. */
+  const [zonas, setZonas] = useState(() =>
+    regla.medida === "zona"
+      ? regla.tramos.map((t) => ({ id: t.id, nombre: t.nombre ?? "", texto: String(t.monto) }))
+      : [{ id: 1, nombre: "", texto: "" }],
+  );
+  const [quitando, setQuitando] = useState<number | null>(null);
   const [montoUnico, setMontoUnico] = useState(
     String(regla.tramos[0]?.monto ?? (vehiculo === "moto" ? TARIFA_MOTO_ELECTRICA : 10)),
   );
   const [tramos, setTramos] = useState(() =>
-    (regla.tramos.length > 1 ? regla.tramos : REGLA_INICIAL.tramos).map((t) => ({
+    (regla.tramos.length > 1 && regla.medida !== "zona" ? regla.tramos : REGLA_INICIAL.tramos).map((t) => ({
       ...t,
       texto: String(t.monto),
     })),
@@ -483,6 +494,31 @@ function EditorTarifa({
       setGuardando(true);
       try {
         await guardarRegla(tiendaId, vehiculo, hoy, reglaTarifaUnica(valor));
+        alGuardar();
+      } catch (e) {
+        setError(mensajeDeFallo(e));
+      } finally {
+        setGuardando(false);
+      }
+      return;
+    }
+
+    if (modo === "zona") {
+      const nombres = zonas.map((z) => z.nombre.trim());
+      const montosZona = zonas.map((z) => aMonto(z.texto));
+      if (nombres.some((n) => n === "")) return setError("Cada zona necesita un nombre.");
+      if (new Set(nombres.map((n) => n.toLowerCase())).size !== nombres.length) return setError("Hay dos zonas con el mismo nombre.");
+      if (montosZona.some((m) => m === null || m <= 0)) return setError("Cada zona necesita un monto mayor que cero.");
+      setGuardando(true);
+      try {
+        await guardarRegla(tiendaId, vehiculo, hoy, {
+          moneda: "PEN",
+          base: "por_pedido",
+          medida: "zona",
+          // Sin kilómetros: el tramo se elige a mano, así que el rango no se usa.
+          tramos: zonas.map((z, i) => ({ id: z.id, desde: 0, hasta: 0, monto: montosZona[i] as number, nombre: nombres[i] })),
+          garantiaPermanencia: regla.garantiaPermanencia,
+        });
         alGuardar();
       } catch (e) {
         setError(mensajeDeFallo(e));
@@ -527,7 +563,8 @@ function EditorTarifa({
           {(
             [
               ["unica", "Única"],
-              ["tramos", "Por tramo"],
+              ["tramos", "Por km"],
+              ["zona", "Por zona"],
             ] as const
           ).map(([valor, etiqueta]) => (
             <button
@@ -553,6 +590,62 @@ function EditorTarifa({
           </label>
           <CampoSoles id="tarifa-unica" valor={montoUnico} onChange={setMontoUnico} ancho="w-full" />
         </div>
+      ) : modo === "zona" ? (
+        <div className="flex flex-col gap-2">
+          <p className="text-xs text-tinta-2">
+            Pon solo las tarifas que tiene esta tienda, con el nombre de la zona. Al registrar un pedido eliges la zona.
+          </p>
+          {zonas.map((z) => (
+            <div key={z.id} className="flex items-start gap-2">
+              <input
+                value={z.nombre}
+                onChange={(e) => setZonas((p) => p.map((x) => (x.id === z.id ? { ...x, nombre: e.target.value } : x)))}
+                placeholder="Ej.: Miraflores, Surquillo, Surco"
+                aria-label="Nombre de la zona"
+                maxLength={60}
+                className="min-h-11 min-w-0 flex-1 rounded-btn border border-linea-fuerte bg-sup px-3 text-sm"
+              />
+              <CampoSoles
+                valor={z.texto}
+                onChange={(v) => setZonas((p) => p.map((x) => (x.id === z.id ? { ...x, texto: v } : x)))}
+              />
+              <button
+                type="button"
+                aria-label={`Quitar ${z.nombre || "la zona"}`}
+                disabled={zonas.length <= 1}
+                onClick={() => setQuitando(z.id)}
+                className="grid size-11 shrink-0 place-items-center rounded-btn text-lg text-mal disabled:opacity-30"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+          {zonas.length >= 5 ? (
+            <p className="text-xs text-tinta-3">Máximo 5 zonas por tienda.</p>
+          ) : (
+            <button
+              type="button"
+              className="boton-sec self-start"
+              onClick={() => {
+                const libre = [1, 2, 3, 4, 5].find((i) => !zonas.some((z) => z.id === i));
+                if (libre) setZonas((p) => [...p, { id: libre, nombre: "", texto: "" }]);
+              }}
+            >
+              + Añadir zona
+            </button>
+          )}
+          {quitando !== null && (
+            <DialogoConfirmar
+              titulo={`¿Quitar «${zonas.find((z) => z.id === quitando)?.nombre || "esta zona"}»?`}
+              texto="Los pedidos que ya la usan conservan su monto. Se aplica al pulsar «Guardar tarifa»."
+              alCancelar={() => setQuitando(null)}
+              alConfirmar={() => {
+                setZonas((p) => p.filter((z) => z.id !== quitando));
+                setQuitando(null);
+              }}
+            />
+          )}
+        </div>
       ) : (
         <div className="flex flex-col gap-1.5">
           {tramos.map((t) => (
@@ -577,7 +670,9 @@ function EditorTarifa({
       <p className="text-xs text-tinta-3">
         {modo === "unica"
           ? "Cobra lo mismo cualquier pedido, sin importar la distancia."
-          : "Cobra según el tramo de distancia de cada pedido."}{" "}
+          : modo === "zona"
+            ? "Cobra según la zona que elijas en cada pedido; no mide kilómetros."
+            : "Cobra según el tramo de distancia de cada pedido."}{" "}
         Se aplica desde hoy: las jornadas ya cargadas conservan la tarifa con la que se guardaron.
       </p>
       {error && <p className="text-sm text-mal">{error}</p>}

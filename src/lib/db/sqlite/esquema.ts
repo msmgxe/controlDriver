@@ -206,6 +206,10 @@ export const ESQUEMA: string[] = [
         está impreso) o 'manual' (escrito a mano). Se guarda para poder decir,
         cuando un pago se discute, de dónde viene cada código. */
      origen           text not null default 'captura',
+     /* La empresa lo contó en el reporte que envía para el pago. Lo marca la
+        persona al cotejar su semana con ese reporte; los que quedan sin marcar
+        son los que la empresa no tuvo en cuenta. No cambia el monto. */
+     contado_empresa  integer not null default 0,
      /* La misma razón que en rutas, y además lo que permite el modo
         "combinar": un pedido ya registrado se actualiza, no se repite. */
      unique (jornada_id, codigo)
@@ -296,6 +300,20 @@ export const ESQUEMA: string[] = [
      cifras de "pedidos/rutas" que son de la tienda principal (§ ver el plan
      de apoyo/taxi)—, pero sí cuelgan de la misma `jornada_id`: ancla todo a
      "qué día fue", que es lo único que de verdad comparten los tres tipos. */
+  /* Los tipos de adicional que la persona crea («Taxi», «Movilidad», «Expo Vino»…).
+     Se archivan, no se borran: un adicional ya cobrado conserva su categoría. */
+  `create table if not exists categorias_adicional (
+     id             text primary key,
+     nombre         text not null,
+     orden          integer not null default 0,
+     activa         integer not null default 1,
+     creado_en      text not null,
+     actualizado_en text not null
+   );`,
+
+  `insert or ignore into categorias_adicional (id, nombre, orden, activa, creado_en, actualizado_en)
+     values ('cat_taxi', 'Taxi', 0, 1, '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z');`,
+
   `create table if not exists bloques_extra (
      id             text primary key,
      jornada_id     text not null references jornadas (id) on delete cascade,
@@ -332,6 +350,11 @@ export const ESQUEMA: string[] = [
         de recalcular según de qué tipo es cada bloque. */
      monto_centimos integer not null,
      notas          text,
+
+     /* Los adicionales (antes «taxi libre»): «tipo» sigue siendo 'taxi' por dentro,
+        porque SQLite no deja cambiar el CHECK sin rehacer la tabla. */
+     categoria_id   text references categorias_adicional (id) on delete set null,
+     descripcion    text,
 
      creado_en      text not null,
      actualizado_en text not null,
@@ -404,6 +427,9 @@ const COLUMNAS_ANADIDAS: ReadonlyArray<[tabla: string, columna: string, definici
   ["ordenes", "km_fuente", "text"],
   ["ordenes", "tramo_auto", "integer not null default 0"],
   ["ordenes", "origen", "text not null default 'captura'"],
+  ["ordenes", "contado_empresa", "integer not null default 0"],
+  ["bloques_extra", "categoria_id", "text"],
+  ["bloques_extra", "descripcion", "text"],
 ];
 
 /** Lo mínimo que necesita `migrar` de una base, sea cual sea el motor. */
@@ -456,4 +482,12 @@ export async function migrar(base: BaseMigrable): Promise<string[]> {
 export const VISTAS_A_REFRESCAR: readonly string[] = [
   `drop view if exists v_resumen_diario;`,
   VISTA_RESUMEN_DIARIO.replace("create view if not exists", "create view"),
+];
+
+/**
+ * Se ejecuta tras `migrar`: los taxis de antes pasan a la categoría «Taxi».
+ * Idempotente, y cada sentencia con su red igual que el esquema.
+ */
+export const RELLENOS_TRAS_MIGRAR: readonly string[] = [
+  `update bloques_extra set categoria_id = 'cat_taxi' where tipo = 'taxi' and categoria_id is null;`,
 ];

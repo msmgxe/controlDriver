@@ -51,7 +51,7 @@ export function HojaDeBloqueExtra({
   const flujo: TipoFlujo = corregir ? (corregir.tipo === "taxi" ? "taxi" : "apoyo") : tipo;
   const [modoApoyo, setModoApoyo] = useState<"hora" | "tramos">(corregir?.tipo === "apoyo_tramos" ? "tramos" : "hora");
 
-  const titulo = `${corregir ? "Corregir: " : ""}${flujo === "taxi" ? "Taxi libre" : "Apoyo a otra tienda"}`;
+  const titulo = `${corregir ? "Corregir: " : ""}${flujo === "taxi" ? "Adicional" : "Apoyo a otra tienda"}`;
 
   async function alTerminar() {
     if (corregir) await eliminarBloque(fecha, corregir.id);

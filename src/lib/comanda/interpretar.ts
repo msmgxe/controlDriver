@@ -305,7 +305,8 @@ function interpretarHoja(lineas: readonly LineaLeida[], ctx: Contexto, numeroDel
      parezca parte de un nombre. */
   const nombreLineas: LineaLeida[] = [];
   if (inicio > 0) {
-    for (let i = inicio - 1; i >= 0 && nombreLineas.length < 3; i--) {
+    /* Como mucho dos líneas: en la hoja el nombre ocupa una o dos, arriba a la derecha. */
+    for (let i = inicio - 1; i >= 0 && nombreLineas.length < 2; i--) {
       if (!parecerNombre(columna[i].texto)) break;
       nombreLineas.unshift(columna[i]);
     }
@@ -337,7 +338,17 @@ function interpretarHoja(lineas: readonly LineaLeida[], ctx: Contexto, numeroDel
      derecha de «LIMA», más lejos que la columna; y la fecha, en la columna o
      en el sello. */
   const textosHoja = ordenadas.map((l) => l.texto);
-  const telefonoCompleto = buscarTelefono(textosHoja);
+  /* El teléfono va a la derecha de «Teléfono:», en su misma fila, y el lector a
+     veces lo parte en trozos («+51 987» / «654 321»): se junta la fila entera. */
+  const etiquetaTel = ctx.conCajas ? ordenadas.find((l) => /tel[eé]fono/i.test(l.texto)) : undefined;
+  const filaTel = etiquetaTel
+    ? ordenadas
+        .filter((l) => Math.abs(l.y - etiquetaTel.y) <= Math.max(etiquetaTel.h, 20) && l.x >= etiquetaTel.x - 5)
+        .sort((a, b) => a.x - b.x)
+        .map((l) => l.texto)
+        .join(" ")
+    : null;
+  const telefonoCompleto = buscarTelefono(textosHoja) ?? (filaTel ? buscarTelefono([filaTel]) : null);
   // La etiqueta y la cifra a veces salen como dos líneas: se busca en el texto unido.
   const telefonoParcial = telefonoCompleto ? null : buscarTelefonoParcial([textosHoja.join("  ")]);
   const telefono = telefonoCompleto ?? telefonoParcial;
@@ -456,3 +467,14 @@ export function interpretarComandas(
  */
 export const codigoDeDespacho = (numero: string, bulto = 1): string =>
   numero.length === 7 ? numero : `v${numero}wofp-${String(bulto).padStart(2, "0")}`;
+
+/**
+ * La primera letra libre para distinguir un pedido cuyo código ya existe en otro
+ * día: `7106635` → `7106635b` si `7106635` y `7106635a`... ya están. Empieza en
+ * «b»: el original es, en la práctica, el «a».
+ */
+export function siguienteLetra(base: string, usados: readonly string[]): string {
+  const tomados = new Set(usados.map((c) => c.toLowerCase()));
+  for (const l of "bcdefghijklmnopqrstuvwxyz") if (!tomados.has(base.toLowerCase() + l)) return l;
+  return "";
+}

@@ -47,6 +47,8 @@ const TABLAS = [
   // Apoyo a otra tienda y taxi libre (v48). Cuelgan de jornadas y tiendas, así
   // que van después de ellas; sin estas dos, restaurar borraba el apoyo y el
   // taxi de todos los días y no los devolvía.
+  // Las categorías de adicional, antes de los bloques que las usan.
+  "categorias_adicional",
   "bloques_extra",
   "bloques_apoyo_pedidos",
 ] as const;
@@ -132,6 +134,7 @@ const esquemaRespaldo = z.object({
     // Los respaldos anteriores a los días de descanso no la traen.
     dias_descanso: z.array(z.record(z.string(), z.unknown())).default([]),
     // Los respaldos anteriores a apoyo/taxi no las traen.
+    categorias_adicional: z.array(z.record(z.string(), z.unknown())).default([]),
     bloques_extra: z.array(z.record(z.string(), z.unknown())).default([]),
     bloques_apoyo_pedidos: z.array(z.record(z.string(), z.unknown())).default([]),
   }),

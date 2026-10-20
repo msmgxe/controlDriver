@@ -18,7 +18,7 @@
  *     verdad —el mismo esquema, las mismas consultas— en vez de un simulacro
  *     que siempre dice que sí.
  */
-import { ESQUEMA, NOMBRE_BASE, VERSION_ESQUEMA, VISTAS_A_REFRESCAR, migrar } from "./esquema";
+import { ESQUEMA, NOMBRE_BASE, RELLENOS_TRAS_MIGRAR, VERSION_ESQUEMA, VISTAS_A_REFRESCAR, migrar } from "./esquema";
 
 /** Lo mínimo que tiene que saber hacer una base para esta aplicación. */
 export interface Motor {
@@ -169,6 +169,13 @@ async function motorDeCapacitor(): Promise<Motor> {
     consultar: async <T,>(sql: string) => ((await db.query(sql)).values ?? []) as T[],
     ejecutar: (sql: string) => db.execute(sql),
   }).catch(() => []);
+  for (const sentencia of RELLENOS_TRAS_MIGRAR) {
+    try {
+      await db.execute(sentencia);
+    } catch {
+      /* Es un relleno: si falla, esos taxis salen como «Sin categoría». */
+    }
+  }
   /* Las vistas se rehacen en cada arranque: una guardada de una versión anterior
      no se actualiza sola y dejaba fuera columnas nuevas (apoyo y taxi). */
   for (const sentencia of VISTAS_A_REFRESCAR) {

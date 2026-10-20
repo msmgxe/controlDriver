@@ -9,8 +9,11 @@ import {
   borrarJornada,
   borrarPedido,
   jornadaPorFecha,
+  moverPedido,
   reglaVigente,
 } from "@/lib/db/sqlite/jornadas";
+import { crearCategoria } from "@/lib/db/sqlite/bloques-extra";
+import type { CategoriaAdicional } from "@/lib/db/tipos";
 import {
   borrarBloque,
   guardarApoyoHora,
@@ -22,10 +25,10 @@ import { estadoDeSemana } from "@/lib/db/sqlite/liquidaciones";
 import { reordenarRutasDelDia } from "@/lib/db/sqlite/rutas";
 import { ESTADOS_DE_PEDIDO, actualizarPedido } from "@/lib/db/sqlite/pedidos";
 import { perfilActual } from "@/lib/db/sqlite/perfil";
-import { esFechaISO, hoyEnLima, type FechaISO } from "@/lib/fechas";
+import { esFechaISO, formatearFecha, hoyEnLima, type FechaISO } from "@/lib/fechas";
 import { RE_CODIGO_PEDIDO } from "@/lib/extraccion/esquema";
 import { tramoPorDistancia } from "@/lib/geo/tramo";
-import { TRAMO_MAS_DE_12_KM, pagoDelTramo } from "@/lib/pagos/reglas";
+import { TRAMO_MAS_DE_12_KM, esPorZona, pagoDelTramo } from "@/lib/pagos/reglas";
 
 /**
  * Edición de una jornada ya guardada (§9).
@@ -232,6 +235,34 @@ export async function corregirPedido(
 }
 
 /**
+ * Pasa un pedido a otro día, con una letra al final del código si hace falta
+ * para no repetir uno que ya está. Se comprueba la semana de los dos días: ni
+ * se saca un pedido de una semana pagada ni se mete en una.
+ */
+export async function cambiarDiaDePedido(
+  fecha: string,
+  ordenId: string,
+  fechaNueva: string,
+  letra: string,
+): Promise<Resultado> {
+  if (!esFechaISO(fechaNueva)) return { ok: false, error: "Fecha no válida." };
+  if (fechaNueva > hoyEnLima()) return { ok: false, error: "No puedes pasar un pedido a un día futuro." };
+  if (!/^[a-zA-Z]?$/.test(letra)) return { ok: false, error: "La letra tiene que ser una sola, de la a a la z." };
+
+  for (const f of new Set([fecha, fechaNueva])) {
+    const editable = await semanaEditable(f as FechaISO);
+    if (!editable.ok) return { ok: false, error: editable.error };
+  }
+
+  try {
+    await moverPedido(ordenId, fechaNueva as FechaISO, letra === "" ? undefined : letra);
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "No se pudo cambiar el día." };
+  }
+  return { ok: true, mensaje: `Pedido pasado al ${formatearFecha(fechaNueva as FechaISO)}.` };
+}
+
+/**
  * Renumera las rutas del día por hora de salida. Opcional: solo se usa si la
  * lista quedó desordenada —capturas fuera de secuencia, rutas añadidas a
  * mano— y se prefiere que los números sigan el orden real de la jornada.
@@ -407,6 +438,11 @@ export async function fijarDistanciaDePedido(
 
     const perfil = await perfilActual();
     const { regla } = await reglaVigente(fecha, perfil?.tiendaId ?? null, perfil?.vehiculo);
+    // Con tarifa por zona los kilómetros no deciden nada: se guardan y el tramo queda como está.
+    if (esPorZona(regla)) {
+      await guardarDistancia(ordenId, { km: d.km, kmFuente: d.kmFuente });
+      return { ok: true, mensaje: "Distancia guardada. El tramo de esta tienda se elige a mano, por zona." };
+    }
     const calculado = tramoPorDistancia(regla, d.km);
     const montoCentimos = calculado.montoCentimos ?? d.montoManualCentimos ?? null;
     if (montoCentimos === null) {
@@ -515,9 +551,23 @@ const esquemaTaxi = z.object({
   kmFuente: KM_FUENTE,
   montoCentimos: z.number().int().min(1).max(100_000),
   notas: z.string().max(500).nullable(),
+  /** El tipo de adicional; sin él, «Taxi». */
+  categoriaId: z.string().min(1).max(64).nullable().optional(),
+  descripcion: z.string().trim().max(120).nullable().optional(),
 });
 
-/** Registra una carrera de taxi libre. El monto siempre lo escribe la persona. */
+/** Crea un tipo de adicional (o devuelve el que ya existe con ese nombre). */
+export async function crearTipoDeAdicional(
+  nombre: string,
+): Promise<{ ok: true; categoria: CategoriaAdicional } | { ok: false; error: string }> {
+  try {
+    return { ok: true, categoria: await crearCategoria(String(nombre)) };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "No se pudo crear el tipo." };
+  }
+}
+
+/** Registra un adicional (taxi, movilidad…). El monto siempre lo escribe la persona. */
 export async function guardarBloqueTaxi(datos: unknown): Promise<Resultado> {
   const parseado = esquemaTaxi.safeParse(datos);
   if (!parseado.success) return { ok: false, error: "Datos no válidos." };
@@ -531,7 +581,7 @@ export async function guardarBloqueTaxi(datos: unknown): Promise<Resultado> {
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : "No se pudo guardar el taxi." };
   }
-  return { ok: true, mensaje: "Taxi guardado." };
+  return { ok: true, mensaje: "Adicional guardado." };
 }
 
 /**

@@ -21,7 +21,10 @@ export function tituloYDetalleDeBloque(b: BloqueExtraFila): { titulo: string; de
   if (b.tipo === "apoyo_tramos") {
     return { titulo: b.tiendaNombre || "Apoyo por tramos", detalle: `${b.pedidos.length} pedido${b.pedidos.length === 1 ? "" : "s"}` };
   }
-  return { titulo: "Taxi libre", detalle: b.km !== null ? `${b.km} km` : "Carrera suelta" };
+  return {
+    titulo: b.categoriaNombre ?? "Taxi",
+    detalle: [b.descripcion, b.km ? `${b.km} km` : null].filter(Boolean).join(" · ") || "Adicional",
+  };
 }
 
 /** «Apoyo», «Taxi»: la categoría con la que se suma en los desgloses. */

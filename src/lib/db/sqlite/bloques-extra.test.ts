@@ -192,3 +192,36 @@ describe("bloquesPorRango", () => {
     expect(porFecha.has("2026-09-16" as FechaISO)).toBe(false);
   });
 });
+
+describe("adicionales: tipos propios", () => {
+  it("crea tipos sin duplicar por mayúsculas o espacios, y los taxis de siempre son «Taxi»", async () => {
+    const { crearCategoria, listarCategorias, archivarCategoria, CATEGORIA_TAXI } = await import("./bloques-extra");
+    expect((await listarCategorias()).map((c) => c.nombre)).toEqual(["Taxi"]);
+
+    const a = await crearCategoria("  Expo   Vino ");
+    const b = await crearCategoria("expo vino");
+    expect(b.id).toBe(a.id);
+    expect(a.nombre).toBe("Expo Vino");
+    await expect(crearCategoria("x")).rejects.toThrow();
+
+    await archivarCategoria(a.id);
+    expect((await listarCategorias()).find((c) => c.id === a.id)!.activa).toBe(false);
+    expect((await crearCategoria("Expo Vino")).activa).toBe(true); // volver a crearlo lo reactiva
+    expect(CATEGORIA_TAXI).toBe("cat_taxi");
+  });
+
+  it("un adicional guarda su tipo y se lee con el nombre; sin tipo, es Taxi", async () => {
+    const { crearCategoria, guardarTaxi, listarBloquesDelDia } = await import("./bloques-extra");
+    const fecha = "2026-09-16" as FechaISO;
+    const mov = await crearCategoria("Movilidad");
+    const base = { fecha, horaInicio: null, horaFin: null, origen: null, destino: null, km: 0, kmFuente: "manual" as const, notas: null };
+    await guardarTaxi({ ...base, montoCentimos: 2500, categoriaId: mov.id, descripcion: "A Barranco" });
+    await guardarTaxi({ ...base, km: 6, montoCentimos: 1800 });
+
+    const leidos = await listarBloquesDelDia(fecha);
+    const nombres = leidos.map((b) => (b.tipo === "taxi" ? b.categoriaNombre : null)).sort();
+    expect(nombres).toEqual(["Movilidad", "Taxi"]);
+    const m = leidos.find((b) => b.tipo === "taxi" && b.categoriaNombre === "Movilidad")!;
+    expect(m.tipo === "taxi" && m.descripcion).toBe("A Barranco");
+  });
+});

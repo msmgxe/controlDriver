@@ -11,7 +11,7 @@ import { ImagenConZoom } from "@/components/ImagenConZoom";
 import { Aviso } from "@/components/ui";
 import { useCapa } from "@/hooks/useCapa";
 import { sonar } from "@/lib/sonidos";
-import { codigoDeDespacho, type CampoDeComanda } from "@/lib/comanda/interpretar";
+import { codigoDeDespacho, siguienteLetra, type CampoDeComanda } from "@/lib/comanda/interpretar";
 import { guardarComanda, type ResultadoDeGuardado } from "@/lib/comanda/guardar";
 import { leerFotoDeComandas, type HojaLeida } from "@/lib/comanda/leer";
 import type { AjustesDeComandas } from "@/lib/db/sqlite/ajustes";
@@ -22,7 +22,7 @@ import { esPuntoValido, kmEnLinea, type Punto } from "@/lib/geo/distancia";
 import { enlaceDeMapa } from "@/lib/geo/enlaces";
 import { buscarDireccion, resolverEnlace, rutaPorCalles, type Candidato } from "@/lib/geo/nativo";
 import { aDecimas, distanciaAlCliente, tramoPorDistancia, type Distancia } from "@/lib/geo/tramo";
-import { TRAMO_MAS_DE_12_KM, formatearSoles, type ReglaPago } from "@/lib/pagos/reglas";
+import { TRAMO_MAS_DE_12_KM, esPorZona, formatearSoles, type ReglaPago } from "@/lib/pagos/reglas";
 
 /**
  * Leer comandas, una por una.
@@ -115,6 +115,8 @@ interface Item {
   fecha: FechaISO;
   /** Si `elegido` está en otro día, ¿se pidió traerlo al día que se revisa? */
   moverAFecha: boolean;
+  /** Letra al final del código de un pedido nuevo cuyo número ya está cargado en otro día. */
+  sufijo: string;
   ruta: number | null;
   ubicacion: { estado: EstadoUbicacion; candidatos: Candidato[]; etiqueta: string | null; mensaje: string | null };
   punto: Punto | null;
@@ -273,6 +275,7 @@ export function HojaDeComandas({
             elegido: existentes[0]?.ordenId ?? null,
             fecha: fechaDelItem,
             moverAFecha: false,
+            sufijo: "",
             // Solo se sugiere ruta para un pedido nuevo que va al día de hoy,
             // recién fotografiado en el momento: es cuando la hora dice algo.
             ruta:
@@ -354,6 +357,7 @@ export function HojaDeComandas({
           ordenExistenteId: elegido?.ordenId ?? null,
           fecha: elegido ? (mover ? fecha : elegido.fecha) : item.fecha,
           moverAFecha: mover,
+          sufijo: elegido ? "" : item.sufijo,
           ruta: item.ruta,
           ventana: item.hoja.comanda.ventana.valor,
           nombre: item.nombre,
@@ -797,14 +801,23 @@ function Revision({
 
   const elegido = item.existentes.find((x) => x.ordenId === item.elegido) ?? null;
   const km = item.distancia?.km ?? null;
-  const calculado = km !== null ? tramoPorDistancia(regla, km) : null;
+  const calculado = km !== null && !esPorZona(regla) ? tramoPorDistancia(regla, km) : null;
   const masDe12 = calculado !== null && calculado.montoCentimos === null;
   const numeroValido = /^\d{7,8}$/.test(item.numero);
 
   async function renumerar(numero: string) {
     const existentes = /^\d{7,8}$/.test(numero) ? await pedidosPorNumero(numero) : [];
-    actualizar(item.id, { numero, existentes, elegido: existentes[0]?.ordenId ?? null });
+    actualizar(item.id, { numero, existentes, elegido: existentes[0]?.ordenId ?? null, sufijo: "" });
   }
+
+  /** Elegir a cuál completa, o «es otro pedido»: entonces se propone la letra libre. */
+  function elegirExistente(id: string | null) {
+    actualizar(item.id, {
+      elegido: id,
+      sufijo: id || !numeroValido ? "" : siguienteLetra(codigoDeDespacho(item.numero), item.existentes.map((x) => x.codigo)),
+    });
+  }
+  const codigoNuevo = numeroValido ? codigoDeDespacho(item.numero) + item.sufijo : null;
 
   return (
     <>
@@ -845,6 +858,28 @@ function Revision({
 
         {pestana === "pedido" && (
           <>
+            {item.existentes.length > 0 && (
+              <div role="radiogroup" aria-label="Qué hacer con el pedido que ya está" className="grid grid-cols-2 gap-2">
+                {[
+                  { id: "completar", texto: "Completar el que ya está", activa: elegido !== null },
+                  { id: "otro", texto: "Es otro pedido", activa: elegido === null },
+                ].map((o) => (
+                  <button
+                    key={o.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={o.activa}
+                    onClick={() => elegirExistente(o.id === "completar" ? (item.existentes[0]?.ordenId ?? null) : null)}
+                    className={`min-h-12 rounded-btn border-2 px-2 text-sm font-semibold ${
+                      o.activa ? "border-acento bg-acento-suave text-acento-tinta" : "border-linea-fuerte text-tinta-2"
+                    }`}
+                  >
+                    {o.texto}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {elegido ? (
               <>
                 <Aviso tono="bien" titulo="Este pedido ya está cargado">
@@ -877,7 +912,9 @@ function Revision({
               <Aviso tono="atento" titulo="Pedido nuevo">
                 <p>
                   {numeroValido
-                    ? `No estaba entre tus capturas. Se añade como ${codigoDeDespacho(item.numero)}.`
+                    ? item.existentes.length > 0
+                      ? `El número ya está cargado en otro día. Se añade como ${codigoNuevo}, aparte del que ya está.`
+                      : `No estaba entre tus capturas. Se añade como ${codigoNuevo}.`
                     : "Escribe el número de despacho de la hoja (7 u 8 dígitos) para poder guardarla."}
                 </p>
               </Aviso>
@@ -904,7 +941,7 @@ function Revision({
                 <span className="text-sm font-semibold">Hay varios bultos: ¿a cuál es?</span>
                 <select
                   value={item.elegido ?? ""}
-                  onChange={(e) => actualizar(item.id, { elegido: e.target.value || null })}
+                  onChange={(e) => elegirExistente(e.target.value || null)}
                   className="min-h-11 rounded-btn border border-linea-fuerte bg-sup px-2 font-mono text-base"
                 >
                   {item.existentes.map((x) => (
@@ -915,6 +952,23 @@ function Revision({
                   ))}
                   <option value="">Ninguno: crear uno nuevo</option>
                 </select>
+              </label>
+            )}
+
+            {!elegido && item.existentes.length > 0 && numeroValido && (
+              <label className="flex flex-col gap-1.5">
+                <span className="text-sm font-semibold">
+                  Letra al final del código <span className="text-xs font-medium text-tinta-3">para diferenciarlo</span>
+                </span>
+                <input
+                  value={item.sufijo}
+                  maxLength={1}
+                  onChange={(e) => actualizar(item.id, { sufijo: e.target.value.replace(/[^a-zA-Z]/g, "").toLowerCase() })}
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  autoComplete="off"
+                  className="min-h-11 w-20 rounded-btn border border-linea-fuerte bg-sup px-3 text-center font-mono text-base"
+                />
               </label>
             )}
 

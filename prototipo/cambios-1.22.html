@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cambios pendientes de compilar</title>
+<style>
+  :root{--acento:#1f5cff;--acento-tinta:#1244cc;--acento-suave:#dce6ff;--tinta:#0d1b4a;--tinta-2:#4a5780;--tinta-3:#7c87a8;--sup:#fff;--sup-2:#e3eafb;--linea:#d6def2;--linea-fuerte:#a9b8dd;--aviso:#8a5a00;--aviso-suave:#fff3d1;--mal:#b3261e;--bien:#1b7a3d;--bien-suave:#dff5e6;--fondo:#eef2fb}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--fondo);color:var(--tinta);font:16px/1.45 system-ui,-apple-system,Roboto,sans-serif}
+  main{max-width:1100px;margin:0 auto;padding:24px 16px 64px}
+  h1{font-size:26px;margin:0 0 4px} h2{font-size:20px;margin:40px 0 4px}
+  .sub{color:var(--tinta-2);margin:0 0 16px}
+  .fila{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:28px;align-items:start}
+  @media(max-width:820px){.fila{grid-template-columns:1fr}}
+  .nota{background:var(--sup);border:1px solid var(--linea);border-radius:14px;padding:14px 16px;font-size:14.5px}
+  .nota ul{margin:6px 0 0;padding-left:18px} .nota li{margin:4px 0}
+  .nota code,.arch{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:var(--sup-2);padding:1px 5px;border-radius:5px}
+  .nuevo{display:inline-block;background:var(--acento);color:#fff;font-size:11px;font-weight:700;letter-spacing:.04em;padding:2px 8px;border-radius:99px;text-transform:uppercase;vertical-align:middle}
+  /* teléfono */
+  .tel{width:100%;max-width:380px;background:var(--sup);border:1px solid var(--linea-fuerte);border-radius:26px;box-shadow:0 10px 30px #0d1b4a22;overflow:hidden;padding:14px 16px 18px;position:relative}
+  .tel h3{margin:0;font-size:19px;font-family:ui-monospace,Menlo,monospace}
+  .tel .p{margin:0;color:var(--tinta-2);font-size:14px}
+  .tabs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--sup-2);border-radius:14px;padding:4px;margin:12px 0;gap:2px}
+  .tabs span{text-align:center;padding:9px 4px;border-radius:11px;font-size:14px;font-weight:600;color:var(--tinta-2);cursor:pointer}
+  .tabs span.on{background:#fff;color:var(--tinta);box-shadow:0 1px 4px #0d1b4a22}
+  label{display:flex;flex-direction:column;gap:5px;font-size:14px;font-weight:600}
+  input,select{min-height:44px;border:1px solid var(--linea-fuerte);border-radius:12px;padding:0 10px;font:inherit;font-weight:400;background:#fff;color:var(--tinta)}
+  .mono{font-family:ui-monospace,Menlo,monospace}
+  .btn{min-height:44px;border:1px solid var(--linea-fuerte);background:#fff;border-radius:12px;font:inherit;font-weight:600;color:var(--tinta);cursor:pointer;padding:0 14px}
+  .btn:disabled{opacity:.45;cursor:default}
+  .caja{display:flex;flex-direction:column;gap:8px;border:1px solid var(--linea);background:#e3eafb55;border-radius:12px;padding:12px;margin:12px 0}
+  .r{font-size:12.5px;margin:0}.aviso{color:var(--aviso)}.gris{color:var(--tinta-2)}.g3{color:var(--tinta-3)}
+  .hl{outline:3px solid #ff9f1c;outline-offset:3px;border-radius:14px;position:relative}
+  .hl::before{content:attr(data-et);position:absolute;top:-11px;left:12px;background:#ff9f1c;color:#1a0f00;font:700 11px system-ui;padding:2px 8px;border-radius:99px;z-index:2;white-space:nowrap}
+  /* elección */
+  .dos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+  .dos button{min-height:48px;border:2px solid var(--linea-fuerte);background:#fff;border-radius:12px;font:inherit;font-size:14px;font-weight:600;color:var(--tinta-2);cursor:pointer}
+  .dos button.on{border-color:var(--acento);background:var(--acento-suave);color:var(--acento-tinta)}
+  .av{border-radius:12px;padding:10px 12px;font-size:14px;margin-bottom:10px}
+  .av.bien{background:var(--bien-suave);color:var(--bien)} .av.atento{background:var(--aviso-suave);color:var(--aviso)}
+  /* subir más */
+  .fila-b{display:flex;align-items:center;gap:10px;width:100%;min-height:54px;padding:10px 14px;border:1px solid var(--linea-fuerte);border-radius:12px;background:#fff;font:inherit;font-weight:600;color:var(--tinta);cursor:pointer;text-align:left;margin-bottom:10px}
+  .fila-b::after{content:"›";margin-left:auto;color:var(--tinta-3);font-size:22px}
+  .vuelta{background:none;border:0;color:var(--acento-tinta);font:inherit;font-weight:600;min-height:40px;cursor:pointer;padding:0 6px;margin-bottom:6px}
+  .abierta{border:2px solid var(--acento);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;background:#fff}
+  .abierta h4{margin:0}
+  .principal{min-height:46px;border:0;border-radius:12px;background:var(--acento);color:#fff;font:inherit;font-weight:700;cursor:pointer}
+  .antes{opacity:.9}.antes .abierta{border:1px solid var(--linea-fuerte)}
+  /* hoja comanda */
+  .hoja{position:relative;background:#fffef8;border:1px solid #cfc9b0;border-radius:6px;height:300px;font-size:12px;color:#333}
+  .z{position:absolute;border:2px dashed;border-radius:6px;padding:2px 6px;font-weight:700;font-size:11.5px;display:flex;align-items:flex-start}
+  .z small{font-weight:400;display:block}
+  .tabla{width:100%;border-collapse:collapse;font-size:14px;background:#fff;border:1px solid var(--linea);border-radius:12px;overflow:hidden}
+  .tabla td,.tabla th{padding:8px 10px;border-bottom:1px solid var(--linea);text-align:left;vertical-align:top}
+  .tabla th{background:var(--sup-2);font-size:12.5px}
+</style>
+</head>
+<body>
+<main>
+  <h1>Cambios de esta tanda (aún sin compilar)</h1>
+  <p class="sub">Maqueta interactiva: toca y escribe como en el teléfono. Lo naranja marca <b>dónde</b> está el cambio. Es una réplica de los componentes, no la app real.</p>
+
+  <!-- ===================== 1 ===================== -->
+  <h2>1 · Cambiar el día de un pedido, con letra para no duplicar</h2>
+  <p class="sub">Dónde: hoja del pedido › pestaña <b>Pedido</b>, entre el código y la ruta. <span class="arch">HojaDePedido.tsx › CambiarDia</span></p>
+  <div class="fila">
+    <div class="tel">
+      <h3 id="cod1">7106635</h3>
+      <p class="p">Viernes 16 · Sin ruta</p>
+      <div class="tabs"><span class="on">Pedido</span><span>Cliente</span><span>Distancia</span><span>Evidencia</span></div>
+      <label>Código del pedido<input class="mono" value="7106635" disabled></label>
+      <div class="caja hl" data-et="NUEVO">
+        <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end">
+          <label>Día del pedido<input id="dia" type="date" value="2026-10-16" max="2026-10-16"></label>
+          <label>Letra<input id="letra" class="mono" maxlength="1" style="width:56px;text-align:center" placeholder="—"></label>
+        </div>
+        <p class="r aviso" id="ocupado" hidden>Ese día ya tiene el pedido <b class="mono">7106635</b>. Pon una letra al final para que sean dos pedidos distintos.</p>
+        <p class="r gris" id="previo" hidden></p>
+        <p class="r g3" id="sinruta" hidden>Al cambiar de día el pedido se queda sin ruta: la asignas de nuevo.</p>
+        <button class="btn" id="ir" disabled>Cambiar</button>
+        <p class="r" id="hecho" style="color:var(--bien)" hidden></p>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><label>Ruta<select disabled><option>Sin ruta</option></select></label><label>Estado<select disabled><option>Entregado</option></select></label></div>
+    </div>
+    <div class="nota">
+      <b>Pruébalo</b>
+      <ul>
+        <li>Cambia el día a <b>15/10/2026</b>: ese día ya tiene <code>7106635</code>, sale el aviso naranja y se propone la letra <code>b</code>. El botón no deja continuar sin letra.</li>
+        <li>Cambia a <b>14/10/2026</b> (libre): se mueve tal cual, sin letra. Puedes ponerla igual si quieres.</li>
+        <li>Deja el día de hoy y escribe solo una letra: cambia el código sin mover el pedido (conserva ruta).</li>
+      </ul>
+      <p class="r g3" style="margin-top:8px">Un código puede acabar en una sola letra a–z. Funciona igual para <code>v12239582wofp-01b</code>.</p>
+    </div>
+  </div>
+
+  <h3 style="margin:28px 0 4px;font-size:17px">…y en «Revisar la comanda»</h3>
+  <p class="sub">Cuando el número ya está cargado en otro día. <span class="arch">HojaDeComandas.tsx › Revision</span></p>
+  <div class="fila">
+    <div class="tel">
+      <h3 style="font-family:inherit">Revisar la comanda</h3>
+      <p class="p">Viernes 16 · 16/10/2026</p>
+      <div class="tabs"><span class="on">Pedido</span><span>Cliente</span><span>Entrega</span></div>
+      <div class="dos hl" data-et="NUEVO" style="margin-top:14px">
+        <button id="b-comp" class="on">Completar el que ya está</button>
+        <button id="b-otro">Es otro pedido</button>
+      </div>
+      <div id="av-comp" class="av bien"><b>Este pedido ya está cargado</b><br>Jueves 15 · Ruta 2 · 17:00. Se le añaden el cliente, la distancia y la foto.</div>
+      <div id="av-otro" hidden>
+        <div class="av atento"><b>Pedido nuevo</b><br>El número ya está cargado en otro día. Se añade como <b class="mono" id="cn">7106635b</b>, aparte del que ya está.</div>
+        <label class="hl" data-et="NUEVO">Letra al final del código <span class="g3" style="font-weight:400;font-size:12px">para diferenciarlo</span>
+          <input id="l2" class="mono" maxlength="1" value="b" style="width:80px;text-align:center"></label>
+        <label style="margin-top:12px">Día<input type="date" value="2026-10-16"></label>
+      </div>
+      <label style="margin-top:12px">Número de despacho<input class="mono" value="7106635" disabled></label>
+    </div>
+    <div class="nota">
+      <b>Qué cambia</b>
+      <ul>
+        <li>Antes solo se podía completar el pedido existente (o moverlo de día). Ahora hay una segunda salida: <b>«Es otro pedido»</b>.</li>
+        <li>Se propone la primera letra libre (empieza en <code>b</code>); si ya existe <code>b</code>, propone <code>c</code>.</li>
+        <li>El botón activo lleva el borde del tema, para saber qué estás eligiendo.</li>
+        <li>Si guardas sin letra un número ya cargado, la app lo rechaza y te dice qué hacer.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===================== 2 ===================== -->
+  <h2>2 · Cómo se lee la disposición de la comanda</h2>
+  <p class="sub">Dónde: el intérprete de la hoja. <span class="arch">lib/comanda/interpretar.ts</span></p>
+  <div class="fila">
+    <div class="hoja" style="max-width:380px">
+      <div class="z" style="left:6px;top:8px;width:130px;height:46px;border-color:#1f5cff;color:#1244cc">① Nº del pedido<small>arriba izquierda</small></div>
+      <div class="z" style="right:6px;top:8px;width:200px;height:60px;border-color:#7a2fd0;color:#5a1fa0">② Nombre<small>arriba derecha, hasta 2 líneas</small></div>
+      <div class="z" style="right:6px;top:76px;width:220px;height:56px;border-color:#1b7a3d;color:#1b7a3d">③ Dirección<small>debajo del nombre</small></div>
+      <div class="z" style="right:6px;top:140px;width:130px;height:40px;border-color:#c2410c;color:#9a3412">⑤ Teléfono<small>a la derecha · +51 o 9</small></div>
+      <div class="z" style="left:6px;top:190px;width:210px;height:48px;border-color:#b3261e;color:#b3261e">④ Fecha y ruta<small>horario de entrega, más abajo</small></div>
+      <div class="z" style="left:6px;top:70px;width:100px;height:100px;border-color:#aaa;color:#888;border-style:dotted">etiquetas<small>se ignoran</small></div>
+    </div>
+    <div>
+      <div class="nota" style="margin-bottom:14px">
+        <b>Qué hice</b>
+        <ul>
+          <li><b>Nombre:</b> ahora toma como máximo <b>2 líneas</b> (antes hasta 3) justo encima de la dirección, así no se cuela una línea ajena.</li>
+          <li><b>Teléfono:</b> se busca en la <b>fila de «Teléfono:»</b> y se juntan los trozos que el lector separa. Antes, si venía partido, salía «No se leyó» (tu captura 3).</li>
+          <li>Número, dirección, fecha y horario ya seguían esta disposición.</li>
+        </ul>
+      </div>
+      <table class="tabla">
+        <tr><th>El lector entrega…</th><th>Resultado</th></tr>
+        <tr><td><span class="mono">Teléfono:</span> · <span class="mono">+51 987</span> · <span class="mono">654 321</span> <span class="g3">(3 trozos, misma fila)</span></td><td><b class="mono">987 654 321</b></td></tr>
+        <tr><td><span class="mono">Elsa Patricia</span> / <span class="mono">Tizon Garcia</span> (2 líneas)</td><td><b>Elsa Patricia Tizon Garcia</b></td></tr>
+        <tr><td><span class="mono">Teléfono:</span> · <span class="mono">+5199</span> <span class="g3">(cortado por el borde)</span></td><td>Vacío (muy poco): se pide completarlo a mano</td></tr>
+      </table>
+      <p class="r g3" style="margin-top:8px">Probado con las hojas reales de Metro y Wong del repositorio y los casos de arriba (pruebas automáticas).</p>
+    </div>
+  </div>
+
+  <!-- ===================== 3 ===================== -->
+  <h2>3 · Saber en qué opción estás (Subir más)</h2>
+  <p class="sub">Dónde: «Subir más» › Pedidos y Rutas. <span class="arch">SubirMas.tsx · OpcionActiva.tsx</span></p>
+  <div class="fila">
+    <div class="tel">
+      <h3 style="font-family:inherit;font-size:18px">Pedidos de mi tienda</h3>
+      <div class="tabs"><span class="on">Pedidos</span><span>Rutas</span><span>Taxi y apoyo</span></div>
+      <div id="sm"></div>
+    </div>
+    <div>
+      <div class="nota" style="margin-bottom:14px">
+        <b>Pruébalo</b>
+        <ul>
+          <li>Toca cualquier fila: se abre su formulario con <b>borde del tema</b>, las demás filas <b>se esconden</b> y arriba aparece <b>‹ Otras formas de anotar</b>.</li>
+          <li>Ese enlace (o «Cancelar») vuelve a la lista de un toque.</li>
+          <li>«Leer una comanda» abre su propia pantalla, así que desaparece de la lista mientras hay otra abierta.</li>
+        </ul>
+      </div>
+      <p class="r g3"><b>Antes</b> (tu captura): el formulario se abría en el sitio del botón con borde gris, y las otras tres filas seguían alrededor; no se sabía de cuál venía.</p>
+    </div>
+  </div>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+/* ---- 1: cambiar día ---- */
+const HOY='2026-10-16', OCUPADOS=['2026-10-15'];
+function f1(){
+  const d=$('dia').value, l=$('letra').value.replace(/[^a-z]/gi,'').toLowerCase(); $('letra').value=l;
+  const otro=d!==HOY, ocu=otro&&OCUPADOS.includes(d);
+  if(ocu&&!l){$('letra').value='b'}
+  const L=$('letra').value;
+  $('ocupado').hidden=!ocu; $('sinruta').hidden=!(otro&&!ocu&&!L);
+  $('previo').hidden=!L; $('previo').innerHTML='El código pasará a ser <b class="mono">7106635'+L+'</b>.';
+  $('ir').disabled=!(otro||L)||(ocu&&!L)||d>HOY;
+  $('ir').textContent=otro?'Pasar a ese día':L?'Cambiar la letra':'Cambiar';
+  $('hecho').hidden=true;
+}
+$('dia').oninput=f1;
+$('letra').oninput=f1;
+$('ir').onclick=()=>{const d=$('dia').value,L=$('letra').value;$('hecho').hidden=false;
+  $('hecho').textContent=(d!==HOY?'Pedido pasado al '+d.split('-').reverse().join('/')+'. ':'')+'Código: 7106635'+L; $('cod1').textContent='7106635'+L;};
+/* ---- 1b ---- */
+function f2(o){ $('b-comp').classList.toggle('on',!o);$('b-otro').classList.toggle('on',o);$('av-comp').hidden=o;$('av-otro').hidden=!o;}
+$('b-comp').onclick=()=>f2(false);$('b-otro').onclick=()=>f2(true);
+$('l2').oninput=e=>{e.target.value=e.target.value.replace(/[^a-z]/gi,'').toLowerCase();$('cn').textContent='7106635'+e.target.value};
+/* ---- 3 ---- */
+const OPC=[
+ {id:'com',t:'Leer una comanda',ext:true},
+ {id:'cant',t:'Anotar cuántos pedidos hice',h:'Cuántos pedidos hiciste',c:'<label>Cantidad<input type="number" placeholder="3"></label>'},
+ {id:'man',t:'Añadir un pedido a mano',h:'Pedido a mano',c:'<label>Código<input class="mono" placeholder="v12238726wofp-01"></label><label>Ruta<select><option>Sin ruta</option></select></label>'},
+ {id:'foto',t:'Leer pedidos de una foto',h:'Pedidos desde una foto',c:'<label>Fecha de esos pedidos<input type="date" value="2026-10-16"></label><input type="file">'}
+];
+let act=null;
+function sm(){
+  let h='';
+  if(act) h+='<button class="vuelta" onclick="act=null;sm()">‹ Otras formas de anotar</button>';
+  else h+='<p class="r g3" style="margin-bottom:10px">Pedidos de tu tienda. Elige cómo quieres anotarlos.</p>';
+  for(const o of OPC){
+    if(act&&o.id!==act) continue;
+    if(o.id===act) h+=`<div class="abierta hl" data-et="BORDE DEL TEMA"><h4>${o.h}</h4>${o.c}<div style="display:flex;gap:8px"><button class="principal" style="flex:1">Añadir</button><button class="btn" onclick="act=null;sm()">Cancelar</button></div></div>`;
+    else h+=`<button class="fila-b" onclick="${o.ext?"alert('Abre la pantalla Leer comandas');":"act='"+o.id+"';sm()"}">${o.t}</button>`;
+  }
+  $('sm').innerHTML=h;
+}
+sm(); f1();
+</script>
+</body>
+</html>

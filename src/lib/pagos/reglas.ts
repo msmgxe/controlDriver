@@ -36,6 +36,11 @@ const esquemaTramo = z.object({
   desde: z.number().min(0),
   hasta: z.number().min(0),
   monto: z.number().min(0),
+  /**
+   * El nombre del tramo, para tarifas por zona («Miraflores, Surquillo, Surco»).
+   * Sin nombre, el tramo se llama como siempre: «T1», o por sus kilómetros.
+   */
+  nombre: z.string().trim().min(1).max(60).optional(),
 });
 
 /**
@@ -65,6 +70,13 @@ export const esquemaReglaPago = z.object({
   moneda: z.literal("PEN"),
   base: z.literal("por_pedido"),
   tramos: z.array(esquemaTramo).min(1),
+  /**
+   * Cómo se elige el tramo de un pedido: por los kilómetros (lo de siempre) o por
+   * **zona**, donde cada tramo tiene nombre y lo elige la persona al registrar el
+   * pedido, sin cálculo por distancia. Ausente = «km», así las reglas ya
+   * guardadas siguen valiendo sin migrar nada.
+   */
+  medida: z.enum(["km", "zona"]).optional(),
   /** Ausente en tiendas que no pagan permanencia. */
   garantiaPermanencia: esquemaGarantiaPermanencia.nullish(),
 });
@@ -151,6 +163,19 @@ export function formatearSoles(centimos: number): string {
 /* ---------------------------------------------------------------------------
  * Tramos
  * ------------------------------------------------------------------------- */
+
+/** ¿Esta tarifa se elige por zona, sin cálculo por kilómetros? */
+export const esPorZona = (regla: ReglaPago): boolean => regla.medida === "zona";
+
+/**
+ * Cómo se llama un tramo en pantalla: su nombre si lo tiene, «Más de 12 km» el
+ * tramo abierto, y si no «T1», «T2»…
+ */
+export function etiquetaTramo(regla: ReglaPago, id: number): string {
+  const nombre = regla.tramos.find((t) => t.id === id)?.nombre;
+  if (nombre) return nombre;
+  return id === TRAMO_MAS_DE_12_KM && !esPorZona(regla) ? "Más de 12 km" : `T${id}`;
+}
 
 /** Lo que cuesta un pedido de ese tramo, en céntimos. */
 export function pagoDelTramo(regla: ReglaPago, tramo: number): number | null {

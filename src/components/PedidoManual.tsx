@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 
+import { useOpcion } from "@/components/OpcionActiva";
 import { Check } from "@/components/iconos";
 import { comprimir } from "@/lib/carga";
 import {
@@ -42,7 +43,7 @@ export function PedidoManual({
   rutas: number[];
   alAgregar: () => void;
 }) {
-  const [abierto, setAbierto] = useState(false);
+  const [abierto, setAbierto, oculta] = useOpcion("manual");
   const [codigo, setCodigo] = useState("");
   const [ruta, setRuta] = useState<string>("");
   const [estado, setEstado] = useState<string>("Entregado");
@@ -91,6 +92,8 @@ export function PedidoManual({
     }
   }
 
+  if (oculta) return null;
+
   if (!abierto) {
     return (
       <button type="button" onClick={() => setAbierto(true)} className="boton-fila">
@@ -100,7 +103,7 @@ export function PedidoManual({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-card border border-linea-fuerte bg-sup p-4">
+    <div className="flex flex-col gap-3 rounded-card border-2 border-acento bg-sup p-4">
       <h4 className="font-semibold">Pedido a mano</h4>
 
       <label className="flex flex-col gap-1.5">
@@ -242,7 +245,7 @@ export function PedidosPorCantidad({
   /** Se llama con la fecha en que de verdad se guardó —puede ser otra—. */
   alAgregar: (fecha: FechaISO) => void;
 }) {
-  const [abierto, setAbierto] = useState(false);
+  const [abierto, setAbierto, oculta] = useOpcion("cantidad");
   const [fechaElegida, setFechaElegida] = useState<string>(fecha);
   const [cantidad, setCantidad] = useState("");
   const [guardando, setGuardando] = useState(false);
@@ -276,6 +279,8 @@ export function PedidosPorCantidad({
     }
   }
 
+  if (oculta) return null;
+
   if (!abierto) {
     return (
       <button
@@ -293,7 +298,7 @@ export function PedidosPorCantidad({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-card border border-linea-fuerte bg-sup p-4">
+    <div className="flex flex-col gap-3 rounded-card border-2 border-acento bg-sup p-4">
       <h4 className="font-semibold">Cuántos pedidos hiciste</h4>
 
       {agregados !== null ? (
@@ -421,7 +426,7 @@ export function LectorDePedidos({
    */
   alTerminar: (fecha: FechaISO) => void;
 }) {
-  const [abierto, setAbierto] = useState(false);
+  const [abierto, setAbierto, oculta] = useOpcion("foto-pedidos");
   const [fechaElegida, setFechaElegida] = useState<string>(fecha);
   const [estado, setEstado] = useState<
     "reposo" | "leyendo" | "listos" | "guardando" | "hecho" | "error"
@@ -488,6 +493,8 @@ export function LectorDePedidos({
     }
   }
 
+  if (oculta) return null;
+
   if (!abierto) {
     return (
       <button
@@ -511,7 +518,7 @@ export function LectorDePedidos({
 
   if (estado === "hecho") {
     return (
-      <div className="flex flex-col gap-3 rounded-card border border-linea-fuerte bg-sup p-4">
+      <div className="flex flex-col gap-3 rounded-card border-2 border-acento bg-sup p-4">
         <p className="flex items-center gap-2 text-sm font-semibold text-bien">
           <Check className="size-4 shrink-0" />
           {resultado}
@@ -533,7 +540,7 @@ export function LectorDePedidos({
   const revisando = estado === "listos" || estado === "guardando" || (estado === "error" && nuevos.length + repetidos.length > 0);
 
   return (
-    <div className="flex flex-col gap-3 rounded-card border border-linea-fuerte bg-sup p-4">
+    <div className="flex flex-col gap-3 rounded-card border-2 border-acento bg-sup p-4">
       <h4 className="font-semibold">Pedidos desde una foto</h4>
 
       <label className="flex flex-col gap-1.5">

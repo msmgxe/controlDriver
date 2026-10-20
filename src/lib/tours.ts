@@ -59,7 +59,7 @@ export const TOURS: Record<PantallaConTours, Record<string, PasoDeTour[]>> = {
         selector: "#recorrido-fab",
         titulo: "El botón «+»",
         texto:
-          "Abre tres opciones: pedidos de tu tienda, apoyo a otra tienda y taxi libre. En cada hoja eliges el día arriba, así que puedes registrar algo de ayer.",
+          "Abre tres opciones: pedidos de tu tienda, apoyo a otra tienda y adicionales (taxi, movilidad…). En cada hoja eliges el día arriba, así que puedes registrar algo de ayer.",
       },
       {
         selector: "#recorrido-tarjeta",

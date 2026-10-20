@@ -23,7 +23,7 @@ describe("desglose por fuente", () => {
     expect(filas.map((f) => [f.categoria, f.etiqueta, f.detalle, f.centimos])).toEqual([
       ["tienda", "Tienda Wong", "33 pedidos", 33150],
       ["apoyo", "Apoyo · Limatambo", "11.25 h", 20250],
-      ["taxi", "Taxi libre", "2 carreras · 8.2 km", 4000],
+      ["taxi", "Adicionales · Taxi", "2 registros · 8.2 km", 4000],
     ]);
   });
 

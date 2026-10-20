@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 
 import { Check, Flecha } from "@/components/iconos";
+import { useOpcion } from "@/components/OpcionActiva";
 import { hoyEnLima } from "@/lib/fechas";
 
 /**
@@ -25,7 +26,7 @@ export function RutaManual({
   siguienteNumero: number;
   onGuardar: (datos: { numero: number; horaInicio: string | null; horaFin: string | null }) => void;
 }) {
-  const [abierto, setAbierto] = useState(false);
+  const [abierto, setAbierto, oculta] = useOpcion("ruta-manual");
   const [numero, setNumero] = useState(String(siguienteNumero));
   const [horaInicio, setHoraInicio] = useState("");
   const [horaFin, setHoraFin] = useState("");
@@ -45,6 +46,8 @@ export function RutaManual({
     setHoraFin("");
   }
 
+  if (oculta) return null;
+
   if (!abierto) {
     return (
       <button
@@ -61,7 +64,7 @@ export function RutaManual({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-card border border-linea-fuerte bg-sup p-4">
+    <div className="flex flex-col gap-3 rounded-card border-2 border-acento bg-sup p-4">
       <h4 className="font-semibold">Ruta a mano</h4>
 
       <label className="flex flex-col gap-1.5">
@@ -258,7 +261,7 @@ export function LectorDeRutas({
     rutas: Array<{ numero: number; horaInicio: string | null; horaFin: string | null }>,
   ) => void | Promise<void>;
 }) {
-  const [abierto, setAbierto] = useState(false);
+  const [abierto, setAbierto, oculta] = useOpcion("ruta-foto");
   const [fechaElegida, setFechaElegida] = useState(fecha);
   const [estado, setEstado] = useState<"reposo" | "leyendo" | "listas" | "guardando" | "error">(
     "reposo",
@@ -307,6 +310,8 @@ export function LectorDeRutas({
     }
   }
 
+  if (oculta) return null;
+
   if (!abierto) {
     return (
       <button
@@ -325,7 +330,7 @@ export function LectorDeRutas({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-card border border-linea-fuerte bg-sup p-4">
+    <div className="flex flex-col gap-3 rounded-card border-2 border-acento bg-sup p-4">
       <h4 className="font-semibold">Rutas desde una foto</h4>
 
       <label className="flex flex-col gap-1.5">

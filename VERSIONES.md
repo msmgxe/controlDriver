@@ -37,6 +37,36 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 1.24 — 20/10/2026
+- **Tarifa por zona** (Ajustes › Tienda, ubicación y tarifa › Tarifa › **Por zona**): pones solo
+  las zonas que tiene la tienda, con su nombre y monto (p. ej. «Miraflores, Surquillo, Surco»
+  S/ 9.50 y «Chorrillos» S/ 13.00), con **+ Añadir zona** y ✕ para quitar (pide confirmar).
+  Al registrar un pedido eliges la zona; no mide kilómetros. «Por km» y «Única» siguen igual.
+- **«Taxi libre» pasa a «Adicionales»:** creas tus propios tipos (Taxi, Movilidad, Expo Vino,
+  Especiales…) con **+ Nuevo tipo** al registrar. Los taxis de antes quedan como «Taxi». Solo
+  Taxi pide km; los demás, monto y descripción. En Pagos sale una fila por tipo.
+- **Pagos: «¿Qué quieres ver?»** con casillas (Pedidos, cada apoyo, cada tipo de adicional).
+  Solo cambia lo que ves; lo que cobras de la tienda no cambia. Se recuerda la elección.
+- Arreglos de pruebas: con dos tarifas guardadas el mismo día gana la última; en tarifa por
+  zona el tramo 6 es una zona más.
+
+### 1.23 — 16/10/2026
+- **Pagos: casilla en cada pedido para cotejar con el reporte de la empresa.** Marca los
+  que la empresa sí contó: la fila se pinta de verde. Al abrir «Tu tienda» sale «La empresa
+  contó N de M · faltan K (S/ …)», con «Ver solo los que faltan», y cada día avisa «N sin
+  marcar». No cambia ningún monto y se puede marcar también en una semana ya pagada.
+
+### 1.22 — 16/10/2026
+- **Cambiar el día de un pedido** (hoja del pedido › pestaña Pedido › «Día del pedido»), con
+  una **letra al final del código** (`7106635` → `7106635b`) para no duplicar si ese día ya
+  tiene el mismo código. Los códigos aceptan ahora una letra final.
+- **Revisar una comanda cuyo número ya está en otro día:** «Completar el que ya está» /
+  «Es otro pedido» (con letra sugerida), en vez de solo completar o mover.
+- **Lectura de la comanda:** el nombre toma como mucho 2 líneas; el teléfono partido en
+  trozos en la fila de «Teléfono:» se junta.
+- **Subir más:** al abrir una opción, las demás se esconden, la abierta lleva borde del tema
+  y arriba hay «‹ Otras formas de anotar».
+
 ### 1.21 — 16/10/2026
 - **Arreglo grave al revisar una comanda:** la foto se veía enorme y tapaba los botones
   (Guardar), sin dejar bajar. Era un error mío de la 1.14: al añadir el zoom, también

@@ -180,7 +180,7 @@ function Eleccion({
 
           <Opcion
             Icono={Taxi}
-            titulo="Carrera de taxi"
+            titulo="Adicional (taxi, movilidad…)"
             detalle="Una carrera suelta: marcas inicio y fin con el GPS, o escribes los km, y el monto que cobraste."
             destino={`Se suma al ${corto}, aparte de tus pedidos.`}
             deshabilitado={deshabilitado}

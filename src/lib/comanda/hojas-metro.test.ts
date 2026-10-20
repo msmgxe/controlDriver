@@ -6,7 +6,7 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { codigoDeDespacho, interpretarComandas, type LineaLeida } from "./interpretar";
+import { codigoDeDespacho, interpretarComandas, siguienteLetra, type LineaLeida } from "./interpretar";
 
 const L = (texto: string, x: number, y: number, w: number, h: number, confianza: number | null = 0.9): LineaLeida => ({ texto, x, y, w, h, confianza });
 const TAM = { ancho: 1200, alto: 1600 };
@@ -112,5 +112,37 @@ describe("hojas de despacho de Metro", () => {
 
   it("los números de 8 cifras de Wong siguen funcionando", () => {
     expect(interpretarComandas(MONICA, TAM)[0].numero.valor).toBe("12289138");
+  });
+});
+
+describe("disposición de la hoja", () => {
+  it("el teléfono partido en dos trozos en la fila de «Teléfono:» se junta", () => {
+    const partido = [
+      ...ALEXIS.filter((l) => l.texto !== "+5199"),
+      L("+51 987", 1050, 917, 80, 22),
+      L("654 321", 1135, 917, 60, 22),
+    ];
+    expect(interpretarComandas(partido, TAM)[0].telefono.valor).toBe("987 654 321");
+  });
+
+  it("el nombre ocupa como mucho dos líneas, justo encima de la dirección", () => {
+    const [c] = interpretarComandas(
+      [
+        L("de despacho Nº 7106635", 0, 755, 395, 40, 0.93),
+        L("Elsa Patricia", 565, 800, 150, 22),
+        L("Tizon Garcia", 565, 828, 150, 22),
+        L("Algeciras 181, SAN LUIS (CP 150134)", 565, 856, 335, 22),
+        L("LIMA, Lima", 565, 884, 100, 22),
+      ],
+      TAM,
+    );
+    expect(c.nombre.valor).toBe("Elsa Patricia Tizon Garcia");
+  });
+});
+
+describe("letra para diferenciar un pedido repetido", () => {
+  it("propone la primera letra libre, empezando en «b»", () => {
+    expect(siguienteLetra("7106635", ["7106635"])).toBe("b");
+    expect(siguienteLetra("7106635", ["7106635", "7106635b"])).toBe("c");
   });
 });

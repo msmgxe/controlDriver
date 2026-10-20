@@ -104,6 +104,8 @@ export interface OrdenFila {
   fotos: number;
   /** De dónde salió el pedido y su código. */
   origen: OrigenDePedido;
+  /** Marcado al cotejar con el reporte de la empresa: ella sí lo contó para el pago. */
+  contado: boolean;
 }
 
 export type OrigenDePedido = "captura" | "comanda" | "manual";
@@ -153,7 +155,18 @@ export type BloqueExtraFila =
       destino: Punto | null;
       km: number | null;
       kmFuente: FuenteDeKm | null;
+      /** El tipo de adicional (Taxi, Movilidad…); null en un registro sin categoría. */
+      categoriaId?: string | null;
+      categoriaNombre?: string;
+      descripcion?: string | null;
     });
+
+/** Un tipo de adicional que la persona creó. */
+export interface CategoriaAdicional {
+  id: string;
+  nombre: string;
+  activa: boolean;
+}
 
 export interface ApoyoHoraParaGuardar {
   fecha: FechaISO;
@@ -185,6 +198,9 @@ export interface TaxiParaGuardar {
   kmFuente: FuenteDeKm;
   montoCentimos: number;
   notas: string | null;
+  /** El tipo de adicional; sin él, «Taxi». */
+  categoriaId?: string | null;
+  descripcion?: string | null;
 }
 
 export interface JornadaCompleta {

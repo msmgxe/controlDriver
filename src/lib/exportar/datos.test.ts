@@ -46,7 +46,7 @@ describe("exportar con apoyo y taxi", () => {
     expect(fuentesDe(datos).map((f) => [f.etiqueta, f.centimos])).toEqual([
       ["Tienda Wong", 2150],
       ["Apoyo · Limatambo", 3600],
-      ["Taxi libre", 2200],
+      ["Adicionales · Taxi", 2200],
     ]);
   });
 
@@ -58,7 +58,7 @@ describe("exportar con apoyo y taxi", () => {
   });
 
   it("describe cada bloque", () => {
-    expect(describirBloque(taxi)).toMatchObject({ tipo: "Taxi libre", detalle: "8.2 km", horario: "10:00–12:00" });
+    expect(describirBloque(taxi)).toMatchObject({ tipo: "Adicional", detalle: "8.2 km", horario: "10:00–12:00" });
     expect(describirBloque(apoyo).detalle).toBe("2 h × S/ 18.00");
   });
 

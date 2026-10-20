@@ -38,7 +38,7 @@ import {
 } from "@/lib/fechas";
 import type { DetalleDia } from "@/lib/pagos/calcular-liquidacion";
 import { desglosePorFuente } from "@/lib/pagos/desglose";
-import { formatearSoles } from "@/lib/pagos/reglas";
+import { esPorZona, formatearSoles } from "@/lib/pagos/reglas";
 
 /**
  * Pagos (§13).
@@ -408,7 +408,7 @@ export default function PaginaPagos() {
           <thead>
             <tr>
               <th>Tramo</th>
-              <th>Distancia</th>
+              <th>{esPorZona(regla) ? "Zona" : "Distancia"}</th>
               <th className="num">Por pedido</th>
             </tr>
           </thead>
@@ -416,9 +416,7 @@ export default function PaginaPagos() {
             {regla.tramos.map((t) => (
               <tr key={t.id}>
                 <td>{t.id}</td>
-                <td>
-                  {t.desde} a {t.hasta} km
-                </td>
+                <td>{t.nombre ?? `${t.desde} a ${t.hasta} km`}</td>
                 <td className="num">{formatearSoles(Math.round(t.monto * 100))}</td>
               </tr>
             ))}

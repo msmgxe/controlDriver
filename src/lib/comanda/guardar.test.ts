@@ -262,3 +262,25 @@ describe("una semana pagada no se toca", () => {
     expect(fotos).toEqual([]);
   });
 });
+
+describe("el mismo número en otro día", () => {
+  it("sin letra se rechaza, y con letra se crea como pedido aparte", async () => {
+    await expect(guardarComanda({ ...base, fecha: "2026-09-18" as FechaISO }, ajustes(), deps)).rejects.toThrow(/otro pedido/);
+
+    const r = await guardarComanda({ ...base, fecha: "2026-09-18" as FechaISO, sufijo: "b" }, ajustes(), deps);
+    expect(r.creado).toBe(true);
+    expect((await pedidosPorNumero("12264655")).map((p) => p.codigo).sort()).toEqual(["v12264655wofp-01", "v12264655wofp-01b"]);
+  });
+
+  it("mover un pedido a un día que ya tiene su código pide una letra, y con ella entra", async () => {
+    const { moverPedido } = await import("@/lib/db/sqlite/jornadas");
+    const otroDia = "2026-09-18" as FechaISO;
+    await guardarJornada({ ...dia, fecha: otroDia, ordenes: [dia.ordenes[0]] }, "reemplazar");
+    const original = await ordenDe("v12264655wofp-01");
+
+    await expect(moverPedido(original.id, otroDia)).rejects.toThrow(/letra/);
+    await moverPedido(original.id, otroDia, "b");
+    const destino = (await jornadaPorFecha(otroDia))!.ordenes.map((o) => o.codigo).sort();
+    expect(destino).toEqual(["v12264655wofp-01", "v12264655wofp-01b"]);
+  });
+});

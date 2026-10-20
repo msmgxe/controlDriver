@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { usarMotor } from "./conexion";
 import { motorEnMemoria } from "./motor-en-memoria";
 import { guardarJornada, jornadaPorFecha } from "./jornadas";
-import { actualizarPedido } from "./pedidos";
+import { actualizarPedido, marcarContado } from "./pedidos";
 import type { JornadaParaGuardar } from "../tipos";
 import type { FechaISO } from "@/lib/fechas";
 
@@ -111,5 +111,21 @@ describe("si algo no vale, no se aplica nada", () => {
     ).rejects.toThrow();
     const j = await jornadaPorFecha(FECHA);
     expect(j!.ordenes.some((o) => o.codigo === "v11111111wofp-01")).toBe(true);
+  });
+});
+
+describe("cotejar con el reporte de la empresa", () => {
+  it("marca y desmarca un pedido sin tocar su monto", async () => {
+    const id = await idDe("v11111111wofp-01");
+    expect((await jornadaPorFecha(FECHA))!.ordenes.every((o) => !o.contado)).toBe(true);
+
+    await marcarContado(id, true);
+    let o = (await jornadaPorFecha(FECHA))!.ordenes;
+    expect(o.filter((x) => x.contado).map((x) => x.codigo)).toEqual(["v11111111wofp-01"]);
+    expect(o.find((x) => x.id === id)!.montoCentimos).toBe(1000);
+
+    await marcarContado(id, false);
+    o = (await jornadaPorFecha(FECHA))!.ordenes;
+    expect(o.some((x) => x.contado)).toBe(false);
   });
 });

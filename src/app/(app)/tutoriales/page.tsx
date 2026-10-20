@@ -37,7 +37,7 @@ export default function PaginaTutoriales() {
       <Tema titulo="La foto de la comanda" resumen="Cliente, dirección, teléfono y ruta, leídos solos" tour="/?tour=comanda">
         <TutorialComanda />
       </Tema>
-      <Tema titulo="Apoyo a otra tienda y taxi libre" resumen="El botón «+», el día, corregir y quitar" tour="/?tour=agregar">
+      <Tema titulo="Apoyo a otra tienda y adicionales" resumen="El botón «+», el día, corregir y quitar" tour="/?tour=agregar">
         <TutorialApoyoYTaxi />
       </Tema>
 
@@ -284,14 +284,14 @@ function TutorialApoyoYTaxi() {
       </p>
       <Lista>
         <Paso numero={1} titulo="Toca el botón «+»">
-          Se abre en abanico: pedidos de tu tienda, apoyo a otra tienda y taxi libre. También están en la hoja de «Cargar».
+          Se abre en abanico: pedidos de tu tienda, apoyo a otra tienda y adicionales (taxi, movilidad, lo que crees). También están en la hoja de «Cargar».
         </Paso>
         <Paso numero={2} titulo="Elige el día">
           Arriba de cada hoja está el día; tócalo para cambiarlo y registrar algo de ayer.
         </Paso>
-        <Paso numero={3} titulo="Taxi libre">
-          Toca «Marcar inicio» al comenzar y «Marcar fin» al terminar: con el GPS la app calcula los km. Sin señal, escríbelos a
-          mano. El monto lo pones tú, porque lo fija la app de taxi.
+        <Paso numero={3} titulo="Adicionales">
+          Elige el tipo (Taxi, Movilidad…) o crea uno nuevo con «+ Nuevo tipo». En Taxi toca «Marcar inicio» y «Marcar fin»: con
+          el GPS la app calcula los km; sin señal, escríbelos a mano. El monto lo pones tú.
         </Paso>
         <Paso numero={4} titulo="Apoyo por hora o por tramos">
           Por hora: la tienda, la entrada, la salida y tu tarifa; la cuenta sale sola. Por tramos: eliges la tienda y el tramo

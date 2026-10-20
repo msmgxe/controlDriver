@@ -9,6 +9,7 @@ import type { TipoBloqueExtra } from "@/lib/db/tipos";
 
 import {
   TRAMO_MAS_DE_12_KM,
+  esPorZona,
   horasDePermanencia,
   montoPorPermanencia,
   pagoDelTramo,
@@ -240,7 +241,7 @@ export function calcularLiquidacion(
           codigo: pedido.codigo,
           tramo: pedido.tramo,
           motivo:
-            pedido.tramo === TRAMO_MAS_DE_12_KM
+            pedido.tramo === TRAMO_MAS_DE_12_KM && !esPorZona(regla)
               ? "mas-de-12-km-sin-monto"
               : "tramo-desconocido",
         });
@@ -347,7 +348,8 @@ function montoDelPedido(
   pedido: PedidoLiquidable,
   regla: ReglaPago,
 ): number | null {
-  if (pedido.tramo === TRAMO_MAS_DE_12_KM) {
+  // En una tarifa por zona el 6 es una zona más, no «más de 12 km».
+  if (pedido.tramo === TRAMO_MAS_DE_12_KM && !esPorZona(regla)) {
     return pedido.montoManualCentimos ?? null;
   }
   return pagoDelTramo(regla, pedido.tramo);

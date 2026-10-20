@@ -14,6 +14,7 @@ import type {
   ApoyoHoraParaGuardar,
   ApoyoTramosParaGuardar,
   BloqueExtraFila,
+  CategoriaAdicional,
   FuenteDeKm,
   PedidoDeApoyoFila,
   TaxiParaGuardar,
@@ -120,17 +121,63 @@ export async function guardarTaxi(datos: TaxiParaGuardar): Promise<{ id: string 
       `insert into bloques_extra
          (id, jornada_id, tipo, posicion, hora_inicio, hora_fin,
           origen_lat, origen_lng, destino_lat, destino_lng, km, km_fuente,
-          monto_centimos, notas, creado_en, actualizado_en, sincronizado)
-       values (?, ?, 'taxi', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
+          monto_centimos, notas, categoria_id, descripcion, creado_en, actualizado_en, sincronizado)
+       values (?, ?, 'taxi', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
       [
         id, jornadaId, posicion, datos.horaInicio, datos.horaFin,
         datos.origen?.lat ?? null, datos.origen?.lng ?? null,
         datos.destino?.lat ?? null, datos.destino?.lng ?? null,
-        datos.km, datos.kmFuente, datos.montoCentimos, datos.notas, momento, momento,
+        datos.km, datos.kmFuente, datos.montoCentimos, datos.notas,
+        datos.categoriaId ?? CATEGORIA_TAXI, datos.descripcion?.trim() || null, momento, momento,
       ],
     );
     return { id };
   });
+}
+
+/** La categoría de siempre: los taxis de antes y los que no dicen otra cosa. */
+export const CATEGORIA_TAXI = "cat_taxi";
+
+/** Los tipos de adicional, los activos primero y en el orden en que se crearon. */
+export async function listarCategorias(): Promise<CategoriaAdicional[]> {
+  const filas = await consultar<{ id: string; nombre: string; activa: number }>(
+    `select id, nombre, activa from categorias_adicional order by activa desc, orden asc, nombre asc`,
+  );
+  return filas.map((f) => ({ id: f.id, nombre: f.nombre, activa: f.activa === 1 }));
+}
+
+/**
+ * Crea un tipo de adicional, o devuelve el que ya existe con ese nombre (sin
+ * distinguir mayúsculas ni espacios de más): dos «Taxi» no tienen sentido, y
+ * escribir «taxi » al registrar no debe duplicarlo.
+ */
+export async function crearCategoria(nombre: string): Promise<CategoriaAdicional> {
+  const limpio = nombre.replace(/\s+/g, " ").trim();
+  if (limpio.length < 2 || limpio.length > 40) throw new Error("El nombre debe tener entre 2 y 40 letras.");
+  return enTransaccion(async () => {
+    const existentes = await consultar<{ id: string; nombre: string; activa: number }>(
+      `select id, nombre, activa from categorias_adicional where lower(nombre) = ?`,
+      [limpio.toLowerCase()],
+    );
+    if (existentes[0]) {
+      const e = existentes[0];
+      if (e.activa !== 1) await ejecutar(`update categorias_adicional set activa = 1, actualizado_en = ? where id = ?`, [ahora(), e.id]);
+      return { id: e.id, nombre: e.nombre, activa: true };
+    }
+    const orden = (await consultar<{ m: number | null }>(`select max(orden) as m from categorias_adicional`))[0]?.m ?? 0;
+    const id = nuevoId();
+    const momento = ahora();
+    await ejecutar(
+      `insert into categorias_adicional (id, nombre, orden, activa, creado_en, actualizado_en) values (?, ?, ?, 1, ?, ?)`,
+      [id, limpio, orden + 1, momento, momento],
+    );
+    return { id, nombre: limpio, activa: true };
+  });
+}
+
+/** Deja de ofrecer un tipo al registrar; lo ya cobrado con él no se toca. */
+export async function archivarCategoria(id: string): Promise<void> {
+  await ejecutar(`update categorias_adicional set activa = 0, actualizado_en = ? where id = ?`, [ahora(), id]);
 }
 
 interface FilaBloqueExtraDb {
@@ -153,6 +200,9 @@ interface FilaBloqueExtraDb {
   km_fuente: FuenteDeKm | null;
   monto_centimos: number;
   notas: string | null;
+  categoria_id: string | null;
+  descripcion: string | null;
+  categoria_nombre: string | null;
 }
 
 interface FilaPedidoApoyoDb {
@@ -199,14 +249,18 @@ function aBloqueExtraFila(f: FilaBloqueExtraDb, pedidos: PedidoDeApoyoFila[]): B
     destino: f.destino_lat !== null && f.destino_lng !== null ? { lat: f.destino_lat, lng: f.destino_lng } : null,
     km: f.km,
     kmFuente: f.km_fuente,
+    categoriaId: f.categoria_id,
+    categoriaNombre: f.categoria_nombre ?? "Sin categoría",
+    descripcion: f.descripcion,
   };
 }
 
 /** Todos los bloques de ese día, en el orden en que se registraron. */
 export async function listarBloquesDelDia(fecha: FechaISO): Promise<BloqueExtraFila[]> {
   const filas = await consultar<FilaBloqueExtraDb>(
-    `select b.*, t.nombre as tienda_apoyo_nombre
+    `select b.*, t.nombre as tienda_apoyo_nombre, c.nombre as categoria_nombre
        from bloques_extra b
+       left join categorias_adicional c on c.id = b.categoria_id
        join jornadas j on j.id = b.jornada_id
        left join tiendas t on t.id = b.tienda_id
       where j.fecha = ?
@@ -222,8 +276,9 @@ export async function bloquesPorRango(
   hasta: FechaISO,
 ): Promise<Map<FechaISO, BloqueExtraFila[]>> {
   const filas = await consultar<FilaBloqueExtraDb & { fecha: FechaISO }>(
-    `select b.*, t.nombre as tienda_apoyo_nombre, j.fecha as fecha
+    `select b.*, t.nombre as tienda_apoyo_nombre, c.nombre as categoria_nombre, j.fecha as fecha
        from bloques_extra b
+       left join categorias_adicional c on c.id = b.categoria_id
        join jornadas j on j.id = b.jornada_id
        left join tiendas t on t.id = b.tienda_id
       where j.fecha >= ? and j.fecha <= ?

@@ -122,6 +122,17 @@ export async function actualizarPedido(
 }
 
 /**
+ * Marca (o desmarca) que la empresa contó este pedido en su reporte de pago.
+ *
+ * Es una anotación de la persona, no una corrección: no toca el monto ni el
+ * estado, y por eso se puede hacer también en una semana ya pagada —justo
+ * entonces es cuando se coteja el reporte—.
+ */
+export async function marcarContado(ordenId: string, contado: boolean): Promise<void> {
+  await ejecutar(`update ordenes set contado_empresa = ? where id = ?`, [contado ? 1 : 0, ordenId]);
+}
+
+/**
  * Recalcula los contadores de estado de la jornada y la marca para
  * resincronizar.
  *

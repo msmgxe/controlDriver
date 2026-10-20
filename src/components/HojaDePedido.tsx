@@ -5,6 +5,7 @@ import { useEffect, useState, useTransition } from "react";
 
 import {
   cambiarTramoDePedido,
+  cambiarDiaDePedido,
   corregirPedido,
   eliminarPedido,
   fijarDistanciaDePedido,
@@ -20,18 +21,18 @@ import { ImagenConZoom } from "@/components/ImagenConZoom";
 import { Aviso } from "@/components/ui";
 import { useCapa } from "@/hooks/useCapa";
 import { comprimir } from "@/lib/carga";
-import { partirDireccion, consultaParaMapa } from "@/lib/comanda/interpretar";
+import { partirDireccion, consultaParaMapa, siguienteLetra } from "@/lib/comanda/interpretar";
 import { leerFotoDeComandas } from "@/lib/comanda/leer";
 import type { AjustesDeComandas } from "@/lib/db/sqlite/ajustes";
-import { esCodigoPendiente } from "@/lib/db/sqlite/jornadas";
+import { codigoEnDia, esCodigoPendiente } from "@/lib/db/sqlite/jornadas";
 import { borrarPrueba, contenidoDePrueba, guardarPrueba, pruebaDeOrden, type Prueba } from "@/lib/db/sqlite/pruebas";
 import type { OrdenFila, Tienda } from "@/lib/db/tipos";
-import { nombreDelDia, type FechaISO } from "@/lib/fechas";
+import { nombreDelDia, hoyEnLima, type FechaISO } from "@/lib/fechas";
 import { esPuntoValido, kmEnLinea, type Punto } from "@/lib/geo/distancia";
 import { enlaceDeBusqueda, enlaceDeMapa } from "@/lib/geo/enlaces";
 import { buscarDireccion, resolverEnlace, rutaPorCalles, type Candidato } from "@/lib/geo/nativo";
 import { aDecimas, distanciaAlCliente, tramoPorDistancia, type Distancia } from "@/lib/geo/tramo";
-import { TRAMO_MAS_DE_12_KM, formatearSoles, type ReglaPago } from "@/lib/pagos/reglas";
+import { TRAMO_MAS_DE_12_KM, esPorZona, etiquetaTramo, formatearSoles, type ReglaPago } from "@/lib/pagos/reglas";
 
 /**
  * La hoja de un pedido, con pestañas: **Pedido**, **Cliente**, **Distancia** y
@@ -323,6 +324,8 @@ function TabPedido({
         </p>
       </div>
 
+      <CambiarDia fecha={fecha} orden={orden} deshabilitado={deshabilitado} ejecutar={ejecutar} alMover={alBorrar} />
+
       <div className="grid grid-cols-2 gap-3">
         <label className="flex flex-col gap-1.5">
           <span className="text-sm font-semibold">Ruta</span>
@@ -360,7 +363,7 @@ function TabPedido({
         </label>
       </div>
 
-      <h4 className="border-t border-linea pt-4 text-sm font-semibold">Tramo de distancia</h4>
+      <h4 className="border-t border-linea pt-4 text-sm font-semibold">{esPorZona(regla) ? "Zona de entrega" : "Tramo de distancia"}</h4>
 
       {orden.tramoAuto && orden.km !== null && (
         <Aviso tono="bien" titulo="Calculado con la distancia">
@@ -371,7 +374,7 @@ function TabPedido({
         </Aviso>
       )}
 
-      <div role="radiogroup" aria-label="Tramo de distancia" className="flex flex-col gap-2">
+      <div role="radiogroup" aria-label={esPorZona(regla) ? "Zona de entrega" : "Tramo de distancia"} className="flex flex-col gap-2">
         {regla.tramos.map((t) => (
           <button
             key={t.id}
@@ -393,7 +396,7 @@ function TabPedido({
             </span>
             <span className="flex flex-1 flex-col">
               <b className="text-sm font-bold">
-                {t.desde} a {t.hasta} km
+                {t.nombre ?? `${t.desde} a ${t.hasta} km`}
               </b>
             </span>
             <span className="monto">{formatearSoles(Math.round(t.monto * 100))}</span>
@@ -401,6 +404,7 @@ function TabPedido({
         ))}
       </div>
 
+      {!esPorZona(regla) && (
       <div className="flex flex-col gap-2 border-t border-linea pt-4">
         <label htmlFor="det-manual" className="text-sm font-semibold">
           Más de 12 km{orden.tramo === TRAMO_MAS_DE_12_KM ? ` · ahora ${formatearSoles(orden.montoCentimos ?? 0)}` : ""}
@@ -433,6 +437,7 @@ function TabPedido({
           </button>
         </div>
       </div>
+      )}
 
       {/* Borrar pide confirmación: no se puede deshacer, y en un día guardado
           el pedido ya cuenta para el pago de la semana. */}
@@ -469,6 +474,120 @@ function TabPedido({
         )}
       </div>
     </>
+  );
+}
+
+/**
+ * El día del pedido y, si hace falta, una letra al final del código.
+ *
+ * Una comanda puede traer una fecha que no es la del reparto, o el mismo número
+ * puede volver a aparecer otro día. Aquí se pasa el pedido a su día; y si ese
+ * día ya tiene uno con el mismo código —o la persona quiere dejarlo como un
+ * pedido distinto— se le añade una letra (`7106635` → `7106635b`).
+ */
+function CambiarDia({
+  fecha,
+  orden,
+  deshabilitado,
+  ejecutar,
+  alMover,
+}: {
+  fecha: FechaISO;
+  orden: OrdenFila;
+  deshabilitado: boolean;
+  ejecutar: Ejecutar;
+  alMover: () => void;
+}) {
+  const [nueva, setNueva] = useState<string>(fecha);
+  const [letra, setLetra] = useState("");
+  // El resultado de la última consulta, atado al día que se consultó.
+  const [consulta, setConsulta] = useState<{ dia: string; hay: boolean } | null>(null);
+
+  const otroDia = nueva !== fecha;
+  const fechaValida = /^\d{4}-\d{2}-\d{2}$/.test(nueva) && nueva <= hoyEnLima();
+  const tieneLetra = /[a-z]$/.test(orden.codigo);
+  const base = orden.codigo.replace(/[a-z]$/, "");
+
+  // ¿El día elegido ya tiene este mismo código? Entonces la letra deja de ser opcional.
+  useEffect(() => {
+    if (!otroDia || !fechaValida) return;
+    let vigente = true;
+    codigoEnDia(nueva as FechaISO, orden.codigo, orden.id)
+      .then((hay) => {
+        if (!vigente) return;
+        setConsulta({ dia: nueva, hay });
+        if (hay) setLetra((l) => l || siguienteLetra(base, [orden.codigo]));
+      })
+      .catch(() => {});
+    return () => {
+      vigente = false;
+    };
+  }, [nueva, otroDia, fechaValida, orden.codigo, orden.id, base]);
+
+  const ocupado = otroDia && fechaValida && consulta?.dia === nueva && consulta.hay;
+  const cambio = otroDia || letra !== "";
+  const falta = ocupado && letra === "";
+
+  return (
+    <div className="flex flex-col gap-2 rounded-btn border border-linea bg-sup-2/50 p-3">
+      <div className="grid grid-cols-[1fr_auto] items-end gap-2">
+        <label className="flex flex-col gap-1.5">
+          <span className="text-sm font-semibold">Día del pedido</span>
+          <input
+            type="date"
+            value={nueva}
+            max={hoyEnLima()}
+            disabled={deshabilitado}
+            onChange={(e) => e.target.value && setNueva(e.target.value)}
+            className="min-h-11 rounded-btn border border-linea-fuerte bg-sup px-2 text-base"
+          />
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-sm font-semibold">Letra</span>
+          <input
+            value={letra}
+            maxLength={1}
+            disabled={deshabilitado}
+            onChange={(e) => setLetra(e.target.value.replace(/[^a-zA-Z]/g, "").toLowerCase())}
+            placeholder={tieneLetra ? orden.codigo.slice(-1) : "—"}
+            aria-label="Letra al final del código"
+            autoCapitalize="off"
+            autoCorrect="off"
+            className="min-h-11 w-14 rounded-btn border border-linea-fuerte bg-sup px-2 text-center font-mono text-base"
+          />
+        </label>
+      </div>
+
+      {ocupado && (
+        <p className="text-xs text-aviso">
+          Ese día ya tiene el pedido <b className="font-mono">{orden.codigo}</b>. Pon una letra al final para que sean dos
+          pedidos distintos.
+        </p>
+      )}
+      {letra !== "" && (
+        <p className="text-xs text-tinta-2">
+          El código pasará a ser <b className="font-mono">{base}{letra}</b>.
+        </p>
+      )}
+      {otroDia && !ocupado && letra === "" && (
+        <p className="text-xs text-tinta-3">Al cambiar de día el pedido se queda sin ruta: la asignas de nuevo.</p>
+      )}
+
+      <button
+        type="button"
+        className="boton-sec"
+        disabled={deshabilitado || !fechaValida || !cambio || falta}
+        onClick={() =>
+          ejecutar(
+            () => cambiarDiaDePedido(fecha, orden.id, nueva, letra),
+            // Cambió de día: la hoja es de otro día, se cierra para volver a abrirla donde está.
+            otroDia ? alMover : () => setLetra(""),
+          )
+        }
+      >
+        {otroDia ? "Pasar a ese día" : letra ? "Cambiar la letra" : "Cambiar"}
+      </button>
+    </div>
   );
 }
 
@@ -687,7 +806,7 @@ function TabDistancia({
     orden.cliente?.lat != null && orden.cliente?.lng != null ? { lat: orden.cliente.lat, lng: orden.cliente.lng } : null;
   const km = orden.km;
   const enLinea = origen && cliente ? aDecimas(kmEnLinea(origen, cliente)) : null;
-  const sugerido = km !== null ? tramoPorDistancia(regla, km) : null;
+  const sugerido = km !== null && !esPorZona(regla) ? tramoPorDistancia(regla, km) : null;
   const decididoAMano = !orden.tramoAuto && orden.tramo !== 1;
   const difiere = sugerido !== null && sugerido.tramo !== orden.tramo && sugerido.montoCentimos !== null;
 
@@ -794,7 +913,7 @@ function TabDistancia({
         </Aviso>
       )}
 
-      <RadarDeTramos regla={regla} km={km} tienda={origen} cliente={cliente} />
+      {!esPorZona(regla) && <RadarDeTramos regla={regla} km={km} tienda={origen} cliente={cliente} />}
 
       {km !== null ? (
         <div className="grid grid-cols-3 gap-2 text-center">
@@ -810,7 +929,7 @@ function TabDistancia({
           </div>
           <div className="flex flex-col rounded-btn bg-acento px-1 py-2 text-acento-texto">
             <b className="font-display text-lg leading-tight [zoom:var(--zoom-titulo,1)]">
-              {orden.tramo === TRAMO_MAS_DE_12_KM ? "+12 km" : `T${orden.tramo}`}
+              {esPorZona(regla) ? etiquetaTramo(regla, orden.tramo) : orden.tramo === TRAMO_MAS_DE_12_KM ? "+12 km" : `T${orden.tramo}`}
             </b>
             <span className="text-[11.5px] font-semibold opacity-90">{formatearSoles(orden.montoCentimos ?? 0)}</span>
           </div>

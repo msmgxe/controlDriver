@@ -38,6 +38,8 @@ export function FilaPedidoSimple({
   km = null,
   cliente = null,
   conFoto = false,
+  contado,
+  alContar,
   onClick,
 }: {
   codigo: string;
@@ -55,18 +57,21 @@ export function FilaPedidoSimple({
   cliente?: string | null;
   /** Tiene la foto de su comanda como evidencia. */
   conFoto?: boolean;
+  /** Si se pasa `alContar`, la fila lleva una casilla: ¿la empresa lo contó en su reporte? */
+  contado?: boolean;
+  alContar?: (contado: boolean) => void;
   onClick?: () => void;
 }) {
   const entregado = estado === "Entregado";
 
-  return (
+  const fila = (
     <button
       type="button"
       onClick={onClick}
       disabled={!onClick}
-      className={`flex w-full flex-col gap-2 border-b border-linea px-4 py-3 text-left last:border-b-0 enabled:hover:bg-sup-2 enabled:active:bg-sup-2 ${
-        porCompletar ? "bg-aviso-suave/40" : ""
-      }`}
+      className={`flex w-full min-w-0 flex-1 flex-col gap-2 py-3 text-left enabled:hover:bg-sup-2 enabled:active:bg-sup-2 ${
+        alContar ? "pr-4 pl-1" : "px-4"
+      } ${alContar ? "" : "border-b border-linea last:border-b-0"} ${porCompletar ? "bg-aviso-suave/40" : ""}`}
     >
       <span className="flex items-baseline justify-between gap-3">
         {porCompletar ? (
@@ -120,5 +125,29 @@ export function FilaPedidoSimple({
         )}
       </span>
     </button>
+  );
+
+  if (!alContar) return fila;
+
+  /* Con casilla, la fila es un contenedor: una casilla dentro de un botón no es
+     HTML válido y el toque se lo quedaría el botón. La casilla va fuera, con su
+     propia zona de toque de 44 px, y el resto de la fila sigue abriendo el pedido. */
+  return (
+    <div
+      className={`flex items-stretch border-b border-linea last:border-b-0 ${
+        contado ? "bg-bien-suave/50" : ""
+      }`}
+    >
+      <label className="flex w-12 shrink-0 cursor-pointer items-center justify-center">
+        <input
+          type="checkbox"
+          checked={!!contado}
+          onChange={(e) => alContar(e.target.checked)}
+          aria-label={`La empresa contó ${porCompletar ? "este pedido" : codigo}`}
+          className="size-6 accent-[var(--bien)]"
+        />
+      </label>
+      {fila}
+    </div>
   );
 }

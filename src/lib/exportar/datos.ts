@@ -124,7 +124,12 @@ export function describirBloque(b: BloqueExtraFila): { tipo: string; titulo: str
       detalle: `${b.pedidos.length} pedido${b.pedidos.length === 1 ? "" : "s"} (tramos ${b.pedidos.map((p) => p.tramo).join(", ")})`,
       horario,
     };
-  return { tipo: "Taxi libre", titulo: "Carrera de taxi", detalle: b.km !== null ? `${b.km} km` : "—", horario };
+  return {
+    tipo: "Adicional",
+    titulo: b.categoriaNombre ?? "Taxi",
+    detalle: [b.descripcion, b.km ? `${b.km} km` : null].filter(Boolean).join(" · ") || "—",
+    horario,
+  };
 }
 
 /**
