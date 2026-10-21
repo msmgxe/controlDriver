@@ -121,14 +121,16 @@ export async function guardarTaxi(datos: TaxiParaGuardar): Promise<{ id: string 
       `insert into bloques_extra
          (id, jornada_id, tipo, posicion, hora_inicio, hora_fin,
           origen_lat, origen_lng, destino_lat, destino_lng, km, km_fuente,
-          monto_centimos, notas, categoria_id, descripcion, creado_en, actualizado_en, sincronizado)
-       values (?, ?, 'taxi', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
+          monto_centimos, notas, categoria_id, descripcion, zona, cantidad,
+          creado_en, actualizado_en, sincronizado)
+       values (?, ?, 'taxi', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
       [
         id, jornadaId, posicion, datos.horaInicio, datos.horaFin,
         datos.origen?.lat ?? null, datos.origen?.lng ?? null,
         datos.destino?.lat ?? null, datos.destino?.lng ?? null,
         datos.km, datos.kmFuente, datos.montoCentimos, datos.notas,
-        datos.categoriaId ?? CATEGORIA_TAXI, datos.descripcion?.trim() || null, momento, momento,
+        datos.categoriaId ?? CATEGORIA_TAXI, datos.descripcion?.trim() || null,
+        datos.zona?.trim() || null, datos.cantidad ?? null, momento, momento,
       ],
     );
     return { id };
@@ -138,12 +140,61 @@ export async function guardarTaxi(datos: TaxiParaGuardar): Promise<{ id: string 
 /** La categoría de siempre: los taxis de antes y los que no dicen otra cosa. */
 export const CATEGORIA_TAXI = "cat_taxi";
 
+interface FilaCategoriaDb {
+  id: string;
+  nombre: string;
+  activa: number;
+  tarifario: string | null;
+}
+
+/** El tarifario guardado en JSON, tolerante: uno dañado vale como «sin tarifario». */
+function leerTarifario(texto: string | null): CategoriaAdicional["tarifario"] {
+  if (!texto) return [];
+  try {
+    const v: unknown = JSON.parse(texto);
+    if (!Array.isArray(v)) return [];
+    return v.filter(
+      (z): z is { nombre: string; montoCentimos: number } =>
+        typeof z?.nombre === "string" && Number.isInteger(z?.montoCentimos) && z.montoCentimos > 0,
+    );
+  } catch {
+    return [];
+  }
+}
+
+const aCategoria = (f: FilaCategoriaDb): CategoriaAdicional => ({
+  id: f.id,
+  nombre: f.nombre,
+  activa: f.activa === 1,
+  tarifario: leerTarifario(f.tarifario),
+});
+
 /** Los tipos de adicional, los activos primero y en el orden en que se crearon. */
 export async function listarCategorias(): Promise<CategoriaAdicional[]> {
-  const filas = await consultar<{ id: string; nombre: string; activa: number }>(
-    `select id, nombre, activa from categorias_adicional order by activa desc, orden asc, nombre asc`,
+  const filas = await consultar<FilaCategoriaDb>(
+    `select id, nombre, activa, tarifario from categorias_adicional order by activa desc, orden asc, nombre asc`,
   );
-  return filas.map((f) => ({ id: f.id, nombre: f.nombre, activa: f.activa === 1 }));
+  return filas.map(aCategoria);
+}
+
+/**
+ * Deja el tarifario de un tipo: las zonas y lo que se paga por pedido en cada una.
+ * Vacío lo quita (el tipo vuelve a cobrarse a monto libre). Lo ya registrado no
+ * cambia: cada registro guarda su monto.
+ */
+export async function guardarTarifario(id: string, zonas: ReadonlyArray<{ nombre: string; montoCentimos: number }>): Promise<void> {
+  const limpias = zonas.map((z) => ({ nombre: z.nombre.trim(), montoCentimos: Math.round(z.montoCentimos) }));
+  if (limpias.some((z) => z.nombre.length < 2 || z.nombre.length > 60 || !(z.montoCentimos > 0 && z.montoCentimos <= 100_000))) {
+    throw new Error("Cada zona necesita un nombre y un monto mayor que cero.");
+  }
+  if (new Set(limpias.map((z) => z.nombre.toLowerCase())).size !== limpias.length) {
+    throw new Error("Hay dos zonas con el mismo nombre.");
+  }
+  await ejecutar(`update categorias_adicional set tarifario = ?, actualizado_en = ? where id = ?`, [
+    limpias.length === 0 ? null : JSON.stringify(limpias),
+    ahora(),
+    id,
+  ]);
 }
 
 /**
@@ -155,14 +206,14 @@ export async function crearCategoria(nombre: string): Promise<CategoriaAdicional
   const limpio = nombre.replace(/\s+/g, " ").trim();
   if (limpio.length < 2 || limpio.length > 40) throw new Error("El nombre debe tener entre 2 y 40 letras.");
   return enTransaccion(async () => {
-    const existentes = await consultar<{ id: string; nombre: string; activa: number }>(
-      `select id, nombre, activa from categorias_adicional where lower(nombre) = ?`,
+    const existentes = await consultar<FilaCategoriaDb>(
+      `select id, nombre, activa, tarifario from categorias_adicional where lower(nombre) = ?`,
       [limpio.toLowerCase()],
     );
     if (existentes[0]) {
       const e = existentes[0];
       if (e.activa !== 1) await ejecutar(`update categorias_adicional set activa = 1, actualizado_en = ? where id = ?`, [ahora(), e.id]);
-      return { id: e.id, nombre: e.nombre, activa: true };
+      return { ...aCategoria(e), activa: true };
     }
     const orden = (await consultar<{ m: number | null }>(`select max(orden) as m from categorias_adicional`))[0]?.m ?? 0;
     const id = nuevoId();
@@ -171,7 +222,7 @@ export async function crearCategoria(nombre: string): Promise<CategoriaAdicional
       `insert into categorias_adicional (id, nombre, orden, activa, creado_en, actualizado_en) values (?, ?, ?, 1, ?, ?)`,
       [id, limpio, orden + 1, momento, momento],
     );
-    return { id, nombre: limpio, activa: true };
+    return { id, nombre: limpio, activa: true, tarifario: [] };
   });
 }
 
@@ -203,6 +254,8 @@ interface FilaBloqueExtraDb {
   categoria_id: string | null;
   descripcion: string | null;
   categoria_nombre: string | null;
+  zona: string | null;
+  cantidad: number | null;
 }
 
 interface FilaPedidoApoyoDb {
@@ -252,6 +305,8 @@ function aBloqueExtraFila(f: FilaBloqueExtraDb, pedidos: PedidoDeApoyoFila[]): B
     categoriaId: f.categoria_id,
     categoriaNombre: f.categoria_nombre ?? "Sin categoría",
     descripcion: f.descripcion,
+    zona: f.zona,
+    cantidad: f.cantidad,
   };
 }
 

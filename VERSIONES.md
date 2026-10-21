@@ -37,6 +37,16 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 1.26 — 20/10/2026
+- **Tarifas por zona en los adicionales (Expo Vino):** cada tipo de adicional puede tener su
+  lista de zonas con lo que se paga **por pedido**. Se carga **pegando la tabla** (una zona por
+  línea, o copiada de una hoja de cálculo) en **Ajustes › Adicionales y sus tarifas**, o al
+  registrar (▸ «Tarifas de Expo Vino»).
+- **Registrar un reparto:** eliges el tipo, y por cada zona donde entregaste, la zona y cuántos
+  pedidos; el monto sale solo (precio × pedidos) y ves el total. Un registro por zona
+  («San Borja × 5»). El día se elige arriba, así entran los de viernes, sábado y domingo.
+- En Pagos, «Adicionales · Expo Vino» cuenta pedidos.
+
 ### 1.25 — 20/10/2026
 - **Tarifa: «Aplicar desde».** Antes la tarifa nueva valía solo desde hoy, así que los pedidos
   de días anteriores (p. ej. el lunes) seguían con la tarifa vieja y no dejaban elegir la zona.

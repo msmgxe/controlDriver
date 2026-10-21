@@ -12,7 +12,7 @@ import {
   moverPedido,
   reglaVigente,
 } from "@/lib/db/sqlite/jornadas";
-import { crearCategoria } from "@/lib/db/sqlite/bloques-extra";
+import { crearCategoria, guardarTarifario } from "@/lib/db/sqlite/bloques-extra";
 import type { CategoriaAdicional } from "@/lib/db/tipos";
 import {
   borrarBloque,
@@ -554,7 +554,24 @@ const esquemaTaxi = z.object({
   /** El tipo de adicional; sin él, «Taxi». */
   categoriaId: z.string().min(1).max(64).nullable().optional(),
   descripcion: z.string().trim().max(120).nullable().optional(),
+  /** Con tarifario: la zona y cuántos pedidos fueron en ella. */
+  zona: z.string().trim().min(2).max(60).nullable().optional(),
+  cantidad: z.number().int().min(1).max(500).nullable().optional(),
 });
+
+const esquemaTarifario = z.array(z.object({ nombre: z.string().trim().min(2).max(60), montoCentimos: z.number().int().min(1).max(100_000) })).max(200);
+
+/** Guarda lo que se paga por pedido en cada zona de un tipo de adicional. */
+export async function guardarTarifarioDeAdicional(categoriaId: string, zonas: unknown): Promise<Resultado> {
+  const parseado = esquemaTarifario.safeParse(zonas);
+  if (!parseado.success) return { ok: false, error: "Revisa las zonas: cada una necesita nombre y un monto mayor que cero." };
+  try {
+    await guardarTarifario(String(categoriaId), parseado.data);
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "No se pudieron guardar las tarifas." };
+  }
+  return { ok: true, mensaje: "Tarifas guardadas." };
+}
 
 /** Crea un tipo de adicional (o devuelve el que ya existe con ese nombre). */
 export async function crearTipoDeAdicional(

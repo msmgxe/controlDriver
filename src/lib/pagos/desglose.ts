@@ -81,12 +81,13 @@ export function desglosePorFuente(entrada: {
   }
 
   // Los adicionales, una fila por tipo (Taxi, Movilidad, Expo Vino…), de mayor a menor.
-  const adicionales = new Map<string, { nombre: string; veces: number; km: number; centimos: number }>();
+  const adicionales = new Map<string, { nombre: string; veces: number; pedidos: number; km: number; centimos: number }>();
   for (const b of entrada.bloques) {
     if (b.tipo !== "taxi") continue;
     const clave = claveDeAdicional(b);
-    const a = adicionales.get(clave) ?? { nombre: b.categoriaNombre ?? "Taxi", veces: 0, km: 0, centimos: 0 };
+    const a = adicionales.get(clave) ?? { nombre: b.categoriaNombre ?? "Taxi", veces: 0, pedidos: 0, km: 0, centimos: 0 };
     a.veces += 1;
+    a.pedidos += b.cantidad ?? 0;
     a.km += b.km ?? 0;
     a.centimos += b.montoCentimos;
     adicionales.set(clave, a);
@@ -96,7 +97,7 @@ export function desglosePorFuente(entrada: {
       clave,
       categoria: "taxi",
       etiqueta: `Adicionales · ${a.nombre}`,
-      detalle: `${plural(a.veces, "registro", "registros")}${a.km > 0 ? ` · ${numero(a.km)} km` : ""}`,
+      detalle: `${a.pedidos > 0 ? plural(a.pedidos, "pedido", "pedidos") : plural(a.veces, "registro", "registros")}${a.km > 0 ? ` · ${numero(a.km)} km` : ""}`,
       centimos: a.centimos,
     });
   }

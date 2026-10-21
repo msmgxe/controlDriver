@@ -23,7 +23,7 @@ export function tituloYDetalleDeBloque(b: BloqueExtraFila): { titulo: string; de
   }
   return {
     titulo: b.categoriaNombre ?? "Taxi",
-    detalle: [b.descripcion, b.km ? `${b.km} km` : null].filter(Boolean).join(" · ") || "Adicional",
+    detalle: [b.zona ? `${b.zona}${b.cantidad ? ` × ${b.cantidad}` : ""}` : null, b.descripcion, b.km ? `${b.km} km` : null].filter(Boolean).join(" · ") || "Adicional",
   };
 }
 

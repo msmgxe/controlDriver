@@ -4,6 +4,7 @@ import { Suspense, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 
 import { Acordeon } from "@/components/Acordeon";
+import { EditorDeTarifario } from "@/components/AdicionalPorZona";
 import { DialogoConfirmar } from "@/components/DialogoConfirmar";
 import { IconoDeSeccion } from "@/components/IconoDeSeccion";
 import { TourDePantalla } from "@/components/TourDePantalla";
@@ -17,6 +18,8 @@ import { LineaCopyright, TextoLegal } from "@/components/TextoLegal";
 import { useDatos } from "@/hooks/useDatos";
 import { useVersion } from "@/hooks/useVersion";
 import { leerAjustesDeComandas } from "@/lib/db/sqlite/ajustes";
+import { CATEGORIA_TAXI, listarCategorias } from "@/lib/db/sqlite/bloques-extra";
+import { crearTipoDeAdicional } from "@/app/(app)/jornada/acciones";
 import { espacioOcupado } from "@/lib/db/sqlite/pruebas";
 import { avisarDeCambios } from "@/lib/cambios";
 import { formatearFecha, hoyEnLima, type FechaISO } from "@/lib/fechas";
@@ -106,6 +109,10 @@ export default function PaginaAjustes() {
 
       <div id="aj-tienda">
         <SeccionModalidad />
+      </div>
+
+      <div id="aj-adicionales">
+        <AdicionalesYTarifas />
       </div>
 
       <div id="aj-comandas">
@@ -242,6 +249,71 @@ export default function PaginaAjustes() {
  * «Comandas y clientes»: lo que se guarda de cada cliente. El resumen dice qué
  * datos están activos, que es lo que se quiere saber sin abrirlo.
  */
+function AdicionalesYTarifas() {
+  const { datos: tipos, recargar } = useDatos(() => listarCategorias(), [], { conservar: true });
+  const [abierto, setAbierto] = useState<string | null>(null);
+  const [nuevo, setNuevo] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  // Taxi se cobra por kilómetros y monto libre: no lleva tarifario.
+  const lista = (tipos ?? []).filter((t) => t.activa && t.id !== CATEGORIA_TAXI);
+
+  async function crear() {
+    const r = await crearTipoDeAdicional(nuevo);
+    if (!r.ok) return setError(r.error);
+    setError(null);
+    setNuevo("");
+    setAbierto(r.categoria.id);
+    recargar();
+  }
+
+  return (
+    <Acordeon
+      titulo="Adicionales y sus tarifas"
+      icono="comanda"
+      resumen={lista.length === 0 ? "Crea un tipo (Expo Vino, Movilidad…)" : lista.map((t) => t.nombre).join(" · ")}
+    >
+      <div className="flex flex-col gap-3">
+        <p className="text-xs text-tinta-2">
+          Cada tipo puede tener su lista de zonas con lo que se paga por pedido. Al registrar un adicional de ese tipo eliges la
+          zona y cuántos pedidos, y el monto sale solo.
+        </p>
+        {lista.map((t) => (
+          <div key={t.id} className="rounded-btn border border-linea">
+            <button
+              type="button"
+              aria-expanded={abierto === t.id}
+              onClick={() => setAbierto(abierto === t.id ? null : t.id)}
+              className="flex min-h-12 w-full items-center justify-between gap-3 px-3 text-left"
+            >
+              <b className="text-sm">{t.nombre}</b>
+              <span className="text-xs text-tinta-3">{t.tarifario.length > 0 ? `${t.tarifario.length} zonas` : "sin tarifas"}</span>
+            </button>
+            {abierto === t.id && (
+              <div className="border-t border-linea p-3">
+                <EditorDeTarifario key={t.id + t.tarifario.length} tipo={t} alGuardar={recargar} />
+              </div>
+            )}
+          </div>
+        ))}
+        <div className="flex gap-2">
+          <input
+            value={nuevo}
+            onChange={(e) => setNuevo(e.target.value)}
+            placeholder="Nuevo tipo, ej.: Expo Vino"
+            maxLength={40}
+            aria-label="Nombre del nuevo tipo"
+            className="min-h-11 min-w-0 flex-1 rounded-btn border border-linea-fuerte bg-sup px-3 text-base"
+          />
+          <button type="button" className="boton-sec" disabled={nuevo.trim().length < 2} onClick={() => void crear()}>
+            Crear
+          </button>
+        </div>
+        {error && <p className="text-sm text-mal">{error}</p>}
+      </div>
+    </Acordeon>
+  );
+}
+
 function ComandasYClientes() {
   const { datos: a } = useDatos(() => leerAjustesDeComandas(), [], { conservar: true });
   const guarda = a

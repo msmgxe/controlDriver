@@ -127,7 +127,7 @@ export function describirBloque(b: BloqueExtraFila): { tipo: string; titulo: str
   return {
     tipo: "Adicional",
     titulo: b.categoriaNombre ?? "Taxi",
-    detalle: [b.descripcion, b.km ? `${b.km} km` : null].filter(Boolean).join(" · ") || "—",
+    detalle: [b.zona ? `${b.zona}${b.cantidad ? ` × ${b.cantidad}` : ""}` : null, b.descripcion, b.km ? `${b.km} km` : null].filter(Boolean).join(" · ") || "—",
     horario,
   };
 }

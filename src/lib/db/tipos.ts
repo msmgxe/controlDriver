@@ -159,6 +159,9 @@ export type BloqueExtraFila =
       categoriaId?: string | null;
       categoriaNombre?: string;
       descripcion?: string | null;
+      /** Con tarifario: la zona (distrito) y cuántos pedidos fueron en ella. */
+      zona?: string | null;
+      cantidad?: number | null;
     });
 
 /** Un tipo de adicional que la persona creó. */
@@ -166,6 +169,8 @@ export interface CategoriaAdicional {
   id: string;
   nombre: string;
   activa: boolean;
+  /** Lo que se paga por pedido en cada zona; vacío si este tipo se cobra a monto libre. */
+  tarifario: Array<{ nombre: string; montoCentimos: number }>;
 }
 
 export interface ApoyoHoraParaGuardar {
@@ -201,6 +206,8 @@ export interface TaxiParaGuardar {
   /** El tipo de adicional; sin él, «Taxi». */
   categoriaId?: string | null;
   descripcion?: string | null;
+  zona?: string | null;
+  cantidad?: number | null;
 }
 
 export interface JornadaCompleta {

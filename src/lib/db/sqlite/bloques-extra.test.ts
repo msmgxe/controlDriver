@@ -225,3 +225,38 @@ describe("adicionales: tipos propios", () => {
     expect(m.tipo === "taxi" && m.descripcion).toBe("A Barranco");
   });
 });
+
+describe("adicionales: tarifario por zona (Expo Vino)", () => {
+  it("guarda las zonas, las devuelve, y rechaza nombres repetidos o montos en cero", async () => {
+    const { crearCategoria, guardarTarifario, listarCategorias } = await import("./bloques-extra");
+    const ev = await crearCategoria("Expo Vino");
+    await guardarTarifario(ev.id, [
+      { nombre: "San Borja", montoCentimos: 850 },
+      { nombre: "La Molina", montoCentimos: 900 },
+    ]);
+    expect((await listarCategorias()).find((c) => c.id === ev.id)!.tarifario).toEqual([
+      { nombre: "San Borja", montoCentimos: 850 },
+      { nombre: "La Molina", montoCentimos: 900 },
+    ]);
+    await expect(guardarTarifario(ev.id, [{ nombre: "A1", montoCentimos: 100 }, { nombre: "a1", montoCentimos: 200 }])).rejects.toThrow(/mismo nombre/);
+    await expect(guardarTarifario(ev.id, [{ nombre: "Surco", montoCentimos: 0 }])).rejects.toThrow();
+    await guardarTarifario(ev.id, []); // vacío: vuelve a monto libre
+    expect((await listarCategorias()).find((c) => c.id === ev.id)!.tarifario).toEqual([]);
+  });
+
+  it("un registro por zona guarda zona y cantidad, y el desglose cuenta pedidos", async () => {
+    const { crearCategoria, guardarTaxi, listarBloquesDelDia } = await import("./bloques-extra");
+    const { desglosePorFuente } = await import("@/lib/pagos/desglose");
+    const fecha = "2026-09-18" as FechaISO;
+    const ev = await crearCategoria("Expo Vino");
+    const base = { fecha, horaInicio: null, horaFin: null, origen: null, destino: null, km: 0, kmFuente: "manual" as const, notas: null, categoriaId: ev.id };
+    await guardarTaxi({ ...base, montoCentimos: 4250, zona: "San Borja", cantidad: 5 });
+    await guardarTaxi({ ...base, montoCentimos: 1800, zona: "La Molina", cantidad: 2 });
+
+    const bloques = await listarBloquesDelDia(fecha);
+    const sb = bloques.find((b) => b.tipo === "taxi" && b.zona === "San Borja")!;
+    expect(sb.tipo === "taxi" && sb.cantidad).toBe(5);
+    const filas = desglosePorFuente({ tiendaNombre: null, pedidosTienda: 0, centimosTienda: 0, bloques });
+    expect(filas.map((f) => [f.etiqueta, f.detalle, f.centimos])).toEqual([["Adicionales · Expo Vino", "7 pedidos", 6050]]);
+  });
+});

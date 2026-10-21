@@ -307,6 +307,8 @@ export const ESQUEMA: string[] = [
      nombre         text not null,
      orden          integer not null default 0,
      activa         integer not null default 1,
+     /* Lo que se paga por pedido en cada zona, en JSON: [{nombre, montoCentimos}]. */
+     tarifario      text,
      creado_en      text not null,
      actualizado_en text not null
    );`,
@@ -355,6 +357,9 @@ export const ESQUEMA: string[] = [
         porque SQLite no deja cambiar el CHECK sin rehacer la tabla. */
      categoria_id   text references categorias_adicional (id) on delete set null,
      descripcion    text,
+     /* Con tarifario: la zona y cuántos pedidos fueron en ella. */
+     zona           text,
+     cantidad       integer,
 
      creado_en      text not null,
      actualizado_en text not null,
@@ -430,6 +435,9 @@ const COLUMNAS_ANADIDAS: ReadonlyArray<[tabla: string, columna: string, definici
   ["ordenes", "contado_empresa", "integer not null default 0"],
   ["bloques_extra", "categoria_id", "text"],
   ["bloques_extra", "descripcion", "text"],
+  ["bloques_extra", "zona", "text"],
+  ["bloques_extra", "cantidad", "integer"],
+  ["categorias_adicional", "tarifario", "text"],
 ];
 
 /** Lo mínimo que necesita `migrar` de una base, sea cual sea el motor. */
