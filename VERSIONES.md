@@ -37,6 +37,12 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 1.25 — 20/10/2026
+- **Tarifa: «Aplicar desde».** Antes la tarifa nueva valía solo desde hoy, así que los pedidos
+  de días anteriores (p. ej. el lunes) seguían con la tarifa vieja y no dejaban elegir la zona.
+  Ahora eliges la fecha, con el atajo «Inicio de esta semana». No deja empezar dentro de una
+  semana ya pagada.
+
 ### 1.24 — 20/10/2026
 - **Tarifa por zona** (Ajustes › Tienda, ubicación y tarifa › Tarifa › **Por zona**): pones solo
   las zonas que tiene la tienda, con su nombre y monto (p. ej. «Miraflores, Surquillo, Surco»
