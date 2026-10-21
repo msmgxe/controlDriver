@@ -13,7 +13,7 @@ import { formatearSoles, type TipoVehiculo } from "@/lib/pagos/reglas";
 /* Colores de cada fuente SOBRE la tarjeta, sacados de la cara activa (ver `--h-*`
    en globals.css): se leen contra el color de la tarjeta en las seis caras. */
 const COLOR: Record<CategoriaIngreso, string> = { tienda: "var(--h-tienda)", apoyo: "var(--h-apoyo)", taxi: "var(--h-taxi)" };
-const NOMBRE: Record<CategoriaIngreso, string> = { tienda: "Tienda", apoyo: "Apoyo", taxi: "Taxi" };
+const NOMBRE: Record<CategoriaIngreso, string> = { tienda: "Tienda", apoyo: "Apoyo", taxi: "Adicionales" };
 const R = 44;
 const C = 2 * Math.PI * R;
 

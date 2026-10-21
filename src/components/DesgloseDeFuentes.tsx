@@ -13,7 +13,12 @@ import type { BloqueExtraFila, JornadaCompleta, Tienda } from "@/lib/db/tipos";
 import { nombreDelDia, type FechaISO } from "@/lib/fechas";
 import type { DetalleDia } from "@/lib/pagos/calcular-liquidacion";
 import { claveDeAdicional, type FilaDeDesglose } from "@/lib/pagos/desglose";
-import { formatearSoles, type ReglaPago } from "@/lib/pagos/reglas";
+import {
+  esPorZona,
+  etiquetaTramo,
+  formatearSoles,
+  type ReglaPago,
+} from "@/lib/pagos/reglas";
 
 const COLOR = {
   tienda: "bg-acento",
@@ -196,8 +201,8 @@ export function DesgloseDeFuentes({
 
       {hayQueElegir && (
         <div className="flex flex-col gap-1.5 px-1 pb-2">
-          <span className="text-[11.5px] font-semibold text-tinta-2">
-            ¿Qué quieres ver?
+          <span className="text-[12px] font-semibold text-tinta">
+            Marca lo que quieres sumar
           </span>
           <div className="flex flex-wrap gap-1.5">
             {todasLasFilas.map((f) => {
@@ -229,11 +234,19 @@ export function DesgloseDeFuentes({
               );
             })}
           </div>
-          {ocultas.some((g) => todasLasFilas.some((f) => grupoDe(f) === g)) && (
+          <div className="flex items-baseline justify-between gap-3 rounded-btn bg-acento px-3 py-2 text-acento-texto">
+            <span className="text-[12px] font-semibold">
+              {ocultas.some((g) => todasLasFilas.some((f) => grupoDe(f) === g))
+                ? `Total de lo marcado (de ${formatearSoles(totalSemana)})`
+                : "Total de todo"}
+            </span>
+            <b className="font-mono text-lg tabular-nums">
+              {formatearSoles(total)}
+            </b>
+          </div>
+          {ocultas.includes("tienda") && (
             <p className="text-[11.5px] text-aviso">
-              Filtro activo: ves {formatearSoles(total)} de{" "}
-              {formatearSoles(totalSemana)}. Lo que cobras de la tienda no
-              cambia.
+              Es solo una vista: lo que la tienda te deposita no cambia.
             </p>
           )}
         </div>
@@ -369,6 +382,7 @@ export function DesgloseDeFuentes({
                             <div className="flex flex-col gap-2 border-t border-linea bg-papel p-2">
                               {f.categoria === "tienda" ? (
                                 <PedidosDelDia
+                                  regla={regla}
                                   jornada={jornadas.find(
                                     (j) => j.fecha === d.fecha,
                                   )}
@@ -432,10 +446,12 @@ export function DesgloseDeFuentes({
 
 function PedidosDelDia({
   jornada,
+  regla,
   alAbrir,
   alContar,
   soloFaltan,
 }: {
+  regla: ReglaPago;
   jornada: JornadaCompleta | undefined;
   alAbrir: (id: string) => void;
   alContar: (id: string, contado: boolean) => void;
@@ -468,6 +484,7 @@ function PedidosDelDia({
           km={o.km}
           cliente={o.cliente?.nombre ?? null}
           conFoto={o.fotos > 0}
+          zona={esPorZona(regla) ? etiquetaTramo(regla, o.tramo) : null}
           contado={o.contado}
           alContar={(v) => alContar(o.id, v)}
           onClick={() => alAbrir(o.id)}

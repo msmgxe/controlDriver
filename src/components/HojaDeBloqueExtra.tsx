@@ -33,10 +33,13 @@ export function HojaDeBloqueExtra({
   tiendas,
   factorCalles,
   corregir,
+  categoriaInicial,
   alCerrar,
   alGuardar,
 }: {
   tipo: TipoFlujo;
+  /** Al añadir desde la fila de un tipo (Expo Vino…): ese tipo ya elegido. */
+  categoriaInicial?: string;
   fecha: FechaISO;
   tiendas: Tienda[];
   factorCalles: number;
@@ -136,6 +139,7 @@ export function HojaDeBloqueExtra({
             fecha={dia}
             factorCalles={factorCalles}
             inicial={corregir?.tipo === "taxi" ? corregir : undefined}
+            categoriaInicial={categoriaInicial}
             alGuardar={() => void alTerminar()}
           />
         ) : modoApoyo === "hora" ? (

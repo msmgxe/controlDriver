@@ -40,8 +40,11 @@ export function FormularioTaxi({
   fecha,
   factorCalles,
   inicial,
+  categoriaInicial,
   alGuardar,
 }: {
+  /** El tipo con que se abre al añadir desde la fila de uno; «sin» = Taxi. */
+  categoriaInicial?: string;
   fecha: FechaISO;
   factorCalles: number;
   /** Si se corrige una carrera ya guardada: sus datos de partida. */
@@ -70,11 +73,18 @@ export function FormularioTaxi({
   const [error, setError] = useState<string | null>(null);
   const [tipos, setTipos] = useState<CategoriaAdicional[]>([]);
   const [categoriaId, setCategoriaId] = useState<string>(
-    inicial?.categoriaId ?? CATEGORIA_TAXI,
+    inicial?.categoriaId ??
+      (categoriaInicial && categoriaInicial !== "sin"
+        ? categoriaInicial
+        : CATEGORIA_TAXI),
   );
   const [descripcion, setDescripcion] = useState(inicial?.descripcion ?? "");
   const [nuevo, setNuevo] = useState<string | null>(null);
-  const [lineas, setLineas] = useState<LineaDeZona[]>([lineaVacia()]);
+  const [lineas, setLineas] = useState<LineaDeZona[]>(
+    inicial?.zona
+      ? [{ zona: inicial.zona, cantidad: String(inicial.cantidad ?? 1) }]
+      : [lineaVacia()],
+  );
   const [verTarifas, setVerTarifas] = useState(false);
 
   const recargarTipos = () =>
@@ -94,9 +104,8 @@ export function FormularioTaxi({
 
   const esTaxi = categoriaId === CATEGORIA_TAXI;
   const tipoActual = tipos.find((t) => t.id === categoriaId) ?? null;
-  // Un tipo con tarifario se registra por zonas (zona × pedidos); corregir uno ya guardado, a monto.
-  const usaZonas =
-    !esTaxi && !inicial && (tipoActual?.tarifario.length ?? 0) > 0;
+  // Un tipo con tarifario se registra por zonas (zona × pedidos), también al corregir uno ya guardado.
+  const usaZonas = !esTaxi && (tipoActual?.tarifario.length ?? 0) > 0;
   const porZona = lineasConMonto(tipoActual?.tarifario ?? [], lineas);
   // Los activos, y el de este registro aunque ya esté archivado.
   const visibles = tipos.filter((t) => t.activa || t.id === categoriaId);
@@ -351,7 +360,7 @@ export function FormularioTaxi({
           </>
         )}
 
-        {!esTaxi && !inicial && tipoActual && (
+        {!esTaxi && tipoActual && (
           <div className="flex flex-col gap-2 border-t border-linea pt-3">
             <button
               type="button"

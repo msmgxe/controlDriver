@@ -363,7 +363,9 @@ function TabPedido({
         </label>
       </div>
 
-      <h4 className="border-t border-linea pt-4 text-sm font-semibold">{esPorZona(regla) ? "Zona de entrega" : "Tramo de distancia"}</h4>
+      <h4 className={`text-sm font-semibold ${esPorZona(regla) ? "order-first" : "border-t border-linea pt-4"}`}>
+        {esPorZona(regla) ? "¿En qué zona fue la entrega?" : "Tramo de distancia"}
+      </h4>
 
       {orden.tramoAuto && orden.km !== null && (
         <Aviso tono="bien" titulo="Calculado con la distancia">
@@ -374,7 +376,7 @@ function TabPedido({
         </Aviso>
       )}
 
-      <div role="radiogroup" aria-label={esPorZona(regla) ? "Zona de entrega" : "Tramo de distancia"} className="flex flex-col gap-2">
+      <div role="radiogroup" aria-label={esPorZona(regla) ? "Zona de entrega" : "Tramo de distancia"} className={`flex flex-col gap-2 ${esPorZona(regla) ? "order-first" : ""}`}>
         {regla.tramos.map((t) => (
           <button
             key={t.id}

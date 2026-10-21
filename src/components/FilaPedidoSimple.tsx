@@ -40,6 +40,7 @@ export function FilaPedidoSimple({
   conFoto = false,
   contado,
   alContar,
+  zona,
   onClick,
 }: {
   codigo: string;
@@ -59,6 +60,8 @@ export function FilaPedidoSimple({
   conFoto?: boolean;
   /** Si se pasa `alContar`, la fila lleva una casilla: ¿la empresa lo contó en su reporte? */
   contado?: boolean;
+  /** Tarifa por zona: el nombre de la zona del pedido, que se enseña en vez de «T2». */
+  zona?: string | null;
   alContar?: (contado: boolean) => void;
   onClick?: () => void;
 }) {
@@ -103,10 +106,14 @@ export function FilaPedidoSimple({
           {estado}
         </span>
 
-        {tramo > 1 && (
-          <span className="rounded-chip border border-linea-fuerte px-2 py-0.5 font-mono text-tinta-2">
-            {tramo === 6 ? "+12 km" : `T${tramo}`}
-          </span>
+        {zona ? (
+          <span className="rounded-chip border border-acento px-2 py-0.5 font-semibold text-acento-tinta">{zona}</span>
+        ) : (
+          tramo > 1 && (
+            <span className="rounded-chip border border-linea-fuerte px-2 py-0.5 font-mono text-tinta-2">
+              {tramo === 6 ? "+12 km" : `T${tramo}`}
+            </span>
+          )
         )}
         {km !== null && <span className="font-mono text-tinta-2">{km.toFixed(1)} km</span>}
         {manual && <span className="text-tinta-3">· a mano</span>}

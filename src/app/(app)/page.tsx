@@ -12,10 +12,20 @@ import { HojaSubirMas } from "@/components/HojaSubirMas";
 import { DetalleDelDia } from "@/components/DetalleDelDia";
 import { HojaDeBloqueExtra } from "@/components/HojaDeBloqueExtra";
 import { HojaDeComandas } from "@/components/HojaDeComandas";
-import { Calendario, Luna, Reloj, Taxi, Ticket, Tienda as IconoTienda } from "@/components/iconos";
+import {
+  Calendario,
+  Luna,
+  Reloj,
+  Taxi,
+  Ticket,
+  Tienda as IconoTienda,
+} from "@/components/iconos";
 import { usePuedeEscribir } from "@/components/Licencia";
 import { MenuAgregarBloque } from "@/components/MenuAgregarBloque";
-import { RecorridoGuiado, type PasoDeRecorrido } from "@/components/RecorridoGuiado";
+import {
+  RecorridoGuiado,
+  type PasoDeRecorrido,
+} from "@/components/RecorridoGuiado";
 import { SubirMas } from "@/components/SubirMas";
 import { TiraDeSemanas, type DatosDelDia } from "@/components/TiraDeSemanas";
 import { Auto } from "@/components/Auto";
@@ -28,14 +38,21 @@ import { avisarDeCambios } from "@/lib/cambios";
 import { publicarDiaElegido } from "@/lib/diaElegido";
 import { sonar } from "@/lib/sonidos";
 import { marcarRecorridoVisto, recorridoYaVisto } from "@/lib/recorrido";
-import { leerAjustesDeComandas, type AjustesDeComandas } from "@/lib/db/sqlite/ajustes";
+import {
+  leerAjustesDeComandas,
+  type AjustesDeComandas,
+} from "@/lib/db/sqlite/ajustes";
 import { listarBloquesDelDia } from "@/lib/db/sqlite/bloques-extra";
-import { descansosPorRango, marcarDescanso, quitarDescanso } from "@/lib/db/sqlite/descansos";
+import {
+  descansosPorRango,
+  marcarDescanso,
+  quitarDescanso,
+} from "@/lib/db/sqlite/descansos";
 import { jornadaPorFecha, reglaVigente } from "@/lib/db/sqlite/jornadas";
 import { estadoDeSemana } from "@/lib/db/sqlite/liquidaciones";
 import { listarTiendas, perfilActual } from "@/lib/db/sqlite/perfil";
 import { montoDelDia } from "@/lib/pagos/calcular-liquidacion";
-import { desglosePorFuente } from "@/lib/pagos/desglose";
+import { claveDeAdicional, desglosePorFuente } from "@/lib/pagos/desglose";
 import { diasEntre } from "@/lib/licencia/estado";
 import {
   esFechaISO,
@@ -48,7 +65,12 @@ import {
   sumarDias,
   type FechaISO,
 } from "@/lib/fechas";
-import type { BloqueExtraFila, EstadoSemana, JornadaCompleta, Tienda } from "@/lib/db/tipos";
+import type {
+  BloqueExtraFila,
+  EstadoSemana,
+  JornadaCompleta,
+  Tienda,
+} from "@/lib/db/tipos";
 import { formatearSoles, type ReglaPago } from "@/lib/pagos/reglas";
 
 /**
@@ -83,7 +105,9 @@ function Contenido() {
   const params = useSearchParams();
   const hoy = hoyEnLima();
   const pedido = params.get("dia");
-  const [dia, setDia] = useState<FechaISO>(esFechaISO(pedido) && pedido <= hoy ? pedido : hoy);
+  const [dia, setDia] = useState<FechaISO>(
+    esFechaISO(pedido) && pedido <= hoy ? pedido : hoy,
+  );
 
   // El botón «Cargar» de la barra de abajo propone el día que se tiene delante.
   useEffect(() => {
@@ -97,23 +121,31 @@ function Contenido() {
   const semana = semanaDe(dia);
   const esSemanaActual = semana.inicio === semanaDe(hoy).inicio;
 
-  const { datos: tira, recargar: recargarTira } = useTiraDeSemanas(semana.inicio, hoy);
+  const { datos: tira, recargar: recargarTira } = useTiraDeSemanas(
+    semana.inicio,
+    hoy,
+  );
 
   /* Lo del día elegido. Aquí **no** se conserva lo de otro día: al cambiar de
      día, la parte de abajo se vacía un instante en vez de enseñar los pedidos
      de ayer bajo la fecha de hoy. */
   const { datos: detalle, recargar: recargarDia } = useDatos(
     async () => {
-      const [jornada, perfil, estado, tiendas, ajustes, descansos, bloques] = await Promise.all([
-        jornadaPorFecha(dia),
-        perfilActual(),
-        estadoDeSemana(dia),
-        listarTiendas(),
-        leerAjustesDeComandas(),
-        descansosPorRango(dia, dia),
-        listarBloquesDelDia(dia),
-      ]);
-      const { regla } = await reglaVigente(dia, perfil?.tiendaId ?? null, perfil?.vehiculo);
+      const [jornada, perfil, estado, tiendas, ajustes, descansos, bloques] =
+        await Promise.all([
+          jornadaPorFecha(dia),
+          perfilActual(),
+          estadoDeSemana(dia),
+          listarTiendas(),
+          leerAjustesDeComandas(),
+          descansosPorRango(dia, dia),
+          listarBloquesDelDia(dia),
+        ]);
+      const { regla } = await reglaVigente(
+        dia,
+        perfil?.tiendaId ?? null,
+        perfil?.vehiculo,
+      );
       return {
         jornada,
         regla,
@@ -138,7 +170,9 @@ function Contenido() {
 
   if (!tira) return <Esqueleto />;
 
-  const cargadosSemana = rangoDeFechas(semana.inicio, semana.fin).filter((f) => tira.get(f)?.cargado).length;
+  const cargadosSemana = rangoDeFechas(semana.inicio, semana.fin).filter(
+    (f) => tira.get(f)?.cargado,
+  ).length;
 
   return (
     <div className="mx-auto flex max-w-[880px] flex-col gap-4">
@@ -153,7 +187,8 @@ function Contenido() {
               {formatearFechaLarga(dia).replace(/ de \d{4}$/, "")}
             </h2>
             <p className="text-xs text-tinta-3">
-              Sem. {Number(semana.inicio.slice(8, 10))}–{Number(semana.fin.slice(8, 10))} · {cargadosSemana} de 7 días
+              Sem. {Number(semana.inicio.slice(8, 10))}–
+              {Number(semana.fin.slice(8, 10))} · {cargadosSemana} de 7 días
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-1">
@@ -166,14 +201,19 @@ function Contenido() {
                 Volver a hoy
               </button>
             )}
-            <label id="recorrido-calendario" className="relative grid size-11 place-items-center rounded-btn border border-linea-fuerte bg-sup">
+            <label
+              id="recorrido-calendario"
+              className="relative grid size-11 place-items-center rounded-btn border border-linea-fuerte bg-sup"
+            >
               <span className="sr-only">Elegir otra fecha</span>
               <Calendario className="size-5" />
               <input
                 type="date"
                 value={dia}
                 max={hoy}
-                onChange={(e) => e.target.value && setDia(e.target.value as FechaISO)}
+                onChange={(e) =>
+                  e.target.value && setDia(e.target.value as FechaISO)
+                }
                 onClick={(e) => {
                   try {
                     e.currentTarget.showPicker();
@@ -232,11 +272,17 @@ function Contenido() {
             // Un gesto dentro de una hoja o de un visor de fotos (que viven en un portal pero
             // propagan sus eventos hasta aquí) es del visor, no un cambio de día.
             const destino = e.target as Element;
-            if (e.touches.length > 1 || destino.closest?.('[role="dialog"], [data-sin-deslizar]')) {
+            if (
+              e.touches.length > 1 ||
+              destino.closest?.('[role="dialog"], [data-sin-deslizar]')
+            ) {
               deslizar.current = null;
               return;
             }
-            deslizar.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            deslizar.current = {
+              x: e.touches[0].clientX,
+              y: e.touches[0].clientY,
+            };
           }}
           onTouchEnd={(e) => {
             // Arrastrar de lado cambia de día, como pasar fotos en la galería.
@@ -253,7 +299,13 @@ function Contenido() {
             }
           }}
         >
-        <DelDia dia={dia} hoy={hoy} detalle={detalle} tira={tira} alCambiar={recargar} />
+          <DelDia
+            dia={dia}
+            hoy={hoy}
+            detalle={detalle}
+            tira={tira}
+            alCambiar={recargar}
+          />
         </div>
       ) : (
         <div className="flex animate-pulse flex-col gap-4" aria-hidden>
@@ -301,11 +353,24 @@ function DelDia({
       comanda» desde «Subir más» la abre en su pantalla de siempre. */
   const [comandaConCamara, setComandaConCamara] = useState(false);
   const [subirMasAbierto, setSubirMasAbierto] = useState(false);
-  const [bloqueAbierto, setBloqueAbierto] = useState<"apoyo" | "taxi" | null>(null);
-  const { jornada, regla, estado, tienda, tiendas, ajustes, descanso, bloques } = detalle;
+  const [bloqueAbierto, setBloqueAbierto] = useState<"apoyo" | "taxi" | null>(
+    null,
+  );
+  const {
+    jornada,
+    regla,
+    estado,
+    tienda,
+    tiendas,
+    ajustes,
+    descanso,
+    bloques,
+  } = detalle;
   /** Qué fila de «¿Qué hiciste hoy?» está desplegada. */
-  const [filaAbierta, setFilaAbierta] = useState<"tienda" | "apoyo" | "taxi" | null>(null);
-  function abrirFila(cual: "tienda" | "apoyo" | "taxi") {
+  const [filaAbierta, setFilaAbierta] = useState<string | null>(null);
+  // Al añadir desde la fila de un tipo (Expo Vino…), la hoja se abre con ese tipo ya elegido.
+  const [tipoParaNuevo, setTipoParaNuevo] = useState<string | null>(null);
+  function abrirFila(cual: string) {
     setFilaAbierta((a) => (a === cual ? null : cual));
   }
 
@@ -333,22 +398,26 @@ function DelDia({
     {
       selector: "#recorrido-tira",
       titulo: "Elige el día",
-      texto: "La tira de arriba manda: toca el que quieres cargar. Por defecto es hoy.",
+      texto:
+        "La tira de arriba manda: toca el que quieres cargar. Por defecto es hoy.",
     },
     {
       selector: "#recorrido-cargar-resumen",
       titulo: "Cargar resumen del día",
-      texto: "La forma normal: sube las capturas de la app de la tienda, con tus rutas y pedidos, al terminar la jornada.",
+      texto:
+        "La forma normal: sube las capturas de la app de la tienda, con tus rutas y pedidos, al terminar la jornada.",
     },
     {
       selector: "#recorrido-tomar-foto",
       titulo: "Tomar foto de una comanda",
-      texto: "El camino más corto: abre la cámara de una vez y registra un pedido apenas lo entregas, sin esperar al final del día.",
+      texto:
+        "El camino más corto: abre la cámara de una vez y registra un pedido apenas lo entregas, sin esperar al final del día.",
     },
     {
       selector: "#recorrido-lista",
       titulo: "¿Qué hiciste hoy?",
-      texto: "Tus pedidos, un apoyo a otra tienda o una carrera de taxi. Toca lo que ya hiciste para ver el detalle, o lo que falta para anotarlo.",
+      texto:
+        "Tus pedidos, un apoyo a otra tienda o una carrera de taxi. Toca lo que ya hiciste para ver el detalle, o lo que falta para anotarlo.",
     },
   ];
 
@@ -358,10 +427,20 @@ function DelDia({
   const editable = estado !== "pagada";
   const esFuturo = dia > hoy;
 
-  const pedidosCentimos = jornada?.ordenes.reduce((s, o) => s + (o.montoCentimos ?? 0), 0) ?? 0;
-  const cobrado = jornada ? montoDelDia(pedidosCentimos, regla, jornada.horaEntrada, jornada.horaSalida).pagadoCentimos : 0;
-  const minutos = jornada?.rutas.reduce((s, r) => s + (r.duracionMin ?? 0), 0) ?? 0;
-  const conCliente = jornada?.ordenes.filter((o) => o.cliente !== null).length ?? 0;
+  const pedidosCentimos =
+    jornada?.ordenes.reduce((s, o) => s + (o.montoCentimos ?? 0), 0) ?? 0;
+  const cobrado = jornada
+    ? montoDelDia(
+        pedidosCentimos,
+        regla,
+        jornada.horaEntrada,
+        jornada.horaSalida,
+      ).pagadoCentimos
+    : 0;
+  const minutos =
+    jornada?.rutas.reduce((s, r) => s + (r.duracionMin ?? 0), 0) ?? 0;
+  const conCliente =
+    jornada?.ordenes.filter((o) => o.cliente !== null).length ?? 0;
   /* Con apoyo o taxi, la pastilla del día es el total de todo —lo que de verdad
      produjo—, y debajo se reparte por fuente. Sin ellos, queda como siempre. */
   const extrasCentimos = bloques.reduce((s, b) => s + b.montoCentimos, 0);
@@ -373,11 +452,28 @@ function DelDia({
     if (d?.cargado || (f === dia && cobrado + extrasCentimos > 0)) racha += 1;
     else if (!d?.descanso) break;
   }
-  const otros = [...tira].filter(([f, d]) => f !== dia && d.cargado && (d.centimos ?? 0) > 0).map(([, d]) => d.centimos ?? 0);
-  const record = otros.length >= 3 && cobrado + extrasCentimos > Math.max(...otros);
+  const otros = [...tira]
+    .filter(([f, d]) => f !== dia && d.cargado && (d.centimos ?? 0) > 0)
+    .map(([, d]) => d.centimos ?? 0);
+  const record =
+    otros.length >= 3 && cobrado + extrasCentimos > Math.max(...otros);
   const apoyos = bloques.filter((b) => b.tipo !== "taxi");
   const taxis = bloques.filter((b) => b.tipo === "taxi");
-  const hayPedidos = (jornada?.ordenes.length ?? 0) > 0 || (jornada?.rutas.length ?? 0) > 0;
+  // Cada tipo de adicional (Taxi, Expo Vino…) es una fila propia, igual que el apoyo.
+  const tiposDeAdicional = [
+    ...new Map(
+      taxis.map((b) => [
+        claveDeAdicional(b),
+        b.tipo === "taxi" ? (b.categoriaNombre ?? "Taxi") : "Taxi",
+      ]),
+    ).entries(),
+  ].map(([clave, nombre]) => ({
+    clave,
+    nombre,
+    bloques: taxis.filter((b) => claveDeAdicional(b) === clave),
+  }));
+  const hayPedidos =
+    (jornada?.ordenes.length ?? 0) > 0 || (jornada?.rutas.length ?? 0) > 0;
   const desglose = desglosePorFuente({
     tiendaNombre: tienda?.nombre ?? null,
     pedidosTienda: jornada?.ordenes.length ?? 0,
@@ -389,7 +485,9 @@ function DelDia({
     <>
       {jornada && (hayPedidos || bloques.length > 0) ? (
         <TarjetaViva
-          encabezado={dia === hoy ? "Hoy cargaste" : `El ${nombreDelDia(dia)} cargaste`}
+          encabezado={
+            dia === hoy ? "Hoy cargaste" : `El ${nombreDelDia(dia)} cargaste`
+          }
           pedidos={jornada.ordenes.length}
           rutas={jornada.rutas.length}
           filas={desglose}
@@ -399,19 +497,32 @@ function DelDia({
           record={record}
           alElegir={(c) => {
             setFilaAbierta(c);
-            document.getElementById("recorrido-lista")?.scrollIntoView({ behavior: "smooth", block: "center" });
+            document
+              .getElementById("recorrido-lista")
+              ?.scrollIntoView({ behavior: "smooth", block: "center" });
           }}
         />
       ) : (
-        <DiaSinCarga fecha={dia} hoy={hoy} descanso={descanso} puedeEscribir={puedeCargar} alCambiar={alCambiar} />
+        <DiaSinCarga
+          fecha={dia}
+          hoy={hoy}
+          descanso={descanso}
+          puedeEscribir={puedeCargar}
+          alCambiar={alCambiar}
+        />
       )}
 
       {/* ¿Qué hiciste hoy? Tres preguntas con su respuesta: lo hecho se
           despliega al tocarlo; lo que falta empieza a anotarse al tocarlo. */}
       <div id="recorrido-lista" className="flex flex-col gap-2.5">
         {bloques.length > 0 && (
-          <h3 className="entra px-1 text-[17px]" style={{ "--i": 1 } as React.CSSProperties}>
-            {dia === hoy ? "¿Qué hiciste hoy?" : `¿Qué hiciste el ${nombreDelDia(dia)}?`}
+          <h3
+            className="entra px-1 text-[17px]"
+            style={{ "--i": 1 } as React.CSSProperties}
+          >
+            {dia === hoy
+              ? "¿Qué hiciste hoy?"
+              : `¿Qué hiciste el ${nombreDelDia(dia)}?`}
           </h3>
         )}
 
@@ -430,7 +541,9 @@ function DelDia({
           monto={hayPedidos ? formatearSoles(cobrado) : undefined}
           hecha={hayPedidos}
           abierta={filaAbierta === "tienda"}
-          alPulsar={() => (hayPedidos ? abrirFila("tienda") : setSubirMasAbierto(true))}
+          alPulsar={() =>
+            hayPedidos ? abrirFila("tienda") : setSubirMasAbierto(true)
+          }
         >
           {jornada && (
             <DetalleDelDia
@@ -444,67 +557,108 @@ function DelDia({
             />
           )}
           {!esFuturo && (
-            <button type="button" className="boton-fila" onClick={() => setSubirMasAbierto(true)}>
+            <button
+              type="button"
+              className="boton-fila"
+              onClick={() => setSubirMasAbierto(true)}
+            >
               Agregar más pedidos o rutas
             </button>
           )}
         </FilaDeLista>
 
         {apoyos.length > 0 && (
-        <FilaDeLista
-          indice={1}
-          Icono={Reloj}
-          fondo="bg-[var(--apoyo-suave)] text-[var(--apoyo-tinta)]"
-          titulo="Apoyé a otra tienda"
-          resumen={
-            apoyos.length > 0
-              ? desglose
-                  .filter((f) => f.categoria === "apoyo")
-                  .map((f) => `${f.etiqueta.replace("Apoyo · ", "")} · ${f.detalle}`)
-                  .join(" · ")
-              : "Toca si cubriste otra tienda"
-          }
-          monto={apoyos.length > 0 ? formatearSoles(apoyos.reduce((s, b) => s + b.montoCentimos, 0)) : undefined}
-          hecha={apoyos.length > 0}
-          abierta={filaAbierta === "apoyo"}
-          alPulsar={() => (apoyos.length > 0 ? abrirFila("apoyo") : setBloqueAbierto("apoyo"))}
-        >
-          <BloquesDelDia fecha={dia} bloques={apoyos} editable={editable && puedeCargar} alCambiar={alCambiar} />
-          {!esFuturo && (
-            <button type="button" className="boton-fila" onClick={() => setBloqueAbierto("apoyo")}>
-              Agregar otro apoyo
-            </button>
-          )}
-        </FilaDeLista>
+          <FilaDeLista
+            indice={1}
+            Icono={Reloj}
+            fondo="bg-[var(--apoyo-suave)] text-[var(--apoyo-tinta)]"
+            titulo="Apoyé a otra tienda"
+            resumen={
+              apoyos.length > 0
+                ? desglose
+                    .filter((f) => f.categoria === "apoyo")
+                    .map(
+                      (f) =>
+                        `${f.etiqueta.replace("Apoyo · ", "")} · ${f.detalle}`,
+                    )
+                    .join(" · ")
+                : "Toca si cubriste otra tienda"
+            }
+            monto={
+              apoyos.length > 0
+                ? formatearSoles(
+                    apoyos.reduce((s, b) => s + b.montoCentimos, 0),
+                  )
+                : undefined
+            }
+            hecha={apoyos.length > 0}
+            abierta={filaAbierta === "apoyo"}
+            alPulsar={() =>
+              apoyos.length > 0 ? abrirFila("apoyo") : setBloqueAbierto("apoyo")
+            }
+          >
+            <BloquesDelDia
+              fecha={dia}
+              bloques={apoyos}
+              editable={editable && puedeCargar}
+              alCambiar={alCambiar}
+            />
+            {!esFuturo && (
+              <button
+                type="button"
+                className="boton-fila"
+                onClick={() => setBloqueAbierto("apoyo")}
+              >
+                Agregar otro apoyo
+              </button>
+            )}
+          </FilaDeLista>
         )}
 
-        {taxis.length > 0 && (
-        <FilaDeLista
-          indice={2}
-          Icono={Taxi}
-          fondo="bg-[var(--taxi-suave)] text-[var(--taxi-tinta)]"
-          titulo="Hice taxi"
-          resumen={
-            taxis.length > 0
-              ? desglose.find((f) => f.categoria === "taxi")?.detalle ?? ""
-              : "Toca para anotar una carrera"
-          }
-          monto={taxis.length > 0 ? formatearSoles(taxis.reduce((s, b) => s + b.montoCentimos, 0)) : undefined}
-          hecha={taxis.length > 0}
-          abierta={filaAbierta === "taxi"}
-          alPulsar={() => (taxis.length > 0 ? abrirFila("taxi") : setBloqueAbierto("taxi"))}
-        >
-          <BloquesDelDia fecha={dia} bloques={taxis} editable={editable && puedeCargar} alCambiar={alCambiar} />
-          {!esFuturo && (
-            <button type="button" className="boton-fila" onClick={() => setBloqueAbierto("taxi")}>
-              Agregar otra carrera
-            </button>
-          )}
-        </FilaDeLista>
-        )}
+        {tiposDeAdicional.map((t, i) => {
+          const centimos = t.bloques.reduce((s, b) => s + b.montoCentimos, 0);
+          return (
+            <FilaDeLista
+              key={t.clave}
+              indice={2 + i}
+              Icono={Taxi}
+              fondo="bg-[var(--taxi-suave)] text-[var(--taxi-tinta)]"
+              titulo={t.nombre === "Taxi" ? "Hice taxi" : t.nombre}
+              resumen={desglose.find((f) => f.clave === t.clave)?.detalle ?? ""}
+              monto={formatearSoles(centimos)}
+              hecha
+              abierta={filaAbierta === t.clave}
+              alPulsar={() => abrirFila(t.clave)}
+            >
+              <BloquesDelDia
+                fecha={dia}
+                bloques={t.bloques}
+                editable={editable && puedeCargar}
+                alCambiar={alCambiar}
+              />
+              {!esFuturo && (
+                <button
+                  type="button"
+                  className="boton-fila"
+                  onClick={() => {
+                    setTipoParaNuevo(t.clave.replace(/^adic:/, ""));
+                    setBloqueAbierto("taxi");
+                  }}
+                >
+                  {t.nombre === "Taxi"
+                    ? "Agregar otra carrera"
+                    : `Agregar otro de ${t.nombre}`}
+                </button>
+              )}
+            </FilaDeLista>
+          );
+        })}
       </div>
 
-      <div className="entra flex flex-col gap-2" style={{ "--i": 6 } as React.CSSProperties}>
+      <div
+        className="entra flex flex-col gap-2"
+        style={{ "--i": 6 } as React.CSSProperties}
+      >
         <div id="recorrido-cargar-resumen">
           <CargarCapturas deshabilitado={!puedeCargar} dia={dia} />
         </div>
@@ -521,11 +675,16 @@ function DelDia({
           <Ticket className="size-[22px]" />
           Tomar foto de una comanda
         </button>
-        <p className="text-xs text-tinta-3">Una foto por pedido, con cliente y dirección: directo a la cámara.</p>
+        <p className="text-xs text-tinta-3">
+          Una foto por pedido, con cliente y dirección: directo a la cámara.
+        </p>
       </div>
 
       {subirMasAbierto && !esFuturo && (
-        <HojaSubirMas titulo="Pedidos de mi tienda" alCerrar={() => setSubirMasAbierto(false)}>
+        <HojaSubirMas
+          titulo="Pedidos de mi tienda"
+          alCerrar={() => setSubirMasAbierto(false)}
+        >
           <SubirMas
             fecha={dia}
             jornada={jornada}
@@ -544,13 +703,21 @@ function DelDia({
         </HojaSubirMas>
       )}
 
-      {recorrido && <RecorridoGuiado pasos={pasosRecorrido} alTerminar={() => setRecorrido(false)} />}
+      {recorrido && (
+        <RecorridoGuiado
+          pasos={pasosRecorrido}
+          alTerminar={() => setRecorrido(false)}
+        />
+      )}
 
       {comanda && (
         <HojaDeComandas
           fecha={dia}
           regla={regla}
-          rutas={(jornada?.rutas ?? []).map((r) => ({ numero: r.numero, inicio: r.horaInicio }))}
+          rutas={(jornada?.rutas ?? []).map((r) => ({
+            numero: r.numero,
+            inicio: r.horaInicio,
+          }))}
           tienda={tienda}
           ajustes={ajustes}
           iniciarConCamara={comandaConCamara}
@@ -567,13 +734,17 @@ function DelDia({
           disabled={!puedeCargar}
           onElegirTienda={() => setSubirMasAbierto(true)}
           onElegirApoyo={() => setBloqueAbierto("apoyo")}
-          onElegirTaxi={() => setBloqueAbierto("taxi")}
+          onElegirTaxi={() => {
+            setTipoParaNuevo(null);
+            setBloqueAbierto("taxi");
+          }}
         />
       )}
 
       {bloqueAbierto && (
         <HojaDeBloqueExtra
           tipo={bloqueAbierto}
+          categoriaInicial={bloqueAbierto === "taxi" ? (tipoParaNuevo ?? undefined) : undefined}
           fecha={dia}
           tiendas={tiendas.filter((t) => t.id !== tienda?.id)}
           factorCalles={tienda?.factorCalles ?? 1.3}
@@ -626,15 +797,25 @@ function DiaSinCarga({
 
   if (descanso) {
     return (
-      <section className="tarjeta flex items-center gap-3" aria-label="Día de descanso">
+      <section
+        className="tarjeta flex items-center gap-3"
+        aria-label="Día de descanso"
+      >
         <span className="grid size-11 shrink-0 place-items-center rounded-full bg-descanso text-descanso-tinta">
           <Luna className="size-6" />
         </span>
         <div className="flex min-w-0 flex-1 flex-col">
           <b className="text-base font-bold">Día de descanso</b>
-          <span className="text-sm text-tinta-2">Dijiste que no trabajaste este día.</span>
+          <span className="text-sm text-tinta-2">
+            Dijiste que no trabajaste este día.
+          </span>
         </div>
-        <button type="button" className="boton-sec shrink-0" disabled={!puedeEscribir || ocupado} onClick={() => void cambiar()}>
+        <button
+          type="button"
+          className="boton-sec shrink-0"
+          disabled={!puedeEscribir || ocupado}
+          onClick={() => void cambiar()}
+        >
           Quitar
         </button>
       </section>
@@ -642,11 +823,18 @@ function DiaSinCarga({
   }
 
   return (
-    <section className="tarjeta grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-2" aria-label="Sin cargar">
+    <section
+      className="tarjeta grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-2"
+      aria-label="Sin cargar"
+    >
       <Auto vehiculo={vehiculo} mono className="w-[96px]" />
       <div>
         <b className="text-base font-bold">
-          {fecha === hoy ? "Hoy" : esFuturo ? "Ese día todavía no llega" : "Ese día"}
+          {fecha === hoy
+            ? "Hoy"
+            : esFuturo
+              ? "Ese día todavía no llega"
+              : "Ese día"}
           {esFuturo ? "" : ": sin cargar"}
         </b>
         <p className="text-sm text-tinta-2">
@@ -706,13 +894,15 @@ function RecordatorioDeRespaldo() {
     setHaciendo(true);
     setError(null);
     try {
-      const { crearYCompartirRespaldo } = await import("@/lib/db/sqlite/compartir-respaldo");
+      const { crearYCompartirRespaldo } =
+        await import("@/lib/db/sqlite/compartir-respaldo");
       await crearYCompartirRespaldo();
       recargar();
     } catch (fallo) {
       // Cerrar el selector sin elegir nada no es un fallo que valga la pena gritar.
       const texto = fallo instanceof Error ? fallo.message : "";
-      if (!/cancel/i.test(texto)) setError(texto || "No se pudo crear el respaldo.");
+      if (!/cancel/i.test(texto))
+        setError(texto || "No se pudo crear el respaldo.");
     } finally {
       setHaciendo(false);
     }
@@ -732,8 +922,12 @@ function RecordatorioDeRespaldo() {
         </button>
       </div>
       <span className="text-xs text-tinta-3">
-        Es un archivo con tus datos: guárdalo en Drive o mándatelo por WhatsApp. Si cambias de teléfono, lo restauras en{" "}
-        <Link href="/ajustes" className="underline underline-offset-2">Ajustes</Link>.
+        Es un archivo con tus datos: guárdalo en Drive o mándatelo por WhatsApp.
+        Si cambias de teléfono, lo restauras en{" "}
+        <Link href="/ajustes" className="underline underline-offset-2">
+          Ajustes
+        </Link>
+        .
       </span>
       {error && <span className="text-xs text-mal">{error}</span>}
     </div>
@@ -742,7 +936,10 @@ function RecordatorioDeRespaldo() {
 
 function Esqueleto() {
   return (
-    <div className="mx-auto flex max-w-[880px] animate-pulse flex-col gap-4" aria-hidden>
+    <div
+      className="mx-auto flex max-w-[880px] animate-pulse flex-col gap-4"
+      aria-hidden
+    >
       <div className="h-8 w-56 rounded bg-sup-2" />
       <div className="h-[66px] rounded-btn bg-sup-2" />
       <div className="h-[150px] rounded-card bg-sup-2" />

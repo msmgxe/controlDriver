@@ -17,7 +17,7 @@ import { esCodigoPendiente } from "@/lib/db/sqlite/jornadas";
 import { borrarRuta } from "@/lib/db/sqlite/rutas";
 import type { JornadaCompleta, Tienda } from "@/lib/db/tipos";
 import type { FechaISO } from "@/lib/fechas";
-import { horasDePermanencia, formatearSoles, montoPorPermanencia, type ReglaPago } from "@/lib/pagos/reglas";
+import { esPorZona, etiquetaTramo, horasDePermanencia, formatearSoles, montoPorPermanencia, type ReglaPago } from "@/lib/pagos/reglas";
 
 /**
  * Lo que se subió de un día, en tres pestañas: **Pedidos**, **Por tramo** (para
@@ -102,6 +102,7 @@ export function DetalleDelDia({
                   hora={o.ruta !== null ? (horaDeRuta.get(o.ruta) ?? null) : null}
                   estado={o.estado}
                   tramo={o.tramo}
+                  zona={esPorZona(regla) ? etiquetaTramo(regla, o.tramo) : null}
                   monto={formatearSoles(o.montoCentimos ?? 0)}
                   manual={o.manual}
                   porCompletar={esCodigoPendiente(o.codigo)}

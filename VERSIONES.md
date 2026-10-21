@@ -37,6 +37,17 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 1.27 — 20/10/2026
+- **Inicio: cada tipo de adicional es una fila propia**, igual que Taxi o el apoyo («Expo Vino»
+  con su monto y sus pedidos), con «Agregar otro de Expo Vino». La tarjeta del día dice
+  «Adicionales» en vez de «Taxi».
+- **Asignar zona a un registro que ya existe:** tócalo › corregir; si el tipo tiene tarifas, sale
+  «Zonas del reparto» (zona + pedidos) y el monto se calcula. También se pueden cargar las
+  tarifas desde ahí.
+- **Pedidos con tarifa por zona:** en la hoja del pedido la pregunta «¿En qué zona fue la
+  entrega?» sale **arriba del todo**, y en las listas cada pedido muestra su zona en vez de «T2».
+- **Pagos: «Marca lo que quieres sumar»** con el **total de lo marcado** siempre visible.
+
 ### 1.26 — 20/10/2026
 - **Tarifas por zona en los adicionales (Expo Vino):** cada tipo de adicional puede tener su
   lista de zonas con lo que se paga **por pedido**. Se carga **pegando la tabla** (una zona por
