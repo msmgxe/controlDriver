@@ -113,6 +113,15 @@ export const REGLA_INICIAL: ReglaPago = {
 };
 
 /**
+ * La tarifa de respaldo para una tienda **sin regla propia**: la tabla de siempre,
+ * pero **sin garantía por permanencia**. La garantía es un acuerdo de una tienda
+ * concreta (Wong - Aldabas), por un tiempo; que una tienda nueva no tenga regla
+ * no puede hacer que herede el piso de otra, y menos que aparezca como un
+ * «mínimo de S/ 130» cuando hizo dos pedidos.
+ */
+export const REGLA_SIN_GARANTIA: ReglaPago = { ...REGLA_INICIAL, garantiaPermanencia: null };
+
+/**
  * Cuánto paga la moto eléctrica hasta que se cambie: un sol único por pedido,
  * sin tramos por distancia (§ modalidad).
  */

@@ -9,7 +9,12 @@ import { Check } from "@/components/iconos";
 import { Pestanas } from "@/components/Pestanas";
 import { SeccionUbicacion } from "@/components/SeccionUbicacion";
 import { useDatos } from "@/hooks/useDatos";
-import { esFechaISO, hoyEnLima, lunesDeLaSemana, type FechaISO } from "@/lib/fechas";
+import {
+  esFechaISO,
+  hoyEnLima,
+  lunesDeLaSemana,
+  type FechaISO,
+} from "@/lib/fechas";
 import { estadoDeSemana } from "@/lib/db/sqlite/liquidaciones";
 import { reglaVigente } from "@/lib/db/sqlite/jornadas";
 import {
@@ -97,9 +102,13 @@ export function SeccionModalidad() {
     datos: vigente,
     cargando: cargandoRegla,
     recargar: recargarRegla,
-  } = useDatos(() => reglaVigente(hoy, tiendaId, vehiculo), [tiendaId, vehiculo], {
-    conservar: true,
-  });
+  } = useDatos(
+    () => reglaVigente(hoy, tiendaId, vehiculo),
+    [tiendaId, vehiculo],
+    {
+      conservar: true,
+    },
+  );
 
   const [ocupado, setOcupado] = useState(false);
   const [mensaje, setMensaje] = useState<string | null>(null);
@@ -108,7 +117,9 @@ export function SeccionModalidad() {
   const [comoPrincipal, setComoPrincipal] = useState(false);
   const [nombreNuevo, setNombreNuevo] = useState("");
   const [errorTienda, setErrorTienda] = useState<string | null>(null);
-  const [pestana, setPestana] = useState<"tienda" | "ubicacion" | "tarifa">("tienda");
+  const [pestana, setPestana] = useState<"tienda" | "ubicacion" | "tarifa">(
+    "tienda",
+  );
 
   /**
    * Si la tienda pasa a moto eléctrica y nunca tuvo tarifa de moto, se le pone
@@ -117,7 +128,12 @@ export function SeccionModalidad() {
   async function asegurarTarifaMoto(deTienda: string) {
     const actual = await reglaVigente(hoy, deTienda, "moto");
     if (actual.id === null) {
-      await guardarRegla(deTienda, "moto", hoy, reglaTarifaUnica(TARIFA_MOTO_ELECTRICA));
+      await guardarRegla(
+        deTienda,
+        "moto",
+        hoy,
+        reglaTarifaUnica(TARIFA_MOTO_ELECTRICA),
+      );
     }
   }
 
@@ -144,7 +160,8 @@ export function SeccionModalidad() {
       const id = await guardarTienda({ nombre });
       // Sin tienda propia todavía, la primera es la tuya; después, solo si lo pides.
       const seraLaTuya = comoPrincipal || !tiendaId;
-      if (seraLaTuya) await guardarPerfil({ nombre: perfil.nombre, tiendaId: id });
+      if (seraLaTuya)
+        await guardarPerfil({ nombre: perfil.nombre, tiendaId: id });
       if (vehiculo === "moto") await asegurarTarifaMoto(id);
       recargarTiendas();
       recargarPerfil();
@@ -159,7 +176,9 @@ export function SeccionModalidad() {
     } catch (e) {
       const texto = e instanceof Error ? e.message : "";
       setErrorTienda(
-        texto.includes("UNIQUE") ? "Ya hay una tienda con ese nombre." : texto || "No se pudo crear la tienda.",
+        texto.includes("UNIQUE")
+          ? "Ya hay una tienda con ese nombre."
+          : texto || "No se pudo crear la tienda.",
       );
     } finally {
       setOcupado(false);
@@ -184,7 +203,11 @@ export function SeccionModalidad() {
     }
   }
 
-  const regla = vigente?.regla ?? (vehiculo === "moto" ? reglaTarifaUnica(TARIFA_MOTO_ELECTRICA) : REGLA_INICIAL);
+  const regla =
+    vigente?.regla ??
+    (vehiculo === "moto"
+      ? reglaTarifaUnica(TARIFA_MOTO_ELECTRICA)
+      : REGLA_INICIAL);
   const cobro =
     regla.tramos.length <= 1
       ? `${formatearSoles(Math.round((regla.tramos[0]?.monto ?? 0) * 100))} por pedido`
@@ -206,7 +229,11 @@ export function SeccionModalidad() {
         alCambiar={(id) => setPestana(id as "tienda" | "ubicacion" | "tarifa")}
         items={[
           { id: "tienda", etiqueta: "Tienda" },
-          { id: "ubicacion", etiqueta: "Ubicación", punto: tienda?.lat != null },
+          {
+            id: "ubicacion",
+            etiqueta: "Ubicación",
+            punto: tienda?.lat != null,
+          },
           { id: "tarifa", etiqueta: "Tarifa" },
         ]}
       />
@@ -299,18 +326,25 @@ export function SeccionModalidad() {
                     </span>
                   </label>
                 )}
-                {errorTienda && <p className="text-sm text-mal">{errorTienda}</p>}
+                {errorTienda && (
+                  <p className="text-sm text-mal">{errorTienda}</p>
+                )}
               </div>
             )}
             <p className="text-xs text-tinta-3">
-              La tienda marcada es <b>tu tienda</b>: de ahí salen tus pedidos y tus tarifas. Para apoyar a otra, agrégala aquí
+              La tienda marcada es <b>tu tienda</b>: de ahí salen tus pedidos y
+              tus tarifas. Para apoyar a otra, agrégala aquí
               <b> sin</b> marcarla como tuya y usa «+» › Apoyo a otra tienda.
             </p>
           </div>
 
           <div className="flex flex-col gap-2">
             <span className="rotulo">Modalidad</span>
-            <div role="radiogroup" aria-label="Modalidad" className="grid grid-cols-2 gap-2">
+            <div
+              role="radiogroup"
+              aria-label="Modalidad"
+              className="grid grid-cols-2 gap-2"
+            >
               <BotonModalidad
                 valor="auto"
                 activa={vehiculo === "auto"}
@@ -326,21 +360,33 @@ export function SeccionModalidad() {
                 titulo="Moto eléctrica"
               />
             </div>
-            <p className="text-xs text-tinta-3">Un cambio no toca lo ya cargado: cada día guarda su tienda y su vehículo.</p>
+            <p className="text-xs text-tinta-3">
+              Un cambio no toca lo ya cargado: cada día guarda su tienda y su
+              vehículo.
+            </p>
           </div>
         </>
       )}
 
       {pestana === "ubicacion" &&
         (tienda ? (
-          <SeccionUbicacion key={tienda.id} tienda={tienda} regla={regla} alCambiar={recargarTiendas} />
+          <SeccionUbicacion
+            key={tienda.id}
+            tienda={tienda}
+            regla={regla}
+            alCambiar={recargarTiendas}
+          />
         ) : (
-          <p className="text-sm text-tinta-2">Elige o crea una tienda para poder ubicarla.</p>
+          <p className="text-sm text-tinta-2">
+            Elige o crea una tienda para poder ubicarla.
+          </p>
         ))}
 
       {pestana === "tarifa" &&
         (!tiendaId || !tienda ? (
-          <p className="text-sm text-tinta-2">Elige o crea una tienda para poder guardar una tarifa.</p>
+          <p className="text-sm text-tinta-2">
+            Elige o crea una tienda para poder guardar una tarifa.
+          </p>
         ) : (
           !cargandoRegla && (
             <EditorTarifa
@@ -381,7 +427,9 @@ function BotonModalidad({
       disabled={disabled}
       onClick={onClick}
       className={`flex min-w-0 flex-col items-start gap-2 rounded-btn border-2 p-2.5 text-left disabled:opacity-60 ${
-        activa ? "border-acento bg-acento-suave" : "border-linea bg-sup hover:bg-sup-2"
+        activa
+          ? "border-acento bg-acento-suave"
+          : "border-linea bg-sup hover:bg-sup-2"
       }`}
     >
       <span className="flex w-full items-center justify-between">
@@ -457,19 +505,49 @@ function EditorTarifa({
   alGuardar: () => void;
 }) {
   const [modo, setModo] = useState<"unica" | "tramos" | "zona">(
-    regla.medida === "zona" ? "zona" : regla.tramos.length <= 1 ? "unica" : "tramos",
+    regla.medida === "zona"
+      ? "zona"
+      : regla.tramos.length <= 1
+        ? "unica"
+        : "tramos",
   );
   /* Las zonas: cada una con su nombre y su monto. El id (1 a 5) es el que guardan
      los pedidos, así que se conserva al renombrar o quitar otra. */
   const [zonas, setZonas] = useState(() =>
     regla.medida === "zona"
-      ? regla.tramos.map((t) => ({ id: t.id, nombre: t.nombre ?? "", texto: String(t.monto) }))
+      ? regla.tramos.map((t) => ({
+          id: t.id,
+          nombre: t.nombre ?? "",
+          texto: String(t.monto),
+        }))
       : [{ id: 1, nombre: "", texto: "" }],
   );
   const [quitando, setQuitando] = useState<number | null>(null);
+  /* La garantía por permanencia: un piso diario que paga solo alguna tienda, por un
+     tiempo. Se activa o se quita aquí; con «Aplicar desde» se fija desde cuándo, así
+     que quitarla desde una fecha es también cómo termina su período. */
+  const [conGarantia, setConGarantia] = useState(
+    Boolean(regla.garantiaPermanencia?.activa),
+  );
+  const [garantiaPorHora, setGarantiaPorHora] = useState(
+    String(regla.garantiaPermanencia?.solesPorHora ?? 10),
+  );
+  const garantiaDelEditor = () => {
+    const porHora = aMonto(garantiaPorHora);
+    return conGarantia && porHora !== null && porHora > 0
+      ? {
+          activa: true,
+          solesPorHora: porHora,
+          comparacion: "diaria" as const,
+          redondeoHoras: "abajo" as const,
+        }
+      : null;
+  };
   // Desde cuándo vale. Por defecto hoy: las jornadas ya cargadas conservan la tarifa de entonces.
   const [desde, setDesde] = useState<string>(hoy);
-  const vigencia = (esFechaISO(desde) && desde <= hoy ? desde : hoy) as FechaISO;
+  const vigencia = (
+    esFechaISO(desde) && desde <= hoy ? desde : hoy
+  ) as FechaISO;
 
   /** Una tarifa no puede empezar dentro de una semana ya pagada: cambiaría lo liquidado. */
   async function vigenciaPermitida(): Promise<boolean> {
@@ -478,16 +556,24 @@ function EditorTarifa({
       return false;
     }
     if (desde < hoy && (await estadoDeSemana(desde as FechaISO)) === "pagada") {
-      setError("Esa semana ya está pagada: elige una fecha de una semana abierta, o reábrela desde Pagos.");
+      setError(
+        "Esa semana ya está pagada: elige una fecha de una semana abierta, o reábrela desde Pagos.",
+      );
       return false;
     }
     return true;
   }
   const [montoUnico, setMontoUnico] = useState(
-    String(regla.tramos[0]?.monto ?? (vehiculo === "moto" ? TARIFA_MOTO_ELECTRICA : 10)),
+    String(
+      regla.tramos[0]?.monto ??
+        (vehiculo === "moto" ? TARIFA_MOTO_ELECTRICA : 10),
+    ),
   );
   const [tramos, setTramos] = useState(() =>
-    (regla.tramos.length > 1 && regla.medida !== "zona" ? regla.tramos : REGLA_INICIAL.tramos).map((t) => ({
+    (regla.tramos.length > 1 && regla.medida !== "zona"
+      ? regla.tramos
+      : REGLA_INICIAL.tramos
+    ).map((t) => ({
       ...t,
       texto: String(t.monto),
     })),
@@ -496,7 +582,9 @@ function EditorTarifa({
   const [error, setError] = useState<string | null>(null);
 
   function cambiarTramo(id: number, texto: string) {
-    setTramos((previos) => previos.map((t) => (t.id === id ? { ...t, texto } : t)));
+    setTramos((previos) =>
+      previos.map((t) => (t.id === id ? { ...t, texto } : t)),
+    );
   }
 
   async function guardar() {
@@ -511,7 +599,10 @@ function EditorTarifa({
       }
       setGuardando(true);
       try {
-        await guardarRegla(tiendaId, vehiculo, vigencia, reglaTarifaUnica(valor));
+        await guardarRegla(tiendaId, vehiculo, vigencia, {
+          ...reglaTarifaUnica(valor),
+          garantiaPermanencia: garantiaDelEditor(),
+        });
         alGuardar();
       } catch (e) {
         setError(mensajeDeFallo(e));
@@ -524,9 +615,12 @@ function EditorTarifa({
     if (modo === "zona") {
       const nombres = zonas.map((z) => z.nombre.trim());
       const montosZona = zonas.map((z) => aMonto(z.texto));
-      if (nombres.some((n) => n === "")) return setError("Cada zona necesita un nombre.");
-      if (new Set(nombres.map((n) => n.toLowerCase())).size !== nombres.length) return setError("Hay dos zonas con el mismo nombre.");
-      if (montosZona.some((m) => m === null || m <= 0)) return setError("Cada zona necesita un monto mayor que cero.");
+      if (nombres.some((n) => n === ""))
+        return setError("Cada zona necesita un nombre.");
+      if (new Set(nombres.map((n) => n.toLowerCase())).size !== nombres.length)
+        return setError("Hay dos zonas con el mismo nombre.");
+      if (montosZona.some((m) => m === null || m <= 0))
+        return setError("Cada zona necesita un monto mayor que cero.");
       setGuardando(true);
       try {
         await guardarRegla(tiendaId, vehiculo, vigencia, {
@@ -534,8 +628,14 @@ function EditorTarifa({
           base: "por_pedido",
           medida: "zona",
           // Sin kilómetros: el tramo se elige a mano, así que el rango no se usa.
-          tramos: zonas.map((z, i) => ({ id: z.id, desde: 0, hasta: 0, monto: montosZona[i] as number, nombre: nombres[i] })),
-          garantiaPermanencia: regla.garantiaPermanencia,
+          tramos: zonas.map((z, i) => ({
+            id: z.id,
+            desde: 0,
+            hasta: 0,
+            monto: montosZona[i] as number,
+            nombre: nombres[i],
+          })),
+          garantiaPermanencia: garantiaDelEditor(),
         });
         alGuardar();
       } catch (e) {
@@ -562,7 +662,7 @@ function EditorTarifa({
           hasta: t.hasta,
           monto: montos[i] as number,
         })),
-        garantiaPermanencia: regla.garantiaPermanencia,
+        garantiaPermanencia: garantiaDelEditor(),
       };
       await guardarRegla(tiendaId, vehiculo, vigencia, nuevaRegla);
       alGuardar();
@@ -577,7 +677,11 @@ function EditorTarifa({
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
         <span className="text-sm font-semibold">Tarifa</span>
-        <div role="radiogroup" aria-label="Forma de cobrar" className="flex gap-0.5 rounded-chip bg-sup-2 p-0.5">
+        <div
+          role="radiogroup"
+          aria-label="Forma de cobrar"
+          className="flex gap-0.5 rounded-chip bg-sup-2 p-0.5"
+        >
           {(
             [
               ["unica", "Única"],
@@ -606,18 +710,30 @@ function EditorTarifa({
           <label htmlFor="tarifa-unica" className="text-sm text-tinta-2">
             Monto por pedido
           </label>
-          <CampoSoles id="tarifa-unica" valor={montoUnico} onChange={setMontoUnico} ancho="w-full" />
+          <CampoSoles
+            id="tarifa-unica"
+            valor={montoUnico}
+            onChange={setMontoUnico}
+            ancho="w-full"
+          />
         </div>
       ) : modo === "zona" ? (
         <div className="flex flex-col gap-2">
           <p className="text-xs text-tinta-2">
-            Pon solo las tarifas que tiene esta tienda, con el nombre de la zona. Al registrar un pedido eliges la zona.
+            Pon solo las tarifas que tiene esta tienda, con el nombre de la
+            zona. Al registrar un pedido eliges la zona.
           </p>
           {zonas.map((z) => (
             <div key={z.id} className="flex items-start gap-2">
               <input
                 value={z.nombre}
-                onChange={(e) => setZonas((p) => p.map((x) => (x.id === z.id ? { ...x, nombre: e.target.value } : x)))}
+                onChange={(e) =>
+                  setZonas((p) =>
+                    p.map((x) =>
+                      x.id === z.id ? { ...x, nombre: e.target.value } : x,
+                    ),
+                  )
+                }
                 placeholder="Ej.: Miraflores, Surquillo, Surco"
                 aria-label="Nombre de la zona"
                 maxLength={60}
@@ -625,7 +741,11 @@ function EditorTarifa({
               />
               <CampoSoles
                 valor={z.texto}
-                onChange={(v) => setZonas((p) => p.map((x) => (x.id === z.id ? { ...x, texto: v } : x)))}
+                onChange={(v) =>
+                  setZonas((p) =>
+                    p.map((x) => (x.id === z.id ? { ...x, texto: v } : x)),
+                  )
+                }
               />
               <button
                 type="button"
@@ -645,8 +765,11 @@ function EditorTarifa({
               type="button"
               className="boton-sec self-start"
               onClick={() => {
-                const libre = [1, 2, 3, 4, 5].find((i) => !zonas.some((z) => z.id === i));
-                if (libre) setZonas((p) => [...p, { id: libre, nombre: "", texto: "" }]);
+                const libre = [1, 2, 3, 4, 5].find(
+                  (i) => !zonas.some((z) => z.id === i),
+                );
+                if (libre)
+                  setZonas((p) => [...p, { id: libre, nombre: "", texto: "" }]);
               }}
             >
               + Añadir zona
@@ -671,11 +794,37 @@ function EditorTarifa({
               <span className="text-sm text-tinta-2">
                 {t.desde} a {t.hasta} km
               </span>
-              <CampoSoles valor={t.texto} onChange={(v) => cambiarTramo(t.id, v)} />
+              <CampoSoles
+                valor={t.texto}
+                onChange={(v) => cambiarTramo(t.id, v)}
+              />
             </div>
           ))}
         </div>
       )}
+
+      <div className="flex flex-col gap-1.5 rounded-btn border border-linea p-3">
+        <label className="flex min-h-11 items-center gap-2.5 text-sm font-semibold">
+          <input
+            type="checkbox"
+            checked={conGarantia}
+            onChange={(e) => setConGarantia(e.target.checked)}
+            className="size-5"
+          />
+          Esta tienda paga una garantía por permanencia
+        </label>
+        {conGarantia && (
+          <div className="flex items-center gap-2 text-sm text-tinta-2">
+            <span>Por hora en tienda</span>
+            <CampoSoles valor={garantiaPorHora} onChange={setGarantiaPorHora} />
+          </div>
+        )}
+        <p className="text-xs text-tinta-3">
+          Si la tienda no la paga, déjala sin marcar: un día de pocos pedidos no
+          tendrá un mínimo. Para terminarla desde una fecha, desmárcala y elige
+          esa fecha en «Aplicar desde».
+        </p>
+      </div>
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="tarifa-desde" className="text-sm font-semibold">
@@ -690,12 +839,17 @@ function EditorTarifa({
             onChange={(e) => e.target.value && setDesde(e.target.value)}
             className="min-h-11 rounded-btn border border-linea-fuerte bg-sup px-2 text-base"
           />
-          <button type="button" className="boton-sec" onClick={() => setDesde(lunesDeLaSemana(hoy as FechaISO))}>
+          <button
+            type="button"
+            className="boton-sec"
+            onClick={() => setDesde(lunesDeLaSemana(hoy as FechaISO))}
+          >
             Inicio de esta semana
           </button>
         </div>
         <p className="text-xs text-tinta-3">
-          Los pedidos de días anteriores a esta fecha conservan la tarifa que tenían.
+          Los pedidos de días anteriores a esta fecha conservan la tarifa que
+          tenían.
         </p>
       </div>
 

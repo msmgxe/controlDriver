@@ -37,6 +37,15 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 1.28 — 26/10/2026
+- **El «mínimo de S/ 130» (garantía por permanencia) ya no sale en otras tiendas.** Es un acuerdo
+  de Wong - Aldabas; se colaba en Aurora porque la tarifa de respaldo y el editor de tarifa la
+  copiaban. Ahora solo la lleva una tienda que la tenga en su tarifa, y al abrir la app se
+  quita **una sola vez** de las tarifas de las demás tiendas.
+- **Tarifa › «Esta tienda paga una garantía por permanencia»:** casilla (y monto por hora) para
+  activarla o quitarla. Para **terminar su período**: desmárcala y elige la fecha en «Aplicar
+  desde»; los días anteriores conservan la garantía.
+
 ### 1.27 — 20/10/2026
 - **Inicio: cada tipo de adicional es una fila propia**, igual que Taxi o el apoyo («Expo Vino»
   con su monto y sus pedidos), con «Agregar otro de Expo Vino». La tarjeta del día dice

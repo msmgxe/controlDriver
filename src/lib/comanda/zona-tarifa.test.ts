@@ -13,7 +13,7 @@ import { motorEnMemoria } from "@/lib/db/sqlite/motor-en-memoria";
 import { guardarPerfil, guardarRegla, guardarTienda } from "@/lib/db/sqlite/perfil";
 import type { JornadaParaGuardar } from "@/lib/db/tipos";
 import type { FechaISO } from "@/lib/fechas";
-import { REGLA_INICIAL, esPorZona, etiquetaTramo, pagoDelTramo, type ReglaPago } from "@/lib/pagos/reglas";
+import { REGLA_INICIAL, REGLA_SIN_GARANTIA, esPorZona, etiquetaTramo, pagoDelTramo, type ReglaPago } from "@/lib/pagos/reglas";
 
 import { guardarComanda, type ComandaParaGuardar } from "./guardar";
 
@@ -223,6 +223,6 @@ describe("(e) regla vieja sin medida", () => {
   it("una fila corrupta (medida inválida) cae a la regla del código sin explotar", async () => {
     await guardarRegla(tiendaId, "auto", "2000-01-01", { ...zonas, medida: "otra" } as unknown as ReglaPago);
     const { regla } = await reglaVigente(FECHA, tiendaId, "auto");
-    expect(regla).toEqual(REGLA_INICIAL);
+    expect(regla).toEqual(REGLA_SIN_GARANTIA);
   });
 });

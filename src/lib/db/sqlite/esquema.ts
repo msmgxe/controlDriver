@@ -497,5 +497,14 @@ export const VISTAS_A_REFRESCAR: readonly string[] = [
  * Idempotente, y cada sentencia con su red igual que el esquema.
  */
 export const RELLENOS_TRAS_MIGRAR: readonly string[] = [
+  /* La garantía por permanencia (el «mínimo de S/ 130») es un acuerdo de Wong -
+     Aldabas. Se coló en otras tiendas porque la tarifa de respaldo y el editor la
+     copiaban. Se quita **una sola vez** de las reglas de las demás tiendas; la
+     marca en `ajustes` evita volver a quitarla si algún día se activa a propósito. */
+  `update reglas_pago set parametros = json_remove(parametros, '$.garantiaPermanencia')
+     where parametros like '%garantiaPermanencia%'
+       and tienda_id in (select id from tiendas where lower(nombre) not like '%aldabas%')
+       and not exists (select 1 from ajustes where clave = 'migracion.garantia-solo-aldabas');
+   insert or ignore into ajustes (clave, valor) values ('migracion.garantia-solo-aldabas', '1');`,
   `update bloques_extra set categoria_id = 'cat_taxi' where tipo = 'taxi' and categoria_id is null;`,
 ];

@@ -16,7 +16,7 @@
  *     conversión que hacer al leer ni al escribir.
  */
 import {
-  REGLA_INICIAL,
+  REGLA_SIN_GARANTIA,
   TARIFA_MOTO_ELECTRICA,
   VEHICULO_POR_DEFECTO,
   esquemaReglaPago,
@@ -375,7 +375,7 @@ export async function reglaVigente(
  * guardada caía en la del auto, y una moto sin tarifa propia cobraba como auto.
  */
 function reglaPorDefecto(vehiculo: TipoVehiculo): ReglaPago {
-  return vehiculo === "moto" ? reglaTarifaUnica(TARIFA_MOTO_ELECTRICA) : REGLA_INICIAL;
+  return vehiculo === "moto" ? reglaTarifaUnica(TARIFA_MOTO_ELECTRICA) : REGLA_SIN_GARANTIA;
 }
 
 /**

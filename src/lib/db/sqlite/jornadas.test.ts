@@ -515,7 +515,12 @@ describe("el monto de un día es el mismo en todas las pantallas", () => {
      lee Inicio, tiene que dar lo que se cobra de verdad. */
   it("un día flojo cobra el piso de permanencia, no la suma de pedidos", async () => {
     // 2 pedidos × S/ 10 = S/ 20, pero de 9:00 a 22:00 son 13 h × S/ 10 = S/ 130.
-    await guardarJornada(jornadaDe("2026-09-17", 1, 2, 1000), "reemplazar");
+    // La garantía es de Wong - Aldabas: la tienda tiene que traerla en su regla.
+    const { guardarPerfil, guardarRegla, guardarTienda } = await import("./perfil");
+    const tiendaId = await guardarTienda({ nombre: "Wong - Aldabas" });
+    await guardarRegla(tiendaId, "auto", "2000-01-01", REGLA_INICIAL);
+    await guardarPerfil({ nombre: "Yo", tiendaId, vehiculo: "auto", horaEntrada: "09:00", horaSalida: "22:00" });
+    await guardarJornada({ ...jornadaDe("2026-09-17", 1, 2, 1000), tiendaId }, "reemplazar");
     const [dia] = await resumenPorRango("2026-09-17" as FechaISO, "2026-09-17" as FechaISO);
 
     expect(dia.montoPedidosCentimos).toBe(2_000);
