@@ -13,6 +13,7 @@
  * apuntando a nada. La pantalla avisa antes, pero quien no deja pasar es esto.
  */
 import { FORMATO_DE_CODIGO, RE_CODIGO_PEDIDO } from "@/lib/extraccion/esquema";
+import type { FechaISO } from "@/lib/fechas";
 
 import { consultar, ejecutar, enTransaccion } from "./conexion";
 
@@ -130,6 +131,31 @@ export async function actualizarPedido(
  */
 export async function marcarContado(ordenId: string, contado: boolean): Promise<void> {
   await ejecutar(`update ordenes set contado_empresa = ? where id = ?`, [contado ? 1 : 0, ordenId]);
+}
+
+/** Marca (o desmarca) varios a la vez, en una sola transacción: o entran todos o ninguno. */
+export async function marcarContados(ordenIds: readonly string[], contado: boolean): Promise<void> {
+  await enTransaccion(async () => {
+    for (const id of ordenIds) await marcarContado(id, contado);
+  });
+}
+
+/** Todos los pedidos con su día, para cotejarlos con el reporte de la empresa. */
+export async function pedidosParaCotejo(): Promise<
+  Array<{ id: string; codigo: string; fecha: FechaISO; montoCentimos: number; contado: boolean }>
+> {
+  const filas = await consultar<{ id: string; codigo: string; fecha: string; monto_centimos: number | null; contado_empresa: number }>(
+    `select o.id, o.codigo, j.fecha, o.monto_centimos, o.contado_empresa
+       from ordenes o join jornadas j on j.id = o.jornada_id
+      order by j.fecha asc, o.posicion asc`,
+  );
+  return filas.map((f) => ({
+    id: f.id,
+    codigo: f.codigo,
+    fecha: f.fecha as FechaISO,
+    montoCentimos: f.monto_centimos ?? 0,
+    contado: f.contado_empresa === 1,
+  }));
 }
 
 /**

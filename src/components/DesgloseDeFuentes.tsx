@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { FilaPedidoSimple } from "@/components/FilaPedidoSimple";
+import { HojaDeCotejo } from "@/components/HojaDeCotejo";
 import { HojaDePedido } from "@/components/HojaDePedido";
 import { Check, Flecha } from "@/components/iconos";
 import { TarjetaBloqueExtra } from "@/components/TarjetaBloqueExtra";
@@ -117,6 +118,7 @@ export function DesgloseDeFuentes({
      marcado como contados. Mientras no se marque ninguno no hay nada que cotejar
      y no se enseñan avisos de «sin marcar». */
   const [soloFaltan, setSoloFaltan] = useState(false);
+  const [cotejando, setCotejando] = useState(false);
   const contados = todas.filter((x) => x.orden.contado);
   const hayCotejo = contados.length > 0;
   const sinMarcar = todas.filter((x) => !x.orden.contado);
@@ -314,7 +316,8 @@ export function DesgloseDeFuentes({
                           <b>Cotejar con el reporte de la empresa:</b> abre un
                           día y marca la casilla de cada pedido que aparece en
                           su reporte. Los que queden sin marcar son los que no
-                          contó.
+                          contó. O sube la imagen del reporte y la app lo coteja
+                          sola.
                         </span>
                       ) : (
                         <>
@@ -340,6 +343,13 @@ export function DesgloseDeFuentes({
                           )}
                         </>
                       )}
+                      <button
+                        type="button"
+                        className="boton-sec self-start"
+                        onClick={() => setCotejando(true)}
+                      >
+                        Subir el reporte de la empresa
+                      </button>
                     </div>
                   )}
                   {dias.length === 0 && (
@@ -422,6 +432,13 @@ export function DesgloseDeFuentes({
           {formatearSoles(total)}
         </b>
       </div>
+
+      {cotejando && (
+        <HojaDeCotejo
+          alCerrar={() => setCotejando(false)}
+          alCambiar={alCambiar}
+        />
+      )}
 
       {editando && (
         <HojaDePedido

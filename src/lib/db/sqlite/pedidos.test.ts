@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { usarMotor } from "./conexion";
 import { motorEnMemoria } from "./motor-en-memoria";
 import { guardarJornada, jornadaPorFecha } from "./jornadas";
-import { actualizarPedido, marcarContado } from "./pedidos";
+import { actualizarPedido, marcarContado, marcarContados, pedidosParaCotejo } from "./pedidos";
 import type { JornadaParaGuardar } from "../tipos";
 import type { FechaISO } from "@/lib/fechas";
 
@@ -127,5 +127,16 @@ describe("cotejar con el reporte de la empresa", () => {
     await marcarContado(id, false);
     o = (await jornadaPorFecha(FECHA))!.ordenes;
     expect(o.some((x) => x.contado)).toBe(false);
+  });
+});
+
+describe("cotejo en bloque", () => {
+  it("lista todos los pedidos con su día y marca varios de una vez", async () => {
+    const todos = await pedidosParaCotejo();
+    expect(todos.map((p) => p.codigo)).toEqual(["v11111111wofp-01", "v22222222wofp-01", "v33333333wofp-01"]);
+    expect(todos.every((p) => p.fecha === FECHA && !p.contado)).toBe(true);
+
+    await marcarContados([todos[0].id, todos[2].id], true);
+    expect((await pedidosParaCotejo()).map((p) => p.contado)).toEqual([true, false, true]);
   });
 });

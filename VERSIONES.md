@@ -37,6 +37,14 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 1.29 — 27/10/2026
+- **Cotejar con el reporte de la empresa subiendo su imagen.** Pagos › «Tienda…» › «Subir el
+  reporte de la empresa»: eliges la captura (o varias) con la lista de códigos; la app la lee en
+  el teléfono y dice cuántos **coinciden**, cuáles **la empresa contó y no tienes registrados**,
+  cuáles **tú tienes y la empresa no contó** (con fecha y monto), y cuántos pedidos **sin código**
+  tienes en ese período. «Marcar como contados los que coinciden» pone la casilla en Pagos.
+  Compara por el número de despacho, así que da igual el formato del código.
+
 ### 1.28 — 26/10/2026
 - **El «mínimo de S/ 130» (garantía por permanencia) ya no sale en otras tiendas.** Es un acuerdo
   de Wong - Aldabas; se colaba en Aurora porque la tarifa de respaldo y el editor de tarifa la
