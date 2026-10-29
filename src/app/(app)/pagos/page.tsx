@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import Link from "next/link";
 
 import { AccionesSemana } from "@/components/AccionesSemana";
 import { Acordeon } from "@/components/Acordeon";
@@ -9,7 +8,9 @@ import { CarreteraDeMeta } from "@/components/CarreteraDeMeta";
 import { DesgloseDeFuentes } from "@/components/DesgloseDeFuentes";
 import { DesgloseDeIngresos } from "@/components/DesgloseDeIngresos";
 import { DueloDePago } from "@/components/DueloDePago";
+import { DialogoConfirmar } from "@/components/DialogoConfirmar";
 import { Alerta, Calendario, Check, Flecha, Luna, Reloj } from "@/components/iconos";
+import { BotonPag, TituloConFigura } from "@/components/PagUi";
 import { PanelDeDescansos } from "@/components/PanelDeDescansos";
 import { PedidosPorTramo } from "@/components/PedidosPorTramo";
 import { TarjetaBloqueExtra } from "@/components/TarjetaBloqueExtra";
@@ -160,16 +161,16 @@ export default function PaginaPagos() {
           </div>
           <div className="flex shrink-0 items-center gap-1">
             {!esActual && (
-              <button
-                type="button"
+              <BotonPag
+                k="taxi"
                 onClick={() => {
                   setInicio(actual);
                   setDia(null);
                 }}
-                className="min-h-11 px-2 text-xs font-bold text-acento-tinta underline underline-offset-2"
               >
+                <Calendario className="size-5" />
                 Volver a hoy
-              </button>
+              </BotonPag>
             )}
             {/* Para ir directo a un día y ver su detalle acumulado. */}
             <label className="relative grid size-11 place-items-center rounded-btn border border-linea-fuerte bg-sup">
@@ -218,70 +219,74 @@ export default function PaginaPagos() {
         </div>
       </div>
 
-      {/* El total de la semana elegida. */}
-      <section id="pagos-total" className="tarjeta entra flex flex-col gap-1.5" aria-label="Total de la semana">
+      {/* El total de la semana elegida: la tarjeta verde. */}
+      <section id="pagos-total" className="pag-hero flex flex-col gap-1.5" aria-label="Total de la semana">
         <div className="flex items-center justify-between gap-2">
-          <span className="rotulo !text-tinta-2">
+          <span className="font-bold opacity-95">
             Sem. {Number(semana.inicio.slice(8, 10))}–{Number(semana.fin.slice(8, 10))}
           </span>
           <EstadoDeLaSemana semana={elegida} termino={semana.fin < hoy} />
         </div>
-        <span className="font-display text-[42px] leading-none font-bold tracking-tight text-acento tabular-nums [zoom:var(--zoom-titulo,1)]">
+        <span className="font-display text-[44px] leading-none font-bold tracking-tight tabular-nums [zoom:var(--zoom-titulo,1)]">
           {formatearSoles(liquidacion.montoTotalCentimos)}
         </span>
-        <span className="text-sm text-tinta-2">
+        <span className="text-sm font-semibold opacity-95">
           {liquidacion.totalOrdenes} pedidos · {liquidacion.totalRutas} rutas
           {fueraTramo1 > 0 && ` · ${fueraTramo1} fuera del tramo 1`}
         </span>
-        <div id="pagos-carretera">
-        <CarreteraDeMeta
-          totalCentimos={liquidacion.montoTotalCentimos}
-          metaCentimos={metas.semanaCentimos}
-          vehiculo={vehiculo}
-          porHoraCentimos={horasTrabajadas > 0 ? liquidacion.montoTotalCentimos / horasTrabajadas : null}
-        />
-        </div>
-        <div id="pagos-desglose">
-          <DesgloseDeFuentes
-            titulo="De dónde viene · toca una fuente"
-            filas={desglosePorFuente({
-              tiendaNombre: tienda?.nombre ?? null,
-              pedidosTienda: liquidacion.totalOrdenes,
-              centimosTienda: liquidacion.montoCalculadoCentimos,
-              bloques: [...bloques.values()].flat(),
-            })}
-            jornadas={jornadas}
-            porDia={liquidacion.detalle.porDia}
-            bloques={bloques}
-            regla={regla}
-            tienda={tienda}
-            ajustes={ajustes}
-            editable={elegida.estado !== "pagada"}
-            alCambiar={recargar}
-          />
-        </div>
         <div className="mt-1.5 grid grid-cols-7 gap-1" aria-label={`${cargados} de 7 días cargados`}>
           {diasDeLaSemana.map((f) => (
             <i
               key={f}
-              className={`h-[5px] rounded-full ${
-                porDia.has(f) ? "bg-acento" : liquidacion.diasDescanso.includes(f) ? "bg-descanso" : "bg-linea"
+              className={`h-[6px] rounded-full ${
+                porDia.has(f) ? "bg-white" : liquidacion.diasDescanso.includes(f) ? "bg-[var(--descanso)]" : "bg-white/30"
               }`}
             />
           ))}
         </div>
-        <div className="mt-2 flex items-center gap-2 border-t border-linea pt-2.5 text-sm text-tinta-2">
+        <div className="mt-1 flex items-center gap-2 text-sm font-semibold opacity-95">
           <Reloj className="size-[18px] shrink-0" />
           <span>{textoDePago(elegida, semana.pago, hoy)}</span>
         </div>
       </section>
+
+      <section className="tarjeta entra" aria-label="Tu meta de la semana">
+        <div id="pagos-carretera">
+          <CarreteraDeMeta
+            totalCentimos={liquidacion.montoTotalCentimos}
+            metaCentimos={metas.semanaCentimos}
+            vehiculo={vehiculo}
+            porHoraCentimos={horasTrabajadas > 0 ? liquidacion.montoTotalCentimos / horasTrabajadas : null}
+          />
+        </div>
+      </section>
+
+      <div id="pagos-desglose">
+        <DesgloseDeFuentes
+          titulo="De dónde viene"
+          filas={desglosePorFuente({
+            tiendaNombre: tienda?.nombre ?? null,
+            pedidosTienda: liquidacion.totalOrdenes,
+            centimosTienda: liquidacion.montoCalculadoCentimos,
+            bloques: [...bloques.values()].flat(),
+          })}
+          jornadas={jornadas}
+          porDia={liquidacion.detalle.porDia}
+          bloques={bloques}
+          regla={regla}
+          tienda={tienda}
+          ajustes={ajustes}
+          editable={elegida.estado !== "pagada"}
+          alCambiar={recargar}
+        />
+      </div>
 
       {/* Lo que falta, a la vista sin abrir nada. */}
       {faltan.length > 0 && (
         <button
           type="button"
           onClick={() => abrir("dias")}
-          className="flex w-full items-center gap-3 rounded-btn bg-aviso-suave px-4 py-3 text-left text-sm text-aviso"
+          className="flex min-h-[var(--toque)] w-full items-center gap-3 rounded-btn border-[3px] border-aviso bg-aviso-suave px-4 py-3 text-left text-sm text-aviso"
         >
           <Alerta className="size-[18px] shrink-0" />
           <span className="flex-1">
@@ -296,7 +301,7 @@ export default function PaginaPagos() {
 
       <Acordeon
         id="pagos-dias"
-        titulo="Día por día"
+        titulo={<TituloConFigura k="pagos">Día por día</TituloConFigura>}
         resumen={`${cargados} de 7 días${faltan.length > 0 ? ` · faltan ${faltan.length}` : ""}`}
         aviso={faltan.length > 0}
         abierto={!!abiertos.dias}
@@ -326,7 +331,7 @@ export default function PaginaPagos() {
 
       <Acordeon
         id="pagos-tramos"
-        titulo="Por tramo"
+        titulo={<TituloConFigura k="comanda">Por tramo</TituloConFigura>}
         resumen={
           dia
             ? `Solo el ${nombreDelDia(dia)} ${Number(dia.slice(8))} · toca un tramo para ver sus pedidos`
@@ -347,7 +352,7 @@ export default function PaginaPagos() {
 
       <Acordeon
         id="pagos-cobro"
-        titulo="Cobro"
+        titulo={<TituloConFigura k="pagos">Cobro</TituloConFigura>}
         resumen={
           elegida.estado === "pagada"
             ? `Pagada · anotaste ${formatearSoles(elegida.montoRecibidoCentimos ?? 0)}`
@@ -399,7 +404,7 @@ export default function PaginaPagos() {
       </Acordeon>
 
       <Acordeon
-        titulo="Tarifa vigente"
+        titulo={<TituloConFigura k="adicional">Tarifa vigente</TituloConFigura>}
         resumen="Por tramo de distancia y garantía"
         abierto={!!abiertos.tarifa}
         alCambiar={(a) => abrir("tarifa", a)}
@@ -439,7 +444,7 @@ export default function PaginaPagos() {
       </Acordeon>
 
       <Acordeon
-        titulo="Otras semanas"
+        titulo={<TituloConFigura k="historial">Otras semanas</TituloConFigura>}
         resumen="Toca una para verla"
         abierto={!!abiertos.semanas}
         alCambiar={(a) => abrir("semanas", a)}
@@ -468,20 +473,20 @@ export default function PaginaPagos() {
 function EstadoDeLaSemana({ semana, termino }: { semana: SemanaLiquidada; termino: boolean }) {
   if (semana.estado === "pagada") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-chip bg-bien-suave px-2 py-0.5 text-[10px] font-bold tracking-wide text-bien uppercase">
-        <Check className="size-3" />
+      <span className="pag-estado pag-estado--ok">
+        <Check className="size-4" />
         Pagada
       </span>
     );
   }
   return termino ? (
-    <span className="inline-flex items-center gap-1 rounded-chip bg-aviso-suave px-2 py-0.5 text-[10px] font-bold tracking-wide text-aviso uppercase">
-      <Reloj className="size-3" />
+    <span className="pag-estado pag-estado--por">
+      <Alerta className="size-4" />
       Por cobrar
     </span>
   ) : (
-    <span className="inline-flex items-center gap-1 rounded-chip bg-acento-suave px-2 py-0.5 text-[10px] font-bold tracking-wide text-acento-tinta uppercase">
-      <Reloj className="size-3" />
+    <span className="pag-estado pag-estado--curso">
+      <Reloj className="size-4" />
       En curso
     </span>
   );
@@ -528,12 +533,15 @@ function FilaDeDia({
   const futuro = fecha > hoy;
   const nombre = nombreDelDia(fecha).slice(0, 3);
   const [ocupado, setOcupado] = useState(false);
+  // «No trabajé» y «Quitar el descanso» cambian lo que se cobra: piden confirmación.
+  const [confirmando, setConfirmando] = useState(false);
 
   async function alternarDescanso() {
     setOcupado(true);
     try {
       if (descanso) await quitarDescanso([fecha]);
       else await marcarDescanso([fecha]);
+      setConfirmando(false);
       alCambiar();
     } finally {
       setOcupado(false);
@@ -608,33 +616,48 @@ function FilaDeDia({
                   </div>
                 </>
               )}
-              <Link href={`/?dia=${fecha}`} className="inline-flex min-h-11 items-center gap-2 self-start text-sm font-semibold text-acento">
+              <BotonPag k="comanda" href={`/?dia=${fecha}`} ancho>
                 Abrir este día en Inicio
                 <Flecha className="size-4" />
-              </Link>
+              </BotonPag>
             </>
           ) : descanso ? (
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm text-tinta-2">Dijiste que no trabajaste este día.</p>
-              <button type="button" className="boton-sec" disabled={ocupado} onClick={() => void alternarDescanso()}>
+              <BotonPag k="ajustes" disabled={ocupado} onClick={() => setConfirmando(true)}>
                 Quitar el descanso
-              </button>
+              </BotonPag>
             </div>
           ) : (
             <div className="flex flex-col gap-2">
               <p className="text-sm text-tinta-2">Este día no tiene nada guardado.</p>
               <div className="grid grid-cols-2 gap-2">
-                <Link href={`/?dia=${fecha}`} className="boton-sec">
+                <BotonPag k="comanda" href={`/?dia=${fecha}`}>
                   Subir el día
-                </Link>
-                <button type="button" className="boton-sec" disabled={ocupado} onClick={() => void alternarDescanso()}>
+                </BotonPag>
+                <BotonPag k="ajustes" disabled={ocupado} onClick={() => setConfirmando(true)}>
                   <Luna className="size-4" />
                   No trabajé
-                </button>
+                </BotonPag>
               </div>
             </div>
           )}
         </div>
+      )}
+
+      {confirmando && (
+        <DialogoConfirmar
+          titulo={descanso ? "¿Quitar el descanso?" : "¿Marcar este día como descanso?"}
+          texto={
+            descanso
+              ? `El ${nombre} ${fecha.slice(8)} volverá a salir como «Sin cargar» y la semana mostrará que falta subirlo.`
+              : `El ${nombre} ${fecha.slice(8)} quedará como día que no trabajaste: no se cobra ni se espera que lo subas.`
+          }
+          confirmar={descanso ? "Sí, quitar descanso" : "Sí, no trabajé"}
+          ocupado={ocupado}
+          alConfirmar={() => void alternarDescanso()}
+          alCancelar={() => setConfirmando(false)}
+        />
       )}
     </div>
   );

@@ -2,23 +2,16 @@
  * La sesión del panel de licencias: una sola contraseña, guardada como
  * variable de entorno (`LICENCIAS_PASSWORD`), sin usuarios ni Supabase.
  *
- * La cookie no guarda la contraseña: guarda el hash de la contraseña
- * correcta. Quien la puso ahí demostró conocerla en el momento de entrar, y
- * comparar hashes en cada visita evita mandar el secreto de un lado a otro
- * en cada pedido.
+ * La cookie no guarda la contraseña ni su hash: guarda un token firmado con
+ * HMAC que caduca a las 12 horas (ver `seguridad.ts`). Si la cookie se
+ * filtrara, deja de servir sola; y cambiar la contraseña la invalida.
  */
 import "server-only";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+
+import { crearToken, DURACION_SESION_SEGUNDOS, igualesEnTiempoConstante, ipDeCabeceras, tokenValido } from "./seguridad";
 
 const COOKIE = "licencias_sesion";
-const UN_MES_EN_SEGUNDOS = 60 * 60 * 24 * 30;
-
-async function hashDe(texto: string): Promise<string> {
-  const datos = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(texto));
-  return Array.from(new Uint8Array(datos))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
 
 /** Si no hay contraseña puesta en el servidor, el panel no se puede usar —no se cae a "sin clave". */
 export function panelConfigurado(): boolean {
@@ -26,28 +19,34 @@ export function panelConfigurado(): boolean {
 }
 
 export async function haySesion(): Promise<boolean> {
-  if (!panelConfigurado()) return false;
+  const secreto = process.env.LICENCIAS_PASSWORD;
+  if (!secreto) return false;
   const jar = await cookies();
-  const valor = jar.get(COOKIE)?.value;
-  if (!valor) return false;
-  return valor === (await hashDe(process.env.LICENCIAS_PASSWORD as string));
+  return tokenValido(secreto, jar.get(COOKIE)?.value);
 }
 
-/** Devuelve si la contraseña era correcta, y pone la cookie si lo era. */
+/** La IP de quien llama, según Vercel. */
+export async function ipDelCliente(): Promise<string> {
+  return ipDeCabeceras(await headers());
+}
+
+/** Comprueba la contraseña en tiempo constante y pone la cookie si era correcta. */
 export async function iniciarSesion(clave: string): Promise<boolean> {
-  if (!panelConfigurado() || clave !== process.env.LICENCIAS_PASSWORD) return false;
+  const secreto = process.env.LICENCIAS_PASSWORD;
+  if (!secreto || !igualesEnTiempoConstante(clave, secreto)) return false;
   const jar = await cookies();
-  jar.set(COOKIE, await hashDe(clave), {
+  jar.set(COOKIE, crearToken(secreto), {
     httpOnly: true,
-    secure: true,
-    sameSite: "lax",
+    // En desarrollo local por http la cookie "secure" no se guardaría.
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
     path: "/licencias",
-    maxAge: UN_MES_EN_SEGUNDOS,
+    maxAge: DURACION_SESION_SEGUNDOS,
   });
   return true;
 }
 
 export async function cerrarSesion(): Promise<void> {
   const jar = await cookies();
-  jar.delete(COOKIE);
+  jar.delete({ name: COOKIE, path: "/licencias" });
 }

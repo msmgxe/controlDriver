@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { BotonPag } from "@/components/PagUi";
 import { ArchivoGenerado } from "@/components/ArchivoGenerado";
 import { Alerta, Hoja } from "@/components/iconos";
 import { prepararArchivo, type ArchivoListo } from "@/lib/exportar/entregar";
@@ -167,15 +168,10 @@ export function ExportarEstadisticas({
 
   return (
     <div className="flex flex-col gap-2">
-      <button
-        type="button"
-        className="boton-sec w-full"
-        disabled={trabajando}
-        onClick={() => void exportar()}
-      >
-        <Hoja className="size-4" />
+      <BotonPag k="stats" grande ancho disabled={trabajando} onClick={() => void exportar()}>
+        <Hoja className="size-5" />
         {trabajando ? "Componiendo el PDF…" : "Exportar estadísticas a PDF"}
-      </button>
+      </BotonPag>
 
       {listo && <ArchivoGenerado archivo={listo} alCerrar={() => setListo(null)} />}
 

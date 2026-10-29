@@ -5,7 +5,8 @@ import Link from "next/link";
 
 import { Acordeon } from "@/components/Acordeon";
 import { Buscar as IconoBuscar, Flecha, Pin, Telefono, Usuario } from "@/components/iconos";
-import { Pestanas } from "@/components/Pestanas";
+import { BotonPag, ChipDeColor, TituloConFigura } from "@/components/PagUi";
+import type { ClaveDeAccion } from "@/components/Acciones";
 import { EstadoPedido, Vacio } from "@/components/ui";
 import { useDatos } from "@/hooks/useDatos";
 import { buscarPedidos, resumenPorRango } from "@/lib/db/sqlite/jornadas";
@@ -45,22 +46,22 @@ import type { CampoDeBusqueda, PedidoEncontrado } from "@/lib/db/tipos";
  * día.
  */
 
-const CAMPOS: Array<{ id: CampoDeBusqueda; etiqueta: string; marcador: string }> = [
-  { id: "codigo", etiqueta: "Código", marcador: "Código o parte de él" },
-  { id: "cliente", etiqueta: "Cliente", marcador: "Nombre del cliente" },
-  { id: "telefono", etiqueta: "Teléfono", marcador: "Teléfono o sus últimos dígitos" },
-  { id: "direccion", etiqueta: "Dirección", marcador: "Calle o urbanización" },
+const CAMPOS: Array<{ id: CampoDeBusqueda; etiqueta: string; marcador: string; k: ClaveDeAccion }> = [
+  { id: "codigo", etiqueta: "Código", marcador: "Código o parte de él", k: "comanda" },
+  { id: "cliente", etiqueta: "Cliente", marcador: "Nombre del cliente", k: "cantidad" },
+  { id: "telefono", etiqueta: "Teléfono", marcador: "Teléfono o sus últimos dígitos", k: "apoyo" },
+  { id: "direccion", etiqueta: "Dirección", marcador: "Calle o urbanización", k: "mano" },
 ];
 
 const INICIALES = ["D", "L", "M", "X", "J", "V", "S"];
 const DIAS_EN_LA_LINEA = 30;
 const POR_PAGINA = 40;
 
-const ATAJOS: Array<{ id: string; nombre: string; dias: number }> = [
-  { id: "hoy", nombre: "Hoy", dias: 1 },
-  { id: "7", nombre: "7 días", dias: 7 },
-  { id: "14", nombre: "14 días", dias: 14 },
-  { id: "30", nombre: "30 días", dias: 30 },
+const ATAJOS: Array<{ id: string; nombre: string; dias: number; k: ClaveDeAccion }> = [
+  { id: "hoy", nombre: "Hoy", dias: 1, k: "buscar" },
+  { id: "7", nombre: "7 días", dias: 7, k: "stats" },
+  { id: "14", nombre: "14 días", dias: 14, k: "adicional" },
+  { id: "30", nombre: "30 días", dias: 30, k: "historial" },
 ];
 
 export default function PaginaBuscar() {
@@ -131,7 +132,7 @@ export default function PaginaBuscar() {
 
   return (
     <div className="mx-auto flex max-w-[880px] flex-col gap-4">
-      <div className="flex items-center gap-2 rounded-btn border border-linea-fuerte bg-sup px-3 focus-within:border-acento focus-within:ring-2 focus-within:ring-acento/30">
+      <div className="flex items-center gap-2 rounded-btn border-[3px] border-[var(--c-buscar)] bg-sup px-3 focus-within:border-acento focus-within:ring-2 focus-within:ring-acento/30">
         <IconoBuscar className="size-5 shrink-0 text-tinta-3" />
         <label htmlFor="codigo-a-buscar" className="sr-only">
           Qué buscar
@@ -148,32 +149,33 @@ export default function PaginaBuscar() {
           autoCapitalize="off"
           spellCheck={false}
           placeholder={CAMPOS.find((c) => c.id === campo)?.marcador}
-          className={`min-h-12 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-tinta-3 ${
+          className={`min-h-14 min-w-0 flex-1 bg-transparent text-lg outline-none placeholder:text-tinta-3 ${
             campo === "codigo" || campo === "telefono" ? "font-mono" : ""
           }`}
         />
         {texto && (
-          <button
-            type="button"
-            aria-label="Borrar lo escrito"
-            onClick={() => setTexto("")}
-            className="grid size-8 place-items-center rounded-full text-tinta-2 hover:bg-sup-2"
-          >
-            ✕
-          </button>
+          <BotonPag k="buscar" className="!min-h-10 shrink-0 !px-3 !text-sm" onClick={() => setTexto("")}>
+            ✕ Borrar
+          </BotonPag>
         )}
       </div>
 
-      <Pestanas
-        etiqueta="Buscar por"
-        actual={campo}
-        alCambiar={(id) => {
-          setCampo(id as CampoDeBusqueda);
-          setTexto("");
-          setVisibles(POR_PAGINA);
-        }}
-        items={CAMPOS.map((c) => ({ id: c.id, etiqueta: c.etiqueta }))}
-      />
+      <div role="group" aria-label="Buscar por" className="flex flex-wrap gap-2">
+        {CAMPOS.map((c) => (
+          <ChipDeColor
+            key={c.id}
+            k={c.k}
+            activo={campo === c.id}
+            onClick={() => {
+              setCampo(c.id);
+              setTexto("");
+              setVisibles(POR_PAGINA);
+            }}
+          >
+            {c.etiqueta}
+          </ChipDeColor>
+        ))}
+      </div>
       {campo !== "codigo" && (
         <p className="-mt-2 text-xs text-tinta-3">
           Busca solo en los pedidos donde guardaste {campo === "cliente" ? "el nombre" : campo === "telefono" ? "el teléfono" : "la dirección"}.
@@ -181,7 +183,7 @@ export default function PaginaBuscar() {
       )}
 
       <Acordeon
-        titulo="Rango de días"
+        titulo={<TituloConFigura k="buscar">Rango de días</TituloConFigura>}
         resumen={
           desde === hasta
             ? formatearFecha(desde)
@@ -192,19 +194,9 @@ export default function PaginaBuscar() {
           {ATAJOS.map((a) => {
             const activo = hasta === hoy && desde === sumarDias(hoy, -(a.dias - 1));
             return (
-              <button
-                key={a.id}
-                type="button"
-                aria-pressed={activo}
-                onClick={() => elegirAtajo(a.dias)}
-                className={`min-h-9 rounded-chip border px-3 text-xs font-bold ${
-                  activo
-                    ? "border-tinta bg-tinta text-papel"
-                    : "border-linea bg-sup-2 text-tinta-2 hover:bg-linea"
-                }`}
-              >
+              <ChipDeColor key={a.id} k={a.k} activo={activo} onClick={() => elegirAtajo(a.dias)}>
                 {a.nombre}
-              </button>
+              </ChipDeColor>
             );
           })}
         </div>
@@ -346,13 +338,9 @@ export default function PaginaBuscar() {
         ))}
 
         {filas.length > visibles && (
-          <button
-            type="button"
-            className="boton-sec self-center"
-            onClick={() => setVisibles((v) => v + POR_PAGINA)}
-          >
+          <BotonPag k="comanda" className="self-center" onClick={() => setVisibles((v) => v + POR_PAGINA)}>
             Ver {Math.min(POR_PAGINA, filas.length - visibles)} más
-          </button>
+          </BotonPag>
         )}
       </div>
     </div>

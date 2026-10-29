@@ -3,6 +3,7 @@
 import { Acordeon } from "@/components/Acordeon";
 import { useApariencia } from "@/components/Apariencia";
 import { Check } from "@/components/iconos";
+import { LetraYControles } from "@/components/LetraYControles";
 import type { Preferencia } from "@/lib/apariencia";
 
 /**
@@ -146,6 +147,8 @@ export function SeccionApariencia() {
           })}
         </div>
       </div>
+
+      <LetraYControles />
     </Acordeon>
   );
 }

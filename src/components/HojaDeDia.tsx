@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 
-import { Luna } from "@/components/iconos";
+import { BotonDeAccion } from "@/components/Acciones";
+import { DialogoConfirmar } from "@/components/DialogoConfirmar";
+import { Flecha, Luna } from "@/components/iconos";
 import { useCapa } from "@/hooks/useCapa";
 import { marcarDescanso, quitarDescanso } from "@/lib/db/sqlite/descansos";
 import { formatearFechaLarga, type FechaISO } from "@/lib/fechas";
@@ -34,6 +36,7 @@ export function HojaDeDia({
 }) {
   useCapa(alCerrar);
   const [ocupado, setOcupado] = useState(false);
+  const [confirmando, setConfirmando] = useState(false);
 
   async function alternar() {
     setOcupado(true);
@@ -74,25 +77,41 @@ export function HojaDeDia({
             No se puede marcar como descanso: trabajaste ese día (tiene pedidos, rutas, apoyo o taxi).
           </p>
         ) : (
-          <button type="button" className="boton-fila" disabled={ocupado} onClick={() => void alternar()}>
-            <Luna className="size-[18px]" />
+          <button
+            type="button"
+            className="boton-accion"
+            style={{ "--c": "var(--descanso)", "--c-texto": "var(--descanso-tinta)" } as React.CSSProperties}
+            disabled={ocupado}
+            onClick={() => (descanso ? setConfirmando(true) : void alternar())}
+          >
+            <Luna className="size-5" />
             {descanso ? "Quitar el día de descanso" : "Marcar como día de descanso"}
           </button>
         )}
 
-        <button
-          type="button"
-          className="boton-fila"
+        <BotonDeAccion
+          k="tienda"
           onClick={() => {
             alElegir();
             alCerrar();
           }}
         >
+          <Flecha className="size-5" />
           Ir a este día
-        </button>
+        </BotonDeAccion>
         <button type="button" className="boton-sec" onClick={alCerrar}>
           Cerrar
         </button>
+        {confirmando && (
+          <DialogoConfirmar
+            titulo={`¿Quitar el descanso del ${formatearFechaLarga(fecha).replace(/ de \d{4}$/, "")}?`}
+            texto="Ese día volverá a contar como un día por subir."
+            confirmar="Sí, quitar el descanso"
+            ocupado={ocupado}
+            alCancelar={() => setConfirmando(false)}
+            alConfirmar={() => void alternar()}
+          />
+        )}
       </div>
     </div>,
     document.body,

@@ -1,6 +1,6 @@
 "use client";
 
-import { Flecha } from "@/components/iconos";
+import { BotonPag, FlechaBoton } from "@/components/PagUi";
 import {
   hoyEnLima,
   nombreDelMes,
@@ -26,37 +26,18 @@ export function SelectorDeMes({
 
   return (
     <div className="flex items-center justify-between gap-2 rounded-btn border border-linea-fuerte bg-sup p-1">
-      <button
-        type="button"
-        aria-label="Mes anterior"
-        onClick={() => alCambiar(sumarMeses(mes, -1))}
-        className="grid size-11 place-items-center rounded-btn hover:bg-sup-2"
-      >
-        <Flecha className="size-5 rotate-180" />
-      </button>
+      <FlechaBoton atras etiqueta="Mes anterior" onClick={() => alCambiar(sumarMeses(mes, -1))} />
 
-      <div className="flex min-w-0 flex-col items-center">
+      <div className="flex min-w-0 flex-col items-center gap-1">
         <h2 className="text-[20px] leading-tight first-letter:uppercase">{nombreDelMes(mes)}</h2>
         {!esActual && (
-          <button
-            type="button"
-            onClick={() => alCambiar(actual)}
-            className="text-xs font-bold text-acento-tinta underline underline-offset-2"
-          >
+          <BotonPag k="taxi" className="!min-h-9 !px-3 !text-sm" onClick={() => alCambiar(actual)}>
             Este mes
-          </button>
+          </BotonPag>
         )}
       </div>
 
-      <button
-        type="button"
-        aria-label="Mes siguiente"
-        disabled={esActual}
-        onClick={() => alCambiar(sumarMeses(mes, 1))}
-        className="grid size-11 place-items-center rounded-btn hover:bg-sup-2 disabled:opacity-30"
-      >
-        <Flecha className="size-5" />
-      </button>
+      <FlechaBoton etiqueta="Mes siguiente" disabled={esActual} onClick={() => alCambiar(sumarMeses(mes, 1))} />
     </div>
   );
 }

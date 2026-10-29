@@ -4,6 +4,7 @@ import { useId, useState } from "react";
 
 import { Flecha } from "@/components/iconos";
 import { IconoDeSeccion, type ClaveDeIcono } from "@/components/IconoDeSeccion";
+import { VistaDeAjuste, useSeccionDeAjustes } from "@/components/SeccionDeAjustes";
 import { sonar } from "@/lib/sonidos";
 
 /**
@@ -56,12 +57,22 @@ export function Acordeon({
   const [interno, setInterno] = useState(false);
   const abierto = controlado ?? interno;
   const id = useId();
+  const enAjustes = useSeccionDeAjustes();
 
   function alternar() {
     const siguiente = !abierto;
     if (icono) sonar("toque", false);
     setInterno(siguiente);
     alCambiar?.(siguiente);
+  }
+
+  // Dentro de la cuadrícula de Ajustes se dibuja como tarjeta o como panel.
+  if (enAjustes) {
+    return (
+      <VistaDeAjuste valor={enAjustes} titulo={titulo} resumen={resumen} aviso={aviso} icono={icono}>
+        {children}
+      </VistaDeAjuste>
+    );
   }
 
   return (

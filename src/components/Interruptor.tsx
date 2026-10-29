@@ -27,23 +27,14 @@ export function Interruptor({
       aria-checked={activo}
       disabled={deshabilitado}
       onClick={() => alCambiar(!activo)}
-      className="flex min-h-12 w-full items-center justify-between gap-3 py-2 text-left disabled:opacity-50"
+      className="flex min-h-[var(--toque)] w-full items-center justify-between gap-3 py-2 text-left disabled:opacity-50"
     >
       <span className="flex min-w-0 flex-col">
         <b className="text-sm font-semibold">{titulo}</b>
         {detalle && <span className="text-xs leading-snug text-tinta-3">{detalle}</span>}
       </span>
-      <span
-        aria-hidden
-        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-          activo ? "bg-acento" : "bg-linea-fuerte"
-        }`}
-      >
-        <span
-          className={`absolute top-0.5 size-5 rounded-full bg-white shadow transition-[left] ${
-            activo ? "left-[22px]" : "left-0.5"
-          }`}
-        />
+      <span aria-hidden className="aju-sw" data-on={activo}>
+        <i />
       </span>
     </button>
   );

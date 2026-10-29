@@ -55,7 +55,7 @@ export function ArchivoGenerado({
           <b className="text-sm font-bold text-acento-tinta">Tu archivo está listo</b>
           <span className="font-mono text-xs break-all text-tinta-2">{archivo.nombre}</span>
         </div>
-        <button type="button" onClick={alCerrar} className="px-1 text-xs font-semibold text-tinta-2 underline">
+        <button type="button" onClick={alCerrar} className="boton-sec !min-h-11 shrink-0 !px-3 text-xs">
           Cerrar
         </button>
       </div>
@@ -63,7 +63,8 @@ export function ArchivoGenerado({
       <div className="grid grid-cols-3 gap-2">
         <button
           type="button"
-          className="boton-sec flex-col !gap-1 !px-1 text-[13px]"
+          className="pag-btn flex-col !gap-1 !px-1 text-[13px]"
+          style={{ "--c": "var(--c-comanda)" } as React.CSSProperties}
           disabled={ocupado}
           onClick={() => void hacer(() => verArchivo(archivo))}
         >
@@ -72,21 +73,23 @@ export function ArchivoGenerado({
         </button>
         <button
           type="button"
-          className="boton-sec flex-col !gap-1 !px-1 text-[13px]"
+          className="pag-btn flex-col !gap-1 !px-1 text-[13px]"
+          style={{ "--c": "var(--c-cantidad)" } as React.CSSProperties}
           disabled={ocupado}
           onClick={() => void hacer(async () => `Guardado en ${await guardarArchivo(archivo)}. Búscalo en el gestor de archivos.`)}
         >
           Guardar
-          <span className="text-[10px] font-medium text-tinta-3">en Descargas</span>
+          <span className="text-[10px] font-medium opacity-90">en Descargas</span>
         </button>
         <button
           type="button"
-          className="boton-sec flex-col !gap-1 !px-1 text-[13px]"
+          className="pag-btn flex-col !gap-1 !px-1 text-[13px]"
+          style={{ "--c": "var(--c-foto)" } as React.CSSProperties}
           disabled={ocupado}
           onClick={() => void hacer(() => compartirArchivo(archivo))}
         >
           Compartir
-          <span className="text-[10px] font-medium text-tinta-3">WhatsApp, correo…</span>
+          <span className="text-[10px] font-medium opacity-90">WhatsApp, correo…</span>
         </button>
       </div>
 

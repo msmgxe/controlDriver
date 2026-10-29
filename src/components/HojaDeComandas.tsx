@@ -1,14 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
 
 import { DialogoConfirmar } from "@/components/DialogoConfirmar";
-import { Alerta, Camara, Check, Equis, Flecha, Pin, Ticket } from "@/components/iconos";
+import { Alerta, Basura, Camara, Check, Equis, Flecha, Galeria, Pin, Ticket } from "@/components/iconos";
 import { Pestanas } from "@/components/Pestanas";
 import { RadarDeTramos } from "@/components/RadarDeTramos";
 import { ImagenConZoom } from "@/components/ImagenConZoom";
 import { Aviso } from "@/components/ui";
+import { ACCION } from "@/components/Acciones";
 import { useCapa } from "@/hooks/useCapa";
 import { sonar } from "@/lib/sonidos";
 import { codigoDeDespacho, siguienteLetra, type CampoDeComanda } from "@/lib/comanda/interpretar";
@@ -163,6 +164,8 @@ export function HojaDeComandas({
   const [abierta, setAbierta] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
+  /** Cuál de los dos botones grandes se tocó último: queda marcado con ✓. */
+  const [eleccion, setEleccion] = useState<"cam" | "gal" | null>(null);
   const entrada = useRef<HTMLInputElement>(null);
   /** Respaldo para «Tomar foto» fuera del APK: sin el plugin nativo, esta
       entrada con `capture` abre la cámara del navegador en un celular real. */
@@ -320,6 +323,7 @@ export function HojaDeComandas({
 
   /** Tomar una foto con la cámara del teléfono, una comanda a la vez. */
   async function alTomarFoto() {
+    setEleccion("cam");
     const archivo = await tomarFotoConCamara();
     if (archivo) {
       await procesarArchivos([archivo], { desdeCamara: true });
@@ -391,6 +395,11 @@ export function HojaDeComandas({
   }
 
   const item = items.find((i) => i.id === abierta) ?? null;
+  const elegirGaleria = () => {
+    setEleccion("gal");
+    entrada.current?.click();
+  };
+  const guardadas = items.filter((i) => i.guardada).length;
 
   return (
     <div
@@ -472,19 +481,27 @@ export function HojaDeComandas({
         ) : (
           <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4">
             {items.length === 0 && !leyendo && (
-              <Inicio alTomarFoto={() => void alTomarFoto()} alElegir={() => entrada.current?.click()} hayTienda={origen !== null} />
+              <Inicio alTomarFoto={() => void alTomarFoto()} alElegir={elegirGaleria} eleccion={eleccion} hayTienda={origen !== null} />
             )}
 
             {leyendo && (
-              <div className="tarjeta flex flex-col gap-2" role="status">
-                <b>Leyendo la foto {Math.min(leyendo.hechas + 1, leyendo.total)} de {leyendo.total}…</b>
-                <div className="h-2 overflow-hidden rounded-full bg-sup-2">
-                  <span
-                    className="block h-full rounded-full bg-acento transition-[width] duration-300"
-                    style={{ width: `${(leyendo.hechas / leyendo.total) * 100}%` }}
-                  />
+              <div className="com-pend rise-v2 !bg-sup-2 !text-tinta" role="status">
+                <div className="relative grid h-36 place-items-center overflow-hidden rounded-btn bg-sup">
+                  <svg viewBox="0 0 84 94" height="132" aria-hidden>
+                    <rect x="6" y="4" width="72" height="86" rx="6" fill="#fff" stroke="#c3cde8" strokeWidth="2" />
+                    {[0, 1, 2, 3, 4, 5].map((k) => (
+                      <rect key={k} x="14" y={16 + k * 13} width={k % 3 === 2 ? 34 : 58} height="5" rx="2.5" fill="#c3cde8" />
+                    ))}
+                  </svg>
+                  <i className="com-escaner" />
                 </div>
-                <p className="text-xs text-tinta-3">Se lee aquí, en tu teléfono. No hace falta internet.</p>
+                <b>
+                  Leyendo la foto {Math.min(leyendo.hechas + 1, leyendo.total)} de {leyendo.total}…
+                </b>
+                <div className="com-pend__barra" style={{ color: "var(--c-comanda)" }}>
+                  <i style={{ width: `${(leyendo.hechas / leyendo.total) * 100}%` }} />
+                </div>
+                <p className="text-xs font-semibold text-tinta-2">Se lee aquí, en tu teléfono. No se guarda nada todavía.</p>
               </div>
             )}
 
@@ -492,15 +509,23 @@ export function HojaDeComandas({
 
             {items.length > 0 && (
               <>
-                {sinGuardar > 0 && (
-                  <Aviso tono="atento" titulo={`${sinGuardar} sin guardar todavía`}>
-                    <p>Toca cada comanda para revisarla y pulsa <b>Guardar</b>: hasta entonces no cuenta como pedido.</p>
-                  </Aviso>
-                )}
-                <p className="text-sm text-tinta-2">
-                  {items.length} comanda{items.length === 1 ? "" : "s"} · {items.filter((i) => i.guardada).length} guardada
-                  {items.filter((i) => i.guardada).length === 1 ? "" : "s"}
-                </p>
+                <div className="com-pend rise-v2" data-ok={sinGuardar === 0}>
+                  <div className="flex items-center gap-2 font-extrabold">
+                    {sinGuardar > 0 ? <Alerta className="size-5" /> : <Check className="size-5" />}
+                    <span className="flex-1">{sinGuardar > 0 ? `${sinGuardar} sin guardar` : "Todo guardado"}</span>
+                    <button type="button" className="boton-sec !min-h-9 !px-3 !text-sm !text-tinta" onClick={cerrarSeguro}>
+                      <Equis className="size-4" />
+                      Salir
+                    </button>
+                  </div>
+                  <div className="com-pend__barra">
+                    <i style={{ width: `${items.length ? (guardadas / items.length) * 100 : 0}%` }} />
+                  </div>
+                  <small className="font-bold">
+                    {guardadas} de {items.length} guardadas
+                    {sinGuardar > 0 ? ". Toca cada comanda para revisarla: hasta guardarla no cuenta como pedido." : ""}
+                  </small>
+                </div>
                 <div className="flex flex-col gap-2">
                   {items.map((i) => (
                     <FilaDeComanda key={i.id} item={i} alAbrir={() => setAbierta(i.id)} />
@@ -533,26 +558,28 @@ export function HojaDeComandas({
           <div className="flex flex-col gap-2 border-t border-linea px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
             <div className="grid grid-cols-2 gap-2">
               <button type="button" className="boton-sec !text-sm" disabled={!!leyendo} onClick={() => void alTomarFoto()}>
-                <Camara className="size-[16px]" />
+                <Camara className="size-[18px]" />
                 Cámara
               </button>
-              <button type="button" className="boton-sec !text-sm" disabled={!!leyendo} onClick={() => entrada.current?.click()}>
+              <button type="button" className="boton-sec !text-sm" disabled={!!leyendo} onClick={elegirGaleria}>
+                <Galeria className="size-[18px]" />
                 Galería
               </button>
             </div>
             {ajustes.confirmarSiempre ? (
               <button
                 type="button"
-                className="boton-principal !min-h-11 !text-base"
+                className="boton-principal"
                 disabled={!!leyendo || pendientes.length === 0}
                 onClick={() => setAbierta(pendientes.find((i) => i.calidad !== "ilegible")?.id ?? pendientes[0]?.id ?? null)}
               >
+                <Check className="size-5" />
                 Revisar y guardar
               </button>
             ) : (
               <button
                 type="button"
-                className="boton-principal !min-h-11 !text-base"
+                className="boton-principal"
                 disabled={!!leyendo || guardando || listas.length === 0}
                 onClick={() => void guardarLasListas()}
               >
@@ -570,57 +597,106 @@ export function HojaDeComandas({
  * Primer paso
  * ------------------------------------------------------------------------- */
 
+const FIG_TIP = {
+  luz: (
+    <svg viewBox="0 0 120 60" aria-hidden>
+      <circle cx="30" cy="30" r="13" fill="#ffc800" className="bob-v2" />
+      <rect x="62" y="8" width="44" height="46" rx="5" fill="#fff" stroke="#c3cde8" strokeWidth="2" />
+      <path d="M68 18h30M68 28h24M68 38h30" stroke="#c3cde8" strokeWidth="4" strokeLinecap="round" />
+    </svg>
+  ),
+  plana: (
+    <svg viewBox="0 0 120 60" aria-hidden>
+      <rect x="10" y="6" width="84" height="50" rx="5" fill="#fff" stroke="#c3cde8" strokeWidth="2" />
+      <path d="M18 16h40M18 26h52" stroke="#c3cde8" strokeWidth="4" strokeLinecap="round" />
+      <rect x="74" y="6" width="20" height="50" fill="#1f5cff" opacity=".18" />
+      <path d="M104 20l-8 10 8 10" stroke="#1f5cff" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  dos: (
+    <svg viewBox="0 0 120 60" aria-hidden>
+      <rect x="8" y="8" width="44" height="46" rx="5" fill="#fff" stroke="#c3cde8" strokeWidth="2" />
+      <rect x="68" y="8" width="44" height="46" rx="5" fill="#fff" stroke="#c3cde8" strokeWidth="2" />
+      <path d="M14 20h30M14 30h24M74 20h30M74 30h24" stroke="#c3cde8" strokeWidth="4" strokeLinecap="round" />
+      <path d="M60 8v46" stroke="#a3274f" strokeWidth="3" strokeDasharray="4 4" strokeLinecap="round" />
+    </svg>
+  ),
+  ver: (
+    <svg viewBox="0 0 120 60" aria-hidden>
+      <path d="M10 30s18-22 50-22 50 22 50 22-18 22-50 22S10 30 10 30z" fill="#fff" stroke="#c3cde8" strokeWidth="2" />
+      <circle cx="60" cy="30" r="13" fill="#0c7d3c" />
+      <path d="M53 30l5 5 9-10" stroke="#fff" strokeWidth="3.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+};
+
 function Inicio({
   alTomarFoto,
   alElegir,
+  eleccion,
   hayTienda,
 }: {
   alTomarFoto: () => void;
   alElegir: () => void;
+  eleccion: "cam" | "gal" | null;
   hayTienda: boolean;
 }) {
+  const tips = [
+    { fig: FIG_TIP.luz, t: "Buena luz", d: "Sin sombras ni reflejos sobre el papel." },
+    { fig: FIG_TIP.plana, t: "Hoja plana", d: "Que se vea el lado derecho: nombre, dirección y teléfono." },
+    { fig: FIG_TIP.dos, t: "Hoja por hoja", d: "Si salen dos hojas, se leen por separado." },
+    { fig: FIG_TIP.ver, t: "Tú decides", d: "Nada se guarda sin que lo veas." },
+  ];
   return (
     <>
-      <p className="text-[15px] text-tinta-2">
-        Una foto por comanda —tomada ahí mismo, o varias de la galería—. La app lee el pedido, el cliente y la
-        dirección; tú confirmas.
-      </p>
-      <div className="flex flex-col gap-2">
-        <button type="button" className="boton-principal" onClick={alTomarFoto}>
-          <Camara className="size-[22px]" />
+      <div className="com-grandes rise-v2">
+        <button
+          type="button"
+          className="com-grande"
+          style={{ "--c": ACCION.comanda.color } as CSSProperties}
+          aria-pressed={eleccion === "cam"}
+          onClick={alTomarFoto}
+        >
+          <span className="com-grande__ck" aria-hidden>
+            ✓
+          </span>
+          <Camara className="com-lente size-12" />
           Tomar foto
+          <small>Con la cámara</small>
         </button>
-        <button type="button" className="boton-sec" onClick={alElegir}>
+        <button
+          type="button"
+          className="com-grande"
+          style={{ "--c": ACCION.foto.color } as CSSProperties}
+          aria-pressed={eleccion === "gal"}
+          onClick={alElegir}
+        >
+          <span className="com-grande__ck" aria-hidden>
+            ✓
+          </span>
+          <Galeria className="size-12" />
           Elegir de la galería
+          <small>Una o varias fotos</small>
         </button>
       </div>
-      <ul className="flex flex-col gap-2.5 text-sm text-tinta-2">
-        <li className="flex gap-2.5">
-          <Check className="mt-0.5 size-[18px] shrink-0 text-acento-tinta" />
-          Con buena luz y sin reflejos sobre el papel.
-        </li>
-        <li className="flex gap-2.5">
-          <Check className="mt-0.5 size-[18px] shrink-0 text-acento-tinta" />
-          La hoja plegada plana y de arriba abajo; <b>incluye el lado derecho</b>, donde están el nombre, la dirección y el teléfono.
-        </li>
-        <li className="flex gap-2.5">
-          <Check className="mt-0.5 size-[18px] shrink-0 text-acento-tinta" />
-          Si en la foto salen dos hojas, se leen las dos por separado.
-        </li>
-        <li className="flex gap-2.5">
-          <Alerta className="mt-0.5 size-[18px] shrink-0 text-acento-tinta" />
-          Lo que no se lea bien queda marcado para que lo revises; nada se guarda sin que lo veas.
-        </li>
-      </ul>
+
+      <div className="text-sm font-bold text-tinta-2">Para que salga bien</div>
+      <div className="com-tips">
+        {tips.map((t, k) => (
+          <div key={t.t} className="com-tip rise-v2" style={{ animationDelay: `${(k + 1) * 60}ms` }}>
+            {t.fig}
+            <b>{t.t}</b>
+            <small>{t.d}</small>
+          </div>
+        ))}
+      </div>
       {!hayTienda && (
         <Aviso tono="atento" titulo="La tienda todavía no tiene ubicación">
-          <p>
-            Puedes leer las comandas igual, pero el tramo no se calculará solo.{" "}
-            <Link href="/ajustes" className="font-semibold underline">
-              Elígela en Ajustes
-            </Link>
-            .
-          </p>
+          <p>Puedes leer las comandas igual, pero el tramo no se calculará solo.</p>
+          <Link href="/ajustes" className="boton-sec mt-2">
+            <Pin className="size-4" />
+            Elegirla en Ajustes
+          </Link>
         </Aviso>
       )}
       <p className="flex gap-2 text-xs text-tinta-3">
@@ -639,23 +715,16 @@ function Inicio({
  * ------------------------------------------------------------------------- */
 
 function EstadoDeComanda({ item }: { item: Item }) {
-  if (item.guardada) {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-chip bg-bien-suave px-2 py-0.5 text-[10.5px] font-bold tracking-wide text-bien uppercase">
-        <Check className="size-3" />
-        Guardada
-      </span>
-    );
-  }
-  const [clase, Icono, texto] =
-    item.calidad === "lista"
-      ? (["bg-bien-suave text-bien", Check, "Lista"] as const)
+  const [e, Icono, texto] = item.guardada
+    ? (["guardada", Check, "Guardada"] as const)
+    : item.calidad === "lista"
+      ? (["lista", Check, "Lista"] as const)
       : item.calidad === "revisar"
-        ? (["bg-aviso-suave text-aviso", Alerta, "Revisar"] as const)
-        : (["bg-mal-suave text-mal", Equis, "No se leyó"] as const);
+        ? (["revisar", Alerta, "Revisar"] as const)
+        : (["fallo", Equis, "No se leyó"] as const);
   return (
-    <span className={`inline-flex items-center gap-1 rounded-chip px-2 py-0.5 text-[10.5px] font-bold tracking-wide uppercase ${clase}`}>
-      <Icono className="size-3" />
+    <span className="com-chip" data-e={e}>
+      <Icono className="size-3.5" />
       {texto}
     </span>
   );
@@ -669,7 +738,7 @@ function FilaDeComanda({ item, alAbrir }: { item: Item; alAbrir: () => void }) {
     <button
       type="button"
       onClick={alAbrir}
-      className="flex min-h-[84px] w-full items-center gap-3 rounded-card border border-linea-fuerte bg-sup p-2.5 text-left"
+      className="com-fila"
     >
       {foto ? (
         // eslint-disable-next-line @next/next/no-img-element -- URL de objeto local, no optimizable
@@ -745,8 +814,8 @@ function Confianza({ campo, valor }: { campo: CampoDeComanda; valor: string }) {
           ? (["bg-aviso-suave text-aviso", Alerta, "Dudoso"] as const)
           : (["bg-mal-suave text-mal", Equis, "Casi ilegible"] as const);
   return (
-    <span className={`ml-2 inline-flex items-center gap-1 rounded-chip px-1.5 py-px text-[11px] font-bold ${clase}`}>
-      <Icono className="size-[11px]" />
+    <span className={`ml-2 inline-flex items-center gap-1 rounded-chip px-2 py-0.5 text-xs font-bold ${clase}`}>
+      <Icono className="size-3.5" />
       {texto}
     </span>
   );
@@ -859,10 +928,10 @@ function Revision({
         {pestana === "pedido" && (
           <>
             {item.existentes.length > 0 && (
-              <div role="radiogroup" aria-label="Qué hacer con el pedido que ya está" className="grid grid-cols-2 gap-2">
+              <div role="radiogroup" aria-label="Qué hacer con el pedido que ya está" className="com-dos">
                 {[
-                  { id: "completar", texto: "Completar el que ya está", activa: elegido !== null },
-                  { id: "otro", texto: "Es otro pedido", activa: elegido === null },
+                  { id: "completar", texto: "Completar el que ya está", ayuda: "Le pone los datos al pedido ya cargado", activa: elegido !== null, k: "cantidad" as const },
+                  { id: "otro", texto: "Es otro pedido", ayuda: "Mismo despacho, otra entrega", activa: elegido === null, k: "mano" as const },
                 ].map((o) => (
                   <button
                     key={o.id}
@@ -870,11 +939,11 @@ function Revision({
                     role="radio"
                     aria-checked={o.activa}
                     onClick={() => elegirExistente(o.id === "completar" ? (item.existentes[0]?.ordenId ?? null) : null)}
-                    className={`min-h-12 rounded-btn border-2 px-2 text-sm font-semibold ${
-                      o.activa ? "border-acento bg-acento-suave text-acento-tinta" : "border-linea-fuerte text-tinta-2"
-                    }`}
+                    className="com-opc"
+                    style={{ "--c": ACCION[o.k].color } as CSSProperties}
                   >
-                    {o.texto}
+                    <b>{o.texto}</b>
+                    <small>{o.ayuda}</small>
                   </button>
                 ))}
               </div>
@@ -956,20 +1025,29 @@ function Revision({
             )}
 
             {!elegido && item.existentes.length > 0 && numeroValido && (
-              <label className="flex flex-col gap-1.5">
-                <span className="text-sm font-semibold">
-                  Letra al final del código <span className="text-xs font-medium text-tinta-3">para diferenciarlo</span>
-                </span>
-                <input
-                  value={item.sufijo}
-                  maxLength={1}
-                  onChange={(e) => actualizar(item.id, { sufijo: e.target.value.replace(/[^a-zA-Z]/g, "").toLowerCase() })}
-                  autoCapitalize="off"
-                  autoCorrect="off"
-                  autoComplete="off"
-                  className="min-h-11 w-20 rounded-btn border border-linea-fuerte bg-sup px-3 text-center font-mono text-base"
-                />
-              </label>
+              <div className="flex flex-col gap-2">
+                <label className="flex flex-col gap-1.5">
+                  <span className="text-sm font-semibold">
+                    Letra al final del código <span className="text-xs font-medium text-tinta-3">para diferenciarlo</span>
+                  </span>
+                  <input
+                    value={item.sufijo}
+                    maxLength={1}
+                    onChange={(e) => actualizar(item.id, { sufijo: e.target.value.replace(/[^a-zA-Z]/g, "").toLowerCase() })}
+                    autoCapitalize="off"
+                    autoCorrect="off"
+                    autoComplete="off"
+                    className="min-h-11 w-20 rounded-btn border border-linea-fuerte bg-sup px-3 text-center font-mono text-base"
+                  />
+                </label>
+                <div className="com-prev">
+                  <small className="text-xs font-semibold text-tinta-2">Así quedará el código</small>
+                  <code>
+                    {codigoDeDespacho(item.numero)}
+                    {item.sufijo && <em>{item.sufijo}</em>}
+                  </code>
+                </div>
+              </div>
             )}
 
             {!elegido && (
@@ -1098,7 +1176,7 @@ function Revision({
       {!item.guardada &&
         (confirmandoQuitar ? (
           <div className="mx-4 mb-1 flex flex-col gap-2 rounded-btn bg-mal-suave p-3">
-            <p className="text-sm text-mal">¿Quitar esta comanda de la lista? Se pierde lo leído de esta foto.</p>
+            <p className="text-sm text-mal">¿Quitar la comanda{item.nombre ? ` de ${item.nombre}` : ""} de la lista? Se pierde lo leído de esta foto; la foto sigue en tu galería.</p>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -1108,7 +1186,7 @@ function Revision({
                 Sí, quitarla
               </button>
               <button type="button" onClick={() => setConfirmandoQuitar(false)} className="boton-sec flex-1">
-                No
+                No, dejarla
               </button>
             </div>
           </div>
@@ -1116,19 +1194,21 @@ function Revision({
           <button
             type="button"
             onClick={() => setConfirmandoQuitar(true)}
-            className="mx-4 mb-1 min-h-9 self-start text-sm font-semibold text-mal"
+            className="mx-4 mb-1 flex min-h-11 items-center justify-center gap-2 rounded-btn bg-mal-suave text-sm font-semibold text-mal"
           >
+            <Basura className="size-4" />
             Quitar esta comanda
           </button>
         ))}
 
       <div className="grid grid-flow-col auto-cols-fr gap-2 border-t border-linea px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
         <button type="button" className="boton-sec" onClick={alVolver}>
+          <Flecha className="size-4 rotate-180" />
           Volver a la lista
         </button>
         <button
           type="button"
-          className="boton-principal !min-h-11 !text-base"
+          className="boton-principal"
           disabled={guardando || !!item.guardada || (!elegido && !numeroValido)}
           onClick={async () => {
             /* Más de 12 km no tiene tarifa: si el tramo se va a calcular solo,
@@ -1233,12 +1313,12 @@ function Entrega({
       {!origen && (
         <Aviso tono="atento" titulo="La tienda todavía no tiene ubicación">
           <p>
-            Sin el punto de partida no se puede medir sola.{" "}
-            <Link href="/ajustes" className="font-semibold underline">
-              Elígelo en Ajustes
-            </Link>
-            , o escribe los kilómetros a mano abajo.
+            Sin el punto de partida no se puede medir sola. Elígelo en Ajustes o escribe los kilómetros a mano abajo.
           </p>
+          <Link href="/ajustes" className="boton-sec mt-2">
+            <Pin className="size-4" />
+            Elegirlo en Ajustes
+          </Link>
         </Aviso>
       )}
 
@@ -1363,7 +1443,7 @@ function Entrega({
 
         {item.punto && (
           <a
-            className="inline-flex min-h-11 items-center gap-2 self-start text-sm font-semibold text-acento-tinta"
+            className="boton-sec self-start"
             href={enlaceDeMapa(item.punto)}
             target="_blank"
             rel="noreferrer"

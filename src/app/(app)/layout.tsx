@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 
+import { FiguraDeAccion } from "@/components/Acciones";
 import { Armazon } from "@/components/Armazon";
 import { BotonAtras } from "@/components/BotonAtras";
 import { RedDeSeguridad } from "@/components/RedDeSeguridad";
 import { ProveedorLicencia, useLicencia } from "@/components/Licencia";
-import { Alerta } from "@/components/iconos";
+import { Alerta, Llave } from "@/components/iconos";
 import { useDatos } from "@/hooks/useDatos";
 import { mensajeDeLicencia } from "@/lib/licencia/estado";
 import { repararMontosDeMoto } from "@/lib/db/sqlite/jornadas";
@@ -73,29 +74,42 @@ function Contenido({ children }: { children: React.ReactNode }) {
   return (
     <Armazon nombre={perfil?.nombre ?? ""} email={perfil?.email ?? null} rol="driver">
       {licencia && !licencia.puedeEscribir && (
-        <div className="mx-auto mb-4 flex max-w-[880px] gap-3 rounded-btn bg-aviso-suave px-4 py-3 text-sm text-aviso">
-          <Alerta className="mt-0.5 size-[18px] shrink-0" />
-          <div>
-            <strong className="block font-bold">
-              {licencia.estado === "sin_licencia" ? "Tu prueba terminó" : "Tu mes venció"}
-            </strong>
-            <p>{mensajeDeLicencia(licencia)}</p>
-            <Link href="/ajustes" className="mt-1 inline-block font-semibold underline">
-              Activar mi licencia
-            </Link>
+        <div className="ini-lic ini-rise mx-auto mb-4 max-w-[880px]">
+          <div className="flex items-center gap-3">
+            <FiguraDeAccion k="licencia" />
+            <div className="min-w-0">
+              <strong className="block leading-tight font-bold">
+                {licencia.estado === "sin_licencia" ? "Tu prueba terminó" : "Tu mes venció"}
+              </strong>
+              <p className="text-sm font-semibold">{mensajeDeLicencia(licencia)}</p>
+            </div>
           </div>
+          <Link
+            href="/ajustes"
+            className="boton-accion"
+            style={{ "--c": "var(--c-licencia)", "--c-texto": "#fff" } as React.CSSProperties}
+          >
+            <Llave className="size-5" />
+            Activar mi licencia
+          </Link>
         </div>
       )}
       {/* Recordatorio suave cuando quedan pocos días: no bloquea nada, solo
           avisa a tiempo para renovar sin quedarse un día sin poder cargar. */}
       {licencia && licencia.puedeEscribir && licencia.debeAvisar && (
-        <Link
-          href="/ajustes"
-          className="mx-auto mb-4 flex max-w-[880px] items-center justify-between gap-3 rounded-btn bg-acento-suave px-4 py-2.5 text-sm text-acento-tinta"
-        >
-          <span>{mensajeDeLicencia(licencia)}</span>
-          <b className="shrink-0">Renovar</b>
-        </Link>
+        <div className="ini-lic ini-lic--suave ini-rise mx-auto mb-4 max-w-[880px]">
+          <div className="flex items-center gap-3">
+            <FiguraDeAccion k="licencia" />
+            <p className="min-w-0 flex-1 text-sm font-semibold">{mensajeDeLicencia(licencia)}</p>
+            <Link
+              href="/ajustes"
+              className="boton-accion !w-auto shrink-0 !px-4 !text-base"
+              style={{ "--c": "var(--c-licencia)", "--c-texto": "#fff" } as React.CSSProperties}
+            >
+              Renovar
+            </Link>
+          </div>
+        </div>
       )}
       <BotonAtras />
       <RedDeSeguridad />

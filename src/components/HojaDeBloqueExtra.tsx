@@ -6,7 +6,8 @@ import { eliminarBloque } from "@/app/(app)/jornada/acciones";
 import { FormularioApoyoHora } from "@/components/FormularioApoyoHora";
 import { FormularioApoyoTramos } from "@/components/FormularioApoyoTramos";
 import { FormularioTaxi } from "@/components/FormularioTaxi";
-import { Calendario, Equis } from "@/components/iconos";
+import { FiguraDeAccion } from "@/components/Acciones";
+import { Calendario, Equis, Flecha, Reloj } from "@/components/iconos";
 import { useCapa } from "@/hooks/useCapa";
 import { useDatos } from "@/hooks/useDatos";
 import { listarTiendas, perfilActual } from "@/lib/db/sqlite/perfil";
@@ -75,9 +76,12 @@ export function HojaDeBloqueExtra({
         className="flex h-[94dvh] w-full max-w-md flex-col overflow-hidden rounded-t-hoja bg-sup shadow-alta sm:h-[88dvh] sm:rounded-hoja"
       >
         <div className="flex items-start justify-between gap-3 px-4 pt-4 pb-2">
-          <div className="min-w-0">
-            <span className="mx-auto mb-2 block h-1 w-9 rounded-full bg-linea-fuerte sm:hidden" />
-            <h3 className="text-[21px] leading-tight">{titulo}</h3>
+          <div className="flex min-w-0 items-center gap-3">
+            <FiguraDeAccion k={flujo === "taxi" ? "taxi" : "apoyo"} />
+            <div className="min-w-0">
+              <span className="mx-auto mb-2 block h-1 w-9 rounded-full bg-linea-fuerte sm:hidden" />
+              <h3 className="text-[21px] leading-tight">{titulo}</h3>
+            </div>
           </div>
           <button
             type="button"
@@ -97,7 +101,7 @@ export function HojaDeBloqueExtra({
               {formatearFechaLarga(dia).replace(/ de \d{4}$/, "")}
               {dia === hoy && <span className="ml-2 text-xs font-medium text-acento-tinta">hoy</span>}
             </span>
-            <span className="text-sm font-semibold text-acento-tinta">Cambiar día</span>
+            <span className="rounded-chip bg-acento-suave px-3 py-1.5 text-sm font-semibold text-acento-tinta">Cambiar día</span>
             <input
               type="date"
               value={dia}
@@ -117,17 +121,10 @@ export function HojaDeBloqueExtra({
         </div>
 
         {flujo === "apoyo" && !corregir && (
-          <div className="flex gap-2 px-4 pb-3">
+          <div role="group" aria-label="Cómo se paga el apoyo" className="com-modo px-4 pb-3">
             {(["hora", "tramos"] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                aria-pressed={modoApoyo === m}
-                onClick={() => setModoApoyo(m)}
-                className={`min-h-9 flex-1 rounded-btn border-2 text-sm font-semibold ${
-                  modoApoyo === m ? "border-acento bg-acento-suave text-acento-tinta" : "border-linea text-tinta-2"
-                }`}
-              >
+              <button key={m} type="button" aria-pressed={modoApoyo === m} onClick={() => setModoApoyo(m)}>
+                {m === "hora" ? <Reloj className="size-6" /> : <Flecha className="size-6" />}
                 {m === "hora" ? "Por hora" : "Por tramos"}
               </button>
             ))}

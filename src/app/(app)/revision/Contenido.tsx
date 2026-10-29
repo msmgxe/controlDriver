@@ -6,8 +6,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { CLAVE_REVISION } from "@/lib/carga";
-import { Acordeon } from "@/components/Acordeon";
-import { Alerta, Check } from "@/components/iconos";
+import { BotonDeAccion } from "@/components/Acciones";
+import { AcordeonDeColor, ChipsDeRuta, ConfirmacionEnLinea, EstadoEnTres } from "@/components/ControlesDeRegistro";
+import { Alerta, Basura, Check } from "@/components/iconos";
+import { useCifraAnimada } from "@/hooks/useCifraAnimada";
 import { Aviso } from "@/components/ui";
 import { confirmarJornada } from "./acciones";
 import { DueloDePago } from "@/components/DueloDePago";
@@ -165,6 +167,7 @@ export function Contenido({ alSiguiente }: { alSiguiente?: () => void } = {}) {
      acierta casi siempre, pero si un día se equivoca, la persona tiene que
      poder deshacerlo sin volver a subir nada: es su dinero. */
   const [recuperados, setRecuperados] = useState(false);
+  const [confirmandoRecuperar, setConfirmandoRecuperar] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -189,6 +192,7 @@ export function Contenido({ alSiguiente }: { alSiguiente?: () => void } = {}) {
     montoPorPermanencia(regla, horaEntrada || null, horaSalida || null) ?? 0;
   const ganaPermanencia = montoPermanencia > totalPedidos;
   const total = Math.max(totalPedidos, montoPermanencia);
+  const totalAnimado = Math.round(useCifraAnimada(total, 700));
   const sinTarifar = pedidos.filter(
     (p) => p.tramo === TRAMO_MAS_DE_12_KM && p.montoManualCentimos === null,
   );
@@ -344,7 +348,7 @@ export function Contenido({ alSiguiente }: { alSiguiente?: () => void } = {}) {
             value={fecha}
             max={hoy}
             onChange={(e) => setFecha(e.target.value)}
-            className="max-w-full border-b-2 border-dashed border-acento bg-transparent pb-0.5 font-display text-[22px] font-bold text-tinta"
+            className="reg-campo !max-w-full !font-display !text-[22px] !font-bold"
           />
         </div>
         <span className="max-w-[17em] text-xs text-acento-tinta">
@@ -380,14 +384,28 @@ export function Contenido({ alSiguiente }: { alSiguiente?: () => void } = {}) {
           {a.referencias && a.referencias.length > 0 && (
             <p className="font-mono text-xs">{a.referencias.join(", ")}</p>
           )}
-          {a.codigo === "arrastre-descartado" && !recuperados && (
+          {a.codigo === "arrastre-descartado" && !recuperados && !confirmandoRecuperar && (
             <button
               type="button"
-              onClick={recuperarDescartados}
-              className="mt-2 min-h-11 rounded-btn border border-current px-3 text-sm font-semibold"
+              onClick={() => setConfirmandoRecuperar(true)}
+              className="reg-chip mt-2"
             >
               Contarlos igual en este día
             </button>
+          )}
+          {a.codigo === "arrastre-descartado" && !recuperados && confirmandoRecuperar && (
+            <div className="mt-2">
+              <ConfirmacionEnLinea
+                texto="¿Contarlos en este día? Entrarán a esta jornada y se pagarán con ella; si ya se pagaron en el día anterior, se cobrarían dos veces."
+                confirmar="Sí, contarlos"
+                cancelar="No"
+                alConfirmar={() => {
+                  recuperarDescartados();
+                  setConfirmandoRecuperar(false);
+                }}
+                alCancelar={() => setConfirmandoRecuperar(false)}
+              />
+            </div>
           )}
         </Aviso>
       ))}
@@ -412,7 +430,7 @@ export function Contenido({ alSiguiente }: { alSiguiente?: () => void } = {}) {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-col gap-0.5">
           <span className="font-display text-[44px] leading-none font-bold tracking-tight text-acento tabular-nums">
-            {formatearSoles(total)}
+            {formatearSoles(totalAnimado)}
           </span>
           <span className="text-sm text-tinta-2">
             {pedidos.length} pedidos · {rutasDelDia.length} rutas
@@ -425,7 +443,8 @@ export function Contenido({ alSiguiente }: { alSiguiente?: () => void } = {}) {
           Las horas no vienen de las capturas: se proponen desde el horario del
           perfil y se corrigen aquí el día que se entre tarde o se salga antes. */}
       {pagaPermanencia && (
-        <Acordeon
+        <AcordeonDeColor
+          k="apoyo"
           titulo="Permanencia en tienda"
           resumen={
             horasEnTienda > 0
@@ -501,14 +520,15 @@ export function Contenido({ alSiguiente }: { alSiguiente?: () => void } = {}) {
               </p>
             )
           )}
-        </Acordeon>
+        </AcordeonDeColor>
       )}
 
       {/* Las rutas del día. Sin esto no hay dónde asignar la ruta de un
           pedido: si una captura de Rutas salió cortada, o si el día se está
           escribiendo entero a mano, la lista de rutas está vacía y el
           selector de cada pedido no tiene nada que ofrecer. */}
-      <Acordeon
+      <AcordeonDeColor
+        k="tienda"
         titulo="Rutas del día"
         resumen={`${rutas.length} ${rutas.length === 1 ? "ruta" : "rutas"}`}
         aviso={rutas.length === 0}
@@ -573,12 +593,13 @@ export function Contenido({ alSiguiente }: { alSiguiente?: () => void } = {}) {
             }}
           />
         )}
-      </Acordeon>
+      </AcordeonDeColor>
 
       {/* Un pedido por fila: el código, y al lado su ruta con la hora y el
           estado. En el orden en que se hicieron —por la hora de su ruta— y los
           que no tienen ruta al final, donde se ven y se tocan para asignarla. */}
-      <Acordeon
+      <AcordeonDeColor
+        k="cantidad"
         titulo="Pedidos"
         resumen={
           sinTarifar.length > 0
@@ -612,21 +633,16 @@ export function Contenido({ alSiguiente }: { alSiguiente?: () => void } = {}) {
             ))
           )}
         </div>
-      </Acordeon>
+      </AcordeonDeColor>
 
       {error && <Aviso tono="mal" titulo="No se pudo guardar">{error}</Aviso>}
 
       <div className="sticky bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] -mx-4 border-t border-linea bg-papel/90 px-4 pt-3 pb-4 backdrop-blur-md lg:bottom-0 lg:-mb-16 lg:pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
         <div className="mx-auto max-w-[880px]">
-          <button
-            type="button"
-            className="boton-principal"
-            disabled={!puedeGuardar}
-            onClick={() => void guardar()}
-          >
+          <BotonDeAccion k="pagos" disabled={!puedeGuardar} onClick={() => void guardar()}>
             <Check className="size-[22px]" />
             {guardando ? "Guardando…" : "Confirmar y guardar"}
-          </button>
+          </BotonDeAccion>
           {faltaFecha && (
             <p className="mt-2 flex items-center gap-2 text-xs text-aviso">
               <Alerta className="size-4" /> Elige la fecha de la jornada para poder guardar.
@@ -799,39 +815,18 @@ function HojaPedido({
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-semibold">Ruta</span>
-            <select
-              value={pedido.ruta ?? ""}
-              onChange={(e) =>
-                onGuardar({ ruta: e.target.value === "" ? null : Number(e.target.value) }, false)
-              }
-              className="min-h-11 rounded-btn border border-linea-fuerte bg-sup px-2 text-base"
-            >
-              <option value="">Sin ruta</option>
-              {rutas.map((r) => (
-                <option key={r.numero} value={r.numero}>
-                  Ruta {r.numero}
-                  {r.inicio ? ` · ${r.inicio}` : ""}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-semibold">Estado</span>
-            <select
-              value={pedido.estado}
-              onChange={(e) => onGuardar({ estado: e.target.value }, false)}
-              className="min-h-11 rounded-btn border border-linea-fuerte bg-sup px-2 text-base"
-            >
-              {ESTADOS_EDITABLES.map((e) => (
-                <option key={e} value={e}>
-                  {e}
-                </option>
-              ))}
-            </select>
-          </label>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-sm font-bold">Ruta</span>
+          <ChipsDeRuta
+            k="tienda"
+            rutas={rutas.map((r) => r.numero)}
+            valor={pedido.ruta === null ? "" : String(pedido.ruta)}
+            alCambiar={(v) => onGuardar({ ruta: v === "" ? null : Number(v) }, false)}
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-sm font-bold">¿Cómo salió?</span>
+          <EstadoEnTres valor={pedido.estado} estados={ESTADOS_EDITABLES} alCambiar={(v) => onGuardar({ estado: v }, false)} />
         </div>
 
         <h4 className="border-t border-linea pt-4 text-sm font-semibold">
@@ -955,34 +950,20 @@ function HojaPedido({
 
         <div className="border-t border-linea pt-4">
           {confirmandoBorrado ? (
-            <div className="flex flex-col gap-3 rounded-btn bg-mal-suave p-3">
-              <p className="text-sm text-mal">
-                ¿Borrar el pedido <b className="font-mono">{pedido.codigo}</b>? No se contará ni se
-                pagará en este día.
-              </p>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={onBorrar}
-                  className="min-h-11 flex-1 rounded-btn bg-mal px-4 text-sm font-semibold text-white"
-                >
-                  Sí, borrarlo
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setConfirmandoBorrado(false)}
-                  className="boton-sec flex-1"
-                >
-                  No
-                </button>
-              </div>
-            </div>
+            <ConfirmacionEnLinea
+              texto={`¿Borrar el pedido ${pedido.codigo}? No se contará ni se pagará en este día.`}
+              confirmar="Sí, borrarlo"
+              cancelar="No"
+              alConfirmar={onBorrar}
+              alCancelar={() => setConfirmandoBorrado(false)}
+            />
           ) : (
             <button
               type="button"
               onClick={() => setConfirmandoBorrado(true)}
-              className="min-h-11 w-full rounded-btn px-4 text-sm font-semibold text-mal"
+              className="flex min-h-11 w-full items-center justify-center gap-2 rounded-btn border-2 border-mal px-4 text-sm font-bold text-mal"
             >
+              <Basura className="size-[18px]" />
               Borrar este pedido
             </button>
           )}

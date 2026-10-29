@@ -241,15 +241,16 @@ function Ficha({
 
   /* Ningún estado depende solo del color: el punto, el número y la luna dicen
      lo mismo con la forma, y el `aria-label` lo dice con palabras. */
+  const esHoy = fecha === hoy;
   let marca: React.ReactNode = null;
   if (descanso && !cargado) {
-    marca = <Luna className="size-3" aria-hidden />;
+    marca = <Luna className="size-3.5" aria-hidden />;
   } else if (cargado) {
     marca =
       modo === "inicio" ? (
-        <i aria-hidden className={`size-[7px] rounded-full ${elegido ? "bg-acento-texto" : "bg-acento"}`} />
+        <i aria-hidden className="ini-pt" />
       ) : (
-        <span className="font-mono text-[10px] font-bold">
+        <span className="font-mono text-[0.65rem] font-bold">
           {modo === "pedidos" ? (datos?.pedidos ?? 0) : Math.round((datos?.centimos ?? 0) / 100)}
         </span>
       );
@@ -257,12 +258,9 @@ function Ficha({
     // Un día pasado sin carga ni descanso: falta subirlo.
     marca =
       modo === "inicio" ? (
-        <i
-          aria-hidden
-          className={`size-[7px] rounded-full border-[1.6px] ${elegido ? "border-acento-texto" : "border-tinta-3"}`}
-        />
+        <i aria-hidden className="ini-pt ini-pt--hueco" />
       ) : (
-        <span className="font-mono text-[10px]">–</span>
+        <span className="font-mono text-[0.65rem]">–</span>
       );
   }
 
@@ -277,17 +275,23 @@ function Ficha({
           ? ""
           : ", sin cargar"
   }`;
-  const clases = `flex min-h-[66px] min-w-0 flex-col items-center justify-center gap-px rounded-btn border text-[11.5px] ${
-    elegido
-      ? "border-acento bg-acento text-acento-texto"
-      : fecha === hoy
-        ? "border-acento bg-sup-2 text-acento-tinta"
-        : "border-linea bg-sup-2 text-tinta-2"
-  } ${futuro && !elegido ? "opacity-45" : ""}`;
+  /* Un botón redondo de color por estado: cargado (verde), descanso (gris con
+     luna), hoy (color de la marca con un anillo que late), sin cargar (borde
+     punteado) y futuro (apagado). */
+  const estado = esHoy
+    ? "hoy"
+    : cargado
+      ? "cargado"
+      : descanso
+        ? "descanso"
+        : futuro
+          ? "futuro"
+          : "vacio";
+  const clases = `ini-dia ini-dia--${estado}`;
   const contenido = (
     <>
-      <span className="font-bold capitalize">{nombre}</span>
-      <b className={`text-base leading-tight font-extrabold ${elegido ? "" : "text-tinta"}`}>{fecha.slice(8)}</b>
+      <span className="text-xs font-bold capitalize">{nombre}</span>
+      <b className="font-display text-lg leading-none font-semibold">{fecha.slice(8)}</b>
       <span className="grid h-3.5 place-items-center">{marca}</span>
     </>
   );
@@ -295,7 +299,7 @@ function Ficha({
   // Sin interacción es solo un rótulo: no es un botón que no hace nada.
   if (!interactivo) {
     return (
-      <div role="img" aria-label={etiqueta} className={clases}>
+      <div role="img" aria-label={etiqueta} className={clases} data-elegido={elegido}>
         {contenido}
       </div>
     );
@@ -333,6 +337,7 @@ function Ficha({
       onContextMenu={(e) => alMantener && e.preventDefault()}
       aria-pressed={elegido}
       aria-label={etiqueta}
+      data-elegido={elegido}
       className={clases}
     >
       {contenido}

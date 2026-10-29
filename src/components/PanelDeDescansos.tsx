@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 
+import { BotonDeAccion } from "@/components/Acciones";
+import { DialogoConfirmar } from "@/components/DialogoConfirmar";
 import { usePuedeEscribir } from "@/components/Licencia";
-import { Alerta, Luna } from "@/components/iconos";
+import { Alerta, Equis, Luna } from "@/components/iconos";
 import { marcarDescanso, quitarDescanso } from "@/lib/db/sqlite/descansos";
 import { nombreDelDia, type FechaISO } from "@/lib/fechas";
 
@@ -46,6 +48,8 @@ export function PanelDeDescansos({
   const [ocupado, setOcupado] = useState(false);
   const [ultimo, setUltimo] = useState<FechaISO[] | null>(null);
   const [fallo, setFallo] = useState<string | null>(null);
+  /** El descanso que se está por quitar: pide confirmación con su nombre. */
+  const [quitando, setQuitando] = useState<FechaISO | null>(null);
 
   const elegidos = faltan.filter((f) => !desmarcados.has(f));
 
@@ -120,7 +124,7 @@ export function PanelDeDescansos({
                   type="button"
                   aria-pressed={marcado}
                   onClick={() => alternar(f)}
-                  className={`inline-flex min-h-9 items-center gap-1.5 rounded-chip border-2 px-3 text-xs font-bold capitalize ${
+                  className={`inline-flex min-h-11 items-center gap-1.5 rounded-chip border-2 px-4 text-sm font-bold capitalize active:scale-95 ${
                     marcado
                       ? "border-aviso bg-aviso text-aviso-suave"
                       : "border-aviso/50 bg-transparent text-aviso"
@@ -132,15 +136,10 @@ export function PanelDeDescansos({
             })}
           </div>
 
-          <button
-            type="button"
-            disabled={!puedeEscribir || ocupado || elegidos.length === 0}
-            onClick={() => void marcar()}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-btn bg-acento px-4 text-sm font-bold text-acento-texto disabled:opacity-50"
-          >
+          <BotonDeAccion k="historial" disabled={!puedeEscribir || ocupado || elegidos.length === 0} onClick={() => void marcar()}>
             <Luna className="size-[18px]" />
             {etiquetaBoton}
-          </button>
+          </BotonDeAccion>
         </div>
       )}
 
@@ -158,7 +157,7 @@ export function PanelDeDescansos({
             type="button"
             disabled={ocupado}
             onClick={() => void deshacer()}
-            className="shrink-0 font-bold underline"
+            className="boton-sec shrink-0"
           >
             Deshacer
           </button>
@@ -172,23 +171,38 @@ export function PanelDeDescansos({
             {descansos.map((f) => (
               <span
                 key={f}
-                className="inline-flex min-h-9 items-center gap-1.5 rounded-chip bg-sup-2 pr-1 pl-3 text-xs font-semibold capitalize"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-chip bg-sup-2 pr-1 pl-3 text-sm font-semibold capitalize"
               >
                 <Luna className="size-3.5 text-tinta-2" />
                 {corto(f)}
                 <button
                   type="button"
                   disabled={!puedeEscribir || ocupado}
-                  onClick={() => void quitar(f)}
+                  onClick={() => setQuitando(f)}
                   aria-label={`Quitar el descanso del ${nombreDelDia(f)} ${Number(f.slice(8, 10))}`}
-                  className="grid size-7 place-items-center rounded-full text-tinta-2 hover:bg-linea disabled:opacity-50"
+                  className="grid size-9 place-items-center rounded-full bg-mal-suave text-mal disabled:opacity-50"
                 >
-                  ✕
+                  <Equis className="size-4" />
                 </button>
               </span>
             ))}
           </div>
         </div>
+      )}
+
+      {quitando && (
+        <DialogoConfirmar
+          titulo={`¿Quitar el descanso del ${nombreDelDia(quitando)} ${Number(quitando.slice(8, 10))}?`}
+          texto="Ese día volverá a contar como un día por subir."
+          confirmar="Sí, quitar el descanso"
+          ocupado={ocupado}
+          alCancelar={() => setQuitando(null)}
+          alConfirmar={async () => {
+            const f = quitando;
+            await quitar(f);
+            setQuitando(null);
+          }}
+        />
       )}
 
       {fallo && (

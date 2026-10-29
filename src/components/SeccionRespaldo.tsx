@@ -199,7 +199,7 @@ function BloqueRestaurar() {
               onClick={() => setEstado({ paso: "reposo" })}
               className="boton-secundario flex-1"
             >
-              No
+              Cancelar
             </button>
           </div>
         </div>

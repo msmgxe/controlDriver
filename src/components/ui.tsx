@@ -30,9 +30,11 @@ export function Aviso({
   const Icono = tono === "bien" ? Check : Alerta;
 
   return (
-    <div className={`flex gap-3 rounded-btn px-4 py-3 text-sm ${estilos}`}>
-      <Icono className="mt-0.5 size-[18px] shrink-0" />
-      <div>
+    <div className={`rise-v2 flex gap-3 rounded-2xl px-4 py-3 text-sm ${estilos}`}>
+      <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-full bg-current/15">
+        <Icono className="size-[18px]" />
+      </span>
+      <div className="min-w-0 self-center">
         <strong className="block font-bold">{titulo}</strong>
         {children && <div className="opacity-95">{children}</div>}
       </div>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { DialogoConfirmar } from "@/components/DialogoConfirmar";
 import { Pin } from "@/components/iconos";
 import { RadarDeTramos } from "@/components/RadarDeTramos";
 import { guardarMetodoDeDistancia, guardarUbicacionDeTienda } from "@/lib/db/sqlite/perfil";
@@ -39,6 +40,7 @@ export function SeccionUbicacion({
   const [direccion, setDireccion] = useState("");
   const [candidatos, setCandidatos] = useState<Candidato[] | null>(null);
   const [mensaje, setMensaje] = useState<{ ok: boolean; texto: string } | null>(null);
+  const [quitando, setQuitando] = useState(false);
 
   async function fijar(lat: number, lng: number, deDireccion: string | null, como: string) {
     await guardarUbicacionDeTienda(tienda.id, { lat, lng, direccion: deDireccion });
@@ -236,9 +238,26 @@ export function SeccionUbicacion({
         )}
 
         {punto && (
-          <button type="button" onClick={() => void quitar()} className="self-start text-sm font-semibold text-mal">
+          <button
+            type="button"
+            onClick={() => setQuitando(true)}
+            className="min-h-11 self-start rounded-btn bg-mal-suave px-4 text-sm font-bold text-mal"
+          >
             Quitar la ubicación
           </button>
+        )}
+
+        {quitando && (
+          <DialogoConfirmar
+            titulo={`¿Quitar la ubicación de «${tienda.nombre}»?`}
+            texto="Sin ubicación no se calcula la distancia: los tramos se elegirán a mano en cada pedido."
+            confirmar="Sí, quitarla"
+            alCancelar={() => setQuitando(false)}
+            alConfirmar={() => {
+              setQuitando(false);
+              void quitar();
+            }}
+          />
         )}
 
         {mensaje && (

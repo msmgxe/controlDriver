@@ -6,7 +6,8 @@ import {
   agregarPedidosDeFoto,
   reordenarRutas,
 } from "@/app/(app)/jornada/acciones";
-import { Flecha, Reloj, Taxi, Ticket } from "@/components/iconos";
+import { FilaDeColor, TileDeAccion } from "@/components/Acciones";
+import { BotonOtrasFormas } from "@/components/ControlesDeRegistro";
 import { ProveedorDeOpcion } from "@/components/OpcionActiva";
 import {
   LectorDePedidos,
@@ -93,35 +94,24 @@ export function SubirMas({
       {/* Con una opción abierta, las demás se esconden y arriba queda el camino
           de vuelta: así se sabe de qué botón viene el formulario. */}
       {activa !== null && (pestana === "pedido" || pestana === "ruta") && (
-        <button
-          type="button"
-          onClick={() => setActiva(null)}
-          className="inline-flex min-h-10 items-center gap-1.5 self-start rounded-btn px-2 text-sm font-semibold text-acento-tinta"
-        >
-          <Flecha className="size-4 rotate-180" />
-          Otras formas de {pestana === "pedido" ? "anotar" : "añadir"}
-        </button>
+        <BotonOtrasFormas
+          texto={`Otras formas de ${pestana === "pedido" ? "anotar" : "añadir"}`}
+          alVolver={() => setActiva(null)}
+        />
       )}
 
       {pestana === "pedido" && (
         <ProveedorDeOpcion activa={activa} fijar={setActiva}>
-          <div className="flex flex-col gap-2.5">
+          <div className={activa === null ? "grid grid-cols-2 gap-2.5" : "flex flex-col gap-2.5"}>
             {activa === null && (
-              <p className="text-xs text-tinta-3">
-                Pedidos de tu tienda. Elige cómo quieres anotarlos.
+              <p className="col-span-2 text-sm font-semibold text-tinta-2">
+                ¿Cómo quieres anotarlos?
               </p>
             )}
             {/* Primero la más completa: una foto por pedido, con cliente, dirección
               y distancia. Completa un pedido que ya está o crea uno nuevo. */}
             {activa === null && (
-              <button
-                type="button"
-                onClick={alLeerComanda}
-                className="boton-fila"
-              >
-                <Ticket className="size-[18px]" />
-                Leer una comanda
-              </button>
+              <TileDeAccion k="comanda" detalle="Con cliente y dirección" onClick={alLeerComanda} />
             )}
             {/* Para cuando no se tiene ni el código a mano: se anota cuántos fueron
               y se completa cada uno después. La fecha también se puede elegir,
@@ -200,22 +190,8 @@ export function SubirMas({
             Lo que no es de tu tienda de siempre. Se suma al total del día,
             aparte de tus pedidos.
           </p>
-          <button
-            type="button"
-            onClick={() => alAgregarBloque("taxi")}
-            className="boton-fila"
-          >
-            <Taxi className="size-[18px]" />
-            Adicional (taxi, movilidad…)
-          </button>
-          <button
-            type="button"
-            onClick={() => alAgregarBloque("apoyo")}
-            className="boton-fila"
-          >
-            <Reloj className="size-[18px]" />
-            Apoyo a otra tienda
-          </button>
+          <FilaDeColor k="adicional" titulo="Adicional" detalle="Taxi, movilidad, Expo Vino…" onClick={() => alAgregarBloque("taxi")} />
+          <FilaDeColor k="apoyo" titulo="Apoyo a otra tienda" detalle="Por hora o por tramos" onClick={() => alAgregarBloque("apoyo")} />
         </div>
       )}
     </>

@@ -4,6 +4,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { BotonDeAccion } from "@/components/Acciones";
 import { BloquesDelDia } from "@/components/BloquesDelDia";
 import { CargarCapturas } from "@/components/CargarCapturas";
 import { FilaDeLista } from "@/components/ListaDelDia";
@@ -12,23 +13,24 @@ import { HojaSubirMas } from "@/components/HojaSubirMas";
 import { DetalleDelDia } from "@/components/DetalleDelDia";
 import { HojaDeBloqueExtra } from "@/components/HojaDeBloqueExtra";
 import { HojaDeComandas } from "@/components/HojaDeComandas";
+import { DialogoConfirmar } from "@/components/DialogoConfirmar";
 import {
   Calendario,
+  Equis,
+  Historial,
   Luna,
-  Reloj,
-  Taxi,
+  Mas,
+  Suma,
   Ticket,
-  Tienda as IconoTienda,
 } from "@/components/iconos";
 import { usePuedeEscribir } from "@/components/Licencia";
-import { MenuAgregarBloque } from "@/components/MenuAgregarBloque";
 import {
   RecorridoGuiado,
   type PasoDeRecorrido,
 } from "@/components/RecorridoGuiado";
 import { SubirMas } from "@/components/SubirMas";
 import { TiraDeSemanas, type DatosDelDia } from "@/components/TiraDeSemanas";
-import { Auto } from "@/components/Auto";
+import { IlustracionDelDia } from "@/components/IlustracionesDeInicio";
 import { TourDePantalla } from "@/components/TourDePantalla";
 import { TarjetaViva } from "@/components/TarjetaViva";
 import { useDatos } from "@/hooks/useDatos";
@@ -119,7 +121,6 @@ function Contenido() {
   /** El día cuyas opciones se abrieron manteniéndolo presionado. */
   const [menuDia, setMenuDia] = useState<FechaISO | null>(null);
   const semana = semanaDe(dia);
-  const esSemanaActual = semana.inicio === semanaDe(hoy).inicio;
 
   const { datos: tira, recargar: recargarTira } = useTiraDeSemanas(
     semana.inicio,
@@ -178,33 +179,27 @@ function Contenido() {
     <div className="mx-auto flex max-w-[880px] flex-col gap-4">
       <TourDePantalla pantalla="inicio" />
       <div className="flex flex-col gap-3">
-        <div className="flex items-end justify-between gap-3">
-          <div className="min-w-0">
+        <div className="ini-cab ini-rise">
+          <div className="min-w-0 flex-1">
             {/* Sin el año: el calendario de al lado ya lo dice, y con la letra
                 condensada y en mayúsculas del modo oscuro la fecha entera
                 ocupaba cuatro líneas. */}
-            <h2 className="text-[24px] leading-tight first-letter:uppercase">
+            <h2 className="ini-fecha first-letter:uppercase">
               {formatearFechaLarga(dia).replace(/ de \d{4}$/, "")}
             </h2>
-            <p className="text-xs text-tinta-3">
+            <p className="text-sm text-tinta-2">
               Sem. {Number(semana.inicio.slice(8, 10))}–
               {Number(semana.fin.slice(8, 10))} · {cargadosSemana} de 7 días
             </p>
           </div>
-          <div className="flex shrink-0 items-center gap-1">
-            {!esSemanaActual && (
-              <button
-                type="button"
-                onClick={() => setDia(hoy)}
-                className="min-h-11 px-2 text-xs font-bold text-acento-tinta underline underline-offset-2"
-              >
+          <div className="flex shrink-0 items-center gap-2">
+            {dia !== hoy && (
+              <button type="button" onClick={() => setDia(hoy)} className="ini-volver">
+                <Historial className="size-[18px]" />
                 Volver a hoy
               </button>
             )}
-            <label
-              id="recorrido-calendario"
-              className="relative grid size-11 place-items-center rounded-btn border border-linea-fuerte bg-sup"
-            >
+            <label id="recorrido-calendario" className="ini-icb relative">
               <span className="sr-only">Elegir otra fecha</span>
               <Calendario className="size-5" />
               <input
@@ -227,7 +222,7 @@ function Contenido() {
           </div>
         </div>
 
-        <div id="recorrido-tira">
+        <div id="recorrido-tira" className="ini-rise" style={{ animationDelay: "70ms" }}>
           <TiraDeSemanas
             semana={semana.inicio}
             dia={dia}
@@ -247,9 +242,21 @@ function Contenido() {
         </div>
       </div>
 
-      <p id="recorrido-pista" className="-mt-2 px-1 text-[11.5px] text-tinta-3">
-        Mantén presionado un día para marcarlo como descanso.
-      </p>
+      <div id="recorrido-pista" className="ini-sub ini-rise -mt-2" style={{ animationDelay: "140ms" }}>
+        <small>
+          {dia === hoy ? "Hoy" : `${nombreDelDia(dia).slice(0, 3)} ${Number(dia.slice(8, 10))}`} · toca un día para verlo
+        </small>
+        {dia <= hoy && (
+          <button
+            type="button"
+            className="ini-icb"
+            onClick={() => setMenuDia(dia)}
+            aria-label="Opciones de este día"
+          >
+            <Mas className="size-5" />
+          </button>
+        )}
+      </div>
 
       {menuDia && (
         <HojaDeDia
@@ -274,7 +281,7 @@ function Contenido() {
             const destino = e.target as Element;
             if (
               e.touches.length > 1 ||
-              destino.closest?.('[role="dialog"], [data-sin-deslizar]')
+              destino.closest?.('[role="dialog"], [role="alertdialog"], [data-sin-deslizar]')
             ) {
               deslizar.current = null;
               return;
@@ -305,6 +312,7 @@ function Contenido() {
             detalle={detalle}
             tira={tira}
             alCambiar={recargar}
+            alVolverAHoy={() => setDia(hoy)}
           />
         </div>
       ) : (
@@ -338,10 +346,13 @@ function DelDia({
   detalle,
   tira,
   alCambiar,
+  alVolverAHoy,
 }: {
   dia: FechaISO;
   hoy: FechaISO;
   detalle: Detalle;
+  /** «Volver a hoy», para el día que todavía no llega. */
+  alVolverAHoy: () => void;
   /** Lo cargado y lo cobrado de las tres semanas cercanas, para la racha y el récord. */
   tira: Map<FechaISO, DatosDelDia>;
   alCambiar: () => void;
@@ -474,6 +485,33 @@ function DelDia({
   }));
   const hayPedidos =
     (jornada?.ordenes.length ?? 0) > 0 || (jornada?.rutas.length ?? 0) > 0;
+  const tieneDatos = Boolean(jornada && (hayPedidos || bloques.length > 0));
+  /* En un día vacío y pasado, los dos botones grandes de cargar viven dentro de
+     la ilustración; en los demás, al final de la pantalla. */
+  const enVacio = !tieneDatos && !descanso && !esFuturo;
+  const accionesDeCarga = (
+    <div className="flex w-full flex-col gap-2.5">
+      <div id="recorrido-cargar-resumen">
+        <CargarCapturas deshabilitado={!puedeCargar} dia={dia} />
+      </div>
+      <div id="recorrido-tomar-foto">
+        <BotonDeAccion
+          k="comanda"
+          disabled={!puedeCargar}
+          onClick={() => {
+            setComandaConCamara(true);
+            setComanda(true);
+          }}
+        >
+          <Ticket className="size-[22px]" />
+          Tomar foto de una comanda
+        </BotonDeAccion>
+      </div>
+      <p className="text-center text-xs text-tinta-3">
+        Una foto por pedido, con cliente y dirección: directo a la cámara.
+      </p>
+    </div>
+  );
   const desglose = desglosePorFuente({
     tiendaNombre: tienda?.nombre ?? null,
     pedidosTienda: jornada?.ordenes.length ?? 0,
@@ -483,7 +521,7 @@ function DelDia({
 
   return (
     <>
-      {jornada && (hayPedidos || bloques.length > 0) ? (
+      {tieneDatos && jornada ? (
         <TarjetaViva
           encabezado={
             dia === hoy ? "Hoy cargaste" : `El ${nombreDelDia(dia)} cargaste`
@@ -509,16 +547,18 @@ function DelDia({
           descanso={descanso}
           puedeEscribir={puedeCargar}
           alCambiar={alCambiar}
+          alVolverAHoy={alVolverAHoy}
+          acciones={enVacio ? accionesDeCarga : null}
         />
       )}
 
       {/* ¿Qué hiciste hoy? Tres preguntas con su respuesta: lo hecho se
           despliega al tocarlo; lo que falta empieza a anotarse al tocarlo. */}
       <div id="recorrido-lista" className="flex flex-col gap-2.5">
-        {bloques.length > 0 && (
+        {tieneDatos && (
           <h3
-            className="entra px-1 text-[17px]"
-            style={{ "--i": 1 } as React.CSSProperties}
+            className="ini-rise px-1 font-display text-lg"
+            style={{ animationDelay: "140ms" }}
           >
             {dia === hoy
               ? "¿Qué hiciste hoy?"
@@ -528,8 +568,7 @@ function DelDia({
 
         <FilaDeLista
           indice={0}
-          Icono={IconoTienda}
-          fondo="bg-acento-suave text-acento-tinta"
+          k="tienda"
           titulo="Pedidos de mi tienda"
           resumen={
             hayPedidos
@@ -557,21 +596,17 @@ function DelDia({
             />
           )}
           {!esFuturo && (
-            <button
-              type="button"
-              className="boton-fila"
-              onClick={() => setSubirMasAbierto(true)}
-            >
+            <BotonDeAccion k="tienda" className="!min-h-12 !text-base" onClick={() => setSubirMasAbierto(true)}>
+              <Suma className="size-5" />
               Agregar más pedidos o rutas
-            </button>
+            </BotonDeAccion>
           )}
         </FilaDeLista>
 
         {apoyos.length > 0 && (
           <FilaDeLista
             indice={1}
-            Icono={Reloj}
-            fondo="bg-[var(--apoyo-suave)] text-[var(--apoyo-tinta)]"
+            k="apoyo"
             titulo="Apoyé a otra tienda"
             resumen={
               apoyos.length > 0
@@ -604,13 +639,10 @@ function DelDia({
               alCambiar={alCambiar}
             />
             {!esFuturo && (
-              <button
-                type="button"
-                className="boton-fila"
-                onClick={() => setBloqueAbierto("apoyo")}
-              >
+              <BotonDeAccion k="apoyo" className="!min-h-12 !text-base" onClick={() => setBloqueAbierto("apoyo")}>
+                <Suma className="size-5" />
                 Agregar otro apoyo
-              </button>
+              </BotonDeAccion>
             )}
           </FilaDeLista>
         )}
@@ -621,8 +653,7 @@ function DelDia({
             <FilaDeLista
               key={t.clave}
               indice={2 + i}
-              Icono={Taxi}
-              fondo="bg-[var(--taxi-suave)] text-[var(--taxi-tinta)]"
+              k={t.nombre === "Taxi" ? "taxi" : "adicional"}
               titulo={t.nombre === "Taxi" ? "Hice taxi" : t.nombre}
               resumen={desglose.find((f) => f.clave === t.clave)?.detalle ?? ""}
               monto={formatearSoles(centimos)}
@@ -637,48 +668,28 @@ function DelDia({
                 alCambiar={alCambiar}
               />
               {!esFuturo && (
-                <button
-                  type="button"
-                  className="boton-fila"
+                <BotonDeAccion
+                  k={t.nombre === "Taxi" ? "taxi" : "adicional"}
+                  className="!min-h-12 !text-base"
                   onClick={() => {
                     setTipoParaNuevo(t.clave.replace(/^adic:/, ""));
                     setBloqueAbierto("taxi");
                   }}
                 >
-                  {t.nombre === "Taxi"
-                    ? "Agregar otra carrera"
-                    : `Agregar otro de ${t.nombre}`}
-                </button>
+                  <Suma className="size-5" />
+                  Agregar otro de {t.nombre}
+                </BotonDeAccion>
               )}
             </FilaDeLista>
           );
         })}
       </div>
 
-      <div
-        className="entra flex flex-col gap-2"
-        style={{ "--i": 6 } as React.CSSProperties}
-      >
-        <div id="recorrido-cargar-resumen">
-          <CargarCapturas deshabilitado={!puedeCargar} dia={dia} />
+      {!enVacio && (
+        <div className="ini-rise" style={{ animationDelay: "420ms" }}>
+          {accionesDeCarga}
         </div>
-        <button
-          id="recorrido-tomar-foto"
-          type="button"
-          className="boton-segundo"
-          disabled={!puedeCargar}
-          onClick={() => {
-            setComandaConCamara(true);
-            setComanda(true);
-          }}
-        >
-          <Ticket className="size-[22px]" />
-          Tomar foto de una comanda
-        </button>
-        <p className="text-xs text-tinta-3">
-          Una foto por pedido, con cliente y dirección: directo a la cámara.
-        </p>
-      </div>
+      )}
 
       {subirMasAbierto && !esFuturo && (
         <HojaSubirMas
@@ -729,18 +740,6 @@ function DelDia({
         />
       )}
 
-      {!esFuturo && (
-        <MenuAgregarBloque
-          disabled={!puedeCargar}
-          onElegirTienda={() => setSubirMasAbierto(true)}
-          onElegirApoyo={() => setBloqueAbierto("apoyo")}
-          onElegirTaxi={() => {
-            setTipoParaNuevo(null);
-            setBloqueAbierto("taxi");
-          }}
-        />
-      )}
-
       {bloqueAbierto && (
         <HojaDeBloqueExtra
           tipo={bloqueAbierto}
@@ -765,7 +764,7 @@ function DelDia({
  *
  * Es lo que en Pagos se contesta con «No trabajé esos días», pero para un solo
  * día y desde donde se está mirando: si el jueves fue libre, se dice aquí mismo.
- * Subir el día se hace con los dos botones de arriba, o con «Subir más», debajo.
+ * Cada estado trae su ilustración y sus botones grandes: nada de texto suelto.
  */
 function DiaSinCarga({
   fecha,
@@ -773,16 +772,22 @@ function DiaSinCarga({
   descanso,
   puedeEscribir,
   alCambiar,
+  alVolverAHoy,
+  acciones,
 }: {
   fecha: FechaISO;
   hoy: FechaISO;
   descanso: boolean;
   puedeEscribir: boolean;
   alCambiar: () => void;
+  alVolverAHoy: () => void;
+  /** Los botones grandes de cargar, cuando el día se puede cargar. */
+  acciones: React.ReactNode;
 }) {
-  const vehiculo = useVehiculo();
   const [ocupado, setOcupado] = useState(false);
+  const [quitando, setQuitando] = useState(false);
   const esFuturo = fecha > hoy;
+  const corto = `${nombreDelDia(fecha)} ${Number(fecha.slice(8, 10))}`;
 
   async function cambiar() {
     setOcupado(true);
@@ -792,70 +797,72 @@ function DiaSinCarga({
       alCambiar();
     } finally {
       setOcupado(false);
+      setQuitando(false);
     }
   }
 
   if (descanso) {
     return (
-      <section
-        className="tarjeta flex items-center gap-3"
-        aria-label="Día de descanso"
-      >
-        <span className="grid size-11 shrink-0 place-items-center rounded-full bg-descanso text-descanso-tinta">
-          <Luna className="size-6" />
-        </span>
-        <div className="flex min-w-0 flex-1 flex-col">
-          <b className="text-base font-bold">Día de descanso</b>
-          <span className="text-sm text-tinta-2">
-            Dijiste que no trabajaste este día.
-          </span>
-        </div>
+      <section className="ini-vacio ini-rise" style={{ animationDelay: "210ms" }} aria-label="Día de descanso">
+        <IlustracionDelDia tipo="luna" />
+        <h3>Día de descanso</h3>
+        <p>Ese día no cuenta. Descansar también es trabajo.</p>
         <button
           type="button"
-          className="boton-sec shrink-0"
+          className="boton-sec"
           disabled={!puedeEscribir || ocupado}
-          onClick={() => void cambiar()}
+          onClick={() => setQuitando(true)}
         >
-          Quitar
+          <Historial className="size-[18px]" />
+          Quitar el descanso
+        </button>
+        {quitando && (
+          <DialogoConfirmar
+            titulo={`¿Quitar el descanso del ${corto}?`}
+            texto="Ese día volverá a contar como un día por subir."
+            confirmar="Sí, quitar el descanso"
+            ocupado={ocupado}
+            alCancelar={() => setQuitando(false)}
+            alConfirmar={() => void cambiar()}
+          />
+        )}
+      </section>
+    );
+  }
+
+  if (esFuturo) {
+    return (
+      <section className="ini-vacio ini-rise" style={{ animationDelay: "210ms" }} aria-label="Día que todavía no llega">
+        <IlustracionDelDia tipo="futuro" />
+        <h3>Ese día todavía no llega</h3>
+        <p>Cuando llegue, aquí vas a cargar tus pedidos.</p>
+        <button type="button" className="boton-principal" onClick={alVolverAHoy}>
+          <Historial className="size-[20px]" />
+          Volver a hoy
         </button>
       </section>
     );
   }
 
   return (
-    <section
-      className="tarjeta grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-2"
-      aria-label="Sin cargar"
-    >
-      <Auto vehiculo={vehiculo} mono className="w-[96px]" />
-      <div>
-        <b className="text-base font-bold">
-          {fecha === hoy
-            ? "Hoy"
-            : esFuturo
-              ? "Ese día todavía no llega"
-              : "Ese día"}
-          {esFuturo ? "" : ": sin cargar"}
-        </b>
-        <p className="text-sm text-tinta-2">
-          {fecha === hoy
-            ? "Todavía no has subido las capturas de hoy."
-            : esFuturo
-              ? "Cuando llegue, sube aquí sus capturas."
-              : "Súbelo cuando quieras: manda la fecha de la captura, no la de hoy."}
-        </p>
-      </div>
-      {!esFuturo && (
-        <button
-          type="button"
-          className="boton-sec col-span-2"
-          disabled={!puedeEscribir || ocupado}
-          onClick={() => void cambiar()}
-        >
-          <Luna className="size-[18px]" />
-          No trabajé este día
-        </button>
-      )}
+    <section className="ini-vacio ini-rise" style={{ animationDelay: "210ms" }} aria-label="Sin cargar">
+      <IlustracionDelDia tipo="vacio" />
+      <h3>{fecha === hoy ? "Hoy: sin cargar" : "Ese día: sin cargar"}</h3>
+      <p>
+        {fecha === hoy
+          ? "Sube el resumen o toma una foto de la comanda."
+          : "Súbelo cuando quieras: manda la fecha de la captura, no la de hoy."}
+      </p>
+      {acciones}
+      <button
+        type="button"
+        className="boton-sec w-full"
+        disabled={!puedeEscribir || ocupado}
+        onClick={() => void cambiar()}
+      >
+        <Luna className="size-[18px]" />
+        No trabajé este día
+      </button>
     </section>
   );
 }
@@ -867,9 +874,10 @@ function DiaSinCarga({
  * La base vive solo en este teléfono, y hasta que exista la copia en la nube
  * un respaldo manual es la única red de seguridad real. Se avisa aquí, en
  * Inicio, y no solo en Ajustes: nadie va a Ajustes a buscar algo que no sabe
- * que necesita. Es una franja fina y solo sale cuando toca, y el botón hace el
- * respaldo **ahí mismo**: abre el selector de Android para mandarlo a Drive,
- * a WhatsApp o al correo, sin pasar por Ajustes.
+ * que necesita. Sale solo cuando toca, y el botón hace el respaldo **ahí
+ * mismo**: abre el selector de Android para mandarlo a Drive, a WhatsApp o al
+ * correo, sin pasar por Ajustes. La «×» lo esconde hasta la próxima vez que se
+ * abra la app.
  */
 function RecordatorioDeRespaldo() {
   const { datos: ultimo, recargar } = useDatos(async () => {
@@ -877,15 +885,16 @@ function RecordatorioDeRespaldo() {
     return ultimoRespaldoCreado();
   }, []);
   const [haciendo, setHaciendo] = useState(false);
+  const [oculto, setOculto] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (ultimo === undefined) return null; // todavía cargando
+  if (ultimo === undefined || oculto) return null; // todavía cargando, o escondido
 
   const mensaje =
     ultimo === null
-      ? "Todavía no has hecho ningún respaldo de tus datos."
+      ? "Todavía no has hecho ningún respaldo"
       : diasEntre(ultimo.slice(0, 10), hoyEnLima()) >= 14
-        ? `Tu último respaldo fue hace ${diasEntre(ultimo.slice(0, 10), hoyEnLima())} días.`
+        ? `Tu último respaldo fue hace ${diasEntre(ultimo.slice(0, 10), hoyEnLima())} días`
         : null;
 
   if (!mensaje) return null;
@@ -909,27 +918,36 @@ function RecordatorioDeRespaldo() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[880px] flex-col gap-1.5 rounded-btn bg-sup-2 px-4 py-2.5 text-sm text-tinta-2">
-      <div className="flex items-center justify-between gap-3">
-        <span>{mensaje}</span>
-        <button
-          type="button"
-          disabled={haciendo}
-          onClick={() => void respaldar()}
-          className="min-h-11 shrink-0 px-1 font-bold text-acento-tinta underline underline-offset-2 disabled:opacity-60"
-        >
-          {haciendo ? "Abriendo…" : "Respaldar ahora"}
-        </button>
+    <div className="ini-resp ini-rise mx-auto w-full max-w-[880px]" style={{ animationDelay: "480ms" }}>
+      <IlustracionDelDia tipo="nube" />
+      <div className="min-w-0 flex-1">
+        <b className="block leading-tight">{mensaje}</b>
+        <small className="block text-tinta-2">
+          Guarda tus datos en Drive o por WhatsApp. Si cambias de teléfono, los restauras en Ajustes.
+        </small>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button
+            type="button"
+            disabled={haciendo}
+            onClick={() => void respaldar()}
+            className="boton-principal !min-h-11 !px-4 !text-base"
+          >
+            {haciendo ? "Abriendo…" : "Respaldar ahora"}
+          </button>
+          <Link href="/ajustes" className="boton-sec">
+            Ir a Ajustes
+          </Link>
+        </div>
+        {error && <span className="mt-1 block text-xs text-mal">{error}</span>}
       </div>
-      <span className="text-xs text-tinta-3">
-        Es un archivo con tus datos: guárdalo en Drive o mándatelo por WhatsApp.
-        Si cambias de teléfono, lo restauras en{" "}
-        <Link href="/ajustes" className="underline underline-offset-2">
-          Ajustes
-        </Link>
-        .
-      </span>
-      {error && <span className="text-xs text-mal">{error}</span>}
+      <button
+        type="button"
+        className="ini-icb self-start"
+        onClick={() => setOculto(true)}
+        aria-label="Ocultar el aviso de respaldo"
+      >
+        <Equis className="size-[18px]" />
+      </button>
     </div>
   );
 }

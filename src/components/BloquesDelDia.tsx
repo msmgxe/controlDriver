@@ -22,8 +22,10 @@ export function BloquesDelDia({
 
   return (
     <div className="flex flex-col gap-2">
-      {bloques.map((b) => (
-        <TarjetaBloqueExtra key={b.id} bloque={b} fecha={fecha} editable={editable} alCambiar={alCambiar} />
+      {bloques.map((b, i) => (
+        <div key={b.id} className="ini-rise" style={{ animationDelay: `${i * 70}ms` }}>
+          <TarjetaBloqueExtra bloque={b} fecha={fecha} editable={editable} alCambiar={alCambiar} />
+        </div>
       ))}
     </div>
   );

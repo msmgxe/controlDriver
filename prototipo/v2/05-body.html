@@ -1,0 +1,30 @@
+<main>
+  <div class="top">
+    <h1>Control Driver, más simple y de colores</h1>
+    <div class="caras" id="caras" aria-label="Cara de la app"><button type="button" data-c="mapa" aria-pressed="true">Mapa</button><button type="button" data-c="menta" aria-pressed="false">Menta</button><button type="button" data-c="violeta" aria-pressed="false">Violeta</button><button type="button" class="toggle-tema" id="tema">Oscuro</button></div>
+  </div>
+  <p class="lede">Prototipo con todas las pantallas de la app. Navega como en el teléfono: la barra de abajo, los botones, las hojas que suben. A la derecha ves qué cambia en cada pantalla y puedes saltar a cualquiera.</p>
+  <div class="stage">
+    <div class="phone" id="phone" aria-label="Teléfono de prueba">
+      <div class="status"><span>10:24</span><span>5G ▮▮▮ 72%</span></div>
+      <div class="appbar" id="appbar"></div>
+      <div class="screen" id="screen"></div>
+      <div class="nav" id="nav">
+        <button type="button" data-tab="inicio">__I_home__Inicio</button>
+        <button type="button" data-tab="pagos">__I_wallet__Pagos</button>
+        <button type="button" data-tab="cargar" class="cargar" aria-label="Cargar">__I_cargar__<span>Cargar</span></button>
+        <button type="button" data-tab="stats">__I_bars__Estadíst.</button>
+        <button type="button" data-tab="mas">__I_dots__Más</button>
+      </div>
+      <div class="capa" id="capa"></div>
+      <div class="hoja" id="hoja" role="dialog" aria-modal="true"></div>
+      <div class="toast" id="toast" role="status"></div>
+    </div>
+    <div class="lado">
+      <div class="panel" id="cambios"></div>
+      <div class="panel"><h3>Recorridos rápidos</h3><div class="recorridos" id="recorridos"></div></div>
+      <div class="panel"><h3>Todas las pantallas</h3><div class="indice" id="indice"></div></div>
+    </div>
+  </div>
+</main>
+<script>

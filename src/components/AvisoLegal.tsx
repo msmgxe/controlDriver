@@ -3,11 +3,12 @@
 import { useState, useSyncExternalStore } from "react";
 
 import { Acordeon } from "@/components/Acordeon";
+import { DialogoConfirmar } from "@/components/DialogoConfirmar";
 import { IconoApp } from "@/components/IconoApp";
 import { Check } from "@/components/iconos";
+import { cerrarAplicacion } from "@/components/salirDeLaApp";
 import { LineaCopyright, TextoLegal } from "@/components/TextoLegal";
 import { hoyEnLima } from "@/lib/fechas";
-import { intentarSalir } from "@/lib/salir";
 import {
   aceptarTerminos,
   instantaneaTerminos,
@@ -35,11 +36,12 @@ export function AvisoLegal({ children }: { children: React.ReactNode }) {
 function Puerta() {
   const [marcado, setMarcado] = useState(false);
   const [mensaje, setMensaje] = useState<string | null>(null);
+  const [preguntando, setPreguntando] = useState(false);
 
-  async function noAcepto() {
+  async function salir() {
+    setPreguntando(false);
     setMensaje(null);
-    const r = await intentarSalir("Sin aceptar no puedes usar Control Driver. ¿Seguro que quieres salir?");
-    if (!r.ok && r.motivo === "no-nativo") {
+    if ((await cerrarAplicacion()) === "no-nativo") {
       setMensaje("Sin aceptar no puedes usar la app. Esto solo cierra la aplicación instalada, no esta pestaña.");
     }
   }
@@ -52,7 +54,14 @@ function Puerta() {
           <b className="font-display text-lg font-bold">Control Driver</b>
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="aju-cent">
+          <svg viewBox="0 0 120 120" width="110" height="110" aria-hidden="true">
+            <circle cx="60" cy="60" r="54" style={{ fill: "var(--acento-suave)" }} />
+            <g className="aju-escudo">
+              <path d="M60 22l30 11v22c0 20-13 32-30 38-17-6-30-18-30-38V33z" style={{ fill: "var(--acento)" }} />
+              <path d="M45 58l11 11 20-22" fill="none" stroke="#fff" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+            </g>
+          </svg>
           <h1 className="font-display text-[26px] leading-tight font-bold [zoom:var(--zoom-titulo,1)]">
             Antes de empezar
           </h1>
@@ -67,25 +76,12 @@ function Puerta() {
           <TextoLegal />
         </Acordeon>
 
-        <label className="flex items-start gap-3 rounded-card bg-sup-2 p-3">
-          <input
-            type="checkbox"
-            checked={marcado}
-            onChange={(e) => setMarcado(e.target.checked)}
-            className="sr-only"
-          />
-          <span
-            aria-hidden
-            className={`mt-0.5 grid size-[22px] shrink-0 place-items-center rounded-[6px] border-2 transition-colors ${
-              marcado ? "border-acento bg-acento" : "border-linea-fuerte bg-sup"
-            }`}
-          >
-            {marcado && <Check className="size-3.5 text-acento-texto" />}
+        <button type="button" className="aju-check" aria-pressed={marcado} onClick={() => setMarcado((v) => !v)}>
+          <span className="aju-check__caja" aria-hidden>
+            <Check className="size-5" />
           </span>
-          <span className="text-sm text-tinta-2">
-            He leído y acepto las condiciones de uso, incluida la protección de los datos de mis clientes.
-          </span>
-        </label>
+          <span className="text-sm">He leído y acepto el aviso legal, incluida la protección de los datos de mis clientes.</span>
+        </button>
 
         <div className="mt-auto flex flex-col gap-2 pt-2">
           <button
@@ -96,15 +92,20 @@ function Puerta() {
           >
             Aceptar y continuar
           </button>
-          <button
-            type="button"
-            onClick={() => void noAcepto()}
-            className="min-h-11 text-sm font-semibold text-tinta-2 underline"
-          >
+          <button type="button" onClick={() => setPreguntando(true)} className="boton-sec">
             No acepto
           </button>
           {mensaje && <p className="text-center text-xs text-tinta-3">{mensaje}</p>}
         </div>
+        {preguntando && (
+          <DialogoConfirmar
+            titulo="¿Salir de Control Driver?"
+            texto="Sin aceptar el aviso no puedes usar la app."
+            confirmar="Sí, salir"
+            alCancelar={() => setPreguntando(false)}
+            alConfirmar={() => void salir()}
+          />
+        )}
       </div>
     </div>
   );

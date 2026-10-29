@@ -58,7 +58,7 @@ export function PedidosPorTramo({
     })
     .filter((g) => g.id !== TRAMO_MAS_DE_12_KM || g.items.length > 0);
 
-  if (todas.length === 0) return <p className="text-sm text-tinta-3">Sin pedidos en este periodo.</p>;
+  if (todas.length === 0) return <p className="rounded-card bg-sup-2 px-4 py-6 text-center text-sm text-tinta-2">Sin pedidos en este periodo.</p>;
 
   const mayor = Math.max(1, ...grupos.map((g) => g.items.length));
 
@@ -74,13 +74,13 @@ export function PedidosPorTramo({
                 aria-expanded={abiertoAhora}
                 disabled={g.items.length === 0}
                 onClick={() => setAbierto(abiertoAhora ? null : g.id)}
-                className="grid min-h-14 w-full grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 px-3 py-2.5 text-left disabled:opacity-50"
+                className="grid min-h-14 w-full grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 px-3.5 py-3 text-left active:bg-sup-2 disabled:opacity-50"
               >
                 <span className="flex items-baseline gap-2">
                   <b className="text-sm">{g.rotulo}</b>
                   <span className="text-xs text-tinta-3">{g.distancia}</span>
                 </span>
-                <span className="flex items-center gap-1.5 font-mono text-[13px] font-bold tabular-nums">
+                <span className="flex items-center gap-1.5 font-display text-[0.95rem] font-semibold tabular-nums">
                   {formatearSoles(g.centimos)}
                   {g.items.length > 0 && (
                     <Flecha className={`size-4 text-tinta-3 transition-transform ${abiertoAhora ? "-rotate-90" : "rotate-90"}`} />
@@ -89,7 +89,7 @@ export function PedidosPorTramo({
                 <span className="col-span-2 flex items-center gap-2">
                   <span className="h-2 flex-1 overflow-hidden rounded-full bg-linea">
                     <span
-                      className="block h-full rounded-full bg-acento"
+                      className="barra-crece block h-full rounded-full bg-acento"
                       style={{ width: `${(g.items.length / mayor) * 100}%` }}
                     />
                   </span>
@@ -104,7 +104,7 @@ export function PedidosPorTramo({
                   {g.items.map(({ orden: o, jornada }) => (
                     <div key={o.id}>
                       {variosDias && (
-                        <p className="px-3 pt-2 text-[11px] font-bold tracking-wide text-tinta-3 uppercase">
+                        <p className="px-3 pt-2 text-[0.7rem] font-bold tracking-wide text-tinta-3 uppercase">
                           {nombreDelDia(jornada.fecha).slice(0, 3)} {Number(jornada.fecha.slice(8))}
                         </p>
                       )}

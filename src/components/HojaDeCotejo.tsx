@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 
-import { Equis } from "@/components/iconos";
+import { BotonDeAccion } from "@/components/Acciones";
+import { Check, Equis, Galeria } from "@/components/iconos";
+import { useCifraAnimada } from "@/hooks/useCifraAnimada";
 import { Aviso } from "@/components/ui";
 import { useCapa } from "@/hooks/useCapa";
 import { paraLeer } from "@/lib/carga";
@@ -134,8 +136,10 @@ export function HojaDeCotejo({
 
         <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
           <label
-            className={`boton-principal cursor-pointer ${leyendo ? "opacity-60" : ""}`}
+            className={`boton-accion cursor-pointer ${leyendo ? "opacity-60" : ""}`}
+            style={{ "--c": "var(--c-pagos)" } as React.CSSProperties}
           >
+            <Galeria className="size-5" />
             {r ? "Subir otra imagen" : "Elegir la imagen del reporte"}
             <input
               type="file"
@@ -162,21 +166,24 @@ export function HojaDeCotejo({
           {r && (
             <>
               <div className="grid grid-cols-2 gap-2 text-center">
-                <Cifra valor={r.enReporte} etiqueta="La empresa contó" />
+                <Cifra valor={r.enReporte} etiqueta="La empresa contó" color="var(--c-ajustes)" indice={0} />
                 <Cifra
                   valor={r.coinciden.length}
                   etiqueta="Coinciden con los tuyos"
-                  tono="bien"
+                  color="var(--c-pagos)"
+                  indice={1}
                 />
                 <Cifra
                   valor={r.faltanEnMiRegistro.length}
                   etiqueta="No los tienes registrados"
-                  tono={r.faltanEnMiRegistro.length > 0 ? "aviso" : undefined}
+                  color={r.faltanEnMiRegistro.length > 0 ? "var(--c-mano)" : "var(--c-ajustes)"}
+                  indice={2}
                 />
                 <Cifra
                   valor={r.noContados.length}
                   etiqueta="Tuyos que no contó"
-                  tono={r.noContados.length > 0 ? "mal" : undefined}
+                  color={r.noContados.length > 0 ? "var(--c-adic)" : "var(--c-ajustes)"}
+                  indice={3}
                 />
               </div>
               {r.periodo && (
@@ -188,16 +195,12 @@ export function HojaDeCotejo({
               )}
 
               {r.coinciden.length > 0 && (
-                <button
-                  type="button"
-                  className="boton-sec"
-                  disabled={marcado !== null}
-                  onClick={() => void marcar()}
-                >
+                <BotonDeAccion k="pagos" disabled={marcado !== null} onClick={() => void marcar()}>
+                  <Check className="size-5" />
                   {marcado === null
-                    ? `Marcar como contados los ${r.coinciden.length} que coinciden`
+                    ? `Marcar los ${r.coinciden.length} que coinciden`
                     : `Listo: ${marcado} marcados en Pagos`}
-                </button>
+                </BotonDeAccion>
               )}
 
               {r.noContados.length > 0 && (
@@ -262,26 +265,19 @@ export function HojaDeCotejo({
 function Cifra({
   valor,
   etiqueta,
-  tono,
+  color,
+  indice,
 }: {
   valor: number;
   etiqueta: string;
-  tono?: "bien" | "aviso" | "mal";
+  color: string;
+  indice: number;
 }) {
-  const color =
-    tono === "bien"
-      ? "text-bien"
-      : tono === "aviso"
-        ? "text-aviso"
-        : tono === "mal"
-          ? "text-mal"
-          : "text-tinta";
+  const animado = Math.round(useCifraAnimada(valor, 700));
   return (
-    <div className="flex flex-col rounded-btn bg-sup-2 px-2 py-2.5">
-      <b className={`font-mono text-2xl leading-tight ${color}`}>{valor}</b>
-      <span className="text-[11.5px] font-semibold text-tinta-2">
-        {etiqueta}
-      </span>
+    <div className="reg-kpi" style={{ "--c": color, animationDelay: `${indice * 70}ms` } as React.CSSProperties}>
+      <b>{animado}</b>
+      <small>{etiqueta}</small>
     </div>
   );
 }

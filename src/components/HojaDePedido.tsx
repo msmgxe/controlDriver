@@ -12,14 +12,17 @@ import {
   guardarClienteDePedido,
   quitarClienteDePedido,
 } from "@/app/(app)/jornada/acciones";
+import { BotonDeAccion } from "@/components/Acciones";
+import { ChipsDeRuta, ConfirmacionEnLinea, EstadoEnTres } from "@/components/ControlesDeRegistro";
 import { DialogoConfirmar } from "@/components/DialogoConfirmar";
-import { Alerta, Camara, Check, Equis, Ojo, Pin, Telefono, Ticket } from "@/components/iconos";
+import { Alerta, Basura, Camara, Check, Equis, Ojo, Pin, Telefono, Ticket } from "@/components/iconos";
 import { Pestanas } from "@/components/Pestanas";
 import { RadarDeTramos } from "@/components/RadarDeTramos";
 import { numeroDeDespacho } from "@/lib/extraccion/esquema";
 import { ImagenConZoom } from "@/components/ImagenConZoom";
 import { Aviso } from "@/components/ui";
 import { useCapa } from "@/hooks/useCapa";
+import { useCifraAnimada } from "@/hooks/useCifraAnimada";
 import { comprimir } from "@/lib/carga";
 import { partirDireccion, consultaParaMapa, siguienteLetra } from "@/lib/comanda/interpretar";
 import { leerFotoDeComandas } from "@/lib/comanda/leer";
@@ -46,6 +49,20 @@ import { TRAMO_MAS_DE_12_KM, esPorZona, etiquetaTramo, formatearSoles, type Regl
  * Lo del cliente es **opcional en todo**: son datos de otra persona. Se guarda
  * lo que la persona escribe o lo que se leyó de su comanda, y nada más.
  */
+
+const COLORES_DE_ZONA = [
+  "var(--c-comanda)",
+  "var(--c-cantidad)",
+  "var(--c-mano)",
+  "var(--c-foto)",
+  "var(--c-adic)",
+  "var(--c-apoyo)",
+  "var(--c-buscar)",
+  "var(--c-aprender)",
+];
+
+/** Un código vacío o pendiente no sirve de nombre en una pregunta. */
+const sinNombre = (c: string) => (esCodigoPendiente(c) ? "sin código" : c);
 
 const ESTADOS = ["Entregado", "Entrega parcial", "No entregado"] as const;
 
@@ -271,6 +288,7 @@ function TabPedido({
   const [codigo, setCodigo] = useState(orden.codigo);
   const [manual, setManual] = useState("");
   const [confirmandoBorrado, setConfirmandoBorrado] = useState(false);
+  const montoAnimado = Math.round(useCifraAnimada(orden.montoCentimos ?? 0, 600));
 
   const alTramo = (tramo: number, montoManualCentimos: number | null = null) =>
     ejecutar(() =>
@@ -326,44 +344,29 @@ function TabPedido({
 
       <CambiarDia fecha={fecha} orden={orden} deshabilitado={deshabilitado} ejecutar={ejecutar} alMover={alBorrar} />
 
-      <div className="grid grid-cols-2 gap-3">
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-semibold">Ruta</span>
-          <select
-            value={orden.ruta ?? ""}
-            disabled={deshabilitado}
-            onChange={(e) =>
-              ejecutar(() => corregirPedido(fecha, orden.id, { ruta: e.target.value === "" ? null : Number(e.target.value) }))
-            }
-            className="min-h-11 rounded-btn border border-linea-fuerte bg-sup px-2 text-base"
-          >
-            <option value="">Sin ruta</option>
-            {rutas.map((r) => (
-              <option key={r.numero} value={r.numero}>
-                Ruta {r.numero}
-                {r.inicio ? ` · ${r.inicio}` : ""}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-semibold">Estado</span>
-          <select
-            value={orden.estado}
-            disabled={deshabilitado}
-            onChange={(e) => ejecutar(() => corregirPedido(fecha, orden.id, { estado: e.target.value }))}
-            className="min-h-11 rounded-btn border border-linea-fuerte bg-sup px-2 text-base"
-          >
-            {ESTADOS.map((e) => (
-              <option key={e} value={e}>
-                {e}
-              </option>
-            ))}
-          </select>
-        </label>
+      <div className="flex flex-col gap-1.5">
+        <span className="text-sm font-bold">Ruta</span>
+        <div className={deshabilitado ? "pointer-events-none opacity-60" : ""}>
+          <ChipsDeRuta
+            k="tienda"
+            rutas={rutas.map((r) => r.numero)}
+            valor={orden.ruta === null ? "" : String(orden.ruta)}
+            alCambiar={(v) => ejecutar(() => corregirPedido(fecha, orden.id, { ruta: v === "" ? null : Number(v) }))}
+          />
+        </div>
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <span className="text-sm font-bold">¿Cómo salió?</span>
+        <div className={deshabilitado ? "pointer-events-none opacity-60" : ""}>
+          <EstadoEnTres
+            valor={orden.estado}
+            estados={ESTADOS}
+            alCambiar={(v) => ejecutar(() => corregirPedido(fecha, orden.id, { estado: v }))}
+          />
+        </div>
       </div>
 
-      <h4 className={`text-sm font-semibold ${esPorZona(regla) ? "order-first" : "border-t border-linea pt-4"}`}>
+      <h4 className={`text-base font-bold ${esPorZona(regla) ? "order-first" : "border-t border-linea pt-4"}`}>
         {esPorZona(regla) ? "¿En qué zona fue la entrega?" : "Tramo de distancia"}
       </h4>
 
@@ -376,34 +379,63 @@ function TabPedido({
         </Aviso>
       )}
 
-      <div role="radiogroup" aria-label={esPorZona(regla) ? "Zona de entrega" : "Tramo de distancia"} className={`flex flex-col gap-2 ${esPorZona(regla) ? "order-first" : ""}`}>
-        {regla.tramos.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            role="radio"
-            aria-checked={orden.tramo === t.id}
-            disabled={deshabilitado}
-            onClick={() => alTramo(t.id)}
-            className={`flex min-h-[54px] items-center gap-3 rounded-btn border px-3 py-2 text-left ${
-              orden.tramo === t.id ? "border-acento bg-acento-suave" : "border-linea-fuerte hover:bg-sup-2"
-            }`}
-          >
-            <span
-              className={`grid size-7 shrink-0 place-items-center rounded-chip font-mono text-xs font-medium ${
-                orden.tramo === t.id ? "bg-acento text-acento-texto" : "bg-sup-2"
+      <div
+        role="radiogroup"
+        aria-label={esPorZona(regla) ? "Zona de entrega" : "Tramo de distancia"}
+        className={`${esPorZona(regla) ? "reg-zonas order-first" : "flex flex-col gap-2"}`}
+      >
+        {regla.tramos.map((t, i) => {
+          const marcado = orden.tramo === t.id;
+          if (esPorZona(regla)) {
+            return (
+              <button
+                key={t.id}
+                type="button"
+                role="radio"
+                aria-checked={marcado}
+                disabled={deshabilitado}
+                onClick={() => alTramo(t.id)}
+                className="reg-zona"
+                style={{ "--c": COLORES_DE_ZONA[i % COLORES_DE_ZONA.length], animationDelay: `${i * 50}ms` } as React.CSSProperties}
+              >
+                <b>{t.nombre ?? `${t.desde} a ${t.hasta} km`}</b>
+                <span>{formatearSoles(Math.round(t.monto * 100))}</span>
+              </button>
+            );
+          }
+          return (
+            <button
+              key={t.id}
+              type="button"
+              role="radio"
+              aria-checked={marcado}
+              disabled={deshabilitado}
+              onClick={() => alTramo(t.id)}
+              className={`flex min-h-[var(--toque)] items-center gap-3 rounded-btn border-2 px-3 py-2 text-left ${
+                marcado ? "border-acento bg-acento-suave" : "border-linea-fuerte hover:bg-sup-2"
               }`}
             >
-              {t.id}
-            </span>
-            <span className="flex flex-1 flex-col">
-              <b className="text-sm font-bold">
-                {t.nombre ?? `${t.desde} a ${t.hasta} km`}
-              </b>
-            </span>
-            <span className="monto">{formatearSoles(Math.round(t.monto * 100))}</span>
-          </button>
-        ))}
+              <span
+                className={`grid size-8 shrink-0 place-items-center rounded-chip font-mono text-xs font-medium ${
+                  marcado ? "bg-acento text-acento-texto" : "bg-sup-2"
+                }`}
+              >
+                {t.id}
+              </span>
+              <span className="flex flex-1 flex-col">
+                <b className="text-sm font-bold">{t.nombre ?? `${t.desde} a ${t.hasta} km`}</b>
+              </span>
+              <span className="monto">{formatearSoles(Math.round(t.monto * 100))}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className={`reg-monto ${esPorZona(regla) ? "order-first" : ""}`}>
+        <div>
+          <small>Este pedido paga</small>
+          <b>{formatearSoles(montoAnimado)}</b>
+        </div>
       </div>
 
       {!esPorZona(regla) && (
@@ -445,32 +477,22 @@ function TabPedido({
           el pedido ya cuenta para el pago de la semana. */}
       <div className="border-t border-linea pt-4">
         {confirmandoBorrado ? (
-          <div className="flex flex-col gap-3 rounded-btn bg-mal-suave p-3">
-            <p className="text-sm text-mal">
-              ¿Borrar el pedido <b className="font-mono">{orden.codigo}</b>? Dejará de contar para el pago de
-              esta semana.
-            </p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => ejecutar(() => eliminarPedido(fecha, orden.id), alBorrar)}
-                disabled={deshabilitado}
-                className="min-h-11 flex-1 rounded-btn bg-mal px-4 text-sm font-semibold text-white"
-              >
-                Sí, borrarlo
-              </button>
-              <button type="button" onClick={() => setConfirmandoBorrado(false)} className="boton-sec flex-1">
-                No
-              </button>
-            </div>
-          </div>
+          <ConfirmacionEnLinea
+            texto={`¿Borrar el pedido ${sinNombre(orden.codigo)}? Dejará de contar para el pago de esta semana y no se puede deshacer.`}
+            confirmar="Sí, borrarlo"
+            cancelar="No"
+            ocupado={deshabilitado}
+            alConfirmar={() => ejecutar(() => eliminarPedido(fecha, orden.id), alBorrar)}
+            alCancelar={() => setConfirmandoBorrado(false)}
+          />
         ) : (
           <button
             type="button"
             onClick={() => setConfirmandoBorrado(true)}
             disabled={deshabilitado}
-            className="min-h-11 w-full rounded-btn px-4 text-sm font-semibold text-mal disabled:opacity-50"
+            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-btn border-2 border-mal px-4 text-sm font-bold text-mal disabled:opacity-50"
           >
+            <Basura className="size-[18px]" />
             Borrar este pedido
           </button>
         )}
@@ -690,12 +712,22 @@ function TabCliente({
 
       {guardado?.telefono && (
         <div className="grid grid-cols-2 gap-2">
-          <a className="boton-sec" href={`tel:+51${digitos(guardado.telefono).slice(-9)}`}>
-            <Telefono className="size-4" />
+          <a
+            className="boton-accion"
+            style={{ "--c": "var(--c-cantidad)" } as React.CSSProperties}
+            href={`tel:+51${digitos(guardado.telefono).slice(-9)}`}
+          >
+            <Telefono className="size-5" />
             Llamar
           </a>
           {paraWhatsApp ? (
-            <a className="boton-sec" href={`https://wa.me/${paraWhatsApp}`} target="_blank" rel="noreferrer">
+            <a
+              className="boton-accion"
+              style={{ "--c": "var(--c-apoyo)" } as React.CSSProperties}
+              href={`https://wa.me/${paraWhatsApp}`}
+              target="_blank"
+              rel="noreferrer"
+            >
               WhatsApp
             </a>
           ) : (
@@ -706,42 +738,32 @@ function TabCliente({
 
       {guardado &&
         (confirmando ? (
-          <div className="flex flex-col gap-3 rounded-btn bg-mal-suave p-3">
-            <p className="text-sm text-mal">
-              ¿Quitar todo lo del cliente de este pedido? También se borran su ubicación y la distancia. El tramo y el
-              monto no cambian.
-            </p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                disabled={deshabilitado}
-                onClick={() =>
-                  ejecutar(
-                    () => quitarClienteDePedido(fecha, orden.id),
-                    () => {
-                      setNombre("");
-                      setTelefono("");
-                      setDireccion("");
-                      setConfirmando(false);
-                    },
-                  )
-                }
-                className="min-h-11 flex-1 rounded-btn bg-mal px-4 text-sm font-semibold text-white"
-              >
-                Sí, quitarlo
-              </button>
-              <button type="button" onClick={() => setConfirmando(false)} className="boton-sec flex-1">
-                No
-              </button>
-            </div>
-          </div>
+          <ConfirmacionEnLinea
+            texto={`¿Quitar todo lo del cliente${guardado.nombre ? ` (${guardado.nombre})` : ""} de este pedido? También se borran su ubicación y la distancia. El tramo y el monto no cambian.`}
+            confirmar="Sí, quitarlo"
+            cancelar="No"
+            ocupado={deshabilitado}
+            alConfirmar={() =>
+              ejecutar(
+                () => quitarClienteDePedido(fecha, orden.id),
+                () => {
+                  setNombre("");
+                  setTelefono("");
+                  setDireccion("");
+                  setConfirmando(false);
+                },
+              )
+            }
+            alCancelar={() => setConfirmando(false)}
+          />
         ) : (
           <button
             type="button"
             onClick={() => setConfirmando(true)}
             disabled={deshabilitado}
-            className="min-h-11 w-full rounded-btn px-4 text-sm font-semibold text-mal disabled:opacity-50"
+            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-btn border-2 border-mal px-4 text-sm font-bold text-mal disabled:opacity-50"
           >
+            <Basura className="size-[18px]" />
             Quitar los datos del cliente
           </button>
         ))}
@@ -906,12 +928,12 @@ function TabDistancia({
       {!origen && (
         <Aviso tono="atento" titulo="La tienda todavía no tiene ubicación">
           <p>
-            Sin el punto de partida no se puede medir la distancia sola. Elígelo en{" "}
-            <Link href="/ajustes" className="font-semibold underline">
-              Ajustes › Tienda, ubicación y tarifa › Ubicación
-            </Link>
-            ; mientras tanto puedes escribir los kilómetros a mano.
+            Sin el punto de partida no se puede medir la distancia sola.{" "}
+            Elígelo en Ajustes › Ubicación; mientras tanto puedes escribir los kilómetros a mano.
           </p>
+          <Link href="/ajustes" className="boton-sec mt-2">
+            Ir a Ajustes
+          </Link>
         </Aviso>
       )}
 
@@ -972,15 +994,10 @@ function TabDistancia({
 
       <div className="flex flex-col gap-2 border-t border-linea pt-4">
         <span className="rotulo">Ubicar al cliente</span>
-        <button
-          type="button"
-          className="boton-sec justify-start"
-          disabled={ocupado || !direccion.trim() || !origen}
-          onClick={() => void ubicarLaDireccion()}
-        >
-          <Pin className="size-[18px]" />
-          {direccion.trim() ? "Ubicar la dirección" : "Ubicar la dirección (falta escribirla en «Cliente»)"}
-        </button>
+        <BotonDeAccion k="buscar" disabled={ocupado || !direccion.trim() || !origen} onClick={() => void ubicarLaDireccion()}>
+          <Pin className="size-5" />
+          {direccion.trim() ? "Ubicar la dirección" : "Falta escribir la dirección en «Cliente»"}
+        </BotonDeAccion>
 
         {candidatos.length > 0 && (
           <div className="flex flex-col gap-2 rounded-btn bg-sup-2 p-3">
@@ -1021,7 +1038,7 @@ function TabDistancia({
 
         {(cliente || direccion.trim()) && (
           <a
-            className="inline-flex min-h-11 items-center gap-2 self-start text-sm font-semibold text-acento-tinta"
+            className="boton-sec"
             href={cliente ? enlaceDeMapa(cliente) : enlaceDeBusqueda(`${direccion}, Lima, Perú`)}
             target="_blank"
             rel="noreferrer"
@@ -1093,6 +1110,8 @@ function TabEvidencia({
   const [error, setError] = useState<string | null>(null);
   const [ampliada, setAmpliada] = useState(false);
   const [preguntandoFoto, setPreguntandoFoto] = useState(false);
+  // La foto nueva elegida para reemplazar a la actual: espera la confirmación.
+  const [fotoNueva, setFotoNueva] = useState<File | null>(null);
 
   useEffect(() => {
     let vigente = true;
@@ -1200,15 +1219,29 @@ function TabEvidencia({
                 <Ojo className="size-4" />
                 Ver la foto
               </button>
-              <BotonDeFoto etiqueta="Reemplazar" deshabilitado={deshabilitado || !!ocupado} alElegir={(f) => void subir(f)} />
+              <BotonDeFoto etiqueta="Reemplazar" deshabilitado={deshabilitado || !!ocupado} alElegir={(f) => setFotoNueva(f)} />
               <button
                 type="button"
-                className="min-h-10 rounded-btn text-sm font-semibold text-mal disabled:opacity-50"
+                className="flex min-h-11 items-center justify-center gap-2 rounded-btn border-2 border-mal text-sm font-bold text-mal disabled:opacity-50"
                 disabled={deshabilitado || !!ocupado}
                 onClick={() => setPreguntandoFoto(true)}
               >
+                <Basura className="size-4" />
                 Quitar foto
               </button>
+              {fotoNueva && (
+                <DialogoConfirmar
+                  titulo="¿Reemplazar la foto de la comanda?"
+                  texto="La foto actual es la evidencia de este pedido: se borra y queda la nueva. No se puede recuperar."
+                  confirmar="Sí, reemplazar"
+                  alCancelar={() => setFotoNueva(null)}
+                  alConfirmar={() => {
+                    const f = fotoNueva;
+                    setFotoNueva(null);
+                    void subir(f);
+                  }}
+                />
+              )}
               {preguntandoFoto && (
                 <DialogoConfirmar
                   titulo="¿Quitar la foto de la comanda?"
@@ -1277,7 +1310,10 @@ function BotonDeFoto({
   alElegir: (f: File) => void;
 }) {
   return (
-    <label className={`boton-sec cursor-pointer ${deshabilitado ? "opacity-50" : ""}`}>
+    <label
+      className={`boton-accion cursor-pointer ${deshabilitado ? "opacity-50" : ""}`}
+      style={{ "--c": "var(--c-foto)" } as React.CSSProperties}
+    >
       <Camara className="size-[18px]" />
       {etiqueta}
       <input

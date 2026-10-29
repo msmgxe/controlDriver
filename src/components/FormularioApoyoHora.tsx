@@ -3,10 +3,13 @@
 import { useState } from "react";
 
 import { guardarBloqueApoyoHora } from "@/app/(app)/jornada/acciones";
+import { BotonDeAccion } from "@/components/Acciones";
+import { Check, Reloj } from "@/components/iconos";
 import { Aviso } from "@/components/ui";
+import { useCifraAnimada } from "@/hooks/useCifraAnimada";
 import { horaEnLima, type FechaISO } from "@/lib/fechas";
 import type { BloqueExtraFila } from "@/lib/db/tipos";
-import { aCentimos } from "@/lib/pagos/reglas";
+import { aCentimos, formatearSoles } from "@/lib/pagos/reglas";
 
 /** Horas entre dos `HH:MM`, en decimal —sin el truncado de `horasDePermanencia`: aquí es tarifa, no piso. */
 function horasEntre(inicio: string, fin: string): number {
@@ -39,6 +42,9 @@ export function FormularioApoyoHora({
   const horas = horaFin ? horasEntre(horaInicio, horaFin) : 0;
   const tarifaCentimos = aCentimos(Number(tarifa.replace(",", ".")) || 0);
   const puedeGuardar = tiendaNombre.trim().length > 0 && horaFin !== "" && horas > 0 && tarifaCentimos > 0 && !guardando;
+
+  const aCobrar = horas > 0 && tarifaCentimos > 0 ? Math.round(horas * tarifaCentimos) : 0;
+  const aCobrarAnimado = Math.round(useCifraAnimada(aCobrar, 500));
 
   async function guardar() {
     setGuardando(true);
@@ -93,7 +99,12 @@ export function FormularioApoyoHora({
             />
           </Campo>
         </div>
-        {horas > 0 && <p className="-mt-2 text-xs text-tinta-2">{horas} horas</p>}
+        {horas > 0 && (
+          <div className="aviso-hora flex items-center gap-2 rounded-btn bg-sup-2 px-3 py-2 text-sm font-semibold">
+            <Reloj className="size-5" />
+            {horas} {horas === 1 ? "hora" : "horas"} en esa tienda
+          </div>
+        )}
 
         <Campo etiqueta="Tarifa por hora (S/)">
           <input
@@ -112,13 +123,33 @@ export function FormularioApoyoHora({
             placeholder="Refuerzo de pedidos"
             className="min-h-11 rounded-btn border border-linea-fuerte bg-sup px-3 text-base"
           />
+          <span className="flex flex-wrap gap-2">
+            {["Cubrí el turno", "Campaña", "Reemplazo"].map((m) => (
+              <button
+                key={m}
+                type="button"
+                aria-pressed={motivo === m}
+                onClick={() => setMotivo(m)}
+                className="com-tramo !font-semibold"
+              >
+                {m}
+              </button>
+            ))}
+          </span>
         </Campo>
+
+        <div className="com-res rise-v2" aria-live="polite">
+          <small>Te corresponde</small>
+          <b>{formatearSoles(aCobrarAnimado)}</b>
+          <small>{horas > 0 && tarifaCentimos > 0 ? `${horas} h × ${formatearSoles(tarifaCentimos)}` : "Pon la salida y la tarifa"}</small>
+        </div>
       </div>
 
       <div className="flex flex-col gap-2 border-t border-linea px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
-        <button type="button" className="boton-principal !min-h-11 !text-base" disabled={!puedeGuardar} onClick={() => void guardar()}>
+        <BotonDeAccion k="apoyo" disabled={!puedeGuardar} onClick={() => void guardar()}>
+          <Check className="size-5" />
           {guardando ? "Guardando…" : inicial ? "Guardar cambios" : "Guardar apoyo"}
-        </button>
+        </BotonDeAccion>
       </div>
     </>
   );

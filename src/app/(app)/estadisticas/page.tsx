@@ -10,8 +10,8 @@ import { ExportarEstadisticas } from "@/components/ExportarEstadisticas";
 import { GraficoDeLaSemana } from "@/components/GraficoDeLaSemana";
 import { GraficoDias } from "@/components/GraficoDias";
 import { GraficoSemanas } from "@/components/GraficoSemanas";
-import { Flecha, Reloj, Subir, Trofeo } from "@/components/iconos";
-import { Pestanas } from "@/components/Pestanas";
+import { Reloj, Subir, Trofeo } from "@/components/iconos";
+import { FlechaBoton, PestanasDeColor, TituloConFigura } from "@/components/PagUi";
 import { TourDePantalla } from "@/components/TourDePantalla";
 import { VelocimetroDeMeta } from "@/components/VelocimetroDeMeta";
 import { ResumenDelPeriodo } from "@/components/ResumenDelPeriodo";
@@ -128,14 +128,14 @@ export default function PaginaEstadisticas() {
 
   const encabezado = (
     <div id="est-vistas" className="flex flex-col gap-3">
-      <Pestanas
+      <PestanasDeColor
         etiqueta="Qué mirar"
         actual={vista}
         alCambiar={(id) => setVista(id as Vista)}
         items={[
-          { id: "semana", etiqueta: "Semana" },
-          { id: "comparar", etiqueta: "Comparar" },
-          { id: "mes", etiqueta: "Mes" },
+          { id: "semana", etiqueta: "Semana", k: "stats" },
+          { id: "comparar", etiqueta: "Comparar", k: "adicional" },
+          { id: "mes", etiqueta: "Mes", k: "historial" },
         ]}
       />
     </div>
@@ -152,16 +152,13 @@ export default function PaginaEstadisticas() {
         {encabezado}
         <BarraDeSemana semana={semana} alCambiar={setSemana} etiqueta="Semana que miras" />
 
-        <div className="flex items-center justify-between gap-2 rounded-btn border border-linea-fuerte bg-sup p-1">
-          <button
-            type="button"
-            aria-label="Comparar con una semana más antigua"
+        <div className="flex items-center justify-between gap-2 rounded-btn border border-linea-fuerte bg-sup p-1.5">
+          <FlechaBoton
+            atras
+            etiqueta="Comparar con una semana más antigua"
             disabled={atras >= MAX_SEMANAS_ATRAS}
             onClick={() => setAtras((n) => n + 1)}
-            className="grid size-11 place-items-center rounded-btn hover:bg-sup-2 disabled:opacity-30"
-          >
-            <Flecha className="size-5 rotate-180" />
-          </button>
+          />
           <div className="flex min-w-0 flex-col items-center text-center">
             <span className="rotulo">Compararla con</span>
             <b className="text-[17px] leading-tight">Sem. {rotulo(lunesB)}</b>
@@ -169,15 +166,11 @@ export default function PaginaEstadisticas() {
               {atras === 1 ? "la semana anterior" : `hace ${atras} semanas`}
             </span>
           </div>
-          <button
-            type="button"
-            aria-label="Comparar con una semana más reciente"
+          <FlechaBoton
+            etiqueta="Comparar con una semana más reciente"
             disabled={atras <= 1}
             onClick={() => setAtras((n) => n - 1)}
-            className="grid size-11 place-items-center rounded-btn hover:bg-sup-2 disabled:opacity-30"
-          >
-            <Flecha className="size-5" />
-          </button>
+          />
         </div>
 
         {!diasA.some((d) => d.cargado) && !diasB.some((d) => d.cargado) ? (
@@ -308,7 +301,7 @@ export default function PaginaEstadisticas() {
       ) : (
         <>
           {vista === "mes" && (
-            <Acordeon titulo="Día por día" resumen={`${t.diasTrabajados} días con carga`}>
+            <Acordeon titulo={<TituloConFigura k="pagos">Día por día</TituloConFigura>} resumen={`${t.diasTrabajados} días con carga`}>
               <GraficoDias dias={dias} />
             </Acordeon>
           )}
@@ -436,7 +429,7 @@ function DetalleDelRango({
   return (
     <>
       <Acordeon
-        titulo="Tiempos"
+        titulo={<TituloConFigura k="comanda">Tiempos</TituloConFigura>}
         resumen={`${formatearDuracion(totalMinutos)} en ruta · ${durProm} min por ruta`}
       >
         {bloqueTiempos}
@@ -446,14 +439,14 @@ function DetalleDelRango({
       </Acordeon>
 
       <Acordeon
-        titulo="Ingresos"
+        titulo={<TituloConFigura k="pagos">Ingresos</TituloConFigura>}
         resumen={`${formatearSoles(centimosPorDia)} por día${totalPedidos ? ` · ${formatearSoles(centimosPorPedido)} por pedido` : ""}`}
       >
         {bloqueIngresos}
       </Acordeon>
 
       <Acordeon
-        titulo="Por distancia"
+        titulo={<TituloConFigura k="stats">Por distancia</TituloConFigura>}
         resumen={`${totalFuera} de ${totalPedidos} pedidos fuera del tramo 1${
           conKm.length > 0 ? ` · media ${kmMedio.toFixed(1)} km` : ""
         }`}
@@ -484,13 +477,13 @@ function DetalleDelRango({
       </Acordeon>
 
       <Acordeon
-        titulo="Récords"
+        titulo={<TituloConFigura k="taxi">Récords</TituloConFigura>}
         resumen={`${formatearSoles(mejorIngreso.centimos)} · mejor día`}
       >
         {bloqueRecords}
       </Acordeon>
 
-      <Acordeon titulo="Exportar" resumen="Estadísticas a PDF">
+      <Acordeon titulo={<TituloConFigura k="historial">Exportar</TituloConFigura>} resumen="Estadísticas a PDF">
         <ExportarEstadisticas
           driver={driver}
           desde={desde}

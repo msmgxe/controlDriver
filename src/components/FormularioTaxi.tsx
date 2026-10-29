@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 
 import {
   crearTipoDeAdicional,
@@ -13,7 +13,9 @@ import {
   lineasConMonto,
   type LineaDeZona,
 } from "@/components/AdicionalPorZona";
+import { BotonDeAccion } from "@/components/Acciones";
 import { Campo } from "@/components/FormularioApoyoHora";
+import { Cartera, Check, Equis, Flecha, Pin, Suma } from "@/components/iconos";
 import { Aviso } from "@/components/ui";
 import { horaEnLima, type FechaISO } from "@/lib/fechas";
 import type { Punto } from "@/lib/geo/distancia";
@@ -205,6 +207,11 @@ export function FormularioTaxi({
     alGuardar();
   }
 
+  const colorDelTipo = (t: CategoriaAdicional, i: number) =>
+    t.id === CATEGORIA_TAXI
+      ? { c: "var(--c-taxi)", texto: "var(--sol-tinta, #0a2260)" }
+      : { c: PALETA[(t.tarifario.length > 0 ? 0 : i + 1) % PALETA.length], texto: "#fff" };
+
   return (
     <>
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4">
@@ -216,39 +223,33 @@ export function FormularioTaxi({
 
         <div className="flex flex-col gap-2">
           <span className="text-sm font-semibold">Tipo de adicional</span>
-          <div
-            role="radiogroup"
-            aria-label="Tipo de adicional"
-            className="flex flex-wrap gap-2"
-          >
-            {visibles.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                role="radio"
-                aria-checked={categoriaId === t.id}
-                onClick={() => setCategoriaId(t.id)}
-                className={`min-h-11 rounded-btn border-2 px-4 text-sm font-semibold ${
-                  categoriaId === t.id
-                    ? "border-acento bg-acento-suave text-acento-tinta"
-                    : "border-linea-fuerte text-tinta-2"
-                }`}
-              >
-                {t.nombre}
-              </button>
-            ))}
+          <div role="radiogroup" aria-label="Tipo de adicional" className="com-tipos">
+            {visibles.map((t, i) => {
+              const { c, texto } = colorDelTipo(t, i);
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={categoriaId === t.id}
+                  onClick={() => setCategoriaId(t.id)}
+                  className="com-tipo"
+                  style={{ "--c": c, "--c-texto": texto } as CSSProperties}
+                >
+                  {categoriaId === t.id && <Check className="size-4" />}
+                  {t.nombre}
+                </button>
+              );
+            })}
             {nuevo === null && (
-              <button
-                type="button"
-                onClick={() => setNuevo("")}
-                className="min-h-11 rounded-btn border-2 border-dashed border-linea-fuerte px-4 text-sm font-semibold text-acento-tinta"
-              >
-                + Nuevo tipo
+              <button type="button" onClick={() => setNuevo("")} className="com-tipo" data-nuevo="">
+                <Suma className="size-4" />
+                Nuevo tipo
               </button>
             )}
           </div>
           {nuevo !== null && (
-            <div className="flex gap-2">
+            <div className="rise-v2 flex gap-2">
               <input
                 value={nuevo}
                 onChange={(e) => setNuevo(e.target.value)}
@@ -258,20 +259,11 @@ export function FormularioTaxi({
                 aria-label="Nombre del nuevo tipo"
                 className="min-h-11 min-w-0 flex-1 rounded-btn border border-linea-fuerte bg-sup px-3 text-base"
               />
-              <button
-                type="button"
-                className="boton-sec"
-                disabled={nuevo.trim().length < 2}
-                onClick={() => void crearTipo()}
-              >
+              <button type="button" className="boton-sec" disabled={nuevo.trim().length < 2} onClick={() => void crearTipo()}>
                 Crear
               </button>
-              <button
-                type="button"
-                className="boton-sec"
-                onClick={() => setNuevo(null)}
-              >
-                ✕
+              <button type="button" className="boton-sec" aria-label="Cancelar" onClick={() => setNuevo(null)}>
+                <Equis className="size-4" />
               </button>
             </div>
           )}
@@ -279,39 +271,33 @@ export function FormularioTaxi({
 
         {esTaxi && (
           <>
-            <div className="flex gap-3">
+            <div className="com-marcas">
               <button
                 type="button"
+                className="com-marca"
+                style={{ "--c": "var(--c-cantidad)" } as CSSProperties}
+                data-hecho={origen ? "true" : "false"}
                 onClick={() => void marcarInicio()}
                 disabled={buscando !== null}
-                className={`boton-sec flex-1 !min-h-14 flex-col !gap-0.5 ${origen ? "!border-acento !text-acento-tinta" : ""}`}
               >
-                <span className="text-xs font-semibold opacity-80">
-                  {buscando === "inicio" ? "Ubicando…" : "Inicio"}
-                </span>
-                <span className="text-sm font-bold">
-                  {origen ? `${horaInicio} marcado` : "Marcar inicio"}
-                </span>
+                <span className="com-fig">{origen ? <Check className="size-5" /> : <Pin className="size-5" />}</span>
+                {buscando === "inicio" ? "Ubicando…" : origen ? "Inicio marcado" : "Marcar inicio"}
+                <small>{origen ? `a las ${horaInicio}` : "Al subir el cliente"}</small>
               </button>
               <button
                 type="button"
+                className="com-marca"
+                style={{ "--c": "var(--mal)" } as CSSProperties}
+                data-hecho={destino ? "true" : "false"}
                 onClick={() => void marcarFin()}
                 disabled={buscando !== null || !origen}
-                className={`boton-sec flex-1 !min-h-14 flex-col !gap-0.5 ${destino ? "!border-acento !text-acento-tinta" : ""}`}
               >
-                <span className="text-xs font-semibold opacity-80">
-                  {buscando === "fin" ? "Ubicando…" : "Fin"}
-                </span>
-                <span className="text-sm font-bold">
-                  {destino ? `${horaFin} marcado` : "Marcar fin"}
-                </span>
+                <span className="com-fig">{destino ? <Check className="size-5" /> : <Flecha className="size-5" />}</span>
+                {buscando === "fin" ? "Ubicando…" : destino ? "Fin marcado" : "Marcar fin"}
+                <small>{destino ? `a las ${horaFin}` : "Al bajar el cliente"}</small>
               </button>
             </div>
-            {(!origen || !destino) && (
-              <p className="-mt-2 text-xs text-tinta-3">
-                Sin GPS no hay problema: escribe los km a mano abajo.
-              </p>
-            )}
+            {(!origen || !destino) && <p className="-mt-2 text-xs text-tinta-3">Sin GPS no hay problema: escribe los km a mano abajo.</p>}
 
             <Campo etiqueta="Kilómetros">
               <input
@@ -329,11 +315,7 @@ export function FormularioTaxi({
         )}
 
         {usaZonas ? (
-          <ZonasDelReparto
-            zonas={tipoActual?.tarifario ?? []}
-            lineas={lineas}
-            setLineas={setLineas}
-          />
+          <ZonasDelReparto zonas={tipoActual?.tarifario ?? []} lineas={lineas} setLineas={setLineas} />
         ) : (
           <>
             {!esTaxi && (
@@ -366,12 +348,12 @@ export function FormularioTaxi({
               type="button"
               aria-expanded={verTarifas}
               onClick={() => setVerTarifas((v) => !v)}
-              className="min-h-11 self-start text-sm font-semibold text-acento-tinta"
+              className="com-tipo self-start"
+              data-nuevo=""
             >
-              {verTarifas ? "▾" : "▸"} Tarifas de {tipoActual.nombre}
-              {tipoActual.tarifario.length > 0
-                ? ` (${tipoActual.tarifario.length} zonas)`
-                : " · cargar zonas y precios"}
+              <Cartera className="size-4" />
+              Tarifas de {tipoActual.nombre}
+              {tipoActual.tarifario.length > 0 ? ` (${tipoActual.tarifario.length} zonas)` : " · cargar zonas y precios"}
             </button>
             {verTarifas && (
               <EditorDeTarifario
@@ -385,19 +367,14 @@ export function FormularioTaxi({
       </div>
 
       <div className="flex flex-col gap-2 border-t border-linea px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
-        <button
-          type="button"
-          className="boton-principal !min-h-11 !text-base"
-          disabled={!puedeGuardar}
-          onClick={() => void guardar()}
-        >
-          {guardando
-            ? "Guardando…"
-            : inicial
-              ? "Guardar cambios"
-              : "Guardar adicional"}
-        </button>
+        <BotonDeAccion k={esTaxi ? "taxi" : "adicional"} disabled={!puedeGuardar} onClick={() => void guardar()}>
+          <Check className="size-5" />
+          {guardando ? "Guardando…" : inicial ? "Guardar cambios" : usaZonas ? "Guardar reparto" : "Guardar adicional"}
+        </BotonDeAccion>
       </div>
     </>
   );
 }
+
+/** Los colores de los tipos de adicional que no son Taxi: el primero, para el que reparte por zonas. */
+const PALETA = ["var(--c-adic)", "var(--c-apoyo)", "var(--c-foto)", "var(--c-stats)", "var(--c-aprender)", "var(--c-buscar)"];

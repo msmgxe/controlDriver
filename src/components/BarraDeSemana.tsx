@@ -1,6 +1,7 @@
 "use client";
 
-import { Calendario, Flecha } from "@/components/iconos";
+import { BotonPag, FlechaBoton } from "@/components/PagUi";
+import { Calendario } from "@/components/iconos";
 import {
   formatearFecha,
   hoyEnLima,
@@ -38,14 +39,7 @@ export function BarraDeSemana({
     <div className="flex flex-col gap-1">
       {etiqueta && <span className="rotulo">{etiqueta}</span>}
       <div className="flex items-center gap-0.5 rounded-btn border border-linea-fuerte bg-sup p-1">
-        <button
-          type="button"
-          aria-label="Semana anterior"
-          onClick={() => alCambiar(sumarDias(semana, -7))}
-          className="grid size-11 shrink-0 place-items-center rounded-btn hover:bg-sup-2"
-        >
-          <Flecha className="size-5 rotate-180" />
-        </button>
+        <FlechaBoton atras etiqueta="Semana anterior" onClick={() => alCambiar(sumarDias(semana, -7))} />
 
         {/* Tocar el nombre abre el calendario: el campo de fecha va encima, invisible. */}
         <label className="relative flex min-w-0 flex-1 flex-col items-center justify-center rounded-btn py-0.5 hover:bg-sup-2">
@@ -74,24 +68,12 @@ export function BarraDeSemana({
         </label>
 
         {!esActual && (
-          <button
-            type="button"
-            onClick={() => alCambiar(actual)}
-            className="shrink-0 rounded-chip px-2 py-1 text-xs font-bold text-acento-tinta underline underline-offset-2"
-          >
+          <BotonPag k="taxi" className="!min-h-11 shrink-0 !px-3" onClick={() => alCambiar(actual)}>
             Hoy
-          </button>
+          </BotonPag>
         )}
 
-        <button
-          type="button"
-          aria-label="Semana siguiente"
-          disabled={esActual}
-          onClick={() => alCambiar(sumarDias(semana, 7))}
-          className="grid size-11 shrink-0 place-items-center rounded-btn hover:bg-sup-2 disabled:opacity-30"
-        >
-          <Flecha className="size-5" />
-        </button>
+        <FlechaBoton etiqueta="Semana siguiente" disabled={esActual} onClick={() => alCambiar(sumarDias(semana, 7))} />
       </div>
     </div>
   );

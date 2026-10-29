@@ -30,27 +30,20 @@ export function ResumenDelPeriodo({
         </span>
       </div>
 
-      <div className="grid grid-cols-[minmax(0,5fr)_minmax(0,7fr)] divide-x divide-linea">
-        <div className="flex items-center gap-2 pr-2">
-          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-acento text-acento-texto">
+      <div className="grid grid-cols-2 gap-2">
+        <div className="pag-kpi" style={{ "--c": "var(--c-comanda)" } as React.CSSProperties}>
+          <span className="flex items-center gap-1.5">
             <Ticket className="size-[18px]" />
+            <small>Pedidos</small>
           </span>
-          <span className="flex min-w-0 flex-col">
-            <span className="text-[11px] leading-tight text-tinta-2">Pedidos</span>
-            <b className="font-display text-[30px] leading-none tabular-nums">{pedidos}</b>
-          </span>
+          <b className="tabular-nums">{pedidos}</b>
         </div>
-
-        <div className="flex items-center gap-2 pl-3">
-          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-acento-suave font-mono text-[13px] font-bold text-acento-tinta">
-            S/
+        <div className="pag-kpi" style={{ "--c": "var(--c-pagos)", animationDelay: "0.07s" } as React.CSSProperties}>
+          <span className="flex items-center gap-1.5">
+            <small className="font-mono text-[13px] font-extrabold">S/</small>
+            <small>Generado</small>
           </span>
-          <span className="flex min-w-0 flex-col">
-            <span className="text-[11px] leading-tight text-tinta-2">Generado</span>
-            <b className="font-display text-[26px] leading-none whitespace-nowrap text-acento tabular-nums">
-              {formatearSoles(centimos).replace("S/ ", "")}
-            </b>
-          </span>
+          <b className="whitespace-nowrap tabular-nums">{formatearSoles(centimos).replace("S/ ", "")}</b>
         </div>
       </div>
     </section>

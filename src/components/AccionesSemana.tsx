@@ -3,6 +3,9 @@
 import { useState, useTransition } from "react";
 
 import { accionReabrirSemana, accionRegistrarPago } from "@/app/(app)/pagos/acciones";
+import { DialogoConfirmar } from "@/components/DialogoConfirmar";
+import { Check, Reloj } from "@/components/iconos";
+import { BotonPag } from "@/components/PagUi";
 import { formatearSoles } from "@/lib/pagos/reglas";
 import type { EstadoSemana } from "@/lib/db/tipos";
 
@@ -35,6 +38,12 @@ export function AccionesSemana({
     montoRecibidoCentimos === null ? "" : String(montoRecibidoCentimos / 100),
   );
   const [error, setError] = useState<string | null>(null);
+  // Pedir confirmación antes de registrar un monto distinto o de reabrir.
+  const [confirmando, setConfirmando] = useState<"pago" | "reabrir" | null>(null);
+
+  const escrito = recibido === "" ? null : Number(recibido);
+  const centimosEscritos = escrito === null || Number.isNaN(escrito) ? null : Math.round(escrito * 100);
+  const difEscrita = centimosEscritos === null ? null : centimosEscritos - montoCalculadoCentimos;
 
   const diferencia =
     montoRecibidoCentimos === null ? null : montoRecibidoCentimos - montoCalculadoCentimos;
@@ -46,6 +55,7 @@ export function AccionesSemana({
     setError(null);
     iniciar(async () => {
       const r = await accion();
+      setConfirmando(null);
       if (!r.ok) setError(r.error);
       else alCambiar();
     });
@@ -57,7 +67,7 @@ export function AccionesSemana({
     <div className="flex flex-col gap-3 border-t border-linea pt-4">
       {!pagada && (
         <>
-          <label htmlFor={`recibido-${semanaInicio}`} className="text-sm font-semibold">
+          <label htmlFor={`recibido-${semanaInicio}`} className="font-display text-base font-bold">
             ¿Cuánto te pagaron?
           </label>
           <p className="-mt-1.5 text-xs text-tinta-2">
@@ -74,31 +84,43 @@ export function AccionesSemana({
               placeholder={String(montoCalculadoCentimos / 100)}
               value={recibido}
               onChange={(e) => setRecibido(e.target.value)}
-              className="min-h-11 min-w-32 flex-1 rounded-btn border border-linea-fuerte bg-sup px-4 text-base"
+              className="min-h-14 min-w-32 flex-1 rounded-btn border-[3px] border-[var(--c-pagos)] bg-sup px-4 text-xl font-bold"
             />
-            <button
-              type="button"
-              className="boton-principal"
-              disabled={pendiente || recibido === ""}
-              onClick={() =>
-                ejecutar(() => accionRegistrarPago(semanaInicio, Number(recibido)))
-              }
-            >
-              {pendiente ? "Guardando…" : "Registrar pago"}
-            </button>
           </div>
+          {difEscrita !== null && (
+            <p
+              className={`text-sm font-bold ${difEscrita < 0 ? "text-mal" : "text-bien"}`}
+              aria-live="polite"
+            >
+              {difEscrita === 0
+                ? "Cuadra justo con lo calculado."
+                : difEscrita < 0
+                  ? `Te pagaron de menos: ${formatearSoles(-difEscrita)} por reclamar.`
+                  : `Te pagaron de más: ${formatearSoles(difEscrita)} a tu favor.`}
+            </p>
+          )}
+          <BotonPag
+            k="pagos"
+            grande
+            ancho
+            disabled={pendiente || centimosEscritos === null}
+            onClick={() => {
+              // Lo justo se guarda directo; un monto distinto pide confirmar.
+              if (difEscrita === 0) ejecutar(() => accionRegistrarPago(semanaInicio, Number(recibido)));
+              else setConfirmando("pago");
+            }}
+          >
+            <Check className="size-5" />
+            {pendiente ? "Guardando…" : "Registrar pago"}
+          </BotonPag>
         </>
       )}
 
       {pagada && (
-        <button
-          type="button"
-          className="boton-sec self-start"
-          disabled={pendiente}
-          onClick={() => ejecutar(() => accionReabrirSemana(semanaInicio))}
-        >
+        <BotonPag k="mano" ancho disabled={pendiente} onClick={() => setConfirmando("reabrir")}>
+          <Reloj className="size-5" />
           {pendiente ? "Reabriendo…" : "Reabrir para corregir algo"}
-        </button>
+        </BotonPag>
       )}
 
       {diferencia !== null && diferencia !== 0 && (
@@ -111,6 +133,31 @@ export function AccionesSemana({
       )}
 
       {error && <p className="text-sm font-semibold text-mal">{error}</p>}
+
+      {confirmando === "pago" && centimosEscritos !== null && (
+        <DialogoConfirmar
+          titulo="¿Registrar este pago?"
+          texto={`Anotarás ${formatearSoles(centimosEscritos)} y la semana quedará pagada y bloqueada. Lo calculado era ${formatearSoles(montoCalculadoCentimos)}${
+            difEscrita !== null && difEscrita !== 0
+              ? `: ${difEscrita < 0 ? "faltan" : "sobran"} ${formatearSoles(Math.abs(difEscrita))}`
+              : ""
+          }.`}
+          confirmar="Sí, registrar"
+          ocupado={pendiente}
+          alConfirmar={() => ejecutar(() => accionRegistrarPago(semanaInicio, Number(recibido)))}
+          alCancelar={() => setConfirmando(null)}
+        />
+      )}
+      {confirmando === "reabrir" && (
+        <DialogoConfirmar
+          titulo="¿Reabrir esta semana?"
+          texto={`El pago de ${formatearSoles(montoRecibidoCentimos ?? 0)} dejará de estar registrado y la semana volverá a poder editarse.`}
+          confirmar="Sí, reabrir"
+          ocupado={pendiente}
+          alConfirmar={() => ejecutar(() => accionReabrirSemana(semanaInicio))}
+          alCancelar={() => setConfirmando(null)}
+        />
+      )}
     </div>
   );
 }

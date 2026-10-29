@@ -37,6 +37,32 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 2.00 — 29/10/2026 · Rediseño completo
+**Una app de colores, botones grandes y menos texto.**
+- **Lenguaje de color:** cada acción tiene su color y su figura en toda la app (comanda azul,
+  cuántos hice verde, a mano naranja, fotos morado, adicionales vino, taxi amarillo, apoyo
+  turquesa, pagos verde, estadísticas violeta…). Lo que antes era texto o enlace ahora es botón.
+- **Inicio:** barra inferior con **Cargar** como botón central grande; tira de días en botones
+  redondos; tarjeta del día con anillo por fuente; una fila de color por tipo de adicional;
+  «Volver a hoy», «Activar mi licencia» y «Respaldar ahora» como botones.
+- **Anotar pedidos:** cuatro cuadros de color; al elegir uno se esconden los demás y queda el
+  formulario con el borde de su color y «‹ Otras formas de anotar».
+- **Pedido, comandas, adicionales y apoyo** rediseñados: zonas en botones de color con el monto
+  que anima, Expo Vino por toques, Por hora / Por tramos en un selector grande.
+- **Pagos, Estadísticas, Historial y Buscar:** fuentes como botones de color con casilla, total
+  de lo marcado, carretera de meta, pestañas grandes.
+- **Ajustes:** cuadrícula de tarjetas de color en lugar de catorce acordeones iguales.
+- **Ajustes › Apariencia › Letra y controles:** tipo de letra (7), tamaño (3), botones con
+  relieve o planos, toques cómodos o compactos y animaciones completas o reducidas, con vista
+  previa en vivo.
+- **Preguntas de seguridad al eliminar** en todo lo que borra o quita (se añadieron en: quitar
+  registros de apoyo/adicional, zonas y pedidos cubiertos, quitar descansos, reabrir semana,
+  registrar un pago distinto de lo calculado, quitar la ubicación, quitar el PIN, salir…).
+- **La app abre 1 segundo más rápido** (la pantalla de inicio dura 1 s en vez de 2).
+- **Panel web de licencias** (`/licencias`): tablero con usuarios, vencimientos, ingresos por
+  mes, montos y método de pago, ficha por usuario con renovar y mensaje de WhatsApp, anular el
+  último pago, exportar CSV, auditoría. Ver `Archivos MD/PANEL-LICENCIAS.md`.
+
 ### 1.29 — 27/10/2026
 - **Cotejar con el reporte de la empresa subiendo su imagen.** Pagos › «Tienda…» › «Subir el
   reporte de la empresa»: eliges la captura (o varias) con la lista de códigos; la app la lee en

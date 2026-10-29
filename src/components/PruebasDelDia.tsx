@@ -3,7 +3,8 @@
 import { ImagenConZoom } from "@/components/ImagenConZoom";
 import { useEffect, useRef, useState } from "react";
 
-import { Flecha } from "@/components/iconos";
+import { DialogoConfirmar } from "@/components/DialogoConfirmar";
+import { Basura, Camara, Flecha } from "@/components/iconos";
 import { useCapa } from "@/hooks/useCapa";
 import { useDatos } from "@/hooks/useDatos";
 import {
@@ -14,7 +15,7 @@ import {
   quitarRepetidas,
   type Prueba,
 } from "@/lib/db/sqlite/pruebas";
-import type { FechaISO } from "@/lib/fechas";
+import { formatearFechaLarga, type FechaISO } from "@/lib/fechas";
 
 /**
  * Las capturas guardadas de un día.
@@ -41,9 +42,14 @@ export function PruebasDelDia({ fecha }: { fecha: FechaISO }) {
 
   if (pruebas.length === 0) {
     return (
-      <p className="text-sm text-tinta-3">
-        No hay capturas guardadas de este día. Se guardan solas al cargar.
-      </p>
+      <div className="flex flex-col items-center gap-2 py-2 text-center">
+        <span className="grid size-14 place-items-center rounded-full bg-sup-2 text-tinta-3 bob-v2">
+          <Camara className="size-7" />
+        </span>
+        <p className="max-w-[28ch] text-sm text-tinta-2">
+          No hay capturas guardadas de este día. Se guardan solas al cargar.
+        </p>
+      </div>
     );
   }
 
@@ -71,41 +77,23 @@ export function PruebasDelDia({ fecha }: { fecha: FechaISO }) {
         ))}
       </div>
 
-      {confirmandoTodas ? (
-        <div className="flex flex-col gap-2 rounded-btn bg-mal-suave p-3">
-          <p className="text-sm text-mal">
-            ¿Borrar las {pruebas.length} capturas de este día? Los pedidos y rutas guardados no se
-            tocan; solo las imágenes.
-          </p>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={async () => {
-                await borrarPruebasDelDia(fecha);
-                setConfirmandoTodas(false);
-                setIntento((n) => n + 1);
-              }}
-              className="min-h-11 flex-1 rounded-btn bg-mal px-4 text-sm font-semibold text-white"
-            >
-              Sí, borrarlas
-            </button>
-            <button
-              type="button"
-              onClick={() => setConfirmandoTodas(false)}
-              className="boton-secundario flex-1"
-            >
-              No
-            </button>
-          </div>
-        </div>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setConfirmandoTodas(true)}
-          className="self-start text-sm font-semibold text-mal"
-        >
-          Borrar todas las capturas de este día
-        </button>
+      <button type="button" onClick={() => setConfirmandoTodas(true)} className="boton-accion ini-borrar !min-h-11 !text-base">
+        <Basura className="size-5" />
+        Borrar todas las capturas
+      </button>
+
+      {confirmandoTodas && (
+        <DialogoConfirmar
+          titulo={`¿Borrar las ${pruebas.length} capturas del ${formatearFechaLarga(fecha).replace(/ de \d{4}$/, "")}?`}
+          texto="Los pedidos y rutas guardados no se tocan; solo las imágenes. No se puede deshacer."
+          confirmar="Sí, borrarlas"
+          alCancelar={() => setConfirmandoTodas(false)}
+          alConfirmar={async () => {
+            await borrarPruebasDelDia(fecha);
+            setConfirmandoTodas(false);
+            setIntento((n) => n + 1);
+          }}
+        />
       )}
 
       {abierta !== null && (
@@ -199,7 +187,7 @@ function Carrusel({
         <button
           type="button"
           onClick={onCerrar}
-          className="min-h-11 rounded-btn px-4 text-sm font-semibold"
+          className="min-h-11 rounded-btn bg-white/15 px-4 text-sm font-semibold"
         >
           Cerrar
         </button>
@@ -231,32 +219,14 @@ function Carrusel({
         </button>
 
         <div className="flex flex-1 justify-center">
-          {confirmando ? (
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => void borrar()}
-                className="min-h-11 rounded-btn bg-mal px-4 text-sm font-semibold text-white"
-              >
-                Sí, borrar esta
-              </button>
-              <button
-                type="button"
-                onClick={() => setConfirmando(false)}
-                className="min-h-11 rounded-btn bg-white/15 px-4 text-sm font-semibold text-white"
-              >
-                No
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setConfirmando(true)}
-              className="min-h-11 rounded-btn px-4 text-sm font-semibold text-red-300"
-            >
-              Borrar esta captura
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setConfirmando(true)}
+            className="inline-flex min-h-11 items-center gap-2 rounded-btn bg-mal px-4 text-sm font-semibold text-white"
+          >
+            <Basura className="size-[18px]" />
+            Borrar esta captura
+          </button>
         </div>
 
         <button
@@ -269,6 +239,18 @@ function Carrusel({
           <Flecha className="size-5" />
         </button>
       </div>
+      {confirmando && (
+        <DialogoConfirmar
+          titulo={`¿Borrar la captura ${actual + 1} de ${pruebas.length}?`}
+          texto="Se quita solo esta imagen; los pedidos y rutas no se tocan. No se puede deshacer."
+          confirmar="Sí, borrar esta"
+          alCancelar={() => setConfirmando(false)}
+          alConfirmar={() => {
+            setConfirmando(false);
+            void borrar();
+          }}
+        />
+      )}
     </div>
   );
 }

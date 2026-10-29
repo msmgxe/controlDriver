@@ -5,7 +5,8 @@ import { useState } from "react";
 import { FilaPedidoSimple } from "@/components/FilaPedidoSimple";
 import { HojaDeCotejo } from "@/components/HojaDeCotejo";
 import { HojaDePedido } from "@/components/HojaDePedido";
-import { Check, Flecha } from "@/components/iconos";
+import { Check, Flecha, Hoja } from "@/components/iconos";
+import { BotonPag, ChipDeColor } from "@/components/PagUi";
 import { TarjetaBloqueExtra } from "@/components/TarjetaBloqueExtra";
 import type { AjustesDeComandas } from "@/lib/db/sqlite/ajustes";
 import { esCodigoPendiente } from "@/lib/db/sqlite/jornadas";
@@ -21,10 +22,11 @@ import {
   type ReglaPago,
 } from "@/lib/pagos/reglas";
 
-const COLOR = {
-  tienda: "bg-acento",
-  apoyo: "bg-[var(--f-apoyo)]",
-  taxi: "bg-[var(--f-taxi)]",
+/** El color de cada fuente: el mismo botón de color en Inicio, Pagos y Estadísticas. */
+const COLOR_FUENTE = {
+  tienda: { fondo: "var(--acento)", texto: "var(--acento-texto)" },
+  apoyo: { fondo: "var(--c-apoyo)", texto: "#fff" },
+  taxi: { fondo: "var(--c-taxi)", texto: "var(--sol-tinta, #0a2260)" },
 } as const;
 
 interface DiaDeFuente {
@@ -196,70 +198,74 @@ export function DesgloseDeFuentes({
 
   return (
     <div
-      className="entra flex flex-col gap-1 rounded-card bg-sup-2 p-3"
+      className="entra flex flex-col gap-2.5"
       aria-label={titulo ?? "De dónde viene"}
     >
       {titulo && <span className="rotulo px-1 pb-1">{titulo}</span>}
 
       {hayQueElegir && (
-        <div className="flex flex-col gap-1.5 px-1 pb-2">
-          <span className="text-[12px] font-semibold text-tinta">
-            Marca lo que quieres sumar
-          </span>
-          <div className="flex flex-wrap gap-1.5">
-            {todasLasFilas.map((f) => {
-              const grupo = grupoDe(f);
-              const visible = !ocultas.includes(grupo);
-              return (
-                <button
-                  key={f.clave}
-                  type="button"
-                  role="checkbox"
-                  aria-checked={visible}
-                  onClick={() => alternar(grupo)}
-                  className={`inline-flex min-h-9 items-center gap-1.5 rounded-chip border-2 px-3 text-xs font-semibold ${
-                    visible
-                      ? "border-acento bg-acento-suave text-acento-tinta"
-                      : "border-linea-fuerte bg-sup text-tinta-3"
-                  }`}
-                >
-                  <span
-                    aria-hidden
-                    className={`grid size-4 place-items-center rounded-[4px] border ${visible ? "border-acento bg-acento text-acento-texto" : "border-linea-fuerte"}`}
-                  >
-                    {visible && <Check className="size-3" />}
-                  </span>
-                  {f.categoria === "tienda"
-                    ? "Pedidos"
-                    : f.etiqueta.replace(/^Apoyo · /, "Apoyo ")}
-                </button>
-              );
-            })}
-          </div>
-          <div className="flex items-baseline justify-between gap-3 rounded-btn bg-acento px-3 py-2 text-acento-texto">
-            <span className="text-[12px] font-semibold">
-              {ocultas.some((g) => todasLasFilas.some((f) => grupoDe(f) === g))
-                ? `Total de lo marcado (de ${formatearSoles(totalSemana)})`
-                : "Total de todo"}
-            </span>
-            <b className="font-mono text-lg tabular-nums">
-              {formatearSoles(total)}
-            </b>
-          </div>
-          {ocultas.includes("tienda") && (
-            <p className="text-[11.5px] text-aviso">
-              Es solo una vista: lo que la tienda te deposita no cambia.
-            </p>
-          )}
+        <div className="px-1 pb-1">
+          <h3 className="text-[17px] leading-tight">Marca lo que quieres sumar</h3>
+          <p className="text-xs font-semibold text-tinta-2">Toca cada color para sumarlo o quitarlo.</p>
         </div>
       )}
 
-      {filas.map((f) => {
+      {todasLasFilas.map((f, indice) => {
+        const grupo = grupoDe(f);
+        const visible = !ocultas.includes(grupo);
         const abierta = fuenteAbierta === f.clave;
-        const parte = total > 0 ? f.centimos / total : 0;
+        const parte = totalSemana > 0 ? f.centimos / totalSemana : 0;
         const dias = abierta ? diasDe(f) : [];
+        const color = COLOR_FUENTE[f.categoria];
+        const nombre =
+          f.categoria === "tienda" ? "Pedidos" : f.etiqueta.replace(/^Apoyo · /, "Apoyo ");
+        const cuerpo = (
+          <>
+            {hayQueElegir && (
+              <span className="pag-fu__box" aria-hidden>
+                <Check />
+              </span>
+            )}
+            <span className="min-w-0 flex-1">
+              <b className="block leading-tight">{hayQueElegir ? nombre : f.etiqueta}</b>
+              <small className="block text-[12px] font-bold opacity-90">
+                {f.detalle}
+                {totalSemana > 0 && ` · ${Math.round(parte * 100)} %`}
+              </small>
+            </span>
+            <span className="pag-fu__monto tabular-nums">{formatearSoles(f.centimos)}</span>
+          </>
+        );
         return (
-          <div key={f.clave} className="rounded-btn bg-sup/60">
+          <div
+            key={f.clave}
+            className="pag-fu"
+            data-on={visible}
+            style={
+              {
+                "--fc": color.fondo,
+                "--fc-texto": color.texto,
+                animationDelay: `${indice * 0.06}s`,
+              } as React.CSSProperties
+            }
+          >
+            {hayQueElegir ? (
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={visible}
+                aria-label={`Sumar ${f.etiqueta}`}
+                onClick={() => alternar(grupo)}
+                className="pag-fu__top"
+              >
+                {cuerpo}
+              </button>
+            ) : (
+              <div className="pag-fu__top">{cuerpo}</div>
+            )}
+            <div className="pag-fu__barra" aria-hidden>
+              <i style={{ width: `${Math.max(parte * 100, f.centimos > 0 ? 3 : 0)}%` }} />
+            </div>
             <button
               type="button"
               aria-expanded={abierta}
@@ -267,34 +273,12 @@ export function DesgloseDeFuentes({
                 setFuenteAbierta(abierta ? null : f.clave);
                 setDiaAbierto(null);
               }}
-              className="flex w-full flex-col gap-1 px-3 py-2.5 text-left"
+              className="pag-fu__ver"
             >
-              <span className="flex items-baseline justify-between gap-3">
-                <span className="min-w-0 truncate text-[13px] font-semibold">
-                  {f.etiqueta}
-                </span>
-                <span className="flex shrink-0 items-center gap-1.5">
-                  <b className="font-mono text-[13px] tabular-nums">
-                    {formatearSoles(f.centimos)}
-                  </b>
-                  <Flecha
-                    className={`size-3.5 text-tinta-3 transition-transform duration-300 ${abierta ? "-rotate-90" : "rotate-90"}`}
-                  />
-                </span>
-              </span>
-              <span className="h-2 overflow-hidden rounded-chip bg-papel">
-                <span
-                  className={`barra-crece block h-full rounded-chip ${COLOR[f.categoria]}`}
-                  style={{
-                    width: `${Math.max(parte * 100, f.centimos > 0 ? 3 : 0)}%`,
-                  }}
-                />
-              </span>
-              <span className="text-[11.5px] text-tinta-2">
-                {f.detalle}
-                {total > 0 && ` · ${Math.round(parte * 100)} %`}
-                {!abierta && " · toca para ver los días"}
-              </span>
+              {abierta ? "Cerrar" : "Ver días y pedidos"}
+              <Flecha
+                className={`size-3.5 transition-transform duration-300 ${abierta ? "-rotate-90" : "rotate-90"}`}
+              />
             </button>
 
             <div
@@ -302,7 +286,7 @@ export function DesgloseDeFuentes({
               style={{ gridTemplateRows: abierta ? "1fr" : "0fr" }}
             >
               <div className="overflow-hidden" inert={!abierta}>
-                <div className="flex flex-col gap-1 border-t border-linea px-2 py-2">
+                <div className="pag-fu__detalle flex flex-col gap-1 px-2 py-2">
                   {f.categoria === "tienda" && todas.length > 0 && (
                     <div
                       className={`flex flex-col gap-1.5 rounded-btn p-2.5 text-xs ${
@@ -329,27 +313,16 @@ export function DesgloseDeFuentes({
                               : " · no falta ninguno"}
                           </span>
                           {sinMarcar.length > 0 && (
-                            <label className="flex min-h-9 items-center gap-2 font-medium">
-                              <input
-                                type="checkbox"
-                                checked={soloFaltan}
-                                onChange={(e) =>
-                                  setSoloFaltan(e.target.checked)
-                                }
-                                className="size-4"
-                              />
-                              Ver solo los que faltan
-                            </label>
+                            <ChipDeColor
+                              k="cantidad"
+                              activo={soloFaltan}
+                              onClick={() => setSoloFaltan((v) => !v)}
+                            >
+                              {soloFaltan ? "Viendo solo los que faltan" : "Ver solo los que faltan"}
+                            </ChipDeColor>
                           )}
                         </>
                       )}
-                      <button
-                        type="button"
-                        className="boton-sec self-start"
-                        onClick={() => setCotejando(true)}
-                      >
-                        Subir el reporte de la empresa
-                      </button>
                     </div>
                   )}
                   {dias.length === 0 && (
@@ -426,12 +399,39 @@ export function DesgloseDeFuentes({
         );
       })}
 
-      <div className="mt-1 flex items-baseline justify-between gap-3 border-t border-linea px-3 pt-2.5">
-        <span className="text-[13px] font-bold">Total</span>
-        <b className="font-mono text-[15px] tabular-nums">
-          {formatearSoles(total)}
-        </b>
+      <div className="pag-marcado" aria-live="polite">
+        <span className="flex flex-col">
+          <small className="text-[12px] font-bold opacity-95">
+            {hayQueElegir
+              ? ocultas.some((g) => todasLasFilas.some((f) => grupoDe(f) === g))
+                ? `Total de lo marcado (de ${formatearSoles(totalSemana)})`
+                : "Total de todo"
+              : "Total"}
+          </small>
+          <b className="tabular-nums">{formatearSoles(total)}</b>
+        </span>
+        <span className="flex flex-wrap justify-end gap-1.5" aria-hidden>
+          {filas.map((f) => (
+            <i
+              key={f.clave}
+              className="size-3.5 rounded-[5px] border-2 border-white"
+              style={{ background: COLOR_FUENTE[f.categoria].fondo }}
+            />
+          ))}
+        </span>
       </div>
+      {ocultas.includes("tienda") && (
+        <p className="px-1 text-[12px] font-semibold text-aviso">
+          Es solo una vista: lo que la tienda te deposita no cambia.
+        </p>
+      )}
+
+      {todas.length > 0 && (
+        <BotonPag k="comanda" grande ancho className="mt-1" onClick={() => setCotejando(true)}>
+          <Hoja className="size-5" />
+          Subir el reporte de la empresa
+        </BotonPag>
+      )}
 
       {cotejando && (
         <HojaDeCotejo

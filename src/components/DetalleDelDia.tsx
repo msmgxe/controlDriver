@@ -3,11 +3,12 @@
 import { useState, useTransition } from "react";
 
 import { cambiarHorarioDeJornada, eliminarJornada } from "@/app/(app)/jornada/acciones";
+import { BotonDeAccion } from "@/components/Acciones";
 import { DialogoConfirmar } from "@/components/DialogoConfirmar";
 import { DueloDePago } from "@/components/DueloDePago";
 import { FilaPedidoSimple } from "@/components/FilaPedidoSimple";
 import { HojaDePedido } from "@/components/HojaDePedido";
-import { Camara, Flecha, Reloj, Equis } from "@/components/iconos";
+import { Basura, Camara, Flecha, Reloj, Equis } from "@/components/iconos";
 import { Pestanas } from "@/components/Pestanas";
 import { PedidosPorTramo } from "@/components/PedidosPorTramo";
 import { PruebasDelDia } from "@/components/PruebasDelDia";
@@ -16,7 +17,7 @@ import type { AjustesDeComandas } from "@/lib/db/sqlite/ajustes";
 import { esCodigoPendiente } from "@/lib/db/sqlite/jornadas";
 import { borrarRuta } from "@/lib/db/sqlite/rutas";
 import type { JornadaCompleta, Tienda } from "@/lib/db/tipos";
-import type { FechaISO } from "@/lib/fechas";
+import { formatearFechaLarga, type FechaISO } from "@/lib/fechas";
 import { esPorZona, etiquetaTramo, horasDePermanencia, formatearSoles, montoPorPermanencia, type ReglaPago } from "@/lib/pagos/reglas";
 
 /**
@@ -25,8 +26,8 @@ import { esPorZona, etiquetaTramo, horasDePermanencia, formatearSoles, montoPorP
  *
  * Es el contenido del acordeón «Detalle de lo subido» de Inicio, y reúne lo que
  * antes estaba repartido entre la pantalla de la jornada y el recorrido de
- * Inicio. Al pie, tres filas para lo que se usa menos —las capturas del día, el
- * horario en tienda y borrar el día— y que no hace falta tener a la vista.
+ * Inicio. Al pie, tres botones de color para lo que se usa menos —las capturas
+ * del día, el horario en tienda y borrar el día— y que no hace falta tener a la vista.
  *
  * Tocar un pedido abre su hoja, con pestañas de Pedido, Cliente, Distancia y
  * Evidencia. En una semana ya pagada la hoja se abre igual, pero solo para ver.
@@ -92,7 +93,7 @@ export function DetalleDelDia({
               Un pedido sin ruta va al final, donde se ve y se puede corregir. */}
           <div className="overflow-hidden rounded-card border border-linea bg-sup">
             {jornada.ordenes.length === 0 ? (
-              <p className="px-4 py-6 text-sm text-tinta-3">Este día no tiene pedidos.</p>
+              <p className="px-4 py-6 text-center text-sm text-tinta-2">Todavía no hay pedidos este día.</p>
             ) : (
               visibles.map((o) => (
                 <FilaPedidoSimple
@@ -115,13 +116,9 @@ export function DetalleDelDia({
             )}
           </div>
           {jornada.ordenes.length > PEDIDOS_A_LA_VISTA && (
-            <button
-              type="button"
-              onClick={() => setVerTodos((v) => !v)}
-              className="inline-flex min-h-11 items-center gap-2 self-start text-sm font-semibold text-acento"
-            >
-              {verTodos ? "Ver menos" : `Ver los ${jornada.ordenes.length} pedidos`}
+            <button type="button" onClick={() => setVerTodos((v) => !v)} className="boton-sec w-full" aria-expanded={verTodos}>
               <Flecha className={`size-4 ${verTodos ? "-rotate-90" : "rotate-90"}`} />
+              {verTodos ? "Ver menos" : `Ver los ${jornada.ordenes.length} pedidos`}
             </button>
           )}
         </>
@@ -151,32 +148,32 @@ export function DetalleDelDia({
         />
       )}
 
-      {/* Lo que se usa menos: tres filas que se abren aquí mismo. */}
-      <div className="overflow-hidden rounded-card border border-linea bg-sup">
-        <FilaDePie
-          Icono={Camara}
-          titulo="Capturas y fotos del día"
-          valor={`${capturasYFotos > 0 ? `${capturasYFotos} de pedidos` : "tu respaldo"}`}
-          abierta={abierta === "capturas"}
-          alPulsar={() => alternar("capturas")}
-        />
+      {/* Lo que se usa menos: tres botones de color que abren aquí mismo lo suyo. */}
+      <div className="flex flex-col gap-2">
+        <BotonDeAccion k="foto" onClick={() => alternar("capturas")}>
+          <Camara className="size-[22px]" />
+          Capturas y fotos del día
+          <span className="ml-1 text-sm font-semibold opacity-90">
+            {capturasYFotos > 0 ? `· ${capturasYFotos}` : ""}
+          </span>
+        </BotonDeAccion>
         {abierta === "capturas" && (
-          <div className="border-t border-linea p-3">
+          <div className="ini-panel">
             <PruebasDelDia fecha={fecha} />
           </div>
         )}
 
         {pagaPermanencia && (
           <>
-            <FilaDePie
-              Icono={Reloj}
-              titulo="Horario en tienda"
-              valor={jornada.horaEntrada && jornada.horaSalida ? `${jornada.horaEntrada} – ${jornada.horaSalida}` : "sin horario"}
-              abierta={abierta === "horario"}
-              alPulsar={() => alternar("horario")}
-            />
+            <BotonDeAccion k="historial" onClick={() => alternar("horario")}>
+              <Reloj className="size-[22px]" />
+              Horario en tienda
+              <span className="ml-1 font-mono text-sm font-semibold opacity-90">
+                {jornada.horaEntrada && jornada.horaSalida ? `· ${jornada.horaEntrada} – ${jornada.horaSalida}` : ""}
+              </span>
+            </BotonDeAccion>
             {abierta === "horario" && (
-              <div className="border-t border-linea p-3">
+              <div className="ini-panel">
                 <HorarioEnTienda
                   fecha={fecha}
                   jornada={jornada}
@@ -190,48 +187,36 @@ export function DetalleDelDia({
         )}
 
         {editable && (
-          <>
-            <FilaDePie
-              Icono={Equis}
-              titulo="Borrar este día"
-              valor=""
-              peligro
-              abierta={abierta === "borrar"}
-              alPulsar={() => alternar("borrar")}
-            />
-            {abierta === "borrar" && (
-              <div className="flex flex-col gap-3 border-t border-linea p-3">
-                <p className="text-sm text-tinta-2">
-                  Se va el día entero con sus {jornada.rutas.length} rutas y {jornada.ordenes.length} pedidos
-                  {capturasYFotos > 0 ? " —y con ellos sus datos de clientes y fotos—" : ""}. No se puede deshacer, y este día
-                  ya cuenta para tu semana.
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    disabled={pendiente}
-                    className="min-h-11 flex-1 rounded-btn bg-mal px-4 text-sm font-semibold text-white"
-                    onClick={() =>
-                      iniciar(async () => {
-                        const r = await eliminarJornada(fecha, jornada.ordenes.length);
-                        if (r.ok) {
-                          setAbierta(null);
-                          alCambiar();
-                        } else setAviso({ tono: "mal", texto: r.error });
-                      })
-                    }
-                  >
-                    {pendiente ? "Borrando…" : "Sí, borrar el día completo"}
-                  </button>
-                  <button type="button" className="boton-sec" onClick={() => setAbierta(null)}>
-                    Cancelar
-                  </button>
-                </div>
-              </div>
-            )}
-          </>
+          <button type="button" className="boton-accion ini-borrar" onClick={() => alternar("borrar")}>
+            <Basura className="size-[22px]" />
+            Borrar este día
+          </button>
         )}
       </div>
+
+      {abierta === "borrar" && editable && (
+        <DialogoConfirmar
+          titulo={`¿Borrar el ${formatearFechaLarga(fecha).replace(/ de \d{4}$/, "")}?`}
+          texto={`Se va el día entero con sus ${jornada.rutas.length} ruta${jornada.rutas.length === 1 ? "" : "s"} y ${jornada.ordenes.length} pedido${jornada.ordenes.length === 1 ? "" : "s"}${
+            capturasYFotos > 0 ? " —y con ellos sus datos de clientes y fotos—" : ""
+          }. No se puede deshacer, y este día ya cuenta para tu semana.`}
+          confirmar="Sí, borrar el día completo"
+          ocupado={pendiente}
+          alCancelar={() => setAbierta(null)}
+          alConfirmar={() =>
+            iniciar(async () => {
+              const r = await eliminarJornada(fecha, jornada.ordenes.length);
+              if (r.ok) {
+                setAbierta(null);
+                alCambiar();
+              } else {
+                setAbierta(null);
+                setAviso({ tono: "mal", texto: r.error });
+              }
+            })
+          }
+        />
+      )}
 
       {ordenEditando && (
         <HojaDePedido
@@ -249,38 +234,6 @@ export function DetalleDelDia({
         />
       )}
     </>
-  );
-}
-
-function FilaDePie({
-  Icono,
-  titulo,
-  valor,
-  abierta,
-  peligro = false,
-  alPulsar,
-}: {
-  Icono: typeof Camara;
-  titulo: string;
-  valor: string;
-  abierta: boolean;
-  peligro?: boolean;
-  alPulsar: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={alPulsar}
-      aria-expanded={abierta}
-      className={`flex min-h-12 w-full items-center gap-3 border-b border-linea px-4 text-left text-sm font-semibold last:border-b-0 ${
-        peligro ? "text-mal" : ""
-      }`}
-    >
-      <Icono className="size-[18px] shrink-0" />
-      <span className="flex-1">{titulo}</span>
-      {valor && <span className="font-mono text-xs font-medium text-tinta-3">{valor}</span>}
-      <Flecha className={`size-4 shrink-0 text-tinta-3 transition-transform ${abierta ? "-rotate-90" : "rotate-90"}`} />
-    </button>
   );
 }
 
@@ -358,7 +311,7 @@ function Parada({
   const [preguntando, setPreguntando] = useState(false);
   return (
     <li
-      className={`relative grid grid-cols-[24px_1fr_auto] items-center gap-3 py-2 before:absolute before:left-3 before:border-l-2 before:border-dashed before:border-acento/40 before:content-[''] ${
+      className={`relative grid grid-cols-[24px_1fr_auto] items-center gap-3 py-2 before:absolute before:left-3 before:border-l-[3px] before:border-dashed before:border-acento/40 before:content-[''] ${
         primera ? "before:top-1/2" : "before:top-0"
       } ${ultima ? "before:bottom-1/2" : "before:bottom-0"}`}
     >
@@ -376,15 +329,16 @@ function Parada({
             type="button"
             onClick={() => setPreguntando(true)}
             aria-label={`Borrar ${titulo}`}
-            className="grid size-8 place-items-center rounded-full text-mal"
+            className="grid size-11 place-items-center rounded-full bg-mal-suave text-mal active:scale-90"
           >
-            <Equis className="size-4" />
+            <Equis className="size-[18px]" />
           </button>
         )}
         {preguntando && alBorrar && (
           <DialogoConfirmar
-            titulo={`¿Quitar ${titulo.toLowerCase()}?`}
+            titulo={`¿Quitar la ${titulo.toLowerCase()}${detalle !== "Sin horario" ? ` (${detalle})` : ""}?`}
             texto="Sus pedidos no se borran: se quedan sin ruta y se pagan igual."
+            confirmar="Sí, quitar la ruta"
             alCancelar={() => setPreguntando(false)}
             alConfirmar={() => {
               setPreguntando(false);
@@ -454,9 +408,8 @@ function HorarioEnTienda({
           />
         </div>
         {editable && (
-          <button
-            type="button"
-            className="boton-sec"
+          <BotonDeAccion
+            k="historial"
             disabled={pendiente}
             onClick={() =>
               iniciar(async () => {
@@ -471,7 +424,7 @@ function HorarioEnTienda({
             }
           >
             Guardar horario
-          </button>
+          </BotonDeAccion>
         )}
       </div>
 

@@ -1,6 +1,8 @@
 import Link from "next/link";
 
 import { Acordeon } from "@/components/Acordeon";
+import { GrupoDeTutorial } from "@/components/GrupoDeTutorial";
+import { Flecha as Ruta } from "@/components/iconos";
 
 export const dynamic = "force-static";
 
@@ -17,59 +19,59 @@ export default function PaginaTutoriales() {
   return (
     <div className="mx-auto flex max-w-[880px] flex-col gap-4">
       <div>
-        <h2 className="text-[30px] leading-tight">Tutoriales</h2>
+        <h2 className="text-[30px] leading-tight">Aprende en un minuto</h2>
         <p className="mt-1 max-w-[60ch] text-sm text-tinta-2">
-          Guías cortas, paso a paso, de cada pantalla. En cada una, el botón{" "}
-          <b className="text-tinta">▶ Ver el recorrido guiado</b> te lleva a la pantalla real y te señala cada cosa.
+          Toca un grupo y elige un tema. En cada uno, el botón <b className="text-tinta">Ver el recorrido</b> te
+          lleva a la pantalla real y te señala cada cosa.
         </p>
       </div>
 
-      <Grupo titulo="Inicio" />
-      <Tema titulo="Registrar tus pedidos del día" resumen="Resumen del día, foto de comanda y las otras formas" tour="/?tour=registrar">
-        <TutorialRegistrarPedidos />
-      </Tema>
-      <Tema titulo="La tarjeta del día" resumen="El anillo, las fichas, la racha y el récord" tour="/?tour=tarjeta">
-        <TutorialTarjeta />
-      </Tema>
-      <Tema titulo="Cambiar de día y marcar descansos" resumen="La barra de fechas, el calendario y la pulsación larga" tour="/?tour=dias">
-        <TutorialDias />
-      </Tema>
-      <Tema titulo="La foto de la comanda" resumen="Cliente, dirección, teléfono y ruta, leídos solos" tour="/?tour=comanda">
-        <TutorialComanda />
-      </Tema>
-      <Tema titulo="Apoyo a otra tienda y adicionales" resumen="El botón «+», el día, corregir y quitar" tour="/?tour=agregar">
-        <TutorialApoyoYTaxi />
-      </Tema>
+      <GrupoDeTutorial titulo="Inicio" detalle="Cargar y ver tu día · 5 temas" color="var(--acento)" icono="casa" indice={0}>
+        <Tema titulo="Registrar tus pedidos del día" resumen="Resumen del día, foto de comanda y las otras formas" tour="/?tour=registrar">
+          <TutorialRegistrarPedidos />
+        </Tema>
+        <Tema titulo="La tarjeta del día" resumen="El anillo, las fichas, la racha y el récord" tour="/?tour=tarjeta">
+          <TutorialTarjeta />
+        </Tema>
+        <Tema titulo="Cambiar de día y marcar descansos" resumen="La barra de fechas, el calendario y la pulsación larga" tour="/?tour=dias">
+          <TutorialDias />
+        </Tema>
+        <Tema titulo="La foto de la comanda" resumen="Cliente, dirección, teléfono y ruta, leídos solos" tour="/?tour=comanda">
+          <TutorialComanda />
+        </Tema>
+        <Tema titulo="Apoyo a otra tienda y adicionales" resumen="El botón «+», el día, corregir y quitar" tour="/?tour=agregar">
+          <TutorialApoyoYTaxi />
+        </Tema>
+      </GrupoDeTutorial>
 
-      <Grupo titulo="Pagos" />
-      <Tema titulo="Tu semana y tu meta" resumen="El total, la carretera y de dónde viene el dinero" tour="/pagos?tour=pagos">
-        <TutorialPagos />
-      </Tema>
-      <Tema titulo="Por tramo, evidencia y cobro" resumen="Comprueba cada pago con la foto de la comanda" tour="/pagos?tour=tramos">
-        <TutorialTramos />
-      </Tema>
+      <GrupoDeTutorial titulo="Pagos" detalle="Cuánto llevas y cuánto cobras · 2 temas" color="var(--c-pagos)" icono="cartera" indice={1}>
+        <Tema titulo="Tu semana y tu meta" resumen="El total, la carretera y de dónde viene el dinero" tour="/pagos?tour=pagos">
+          <TutorialPagos />
+        </Tema>
+        <Tema titulo="Por tramo, evidencia y cobro" resumen="Comprueba cada pago con la foto de la comanda" tour="/pagos?tour=tramos">
+          <TutorialTramos />
+        </Tema>
+      </GrupoDeTutorial>
 
-      <Grupo titulo="Estadísticas e historial" />
-      <Tema titulo="Estadísticas" resumen="Semana, comparar, mes y el velocímetro de tu meta" tour="/estadisticas?tour=estadisticas">
-        <TutorialEstadisticas />
-      </Tema>
-      <Tema titulo="Exportar a PDF y Excel" resumen="Con el detalle de tienda, apoyo, taxi y tramos" tour="/historial?tour=exportar">
-        <TutorialExportar />
-      </Tema>
+      <GrupoDeTutorial titulo="Estadísticas e historial" detalle="Compara y busca · 2 temas" color="var(--c-stats)" icono="barras" indice={2}>
+        <Tema titulo="Estadísticas" resumen="Semana, comparar, mes y el velocímetro de tu meta" tour="/estadisticas?tour=estadisticas">
+          <TutorialEstadisticas />
+        </Tema>
+        <Tema titulo="Exportar a PDF y Excel" resumen="Con el detalle de tienda, apoyo, taxi y tramos" tour="/historial?tour=exportar">
+          <TutorialExportar />
+        </Tema>
+      </GrupoDeTutorial>
 
-      <Grupo titulo="Ajustes" />
-      <Tema titulo="Metas, sonidos, transporte, PIN y respaldo" resumen="Deja la app a tu medida y tus datos a salvo" tour="/ajustes?tour=ajustes">
-        <TutorialAjustes />
-      </Tema>
+      <GrupoDeTutorial titulo="Ajustes" detalle="Tu tienda, tarifa y licencia · 1 tema" color="var(--c-ajustes)" icono="engranaje" indice={3}>
+        <Tema titulo="Metas, sonidos, transporte, PIN y respaldo" resumen="Deja la app a tu medida y tus datos a salvo" tour="/ajustes?tour=ajustes">
+          <TutorialAjustes />
+        </Tema>
+      </GrupoDeTutorial>
     </div>
   );
 }
 
-function Grupo({ titulo }: { titulo: string }) {
-  return <h3 className="rotulo mt-2 px-1">{titulo}</h3>;
-}
-
-/** Un tema: acordeón cerrado, con su botón de recorrido guiado y sus pasos. */
+/** Un tema: acordeón cerrado, con su botón de recorrido guiado y sus pasos en línea de tiempo. */
 function Tema({
   titulo,
   resumen,
@@ -83,8 +85,9 @@ function Tema({
 }) {
   return (
     <Acordeon titulo={titulo} resumen={resumen}>
-      <Link href={tour} className="boton-sec self-start !text-sm">
-        ▶ Ver el recorrido guiado
+      <Link href={tour} className="boton-accion" style={{ "--c": "var(--tc)" } as React.CSSProperties}>
+        <Ruta className="size-5" />
+        Ver el recorrido
       </Link>
       {children}
     </Acordeon>
@@ -93,11 +96,9 @@ function Tema({
 
 function Paso({ numero, titulo, children }: { numero: number; titulo: string; children: React.ReactNode }) {
   return (
-    <li className="flex gap-3">
-      <span className="grid size-7 shrink-0 place-items-center rounded-full bg-acento-suave font-display text-sm font-bold text-acento-tinta">
-        {numero}
-      </span>
-      <div className="flex flex-col gap-0.5 pt-0.5">
+    <li style={{ "--n": numero - 1 } as React.CSSProperties}>
+      <i aria-hidden>{numero}</i>
+      <div className="flex flex-col gap-0.5 pt-1">
         <b className="text-[15px]">{titulo}</b>
         <p className="text-sm text-tinta-2">{children}</p>
       </div>
@@ -119,7 +120,7 @@ function TutorialRegistrarPedidos() {
         <h4 className="mb-2 text-xs font-bold tracking-wide text-tinta uppercase">
           «Cargar resumen del día» — al terminar la jornada
         </h4>
-        <ol className="flex flex-col gap-3">
+        <ol className="aju-linea">
           <Paso numero={1} titulo="Elige el día en Inicio">
             La tira de días de arriba manda: toca el que quieres cargar. Por defecto es hoy.
           </Paso>
@@ -194,7 +195,7 @@ function Nota({ children }: { children: React.ReactNode }) {
 }
 
 function Lista({ children }: { children: React.ReactNode }) {
-  return <ol className="flex flex-col gap-3">{children}</ol>;
+  return <ol className="aju-linea">{children}</ol>;
 }
 
 function TutorialTarjeta() {

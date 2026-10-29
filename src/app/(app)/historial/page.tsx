@@ -8,7 +8,7 @@ import Link from "next/link";
 import { Acordeon } from "@/components/Acordeon";
 import { BotonesExportar } from "@/components/BotonesExportar";
 import { FilaPedidoSimple } from "@/components/FilaPedidoSimple";
-import { Pestanas } from "@/components/Pestanas";
+import { BotonPag, ChipDeColor, PestanasDeColor, TituloConFigura } from "@/components/PagUi";
 import { TourDePantalla } from "@/components/TourDePantalla";
 import { SelectorDeMes } from "@/components/SelectorDeMes";
 import { SelectorDeSemana } from "@/components/SelectorDeSemana";
@@ -196,27 +196,26 @@ function Contenido() {
       />
       <h2 className="text-[30px] leading-tight">Historial</h2>
 
-      <Pestanas
+      <PestanasDeColor
         etiqueta="Vista del historial"
         actual={vista}
         alCambiar={(id) => irA({ vista: id === "pedidos" ? "pedidos" : "dia" })}
         items={[
-          { id: "dia", etiqueta: "Por día" },
-          { id: "pedidos", etiqueta: "Pedidos", cuenta: totales.pedidos },
+          { id: "dia", etiqueta: "Por día", k: "historial" },
+          { id: "pedidos", etiqueta: "Pedidos", k: "comanda", cuenta: totales.pedidos },
         ]}
       />
 
       {/* De qué días: una semana o un mes, y cuál. Se elige con la barra de
           días —que se arrastra— o con las flechas del mes. */}
-      <Pestanas
-        etiqueta="Período"
-        actual={tipo}
-        alCambiar={(id) => irA({ tipo: id === "mes" ? "mes" : "semana" })}
-        items={[
-          { id: "semana", etiqueta: "Semana" },
-          { id: "mes", etiqueta: "Mes" },
-        ]}
-      />
+      <div role="group" aria-label="Período" className="flex gap-2">
+        <ChipDeColor k="historial" activo={tipo === "semana"} onClick={() => irA({ tipo: "semana" })}>
+          Semana
+        </ChipDeColor>
+        <ChipDeColor k="historial" activo={tipo === "mes"} onClick={() => irA({ tipo: "mes" })}>
+          Mes
+        </ChipDeColor>
+      </div>
 
       <div id="hist-rango">
       {tipo === "semana" ? (
@@ -241,23 +240,23 @@ function Contenido() {
           aria-label="Buscar un pedido por su código"
           className="min-h-11 min-w-48 flex-1 rounded-btn border border-linea-fuerte bg-sup px-4 font-mono text-base"
         />
-        <button type="submit" className="boton-sec">
+        <BotonPag k="buscar" type="submit">
           Buscar
-        </button>
+        </BotonPag>
         {buscado !== "" && (
-          <Link href={`/historial?tipo=${tipo}&f=${f}&vista=${vista}`} className="boton-sec">
+          <BotonPag k="ajustes" href={`/historial?tipo=${tipo}&f=${f}&vista=${vista}`}>
             Limpiar
-          </Link>
+          </BotonPag>
         )}
       </form>
 
       {buscado !== "" && <ResultadosBusqueda texto={buscado} />}
 
-      <div className="grid grid-cols-2 gap-3 rounded-card bg-sup-2 px-4 py-3 sm:grid-cols-4">
-        <Resumen etiqueta="Pedidos" valor={String(totales.pedidos)} />
-        <Resumen etiqueta="Rutas" valor={String(totales.rutas)} />
-        <Resumen etiqueta="Días" valor={String(jornadas.length)} />
-        <Resumen etiqueta="Monto" valor={formatearSoles(totales.centimos)} />
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <Resumen etiqueta="Pedidos" valor={String(totales.pedidos)} color="var(--c-comanda)" />
+        <Resumen etiqueta="Rutas" valor={String(totales.rutas)} color="var(--c-apoyo)" />
+        <Resumen etiqueta="Días" valor={String(jornadas.length)} color="var(--c-stats)" />
+        <Resumen etiqueta="Monto" valor={formatearSoles(totales.centimos)} color="var(--c-pagos)" />
       </div>
 
       {huecos.length > 0 && (
@@ -293,7 +292,11 @@ function Contenido() {
             return (
               <Acordeon
                 key={sem.lunes}
-                titulo={`${formatearFecha(sem.dias[0]).slice(0, 5)} – ${formatearFecha(fin).slice(0, 5)}`}
+                titulo={
+                  <TituloConFigura k="historial">
+                    {formatearFecha(sem.dias[0]).slice(0, 5)} – {formatearFecha(fin).slice(0, 5)}
+                  </TituloConFigura>
+                }
                 resumen={
                   pedidos === 0
                     ? "Sin carga"
@@ -330,7 +333,7 @@ function Contenido() {
         id="hist-exportar"
         abierto={exportarAbierto}
         alCambiar={setExportarAbierto}
-        titulo="Exportar"
+        titulo={<TituloConFigura k="historial">Exportar</TituloConFigura>}
         resumen={`Excel o PDF de ${formatearFecha(desde).slice(0, 5)} a ${formatearFecha(hasta).slice(0, 5)}`}
       >
         <BotonesExportar datos={datosExportacion} />
@@ -444,19 +447,19 @@ function ListaDePedidos({
         ),
       )}
       {total > visibles && (
-        <button type="button" className="boton-sec self-center" onClick={() => setVisibles((v) => v + PEDIDOS_POR_PAGINA)}>
+        <BotonPag k="comanda" className="self-center" onClick={() => setVisibles((v) => v + PEDIDOS_POR_PAGINA)}>
           Ver más ({total - visibles} restantes)
-        </button>
+        </BotonPag>
       )}
     </div>
   );
 }
 
-function Resumen({ etiqueta, valor }: { etiqueta: string; valor: string }) {
+function Resumen({ etiqueta, valor, color }: { etiqueta: string; valor: string; color: string }) {
   return (
-    <div className="flex min-w-0 flex-col gap-px">
-      <span className="text-[10px] tracking-wide text-tinta-3 uppercase">{etiqueta}</span>
-      <span className="font-mono text-sm font-medium tabular-nums">{valor}</span>
+    <div className="pag-kpi min-w-0" style={{ "--c": color } as React.CSSProperties}>
+      <small>{etiqueta}</small>
+      <b className="truncate tabular-nums">{valor}</b>
     </div>
   );
 }

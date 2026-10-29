@@ -104,7 +104,7 @@ export function RecorridoGuiado({ pasos, alTerminar }: { pasos: PasoDeRecorrido[
         <button
           type="button"
           onClick={alTerminar}
-          className="absolute top-3 right-3 text-xs font-semibold text-tinta-3 underline"
+          className="absolute top-2 right-2 min-h-9 rounded-btn bg-sup-2 px-3 text-xs font-bold text-tinta-2"
         >
           Saltar
         </button>

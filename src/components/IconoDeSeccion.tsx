@@ -1,13 +1,33 @@
+import {
+  Barras,
+  Camara,
+  Candado,
+  Copa,
+  Engranaje,
+  Escudo,
+  Galeria,
+  Info,
+  Lapiz,
+  Llave,
+  Subir,
+  Tienda,
+  Ticket,
+  Trofeo,
+  Estrella,
+} from "@/components/iconos";
+
 /**
- * El icono animado de una sección de Ajustes: un dibujo que **se mueve de la
- * manera que dice lo que la sección hace** —la paleta cambia de color, el pin
- * rebota, el candado se balancea, la cámara destella— para encontrar la opción
- * por su imagen y no solo por su título.
+ * El icono de una sección de Ajustes: una figura de color con un dibujo que
+ * **se mueve de la manera que dice lo que la sección hace** —la paleta cambia
+ * de color, el candado se balancea, la cámara destella—, para encontrar la
+ * opción por su imagen y no solo por su título. El mismo color y dibujo
+ * sirven de tarjeta en la cuadrícula de Ajustes (ver `SeccionDeAjustes`).
  */
 export type ClaveDeIcono =
   | "paleta"
   | "ubicacion"
   | "comanda"
+  | "adicional"
   | "candado"
   | "llave"
   | "escudo"
@@ -19,27 +39,35 @@ export type ClaveDeIcono =
   | "sonido"
   | "version";
 
-const ICONOS: Record<ClaveDeIcono, { emoji: string; fondo: string; movimiento: string }> = {
-  paleta: { emoji: "🎨", fondo: "bg-[#ffe4f1]", movimiento: "icono-colores" },
-  ubicacion: { emoji: "📍", fondo: "bg-[#dff5e6]", movimiento: "icono-bota" },
-  comanda: { emoji: "🧾", fondo: "bg-[var(--apoyo-suave)]", movimiento: "icono-menea" },
-  candado: { emoji: "🔒", fondo: "bg-[#e1e8ff]", movimiento: "icono-balanceo" },
-  llave: { emoji: "🔑", fondo: "bg-[var(--apoyo-suave)]", movimiento: "icono-balanceo" },
-  escudo: { emoji: "🛡️", fondo: "bg-[#dff5e6]", movimiento: "icono-pulso" },
-  respaldo: { emoji: "☁️", fondo: "bg-[#dff1ff]", movimiento: "icono-flota" },
-  camara: { emoji: "📷", fondo: "bg-[var(--taxi-suave)]", movimiento: "icono-destello" },
-  probeta: { emoji: "🧪", fondo: "bg-[#e7f9d9]", movimiento: "icono-menea" },
-  lupa: { emoji: "🔍", fondo: "bg-[#e1e8ff]", movimiento: "icono-barre" },
-  meta: { emoji: "🎯", fondo: "bg-[#ffe1e1]", movimiento: "icono-pulso" },
-  sonido: { emoji: "🔊", fondo: "bg-[var(--taxi-suave)]", movimiento: "icono-pulso" },
-  version: { emoji: "🚕", fondo: "bg-[var(--apoyo-suave)]", movimiento: "icono-avanza" },
+type Icono = (p: React.SVGProps<SVGSVGElement>) => React.JSX.Element;
+
+export const FIGURA_DE_SECCION: Record<ClaveDeIcono, { Icono: Icono; color: string; movimiento: string }> = {
+  paleta: { Icono: Galeria, color: "var(--c-foto)", movimiento: "icono-colores" },
+  ubicacion: { Icono: Tienda, color: "var(--acento)", movimiento: "icono-bota" },
+  comanda: { Icono: Ticket, color: "var(--c-buscar)", movimiento: "icono-menea" },
+  adicional: { Icono: Copa, color: "var(--c-adic)", movimiento: "icono-menea" },
+  candado: { Icono: Candado, color: "var(--c-ajustes)", movimiento: "icono-balanceo" },
+  llave: { Icono: Llave, color: "var(--c-licencia)", movimiento: "icono-balanceo" },
+  escudo: { Icono: Escudo, color: "var(--c-historial)", movimiento: "icono-pulso" },
+  respaldo: { Icono: Subir, color: "var(--c-apoyo)", movimiento: "icono-flota" },
+  camara: { Icono: Camara, color: "var(--c-taxi)", movimiento: "icono-destello" },
+  probeta: { Icono: Lapiz, color: "var(--c-mano)", movimiento: "icono-menea" },
+  lupa: { Icono: Barras, color: "var(--c-stats)", movimiento: "icono-barre" },
+  meta: { Icono: Trofeo, color: "var(--c-cantidad)", movimiento: "icono-pulso" },
+  sonido: { Icono: Estrella, color: "var(--c-aprender)", movimiento: "icono-pulso" },
+  version: { Icono: Info, color: "var(--c-licencia)", movimiento: "icono-avanza" },
 };
 
+// `Engranaje` queda disponible como figura por defecto de una sección sin icono.
+export const FIGURA_POR_DEFECTO = { Icono: Engranaje as Icono, color: "var(--c-ajustes)", movimiento: "" };
+
 export function IconoDeSeccion({ clave, className = "" }: { clave: ClaveDeIcono; className?: string }) {
-  const i = ICONOS[clave];
+  const { Icono, color, movimiento } = FIGURA_DE_SECCION[clave];
   return (
-    <span aria-hidden className={`grid size-11 shrink-0 place-items-center overflow-hidden rounded-full ${i.fondo} ${className}`}>
-      <span className={`text-[22px] leading-none ${i.movimiento}`}>{i.emoji}</span>
+    <span aria-hidden className={`aju-fig ${className}`} style={{ "--c": color } as React.CSSProperties}>
+      <span className={`grid place-items-center ${movimiento}`}>
+        <Icono className="size-6" />
+      </span>
     </span>
   );
 }

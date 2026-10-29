@@ -166,14 +166,14 @@ export function ProveedorDeCarga({
                         setCopiado(false);
                       }
                     }}
-                    className="rounded-chip border border-current px-3 py-1.5 text-xs font-semibold"
+                    className="reg-chip !min-h-11 !text-sm"
                   >
                     {copiado ? "Copiado ✓" : "Copiar el mensaje"}
                   </button>
                   <button
                     type="button"
                     onClick={() => setFase("reposo")}
-                    className="rounded-chip border border-current px-3 py-1.5 text-xs font-semibold"
+                    className="reg-chip !min-h-11 !text-sm"
                   >
                     Cerrar
                   </button>
@@ -209,10 +209,10 @@ export function Progreso({
           {fase === "comprimiendo" ? `${listas} de ${total} listas` : `${listas} de ${total} leídas`}
         </p>
       </div>
-      <div className="h-2 overflow-hidden rounded-full bg-sup-2">
+      <div className="h-3 overflow-hidden rounded-full bg-sup-2">
         <span
-          className="block h-full rounded-full bg-acento transition-[width] duration-300"
-          style={{ width: `${(listas / Math.max(total, 1)) * 100}%` }}
+          className="block h-full rounded-full transition-[width] duration-500"
+          style={{ width: `${(listas / Math.max(total, 1)) * 100}%`, background: "var(--c-foto)" }}
         />
       </div>
       {fase === "comprimiendo" && total <= 8 && (

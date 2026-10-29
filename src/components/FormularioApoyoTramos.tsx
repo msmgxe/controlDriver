@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 
 import { guardarBloqueApoyoTramos } from "@/app/(app)/jornada/acciones";
 import { Campo } from "@/components/FormularioApoyoHora";
-import { Equis } from "@/components/iconos";
+import { BotonDeAccion } from "@/components/Acciones";
+import { DialogoConfirmar } from "@/components/DialogoConfirmar";
+import { Check, Equis, Suma, Tienda as IconoTienda } from "@/components/iconos";
 import { Aviso } from "@/components/ui";
 import { horaEnLima, type FechaISO } from "@/lib/fechas";
 import type { BloqueExtraFila, FuenteDeKm, Tienda } from "@/lib/db/tipos";
@@ -38,6 +40,7 @@ export function FormularioApoyoTramos({
   );
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [quitando, setQuitando] = useState<number | null>(null);
 
   const puedeGuardar = tiendaId !== null && pedidos.length > 0 && !guardando;
 
@@ -86,20 +89,20 @@ export function FormularioApoyoTramos({
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4">
         {error && <Aviso tono="mal" titulo="No se pudo guardar">{error}</Aviso>}
 
-        <Campo etiqueta="Tienda a la que apoyaste">
-          <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col gap-1.5">
+          <span className="text-sm font-semibold">Tienda a la que apoyaste</span>
+          <div className="com-tipos">
             {tiendas.map((t) => (
               <button
                 key={t.id}
                 type="button"
-                aria-pressed={t.id === tiendaId}
+                role="radio"
+                aria-checked={t.id === tiendaId}
                 onClick={() => setTiendaId(t.id)}
-                className={`min-h-10 rounded-chip border-2 px-3 text-sm font-semibold ${
-                  t.id === tiendaId
-                    ? "border-acento bg-acento-suave text-acento-tinta"
-                    : "border-linea bg-sup text-tinta-2 hover:bg-sup-2"
-                }`}
+                className="com-tipo"
+                style={{ "--c": "var(--c-apoyo)" } as CSSProperties}
               >
+                {t.id === tiendaId ? <Check className="size-4" /> : <IconoTienda className="size-4" />}
                 {t.nombre}
               </button>
             ))}
@@ -107,7 +110,7 @@ export function FormularioApoyoTramos({
           {tiendas.length === 0 && (
             <p className="text-xs text-tinta-3">No tienes otras tiendas guardadas todavía —agrégalas en Ajustes.</p>
           )}
-        </Campo>
+        </div>
 
         <Campo etiqueta="Hasta qué hora (opcional)">
           <input
@@ -119,22 +122,13 @@ export function FormularioApoyoTramos({
         </Campo>
 
         <div className="flex flex-col gap-2">
-          <span className="text-sm font-semibold">Pedidos cubiertos</span>
+          <span className="text-sm font-semibold">Pedidos cubiertos · toca el tramo de cada uno</span>
           {pedidos.map((p, i) => (
-            <div key={i} className="tarjeta flex items-center gap-2 !p-3">
-              <div className="flex flex-1 flex-wrap gap-1.5">
+            <div key={i} className="com-ped rise-v2">
+              <span className="com-ped__n">{i + 1}</span>
+              <div className="flex flex-1 flex-wrap gap-1.5" role="group" aria-label={`Tramo del pedido ${i + 1}`}>
                 {TRAMOS.map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    aria-pressed={p.tramo === t}
-                    onClick={() => cambiarTramo(i, t)}
-                    className={`min-h-8 min-w-8 rounded-chip border-2 px-2 text-xs font-bold ${
-                      p.tramo === t
-                        ? "border-acento bg-acento-suave text-acento-tinta"
-                        : "border-linea bg-sup text-tinta-2"
-                    }`}
-                  >
+                  <button key={t} type="button" aria-pressed={p.tramo === t} onClick={() => cambiarTramo(i, t)} className="com-tramo">
                     {t}
                   </button>
                 ))}
@@ -144,31 +138,47 @@ export function FormularioApoyoTramos({
                 value={p.km}
                 onChange={(e) => cambiarKm(i, e.target.value)}
                 placeholder="km"
-                className="min-h-9 w-16 rounded-btn border border-linea-fuerte bg-sup px-2 text-center text-sm"
+                aria-label="Kilómetros"
+                className="min-h-11 w-16 rounded-btn border border-linea-fuerte bg-sup px-2 text-center text-sm"
               />
               {pedidos.length > 1 && (
                 <button
                   type="button"
                   aria-label="Quitar este pedido"
-                  onClick={() => quitarPedido(i)}
-                  className="grid size-8 shrink-0 place-items-center rounded-full text-tinta-3 hover:bg-sup-2"
+                  onClick={() => setQuitando(i)}
+                  className="grid size-11 shrink-0 place-items-center rounded-btn bg-mal-suave text-mal"
                 >
                   <Equis className="size-4" />
                 </button>
               )}
             </div>
           ))}
-          <button type="button" className="boton-sec self-start !min-h-9 !px-3 !text-sm" onClick={agregarPedido}>
-            + Agregar pedido
+          <button type="button" className="boton-sec self-start" onClick={agregarPedido}>
+            <Suma className="size-4" />
+            Agregar pedido
           </button>
           <p className="text-xs text-tinta-3">El tramo decide el monto, con la tarifa de esa tienda. El km es solo para tu registro.</p>
         </div>
       </div>
 
+      {quitando !== null && (
+        <DialogoConfirmar
+          titulo={`¿Quitar el pedido ${quitando + 1}?`}
+          texto="Deja de contarse en este apoyo cuando lo guardes."
+          confirmar="Sí, quitar el pedido"
+          alCancelar={() => setQuitando(null)}
+          alConfirmar={() => {
+            quitarPedido(quitando);
+            setQuitando(null);
+          }}
+        />
+      )}
+
       <div className="flex flex-col gap-2 border-t border-linea px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
-        <button type="button" className="boton-principal !min-h-11 !text-base" disabled={!puedeGuardar} onClick={() => void guardar()}>
+        <BotonDeAccion k="apoyo" disabled={!puedeGuardar} onClick={() => void guardar()}>
+          <Check className="size-5" />
           {guardando ? "Guardando…" : inicial ? "Guardar cambios" : "Guardar apoyo"}
-        </button>
+        </BotonDeAccion>
       </div>
     </>
   );

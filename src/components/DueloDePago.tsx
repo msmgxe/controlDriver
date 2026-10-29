@@ -31,7 +31,7 @@ export function DueloDePago({
   const cobrado = Math.max(pedidosCentimos, permanenciaCentimos);
 
   return (
-    <div className="flex flex-col gap-2.5 rounded-card bg-sup-2 p-4">
+    <div className="ini-rise flex flex-col gap-3 rounded-card bg-sup-2 p-4">
       <Barra
         etiqueta="Pedidos"
         centimos={pedidosCentimos}
@@ -44,7 +44,7 @@ export function DueloDePago({
         centimos={permanenciaCentimos}
         ancho={(permanenciaCentimos / tope) * 100}
         gana={ganaPermanencia}
-        color="bg-[#4f46b8] dark:bg-[#8f89f0]"
+        color="bg-[var(--c-historial)]"
       />
       <div className="flex items-baseline justify-between border-t border-linea pt-2.5">
         <span className="text-sm text-tinta-2">
@@ -73,14 +73,14 @@ function Barra({
 }) {
   return (
     <div className={`grid grid-cols-[88px_1fr_76px] items-center gap-2.5 ${gana ? "" : "opacity-45"}`}>
-      <span className="truncate text-xs font-medium text-tinta-2">{etiqueta}</span>
-      <div className="h-[18px] overflow-hidden rounded-chip bg-papel">
+      <span className="truncate text-xs font-semibold text-tinta-2">{etiqueta}</span>
+      <div className="h-5 overflow-hidden rounded-chip bg-papel">
         <div
-          className={`h-full rounded-chip ${color} transition-[width]`}
+          className={`barra-crece h-full rounded-chip ${color}`}
           style={{ width: `${Math.max(ancho, 3)}%` }}
         />
       </div>
-      <span className="text-right font-mono text-[13px] tabular-nums">
+      <span className="text-right font-display text-[0.85rem] font-semibold tabular-nums">
         {formatearSoles(centimos)}
       </span>
     </div>

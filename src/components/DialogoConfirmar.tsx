@@ -2,6 +2,7 @@
 
 import { createPortal } from "react-dom";
 
+import { Alerta } from "@/components/iconos";
 import { useCapa } from "@/hooks/useCapa";
 
 /**
@@ -39,21 +40,24 @@ export function DialogoConfirmar({
         role="alertdialog"
         aria-modal="true"
         aria-label={titulo}
-        className="flex w-full max-w-sm flex-col gap-4 rounded-hoja bg-sup p-5 shadow-alta"
+        className="pop-v2 flex w-full max-w-sm flex-col gap-4 rounded-hoja bg-sup p-5 shadow-alta"
       >
         <div className="flex flex-col gap-1.5">
+          <span aria-hidden className="mb-1 grid size-12 place-items-center rounded-2xl bg-mal-suave text-mal">
+            <Alerta className="size-6" />
+          </span>
           <h3 className="text-lg leading-tight">{titulo}</h3>
           {texto && <p className="text-sm text-tinta-2">{texto}</p>}
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <button type="button" className="boton-sec !min-h-11" disabled={ocupado} onClick={alCancelar}>
+          <button type="button" className="boton-sec !min-h-[var(--toque)]" disabled={ocupado} onClick={alCancelar}>
             Cancelar
           </button>
           <button
             type="button"
             disabled={ocupado}
             onClick={alConfirmar}
-            className="min-h-11 rounded-btn bg-mal px-3 text-sm font-bold text-white disabled:opacity-60"
+            className="min-h-[var(--toque)] rounded-btn bg-mal px-3 text-sm font-bold text-white shadow-[0_4px_0_rgba(0,0,0,0.2)] disabled:opacity-60"
           >
             {ocupado ? "Quitando…" : confirmar}
           </button>

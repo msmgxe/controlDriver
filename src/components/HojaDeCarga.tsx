@@ -3,7 +3,8 @@
 import { useState } from "react";
 
 import { HojaDeComandas } from "@/components/HojaDeComandas";
-import { Calendario, Equis, Reloj, Subir, Taxi, Ticket } from "@/components/iconos";
+import { ACCION, type ClaveDeAccion } from "@/components/Acciones";
+import { Calendario, Equis } from "@/components/iconos";
 import { Aviso } from "@/components/ui";
 import { useCapa } from "@/hooks/useCapa";
 import { useDatos } from "@/hooks/useDatos";
@@ -127,7 +128,7 @@ function Eleccion({
               {formatearFechaLarga(dia).replace(/ de \d{4}$/, "")}
               {dia === hoy && <span className="ml-2 text-xs font-medium text-acento-tinta">hoy</span>}
             </span>
-            <span className="text-sm font-semibold text-acento-tinta">Cambiar</span>
+            <span className="reg-chip !min-h-9" style={{ background: "var(--c-comanda)", borderColor: "var(--c-comanda)", color: "#fff" }}>Cambiar</span>
             <input
               type="date"
               value={dia}
@@ -156,7 +157,8 @@ function Eleccion({
           <span className="rotulo">De tu tienda</span>
 
           <Opcion
-            Icono={Subir}
+            k="foto"
+            indice={0}
             titulo="Capturas de la tienda"
             detalle="Las pantallas de la app de reparto con tus rutas y pedidos: las pestañas Rutas y Órdenes."
             destino={`Cada captura se guarda en el día que dice («Resumen del 25/09»). Las que no lo digan, el ${corto}.`}
@@ -165,7 +167,8 @@ function Eleccion({
           />
 
           <Opcion
-            Icono={Ticket}
+            k="comanda"
+            indice={1}
             titulo="Comandas"
             detalle="Las hojas de despacho, con el nombre, la dirección y el teléfono del cliente."
             destino={`Completa el pedido si ya está cargado, en su día. Si no está, lo crea el ${corto}.`}
@@ -179,7 +182,8 @@ function Eleccion({
           <span className="rotulo">Otros ingresos del día</span>
 
           <Opcion
-            Icono={Taxi}
+            k="taxi"
+            indice={2}
             titulo="Adicional (taxi, movilidad…)"
             detalle="Una carrera suelta: marcas inicio y fin con el GPS, o escribes los km, y el monto que cobraste."
             destino={`Se suma al ${corto}, aparte de tus pedidos.`}
@@ -188,7 +192,8 @@ function Eleccion({
           />
 
           <Opcion
-            Icono={Reloj}
+            k="apoyo"
+            indice={3}
             titulo="Apoyo a otra tienda"
             detalle="Cubriste otra tienda: te pagan por hora, o por tramos como en tu tienda."
             destino={`Se suma al ${corto}. Ahí puedes cambiar el día.`}
@@ -202,34 +207,44 @@ function Eleccion({
 }
 
 function Opcion({
-  Icono,
+  k,
+  indice = 0,
   titulo,
   detalle,
   destino,
   deshabilitado,
   alElegir,
 }: {
-  Icono: typeof Subir;
+  k: ClaveDeAccion;
+  indice?: number;
   titulo: string;
   detalle: string;
   destino: string;
   deshabilitado: boolean;
   alElegir: () => void;
 }) {
+  const { Icono, color, claro } = ACCION[k];
   return (
     <button
       type="button"
       onClick={alElegir}
       disabled={deshabilitado}
-      className="flex w-full items-start gap-3 rounded-card border-2 border-linea bg-sup p-3.5 text-left enabled:hover:bg-sup-2 enabled:active:bg-sup-2 disabled:opacity-50"
+      className="reg-tarjeta-carga"
+      style={
+        {
+          "--c": color,
+          "--c-texto": claro ? "var(--sol-tinta, #0a2260)" : "#fff",
+          animationDelay: `${indice * 70}ms`,
+        } as React.CSSProperties
+      }
     >
-      <span className="grid size-11 shrink-0 place-items-center rounded-btn bg-acento-suave text-acento-tinta">
-        <Icono className="size-6" />
+      <span className="reg-tarjeta-carga__fig">
+        <Icono className="size-7" />
       </span>
-      <span className="flex min-w-0 flex-col gap-1">
-        <b className="text-base font-bold">{titulo}</b>
-        <span className="text-sm text-tinta-2">{detalle}</span>
-        <span className="text-xs font-semibold text-acento-tinta">{destino}</span>
+      <span className="min-w-0">
+        <b>{titulo}</b>
+        <span className="d">{detalle}</span>
+        <span className="dest">{destino}</span>
       </span>
     </button>
   );

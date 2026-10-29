@@ -1,5 +1,6 @@
 "use client";
 
+import { ChipDeColor } from "@/components/PagUi";
 import { useState } from "react";
 
 import { Acordeon } from "@/components/Acordeon";
@@ -127,19 +128,11 @@ function GraficoComparacion({ a, b }: { a: SemanaAComparar; b: SemanaAComparar }
           <span className="rotulo">Día por día</span>
           <p className="text-sm text-tinta-2">Las dos semanas, un día frente al otro</p>
         </div>
-        <div role="group" aria-label="Qué mide la altura de la barra" className="flex gap-0.5 rounded-chip bg-sup-2 p-0.5">
+        <div role="group" aria-label="Qué mide la altura de la barra" className="flex gap-2">
           {(["pedidos", "soles"] as const).map((m) => (
-            <button
-              key={m}
-              type="button"
-              aria-pressed={metrica === m}
-              onClick={() => setMetrica(m)}
-              className={`rounded-chip px-3 py-1.5 text-xs font-bold capitalize ${
-                metrica === m ? "bg-sup text-tinta" : "text-tinta-3"
-              }`}
-            >
-              {m}
-            </button>
+            <ChipDeColor key={m} k="stats" activo={metrica === m} onClick={() => setMetrica(m)}>
+              <span className="capitalize">{m}</span>
+            </ChipDeColor>
           ))}
         </div>
       </div>

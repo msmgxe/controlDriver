@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 
 import { eliminarBloque } from "@/app/(app)/jornada/acciones";
-import { FONDO_DE_BLOQUE, ICONO_DE_BLOQUE, tituloYDetalleDeBloque } from "@/components/bloques-visual";
+import { ACCION, BotonDeAccion, FiguraDeAccion } from "@/components/Acciones";
+import { ICONO_DE_BLOQUE, tituloYDetalleDeBloque } from "@/components/bloques-visual";
+import { DialogoConfirmar } from "@/components/DialogoConfirmar";
 import { HojaDeBloqueExtraAutonoma } from "@/components/HojaDeBloqueExtra";
-import { Equis } from "@/components/iconos";
+import { Basura, Equis, Lapiz } from "@/components/iconos";
 import { LineaDeHorario } from "@/components/LineaDeHorario";
 import { useCapa } from "@/hooks/useCapa";
 import type { BloqueExtraFila } from "@/lib/db/tipos";
@@ -47,7 +49,8 @@ export function HojaDeDetalleBloque({
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const Icono = ICONO_DE_BLOQUE[bloque.tipo];
+  const clave = bloque.tipo === "taxi" ? "taxi" : "apoyo";
+  const IconoTipo = ICONO_DE_BLOQUE[bloque.tipo];
   const { titulo } = tituloYDetalleDeBloque(bloque);
   const horario = bloque.horaInicio ? `${bloque.horaInicio}${bloque.horaFin ? ` → ${bloque.horaFin}` : ""}` : null;
 
@@ -96,9 +99,7 @@ export function HojaDeDetalleBloque({
         <span className="mx-auto h-1 w-9 shrink-0 rounded-full bg-linea-fuerte sm:hidden" />
 
         <div className="flex items-start gap-3">
-          <span className={`grid size-12 shrink-0 place-items-center rounded-full ${FONDO_DE_BLOQUE[bloque.tipo]}`}>
-            <Icono className="size-6" />
-          </span>
+          <FiguraDeAccion k={clave} />
           <div className="min-w-0 flex-1">
             <h3 className="truncate text-xl leading-tight">{titulo}</h3>
             <p className="text-xs text-tinta-3 first-letter:uppercase">{formatearFechaLarga(fecha)}</p>
@@ -113,13 +114,15 @@ export function HojaDeDetalleBloque({
           </button>
         </div>
 
-        <div className="rounded-card bg-sup-2 px-4 py-3">
-          <span className="rotulo">
+        <div
+          className="com-monto rise-v2"
+          style={{ "--c": ACCION[clave].color, "--c-texto": ACCION[clave].claro ? "var(--sol-tinta, #0a2260)" : "#fff" } as CSSProperties}
+        >
+          <small className="inline-flex items-center gap-1.5">
+            <IconoTipo className="size-4" />
             {bloque.tipo === "taxi" ? "Cobraste" : bloque.tipo === "apoyo_hora" ? "Apoyo por hora" : "Apoyo por tramos"}
-          </span>
-          <b className="block font-display text-[34px] leading-tight text-acento tabular-nums">
-            {formatearSoles(bloque.montoCentimos)}
-          </b>
+          </small>
+          <b className="tabular-nums">{formatearSoles(bloque.montoCentimos)}</b>
         </div>
 
         {bloque.tipo !== "apoyo_tramos" && bloque.horaInicio && (
@@ -131,7 +134,7 @@ export function HojaDeDetalleBloque({
           />
         )}
 
-        <dl className="flex flex-col">
+        <dl className="flex flex-col gap-2">
           {horario && <Fila etiqueta="Horario" valor={horario} />}
 
           {bloque.tipo === "apoyo_hora" && (
@@ -160,14 +163,14 @@ export function HojaDeDetalleBloque({
         {bloque.tipo === "apoyo_tramos" && (
           <div className="flex flex-col gap-2">
             <span className="rotulo">Pedidos cubiertos</span>
-            <div className="overflow-hidden rounded-card border border-linea">
+            <div className="flex flex-col gap-2">
               {bloque.pedidos.map((p, i) => (
                 <div
                   key={p.id}
-                  className="grid grid-cols-[28px_1fr_auto] items-center gap-2 border-b border-linea px-3 py-2.5 text-sm last:border-b-0"
+                  className="com-ped !flex-nowrap text-sm"
                 >
-                  <span className="font-mono text-xs text-tinta-3">{i + 1}</span>
-                  <span>
+                  <span className="com-ped__n">{i + 1}</span>
+                  <span className="flex-1">
                     <b>Tramo {p.tramo}</b>
                     <span className="text-tinta-2">{p.km !== null ? ` · ${p.km} km` : ""}</span>
                   </span>
@@ -185,34 +188,33 @@ export function HojaDeDetalleBloque({
         {error && <p className="text-sm text-mal">{error}</p>}
 
         {editable ? (
-          confirmando ? (
-            <div className="flex items-center gap-3 rounded-card border border-mal/30 bg-mal-suave px-4 py-3">
-              <p className="flex-1 text-sm text-mal">¿Quitar {titulo.toLowerCase()}?</p>
-              <button type="button" className="boton-sec !min-h-9 !px-3 !text-xs" disabled={ocupado} onClick={() => setConfirmando(false)}>
-                No
-              </button>
-              <button
-                type="button"
-                className="min-h-9 rounded-chip bg-mal px-3 text-xs font-bold text-white disabled:opacity-60"
-                disabled={ocupado}
-                onClick={() => void quitar()}
-              >
-                {ocupado ? "Quitando…" : "Sí, quitar"}
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-2">
-              <button type="button" className="boton-principal !min-h-11 !text-base" onClick={() => setCorrigiendo(true)}>
-                Corregir
-              </button>
-              <button type="button" className="boton-sec !min-h-11" onClick={() => setConfirmando(true)}>
-                Quitar
-              </button>
-            </div>
-          )
+          <div className="flex flex-col gap-2">
+            <BotonDeAccion k={clave} onClick={() => setCorrigiendo(true)}>
+              <Lapiz className="size-5" />
+              Corregir
+            </BotonDeAccion>
+            <button
+              type="button"
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-btn bg-mal-suave font-semibold text-mal"
+              onClick={() => setConfirmando(true)}
+            >
+              <Basura className="size-5" />
+              Quitar
+            </button>
+          </div>
         ) : (
           <p className="text-xs text-tinta-3">Esta semana ya está pagada: solo se puede mirar.</p>
         )}
+      {confirmando && (
+        <DialogoConfirmar
+          titulo={`¿Quitar ${titulo.toLowerCase()} de ${formatearSoles(bloque.montoCentimos)}?`}
+          texto="Ya no se sumará al día ni a los pagos. No se puede deshacer."
+          confirmar="Sí, quitar"
+          ocupado={ocupado}
+          alCancelar={() => setConfirmando(false)}
+          alConfirmar={() => void quitar()}
+        />
+      )}
       </div>
     </div>,
     document.body,
@@ -221,9 +223,9 @@ export function HojaDeDetalleBloque({
 
 function Fila({ etiqueta, valor }: { etiqueta: string; valor: string }) {
   return (
-    <div className="flex items-baseline justify-between gap-3 border-b border-linea py-2 text-sm last:border-b-0">
-      <dt className="text-tinta-2">{etiqueta}</dt>
-      <dd className="text-right font-medium">{valor}</dd>
+    <div className="com-dato text-sm">
+      <dt>{etiqueta}</dt>
+      <dd className="text-right font-bold">{valor}</dd>
     </div>
   );
 }

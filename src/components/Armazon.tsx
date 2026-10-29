@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useSyncExternalStore, useState } from "react";
+import { useSyncExternalStore, useState, type CSSProperties } from "react";
 
+import { ACCION, FiguraDeAccion, type ClaveDeAccion } from "@/components/Acciones";
 import { Auto } from "@/components/Auto";
 import { BloqueoApp } from "@/components/BloqueoApp";
 import { ProveedorDeCarga, useCarga } from "@/components/CargaDeCapturas";
@@ -18,10 +19,12 @@ import {
   Cartera,
   Casa,
   Equis,
+  Flecha,
   Gente,
   Info,
   Mas,
   Salir,
+  Subir,
   Tutorial,
 } from "@/components/iconos";
 import { useCapa } from "@/hooks/useCapa";
@@ -64,6 +67,31 @@ const ICONOS: Record<string, typeof Casa | undefined> = {
   tutoriales: Tutorial,
   ajustes: Candado,
   acerca: Info,
+};
+
+/** A qué acción (color + figura) corresponde cada puerta: la píldora de arriba y la hoja «Más». */
+const ACCION_DE: Record<string, ClaveDeAccion> = {
+  inicio: "tienda",
+  cargar: "comanda",
+  pagos: "pagos",
+  estadisticas: "stats",
+  buscar: "buscar",
+  historial: "historial",
+  tutoriales: "aprender",
+  ajustes: "ajustes",
+  acerca: "licencia",
+};
+
+/** El orden VISUAL de la barra de abajo: «Cargar» va al centro, grande y redondo. */
+const ORDEN_DE_LA_BARRA = ["inicio", "pagos", "cargar", "estadisticas"] as const;
+
+/** Una frase corta bajo cada fila de «Más». */
+const DETALLE_DE: Record<string, string> = {
+  buscar: "Un pedido, cliente o teléfono",
+  historial: "Tus días anteriores",
+  tutoriales: "Aprende en pasos cortos",
+  ajustes: "Tienda, tarifa, respaldo",
+  acerca: "Versión y contacto",
 };
 
 const DESTINOS_ADMIN: Array<{ href: string; nombre: string; Icono: typeof Casa }> = [
@@ -124,6 +152,11 @@ function ArmazonInterno({
   const principales = PUERTAS.slice(0, PUERTAS_PRINCIPALES);
   const resto = PUERTAS.slice(PUERTAS_PRINCIPALES);
   const masEncendido = resto.some((p) => p.id === activa);
+  const claveActiva = ACCION_DE[activa] ?? "tienda";
+  const IconoActivo = ACCION[claveActiva].Icono;
+  const enLaBarra = ORDEN_DE_LA_BARRA.map((id) => principales.find((p) => p.id === id)).filter(
+    (p): p is Puerta => Boolean(p),
+  );
 
   /* «Cargar» propone el día que se tiene delante: el de Inicio, si se está en
      Inicio; en cualquier otra pantalla, hoy. Cambiarlo es un toque en la hoja. */
@@ -244,12 +277,17 @@ function ArmazonInterno({
             </Link>
             <h1
               key={ruta}
-              className="entra ml-auto flex min-w-0 items-center gap-1.5 rounded-chip bg-acento-suave px-3 py-1.5 text-[15px] leading-tight font-bold text-acento-tinta lg:ml-0 lg:bg-transparent lg:p-0 lg:text-[22px] lg:text-tinta"
+              className="ini-pildora entra ml-auto"
+              style={
+                {
+                  "--c": ACCION[claveActiva].color,
+                  "--c-texto": ACCION[claveActiva].claro ? "var(--sol-tinta, #0a2260)" : "#fff",
+                } as CSSProperties
+              }
             >
-              {(() => {
-                const Icono = ICONOS[activa];
-                return Icono ? <Icono className="size-[17px] shrink-0 lg:hidden" /> : null;
-              })()}
+              <span className="ini-pildora__fig" aria-hidden>
+                <IconoActivo className="size-[17px]" />
+              </span>
               <span className="truncate">{titulo}</span>
             </h1>
             {conPin && (
@@ -280,28 +318,28 @@ function ArmazonInterno({
       <nav
         aria-label="Navegación principal"
         className="fixed inset-x-0 bottom-0 z-30 grid items-end rounded-t-[20px] border-t border-linea bg-sup px-0.5 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] shadow-[0_-10px_24px_-16px_rgb(10_34_96/0.5)] lg:hidden"
-        style={{ gridTemplateColumns: `repeat(${principales.length + 1}, minmax(0, 1fr))` }}
+        style={{ gridTemplateColumns: `repeat(${enLaBarra.length + 1}, minmax(0, 1fr))` }}
       >
-        {principales.map((p) => {
+        {enLaBarra.map((p) => {
           const encendida = activa === p.id || (p.id === "cargar" && cargando);
+          if (!p.href) {
+            return (
+              <BotonCentralDeCarga
+                key={p.id}
+                encendido={encendida}
+                deshabilitado={trabajando}
+                alTocar={() => setCargando(true)}
+              />
+            );
+          }
           const Icono = ICONOS[p.id];
-          const icono = Icono ? <Icono className="size-7" /> : <Auto vehiculo={vehiculo} mono icono />;
-          return p.href ? (
+          return (
             <PuertaDeLaBarra
               key={p.id}
               nombre={p.corto ?? p.nombre}
               href={p.href}
               activa={encendida}
-              icono={icono}
-            />
-          ) : (
-            <PuertaDeLaBarra
-              key={p.id}
-              nombre={p.nombre}
-              activa={encendida}
-              icono={icono}
-              deshabilitada={trabajando}
-              alTocar={() => setCargando(true)}
+              icono={Icono ? <Icono className="size-7" /> : null}
             />
           );
         })}
@@ -376,7 +414,7 @@ function MenuMas({
         role="dialog"
         aria-modal="true"
         aria-label="Más"
-        className="flex w-full max-w-md flex-col gap-1 rounded-t-hoja bg-sup p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] shadow-alta"
+        className="flex w-full max-w-md flex-col gap-2 rounded-t-hoja bg-sup p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] shadow-alta"
       >
         <div className="relative mb-1 flex items-center justify-center px-1">
           <span className="block h-1 w-9 rounded-full bg-linea-fuerte" />
@@ -389,21 +427,24 @@ function MenuMas({
             <Equis className="size-5" />
           </button>
         </div>
-        {resto.map((p) => {
-          const Icono = ICONOS[p.id];
+        {resto.map((p, i) => {
           const encendida = activa === p.id;
+          const clave = ACCION_DE[p.id] ?? "ajustes";
           return (
             <Link
               key={p.id}
               href={p.href ?? "#"}
               onClick={alCerrar}
               aria-current={encendida ? "page" : undefined}
-              className={`flex min-h-14 items-center gap-3 rounded-btn px-3 text-[16px] ${
-                encendida ? "bg-acento-suave font-semibold text-acento-tinta" : "font-medium text-tinta"
-              }`}
+              className="fila-color ini-rise"
+              style={{ animationDelay: `${i * 60}ms` }}
             >
-              {Icono && <Icono className="size-6 shrink-0" />}
-              {p.nombre}
+              <FiguraDeAccion k={clave} />
+              <span className="min-w-0 flex-1 text-left leading-tight">
+                <b className="block">{p.nombre}</b>
+                <small className="block text-tinta-2">{DETALLE_DE[p.id]}</small>
+              </span>
+              <Flecha className="size-[18px] shrink-0 text-tinta-3" />
             </Link>
           );
         })}
@@ -431,7 +472,7 @@ function PuertaDeLaBarra({
   alTocar?: () => void;
   deshabilitada?: boolean;
 }) {
-  const clases = `flex min-h-14 min-w-0 flex-col items-center justify-end gap-1 text-[10px] leading-none tracking-[-0.01em] ${
+  const clases = `flex min-h-14 min-w-0 flex-col items-center justify-end gap-1 text-[0.68rem] leading-none tracking-[-0.01em] ${
     activa ? "font-bold text-tinta" : "font-semibold text-tinta-2"
   }`;
   const contenido = (
@@ -454,6 +495,36 @@ function PuertaDeLaBarra({
       className={`${clases} disabled:opacity-60`}
     >
       {contenido}
+    </button>
+  );
+}
+
+/**
+ * «Cargar», el botón principal de la app: grande, redondo y con relieve, en el
+ * centro de la barra y un poco por encima de ella. No es una pantalla: abre la
+ * hoja que pregunta qué se carga.
+ */
+function BotonCentralDeCarga({
+  encendido,
+  deshabilitado,
+  alTocar,
+}: {
+  encendido: boolean;
+  deshabilitado: boolean;
+  alTocar: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={alTocar}
+      disabled={deshabilitado}
+      aria-haspopup="dialog"
+      className={`ini-cargar disabled:opacity-60 ${encendido ? "ini-cargar--on" : ""}`}
+    >
+      <span className="ini-cargar__bola">
+        <Subir className="size-8" />
+      </span>
+      <span className="text-[0.68rem] leading-none font-bold text-tinta">Cargar</span>
     </button>
   );
 }

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 
-import { FONDO_DE_BLOQUE, ICONO_DE_BLOQUE, tituloYDetalleDeBloque } from "@/components/bloques-visual";
+import { FiguraDeAccion, type ClaveDeAccion } from "@/components/Acciones";
+import { tituloYDetalleDeBloque } from "@/components/bloques-visual";
 import { HojaDeDetalleBloque } from "@/components/HojaDeDetalleBloque";
 import { Flecha } from "@/components/iconos";
 import type { FechaISO } from "@/lib/fechas";
@@ -25,8 +26,10 @@ export function TarjetaBloqueExtra({
   alCambiar: () => void;
 }) {
   const [abierta, setAbierta] = useState(false);
-  const Icono = ICONO_DE_BLOQUE[bloque.tipo];
   const { titulo, detalle } = tituloYDetalleDeBloque(bloque);
+  /* La figura es la de su acción: apoyo turquesa, taxi amarillo, otro adicional vino. */
+  const clave: ClaveDeAccion =
+    bloque.tipo === "taxi" ? ((bloque.categoriaNombre ?? "Taxi") === "Taxi" ? "taxi" : "adicional") : "apoyo";
 
   return (
     <>
@@ -34,11 +37,9 @@ export function TarjetaBloqueExtra({
         type="button"
         onClick={() => setAbierta(true)}
         aria-label={`Ver el detalle de ${titulo}`}
-        className="tarjeta flex w-full items-center gap-3 text-left"
+        className="fila-color"
       >
-        <span className={`grid size-10 shrink-0 place-items-center rounded-full ${FONDO_DE_BLOQUE[bloque.tipo]}`}>
-          <Icono className="size-[19px]" />
-        </span>
+        <FiguraDeAccion k={clave} />
         <span className="min-w-0 flex-1">
           <b className="block truncate text-sm font-bold">{titulo}</b>
           <span className="block truncate text-xs text-tinta-2">
@@ -46,7 +47,7 @@ export function TarjetaBloqueExtra({
             {detalle}
           </span>
         </span>
-        <b className="shrink-0 font-mono text-sm tabular-nums">{formatearSoles(bloque.montoCentimos)}</b>
+        <b className="shrink-0 font-display text-base tabular-nums">{formatearSoles(bloque.montoCentimos)}</b>
         <Flecha className="size-4 shrink-0 text-tinta-3" />
       </button>
 

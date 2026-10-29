@@ -79,6 +79,17 @@ export async function proxy(request: NextRequest) {
 
   let respuesta = NextResponse.next({ request: { headers: cabecerasPeticion } });
 
+  /* --- 1a. El panel de licencias no depende de Supabase ---
+     Tiene su propia puerta (contraseña firmada, ver src/lib/licencia/sesion.ts),
+     así que no debe caer en /configuracion si faltan las claves de Supabase.
+     Sí lleva la CSP, y nada de eso se guarda en caché ni se indexa. */
+  const rutaLicencias = request.nextUrl.pathname;
+  if (rutaLicencias === "/licencias" || rutaLicencias.startsWith("/licencias/")) {
+    respuesta.headers.set("Cache-Control", "no-store");
+    respuesta.headers.set("X-Robots-Tag", "noindex, nofollow");
+    return conCabeceras(respuesta, csp);
+  }
+
   /* --- 1b. ¿Está configurado el entorno? ---
      Sin las claves de Supabase el cliente lanza al construirse y todo acabaría
      en un 500 sin explicación. Mejor una pantalla que diga qué falta: así se

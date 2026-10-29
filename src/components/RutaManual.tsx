@@ -2,7 +2,9 @@
 
 import { useRef, useState } from "react";
 
-import { Check, Flecha } from "@/components/iconos";
+import { BotonDeAccion, FilaDeColor } from "@/components/Acciones";
+import { ConfirmacionEnLinea, FormularioDeAccion, Stepper } from "@/components/ControlesDeRegistro";
+import { Check, Flecha, Galeria } from "@/components/iconos";
 import { useOpcion } from "@/components/OpcionActiva";
 import { hoyEnLima } from "@/lib/fechas";
 
@@ -27,21 +29,21 @@ export function RutaManual({
   onGuardar: (datos: { numero: number; horaInicio: string | null; horaFin: string | null }) => void;
 }) {
   const [abierto, setAbierto, oculta] = useOpcion("ruta-manual");
-  const [numero, setNumero] = useState(String(siguienteNumero));
+  const [numero, setNumero] = useState(Math.min(99, Math.max(1, siguienteNumero)));
   const [horaInicio, setHoraInicio] = useState("");
   const [horaFin, setHoraFin] = useState("");
 
-  const numeroValido = /^\d{1,2}$/.test(numero) && Number(numero) >= 1 && Number(numero) <= 99;
+  const numeroValido = Number.isInteger(numero) && numero >= 1 && numero <= 99;
 
   function guardar() {
     if (!numeroValido) return;
     onGuardar({
-      numero: Number(numero),
+      numero,
       horaInicio: horaInicio || null,
       horaFin: horaFin || null,
     });
     setAbierto(false);
-    setNumero(String(siguienteNumero + 1));
+    setNumero(Math.min(99, siguienteNumero + 1));
     setHoraInicio("");
     setHoraFin("");
   }
@@ -50,72 +52,44 @@ export function RutaManual({
 
   if (!abierto) {
     return (
-      <button
-        type="button"
+      <FilaDeColor
+        k="tienda"
+        titulo="Añadir una ruta"
+        detalle="Número, salida y regreso"
         onClick={() => {
-          setNumero(String(siguienteNumero));
+          setNumero(Math.min(99, Math.max(1, siguienteNumero)));
           setAbierto(true);
         }}
-        className="boton-fila"
-      >
-        Añadir una ruta
-      </button>
+      />
     );
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-card border-2 border-acento bg-sup p-4">
-      <h4 className="font-semibold">Ruta a mano</h4>
-
-      <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-semibold">Número de ruta</span>
-        <input
-          value={numero}
-          onChange={(e) => setNumero(e.target.value.replace(/\D/g, "").slice(0, 2))}
-          inputMode="numeric"
-          className="min-h-[52px] w-24 rounded-btn border border-linea-fuerte bg-sup px-3 text-base"
-        />
-        {numero !== "" && !numeroValido && (
-          <span className="text-xs text-mal">Un número entre 1 y 99.</span>
-        )}
-      </label>
+    <FormularioDeAccion k="tienda" titulo="Ruta a mano" detalle="Lo mínimo para que los pedidos tengan dónde apuntar">
+      <div>
+        <span className="reg-lbl">Número de ruta</span>
+        <Stepper k="tienda" etiqueta="Número de ruta" valor={numero} min={1} max={99} alCambiar={setNumero} />
+      </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-semibold">Salida</span>
-          <input
-            type="time"
-            value={horaInicio}
-            onChange={(e) => setHoraInicio(e.target.value)}
-            className="min-h-[52px] rounded-btn border border-linea-fuerte bg-sup px-3 text-base"
-          />
+        <label className="block">
+          <span className="reg-lbl">Salida</span>
+          <input type="time" value={horaInicio} onChange={(e) => setHoraInicio(e.target.value)} className="reg-campo" />
         </label>
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-semibold">Regreso</span>
-          <input
-            type="time"
-            value={horaFin}
-            onChange={(e) => setHoraFin(e.target.value)}
-            className="min-h-[52px] rounded-btn border border-linea-fuerte bg-sup px-3 text-base"
-          />
+        <label className="block">
+          <span className="reg-lbl">Regreso</span>
+          <input type="time" value={horaFin} onChange={(e) => setHoraFin(e.target.value)} className="reg-campo" />
         </label>
       </div>
 
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={guardar}
-          disabled={!numeroValido}
-          className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-btn bg-acento px-4 text-sm font-semibold text-acento-texto disabled:opacity-50"
-        >
-          <Check className="size-4" />
-          Guardar
-        </button>
-        <button type="button" onClick={() => setAbierto(false)} className="boton-secundario">
-          Cancelar
-        </button>
-      </div>
-    </div>
+      <BotonDeAccion k="tienda" onClick={guardar} disabled={!numeroValido}>
+        <Check className="size-5" />
+        Guardar ruta
+      </BotonDeAccion>
+      <button type="button" onClick={() => setAbierto(false)} className="boton-secundario">
+        Cancelar
+      </button>
+    </FormularioDeAccion>
   );
 }
 
@@ -130,6 +104,7 @@ export function ListaDeRutas({
   rutas: Array<{ numero: number; horaInicio: string | null; horaFin: string | null }>;
   onBorrar?: (numero: number) => void;
 }) {
+  const [quitando, setQuitando] = useState<number | null>(null);
   if (rutas.length === 0) {
     return <p className="text-sm text-tinta-3">Todavía no hay ninguna ruta este día.</p>;
   }
@@ -154,14 +129,25 @@ export function ListaDeRutas({
             {onBorrar && (
               <button
                 type="button"
-                onClick={() => onBorrar(r.numero)}
-                className="min-h-8 rounded-btn px-2 text-xs font-semibold text-mal"
+                onClick={() => setQuitando(r.numero)}
+                className="reg-chip !min-h-9 !px-3 !text-xs text-mal"
               >
-                Borrar
+                Quitar
               </button>
             )}
           </div>
         ))}
+      {quitando !== null && onBorrar && (
+        <ConfirmacionEnLinea
+          texto={`¿Quitar la ruta ${quitando}? Sus pedidos no se borran.`}
+          confirmar="Sí, quitar"
+          alConfirmar={() => {
+            onBorrar(quitando);
+            setQuitando(null);
+          }}
+          alCancelar={() => setQuitando(null)}
+        />
+      )}
     </div>
   );
 }
@@ -198,41 +184,19 @@ export function BotonReordenar({
 
   if (!confirmando) {
     return (
-      <button
-        type="button"
-        onClick={() => setConfirmando(true)}
-        className="boton-fila"
-      >
-        Reordenar por hora
-      </button>
+      <FilaDeColor k="ajustes" titulo="Reordenar por hora" detalle="Numera del 1 en adelante" onClick={() => setConfirmando(true)} />
     );
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-btn bg-aviso-suave p-3">
-      <p className="text-sm text-aviso">
-        Las rutas quedarán numeradas del 1 en adelante, de la que salió más temprano a la que
-        salió más tarde.
-      </p>
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={() => void aplicar()}
-          disabled={aplicando}
-          className="min-h-11 flex-1 rounded-btn bg-acento px-4 text-sm font-semibold text-acento-texto disabled:opacity-60"
-        >
-          {aplicando ? "Reordenando…" : "Sí, reordenar"}
-        </button>
-        <button
-          type="button"
-          onClick={() => setConfirmando(false)}
-          disabled={aplicando}
-          className="boton-secundario"
-        >
-          No
-        </button>
-      </div>
-    </div>
+    <ConfirmacionEnLinea
+      texto="Cambia el número de TODAS las rutas del día: quedarán del 1 en adelante, de la que salió más temprano a la más tarde. No se puede deshacer."
+      confirmar={aplicando ? "Reordenando…" : "Sí, reordenar"}
+      cancelar="No"
+      ocupado={aplicando}
+      alConfirmar={() => void aplicar()}
+      alCancelar={() => setConfirmando(false)}
+    />
   );
 }
 
@@ -314,34 +278,31 @@ export function LectorDeRutas({
 
   if (!abierto) {
     return (
-      <button
-        type="button"
+      <FilaDeColor
+        k="foto"
+        titulo="Leer rutas de una foto"
+        detalle="Captura de la pestaña Rutas"
         onClick={() => {
           setFechaElegida(fecha);
           setLeidas([]);
           setEstado("reposo");
           setAbierto(true);
         }}
-        className="boton-fila"
-      >
-        Leer rutas de una foto
-      </button>
+      />
     );
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-card border-2 border-acento bg-sup p-4">
-      <h4 className="font-semibold">Rutas desde una foto</h4>
-
-      <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-semibold">Fecha de esas rutas</span>
+    <FormularioDeAccion k="foto" titulo="Rutas desde una foto" detalle="Capturas de la pestaña Rutas">
+      <label className="block">
+        <span className="reg-lbl">¿De qué día son esas rutas?</span>
         <input
           type="date"
           value={fechaElegida}
           max={hoyEnLima()}
           disabled={!fechaEditable}
           onChange={(e) => setFechaElegida(e.target.value)}
-          className="min-h-[52px] rounded-btn border border-linea-fuerte bg-sup px-3 text-base disabled:opacity-60"
+          className="reg-campo disabled:opacity-60"
         />
         {!fechaEditable && (
           <span className="text-xs text-tinta-3">La del día que estás revisando.</span>
@@ -362,18 +323,13 @@ export function LectorDeRutas({
             }
           />
           {error && <p className="text-sm text-mal">{error}</p>}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => void confirmar()}
-              disabled={leidas.length === 0 || estado === "guardando"}
-              className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-btn bg-acento px-4 text-sm font-semibold text-acento-texto disabled:opacity-50"
-            >
-              <Check className="size-4" />
+          <div className="flex flex-col gap-2">
+            <BotonDeAccion k="foto" onClick={() => void confirmar()} disabled={leidas.length === 0 || estado === "guardando"}>
+              <Check className="size-5" />
               {estado === "guardando"
                 ? "Guardando…"
                 : `Guardar ${leidas.length === 1 ? "esta ruta" : "estas rutas"}`}
-            </button>
+            </BotonDeAccion>
             <button
               type="button"
               onClick={() => setAbierto(false)}
@@ -386,25 +342,28 @@ export function LectorDeRutas({
         </>
       ) : (
         <>
-          <input
-            ref={entrada}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            multiple
-            onChange={(e) => void alElegirFotos(e)}
-            disabled={estado === "leyendo"}
-            className="text-sm"
-          />
+          <label className="boton-sec reg-archivo">
+            <Galeria className="size-5" />
+            Elegir fotos
+            <input
+              ref={entrada}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              onChange={(e) => void alElegirFotos(e)}
+              disabled={estado === "leyendo"}
+            />
+          </label>
           <p className="text-xs text-tinta-3">
             Una o varias capturas de la pestaña Rutas. Si se repiten por el scroll, se juntan solas.
           </p>
           {estado === "leyendo" && <p className="text-sm text-tinta-2">Leyendo…</p>}
           {error && <p className="text-sm text-mal">{error}</p>}
-          <button type="button" onClick={() => setAbierto(false)} className="boton-secundario self-start">
+          <button type="button" onClick={() => setAbierto(false)} className="boton-secundario">
             Cancelar
           </button>
         </>
       )}
-    </div>
+    </FormularioDeAccion>
   );
 }

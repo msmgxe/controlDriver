@@ -11,6 +11,7 @@ import {
   crearDriver,
   crearTienda,
 } from "@/app/admin/acciones";
+import { DialogoConfirmar } from "@/components/DialogoConfirmar";
 import { Alerta, Check, Equis } from "@/components/iconos";
 import { formatearFecha, hoyEnLima } from "@/lib/fechas";
 import type { TiendaAdmin, UsuarioAdmin } from "@/lib/db/usuarios";
@@ -40,6 +41,7 @@ export function TablaUsuarios({
   const [vigencia, setVigencia] = useState("");
   const [tienda, setTienda] = useState(false);
   const [nombreTienda, setNombreTienda] = useState("");
+  const [desactivando, setDesactivando] = useState<UsuarioAdmin | null>(null);
 
   function ejecutar(
     accion: () => Promise<{ ok: true; mensaje: string } | { ok: false; error: string }>,
@@ -53,6 +55,19 @@ export function TablaUsuarios({
 
   return (
     <div className="flex flex-col gap-4">
+      {desactivando && (
+        <DialogoConfirmar
+          titulo={`¿Desactivar a ${desactivando.nombre}?`}
+          texto="No podrá entrar a la app hasta que lo reactives."
+          confirmar="Sí, desactivar"
+          alCancelar={() => setDesactivando(null)}
+          alConfirmar={() => {
+            const u = desactivando;
+            setDesactivando(null);
+            ejecutar(() => cambiarActivo(u.id, false));
+          }}
+        />
+      )}
       {aviso && (
         <div
           role="status"
@@ -345,7 +360,7 @@ export function TablaUsuarios({
                         type="button"
                         className="min-h-8 rounded-chip border border-mal/40 px-3 text-xs font-semibold whitespace-nowrap text-mal hover:bg-sup-2"
                         disabled={pendiente}
-                        onClick={() => ejecutar(() => cambiarActivo(u.id, !u.activo))}
+                        onClick={() => (u.activo ? setDesactivando(u) : ejecutar(() => cambiarActivo(u.id, true)))}
                       >
                         {u.activo ? "Desactivar" : "Reactivar"}
                       </button>

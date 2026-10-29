@@ -1,7 +1,9 @@
 # Cómo cobrar y activar licencias
 
-Mientras no exista el panel web, esto se hace desde la terminal de tu Mac, en
-la carpeta del proyecto. Es un solo comando por compañero y por pago.
+Hay dos formas: el **panel web** (`/licencias`, con estadísticas, montos y
+ficha de cada usuario; ver `Archivos MD/PANEL-LICENCIAS.md`) y la terminal de
+tu Mac, en la carpeta del proyecto, que se explica aquí. Las dos escriben en la
+misma base. Es un solo comando por compañero y por pago.
 
 ## El recorrido completo
 
@@ -15,7 +17,8 @@ la carpeta del proyecto. Es un solo comando por compañero y por pago.
    npm run licencia -- emitir <código> "Juan Pérez" 1
    ```
 
-   El último número son los meses pagados. Si todavía le quedaban días, el mes
+   El último número son los meses pagados. Para dejar registrado lo cobrado
+   añade `--monto 15 --metodo yape` (soles, 0–5000). Si todavía le quedaban días, el mes
    nuevo **se suma** a lo que tenía: no pierde nada por pagar antes.
 
 4. **Le reenvías el mensaje** que sale en pantalla. Él lo pega en

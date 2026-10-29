@@ -40,15 +40,15 @@ export function LineaDeHorario({
         setVuelta((v) => v + 1);
       }}
       aria-label={`Horario de ${inicio} a ${fin ?? "—"}. Toca para repetir la animación`}
-      className="relative h-[84px] w-full overflow-hidden rounded-[14px] bg-[var(--asfalto)] text-left"
+      className="relative h-[84px] w-full overflow-hidden rounded-[18px] active:scale-[0.99] bg-[var(--asfalto)] text-left"
     >
       {[6, 9, 12, 15, 18, 21].map((h) => (
-        <span key={h} className="absolute inset-y-0 border-l border-dashed border-white/20 pl-1 text-[10px] font-semibold text-white/60" style={{ left: `${x(h)}%` }}>
+        <span key={h} className="absolute inset-y-0 border-l border-dashed border-white/20 pl-1 text-[0.65rem] font-semibold text-white/60" style={{ left: `${x(h)}%` }}>
           {h}
         </span>
       ))}
       <span
-        className="linea-crece absolute top-7 flex h-[34px] items-center justify-center overflow-hidden rounded-[10px] px-1 text-[11px] font-bold text-white"
+        className="linea-crece absolute top-7 flex h-[34px] items-center justify-center overflow-hidden rounded-[10px] px-1 text-[0.7rem] font-bold text-white"
         style={{ left: `${x(a)}%`, width: `${Math.max(x(termina) - x(a), 3)}%`, background: color }}
       >
         {etiqueta}
@@ -57,7 +57,7 @@ export function LineaDeHorario({
         className="linea-cursor absolute inset-y-0 w-[2px] bg-white"
         style={{ "--fin": `${x(termina)}%` } as React.CSSProperties}
       />
-      <span className="absolute right-2 bottom-1 font-mono text-[11px] text-white/80">
+      <span className="absolute right-2 bottom-1 font-mono text-[0.7rem] text-white/80">
         {inicio} → {fin ?? "—"}
       </span>
     </button>

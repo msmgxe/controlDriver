@@ -34,11 +34,7 @@ export function Pestanas({
   etiqueta: string;
 }) {
   return (
-    <div
-      role="tablist"
-      aria-label={etiqueta}
-      className="grid grid-flow-col auto-cols-fr gap-1 rounded-btn bg-sup-2 p-1"
-    >
+    <div role="tablist" aria-label={etiqueta} className="aju-seg">
       {items.map((p) => {
         const activa = p.id === actual;
         return (
@@ -48,19 +44,12 @@ export function Pestanas({
             role="tab"
             aria-selected={activa}
             onClick={() => alCambiar(p.id)}
-            className={`flex min-h-10 min-w-0 items-center justify-center gap-1.5 rounded-[calc(var(--r-btn)-3px)] px-1 text-[13.5px] ${
-              activa
-                ? "bg-sup font-bold text-tinta shadow-[var(--sombra-tab)]"
-                : "font-semibold text-tinta-2"
-            }`}
           >
             <span className="truncate">{p.etiqueta}</span>
             {p.cuenta !== undefined && (
-              <span className="rounded-chip bg-acento-suave px-1.5 font-mono text-[11px] leading-5 text-acento-tinta">
-                {p.cuenta}
-              </span>
+              <span className="rounded-chip bg-black/15 px-1.5 font-mono text-[11px] leading-5">{p.cuenta}</span>
             )}
-            {p.punto && <i aria-hidden className="size-1.5 shrink-0 rounded-full bg-acento" />}
+            {p.punto && <i aria-hidden className="size-2 shrink-0 rounded-full bg-current opacity-70" />}
           </button>
         );
       })}

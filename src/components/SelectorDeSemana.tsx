@@ -1,6 +1,7 @@
 "use client";
 
 import { Calendario } from "@/components/iconos";
+import { BotonPag } from "@/components/PagUi";
 import { TiraDeSemanas } from "@/components/TiraDeSemanas";
 import { useTiraDeSemanas } from "@/hooks/useTiraDeSemanas";
 import {
@@ -57,13 +58,9 @@ export function SelectorDeSemana({
         </div>
         <div className="flex shrink-0 items-center gap-1">
           {!esActual && (
-            <button
-              type="button"
-              onClick={() => alCambiar(actual)}
-              className="min-h-11 px-2 text-xs font-bold text-acento-tinta underline underline-offset-2"
-            >
+            <BotonPag k="taxi" className="!px-3" onClick={() => alCambiar(actual)}>
               Esta semana
-            </button>
+            </BotonPag>
           )}
           {/* Para saltar a cualquier fecha sin arrastrar semana a semana. */}
           <label className="relative grid size-11 place-items-center rounded-btn border border-linea-fuerte bg-sup">

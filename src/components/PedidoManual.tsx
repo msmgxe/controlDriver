@@ -3,8 +3,17 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 
+import { TileDeAccion, BotonDeAccion } from "@/components/Acciones";
+import {
+  Chip,
+  ChipsDeRuta,
+  ConfirmacionEnLinea,
+  EstadoEnTres,
+  FormularioDeAccion,
+  Stepper,
+} from "@/components/ControlesDeRegistro";
 import { useOpcion } from "@/components/OpcionActiva";
-import { Check } from "@/components/iconos";
+import { Check, Galeria } from "@/components/iconos";
 import { comprimir } from "@/lib/carga";
 import {
   agregarPedidoManual,
@@ -95,19 +104,13 @@ export function PedidoManual({
   if (oculta) return null;
 
   if (!abierto) {
-    return (
-      <button type="button" onClick={() => setAbierto(true)} className="boton-fila">
-        Añadir un pedido a mano
-      </button>
-    );
+    return <TileDeAccion k="mano" detalle="Código, ruta y estado" onClick={() => setAbierto(true)} />;
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-card border-2 border-acento bg-sup p-4">
-      <h4 className="font-semibold">Pedido a mano</h4>
-
-      <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-semibold">Código</span>
+    <FormularioDeAccion k="mano" titulo="Pedido a mano" detalle="Escribe su código">
+      <label className="block">
+        <span className="reg-lbl">Código del pedido</span>
         <input
           value={codigo}
           onChange={(e) => {
@@ -118,102 +121,57 @@ export function PedidoManual({
           inputMode="text"
           autoCapitalize="off"
           autoCorrect="off"
-          className="min-h-[52px] rounded-btn border border-linea-fuerte bg-sup px-3 font-mono text-base"
+          className="reg-campo font-mono"
         />
         {codigo !== "" && !codigoValido && (
           <span className="text-xs text-mal">Debe tener la forma {FORMATO_DE_CODIGO}.</span>
         )}
       </label>
 
-      <div className="grid grid-cols-2 gap-3">
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-semibold">Ruta</span>
-          <select
-            value={ruta}
-            onChange={(e) => setRuta(e.target.value)}
-            className="min-h-[52px] rounded-btn border border-linea-fuerte bg-sup px-3 text-base"
-          >
-            <option value="">Sin ruta</option>
-            {rutas.map((n) => (
-              <option key={n} value={n}>
-                Ruta {n}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-semibold">Estado</span>
-          <select
-            value={estado}
-            onChange={(e) => setEstado(e.target.value)}
-            className="min-h-[52px] rounded-btn border border-linea-fuerte bg-sup px-3 text-base"
-          >
-            {ESTADOS.map((e) => (
-              <option key={e} value={e}>
-                {e}
-              </option>
-            ))}
-          </select>
-        </label>
+      <div>
+        <span className="reg-lbl">Ruta</span>
+        <ChipsDeRuta k="mano" rutas={rutas} valor={ruta} alCambiar={setRuta} />
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <span className="text-sm font-semibold">Tramo · {formatearSoles(montoCentimos)}</span>
-        <div className="flex flex-wrap gap-2">
+      <div>
+        <span className="reg-lbl">¿Cómo salió?</span>
+        <EstadoEnTres valor={estado} alCambiar={setEstado} estados={ESTADOS} />
+      </div>
+
+      <div>
+        <span className="reg-lbl">Tramo · {formatearSoles(montoCentimos)}</span>
+        <div className="reg-chips">
           {regla.tramos.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setTramo(t.id)}
-              aria-pressed={tramo === t.id}
-              className={`min-h-11 rounded-btn border px-3 text-sm font-semibold ${
-                tramo === t.id
-                  ? "border-acento bg-acento text-acento-texto"
-                  : "border-linea bg-sup-2 text-tinta-2"
-              }`}
-            >
+            <Chip key={t.id} k="mano" activo={tramo === t.id} onClick={() => setTramo(t.id)}>
               T{t.id}
-            </button>
+            </Chip>
           ))}
         </div>
       </div>
 
-      <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-semibold">Foto de respaldo (opcional)</span>
+      <div>
+        <span className="reg-lbl">Foto de respaldo (opcional)</span>
         {/* Sin `capture`: con él, el navegador abre la cámara directo y no
             deja elegir una foto ya tomada. Sin ese atributo, Android enseña
             las dos puertas —cámara y galería— y decide la persona. */}
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setFoto(e.target.files?.[0] ?? null)}
-          className="text-sm"
-        />
-        {foto && <span className="text-xs text-tinta-3">{foto.name}</span>}
-      </label>
+        <label className="boton-sec reg-archivo">
+          <Galeria className="size-5" />
+          {foto ? "Cambiar la foto" : "Elegir una foto"}
+          <input type="file" accept="image/*" onChange={(e) => setFoto(e.target.files?.[0] ?? null)} />
+        </label>
+        {foto && <span className="mt-1 block text-xs text-tinta-3">{foto.name}</span>}
+      </div>
 
       {error && <p className="rounded-btn bg-mal-suave px-3 py-2 text-sm text-mal">{error}</p>}
 
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={() => void guardar()}
-          disabled={guardando || !codigoValido}
-          className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-btn bg-acento px-4 text-sm font-semibold text-acento-texto disabled:opacity-50"
-        >
-          <Check className="size-4" />
-          {guardando ? "Guardando…" : "Añadir"}
-        </button>
-        <button
-          type="button"
-          onClick={() => setAbierto(false)}
-          className="boton-secundario"
-        >
-          Cancelar
-        </button>
-      </div>
-    </div>
+      <BotonDeAccion k="mano" onClick={() => void guardar()} disabled={guardando || !codigoValido}>
+        <Check className="size-5" />
+        {guardando ? "Guardando…" : "Guardar pedido"}
+      </BotonDeAccion>
+      <button type="button" onClick={() => setAbierto(false)} className="boton-secundario">
+        Cancelar
+      </button>
+    </FormularioDeAccion>
   );
 }
 
@@ -247,14 +205,14 @@ export function PedidosPorCantidad({
 }) {
   const [abierto, setAbierto, oculta] = useOpcion("cantidad");
   const [fechaElegida, setFechaElegida] = useState<string>(fecha);
-  const [cantidad, setCantidad] = useState("");
+  const [cantidad, setCantidad] = useState(1);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [agregados, setAgregados] = useState<number | null>(null);
 
-  const numero = Number(cantidad);
+  const numero = cantidad;
   const fechaValida = esFechaISO(fechaElegida) && fechaElegida <= hoyEnLima();
-  const valido = fechaValida && cantidad !== "" && Number.isInteger(numero) && numero > 0 && numero <= 60;
+  const valido = fechaValida && Number.isInteger(numero) && numero > 0 && numero <= 60;
 
   async function guardar() {
     if (!fechaValida) {
@@ -270,7 +228,7 @@ export function PedidosPorCantidad({
     try {
       const { ordenIds } = await agregarPedidosPorCantidad(fechaElegida as FechaISO, numero);
       setAgregados(ordenIds.length);
-      setCantidad("");
+      setCantidad(1);
       alAgregar(fechaElegida as FechaISO);
     } catch (fallo) {
       setError(fallo instanceof Error ? fallo.message : "No se pudo guardar.");
@@ -283,24 +241,20 @@ export function PedidosPorCantidad({
 
   if (!abierto) {
     return (
-      <button
-        type="button"
+      <TileDeAccion
+        k="cantidad"
+        detalle="Solo el número"
         onClick={() => {
           setFechaElegida(fecha);
           setAbierto(true);
           setAgregados(null);
         }}
-        className="boton-fila"
-      >
-        Anotar cuántos pedidos hice
-      </button>
+      />
     );
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-card border-2 border-acento bg-sup p-4">
-      <h4 className="font-semibold">Cuántos pedidos hiciste</h4>
-
+    <FormularioDeAccion k="cantidad" titulo="Cuántos pedidos hiciste" detalle="Los completas después">
       {agregados !== null ? (
         <>
           <p className="rounded-btn bg-bien-suave px-3 py-2 text-sm text-bien">
@@ -330,15 +284,23 @@ export function PedidosPorCantidad({
         </>
       ) : (
         <>
-          <p className="text-sm text-tinta-2">
-            Para cuando no tienes cómo leer las capturas de ese día. Anota el número ahora; el
-            código, la ruta y el estado de cada uno se completan después. También sirve para
-            ponerse al día con un día pasado que se quedó sin captura a tiempo —mientras ese día no
-            tenga ya pedidos leídos de una foto.
-          </p>
+          <div>
+            <span className="reg-lbl">¿Cuántos pedidos hiciste?</span>
+            <Stepper
+              k="cantidad"
+              etiqueta="Cantidad de pedidos"
+              valor={cantidad}
+              min={1}
+              max={60}
+              alCambiar={(n) => {
+                setCantidad(n);
+                setError(null);
+              }}
+            />
+          </div>
 
-          <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-semibold">Fecha de esos pedidos</span>
+          <label className="block">
+            <span className="reg-lbl">¿De qué día?</span>
             <input
               type="date"
               value={fechaElegida}
@@ -348,43 +310,27 @@ export function PedidosPorCantidad({
                 setFechaElegida(e.target.value);
                 setError(null);
               }}
-              className="min-h-[52px] rounded-btn border border-linea-fuerte bg-sup px-3 text-base disabled:opacity-60"
+              className="reg-campo disabled:opacity-60"
             />
           </label>
 
-          <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-semibold">Cantidad de pedidos</span>
-            <input
-              value={cantidad}
-              onChange={(e) => {
-                setCantidad(e.target.value.replace(/\D/g, ""));
-                setError(null);
-              }}
-              placeholder="14"
-              inputMode="numeric"
-              className="min-h-[52px] rounded-btn border border-linea-fuerte bg-sup px-3 font-mono text-base"
-            />
-          </label>
+          <p className="text-xs text-tinta-3">
+            Para cuando no tienes cómo leer las capturas. El código, la ruta y el estado se completan
+            después. No sirve si ese día ya tiene pedidos leídos de una foto.
+          </p>
 
           {error && <p className="rounded-btn bg-mal-suave px-3 py-2 text-sm text-mal">{error}</p>}
 
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => void guardar()}
-              disabled={guardando || !valido}
-              className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-btn bg-acento px-4 text-sm font-semibold text-acento-texto disabled:opacity-50"
-            >
-              <Check className="size-4" />
-              {guardando ? "Guardando…" : "Agregar"}
-            </button>
-            <button type="button" onClick={() => setAbierto(false)} className="boton-secundario">
-              Cancelar
-            </button>
-          </div>
+          <BotonDeAccion k="cantidad" onClick={() => void guardar()} disabled={guardando || !valido}>
+            <Check className="size-5" />
+            {guardando ? "Guardando…" : `Guardar ${cantidad} ${cantidad === 1 ? "pedido" : "pedidos"}`}
+          </BotonDeAccion>
+          <button type="button" onClick={() => setAbierto(false)} className="boton-secundario">
+            Cancelar
+          </button>
         </>
       )}
-    </div>
+    </FormularioDeAccion>
   );
 }
 
@@ -436,6 +382,7 @@ export function LectorDePedidos({
   const [fechasDeLaFoto, setFechasDeLaFoto] = useState<FechaISO[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [resultado, setResultado] = useState<string | null>(null);
+  const [quitando, setQuitando] = useState<string | null>(null);
   const entrada = useRef<HTMLInputElement>(null);
 
   const fechaValida = esFechaISO(fechaElegida) && fechaElegida <= hoyEnLima();
@@ -497,8 +444,9 @@ export function LectorDePedidos({
 
   if (!abierto) {
     return (
-      <button
-        type="button"
+      <TileDeAccion
+        k="foto"
+        detalle="Fotos de Órdenes"
         onClick={() => {
           setFechaElegida(fecha);
           setNuevos([]);
@@ -509,18 +457,15 @@ export function LectorDePedidos({
           setEstado("reposo");
           setAbierto(true);
         }}
-        className="boton-fila"
-      >
-        Leer pedidos de una foto
-      </button>
+      />
     );
   }
 
   if (estado === "hecho") {
     return (
-      <div className="flex flex-col gap-3 rounded-card border-2 border-acento bg-sup p-4">
+      <FormularioDeAccion k="foto" titulo="¡Listo!">
         <p className="flex items-center gap-2 text-sm font-semibold text-bien">
-          <Check className="size-4 shrink-0" />
+          <Check className="size-5 shrink-0" />
           {resultado}
         </p>
         <button
@@ -533,25 +478,23 @@ export function LectorDePedidos({
         >
           Listo
         </button>
-      </div>
+      </FormularioDeAccion>
     );
   }
 
   const revisando = estado === "listos" || estado === "guardando" || (estado === "error" && nuevos.length + repetidos.length > 0);
 
   return (
-    <div className="flex flex-col gap-3 rounded-card border-2 border-acento bg-sup p-4">
-      <h4 className="font-semibold">Pedidos desde una foto</h4>
-
-      <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-semibold">Fecha de esos pedidos</span>
+    <FormularioDeAccion k="foto" titulo="Lista de fotos" detalle="Pedidos desde una captura">
+      <label className="block">
+        <span className="reg-lbl">¿De qué día son las fotos?</span>
         <input
           type="date"
           value={fechaElegida}
           max={hoyEnLima()}
           disabled={estado === "guardando"}
           onChange={(e) => setFechaElegida(e.target.value)}
-          className="min-h-[52px] rounded-btn border border-linea-fuerte bg-sup px-3 text-base disabled:opacity-60"
+          className="reg-campo disabled:opacity-60"
         />
       </label>
 
@@ -583,8 +526,8 @@ export function LectorDePedidos({
                     {estado !== "guardando" && (
                       <button
                         type="button"
-                        onClick={() => setNuevos((l) => l.filter((x) => x.codigo !== p.codigo))}
-                        className="min-h-8 rounded-btn px-2 text-xs font-semibold text-mal"
+                        onClick={() => setQuitando(p.codigo)}
+                        className="reg-chip !min-h-9 !px-3 !text-xs text-mal"
                       >
                         Quitar
                       </button>
@@ -599,6 +542,18 @@ export function LectorDePedidos({
                 ? "Todos esos pedidos ya estaban registrados: no hay nada que añadir."
                 : "No queda ningún pedido por añadir."}
             </p>
+          )}
+
+          {quitando && (
+            <ConfirmacionEnLinea
+              texto={`¿Quitar ${quitando} de la lista? No se guardará.`}
+              confirmar="Sí, quitar"
+              alConfirmar={() => {
+                setNuevos((l) => l.filter((x) => x.codigo !== quitando));
+                setQuitando(null);
+              }}
+              alCancelar={() => setQuitando(null)}
+            />
           )}
 
           {repetidos.length > 0 && (
@@ -620,19 +575,14 @@ export function LectorDePedidos({
 
           {error && <p className="rounded-btn bg-mal-suave px-3 py-2 text-sm text-mal">{error}</p>}
 
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2">
             {nuevos.length > 0 && (
-              <button
-                type="button"
-                onClick={() => void confirmar()}
-                disabled={!fechaValida || estado === "guardando"}
-                className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-btn bg-acento px-4 text-sm font-semibold text-acento-texto disabled:opacity-50"
-              >
-                <Check className="size-4" />
+              <BotonDeAccion k="foto" onClick={() => void confirmar()} disabled={!fechaValida || estado === "guardando"}>
+                <Check className="size-5" />
                 {estado === "guardando"
                   ? "Guardando…"
-                  : `Añadir ${nuevos.length} ${nuevos.length === 1 ? "pedido nuevo" : "pedidos nuevos"}`}
-              </button>
+                  : `Guardar ${nuevos.length} ${nuevos.length === 1 ? "pedido" : "pedidos"}`}
+              </BotonDeAccion>
             )}
             <button
               type="button"
@@ -646,26 +596,29 @@ export function LectorDePedidos({
         </>
       ) : (
         <>
-          <input
-            ref={entrada}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            multiple
-            onChange={(e) => void alElegirFotos(e)}
-            disabled={estado === "leyendo"}
-            className="text-sm"
-          />
+          <label className="boton-sec reg-archivo">
+            <Galeria className="size-5" />
+            Elegir fotos
+            <input
+              ref={entrada}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              onChange={(e) => void alElegirFotos(e)}
+              disabled={estado === "leyendo"}
+            />
+          </label>
           <p className="text-xs text-tinta-3">
             Una o varias capturas de la pestaña Órdenes, en el orden en que las tomaste. Los que ya
             estén registrados no se añaden.
           </p>
           {estado === "leyendo" && <p className="text-sm text-tinta-2">Leyendo…</p>}
           {error && <p className="text-sm text-mal">{error}</p>}
-          <button type="button" onClick={() => setAbierto(false)} className="boton-secundario self-start">
+          <button type="button" onClick={() => setAbierto(false)} className="boton-secundario">
             Cancelar
           </button>
         </>
       )}
-    </div>
+    </FormularioDeAccion>
   );
 }

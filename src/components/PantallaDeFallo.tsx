@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { Acordeon } from "@/components/Acordeon";
+
 /**
  * Lo que se ve cuando algo falla, en lugar de una pantalla en blanco.
  *
@@ -27,12 +29,20 @@ export function PantallaDeFallo({
 
   return (
     <div className="mx-auto flex min-h-[60dvh] max-w-md flex-col justify-center gap-5 px-4 py-10">
-      <div className="flex flex-col gap-2">
-        <span className="rotulo">Algo falló</span>
-        <h1 className="text-[28px] leading-tight">Esta pantalla no se pudo mostrar</h1>
-        <p className="text-sm text-tinta-2">
-          Tus jornadas guardadas están bien: lo que falló es esta pantalla, no tus datos.
-        </p>
+      <div className="aju-cent rise-v2">
+        <svg viewBox="0 0 120 110" width="150" aria-hidden="true">
+          <g className="aju-wob">
+            <path
+              d="M60 8l52 92H8z"
+              style={{ fill: "var(--aviso)", stroke: "var(--aviso)" }}
+              strokeWidth="8"
+              strokeLinejoin="round"
+            />
+            <path d="M60 40v28M60 80v.01" stroke="#fff" strokeWidth="9" strokeLinecap="round" />
+          </g>
+        </svg>
+        <h1 className="text-[26px] leading-tight">Esta pantalla no se pudo mostrar</h1>
+        <p className="text-sm text-tinta-2">No perdiste nada: lo que falló es esta pantalla, no tus datos.</p>
       </div>
 
       <div className="flex flex-col gap-2">
@@ -53,9 +63,8 @@ export function PantallaDeFallo({
         </button>
       </div>
 
-      <details className="rounded-btn bg-sup-2 p-3 text-sm">
-        <summary className="cursor-pointer font-semibold">Detalle para soporte</summary>
-        <pre className="mt-2 max-h-48 overflow-auto font-mono text-xs whitespace-pre-wrap">{detalle}</pre>
+      <Acordeon titulo="Detalle para soporte" resumen="Para mandarlo a quien lo arregla">
+        <pre className="aju-caja">{detalle}</pre>
         <button
           type="button"
           onClick={async () => {
@@ -66,11 +75,11 @@ export function PantallaDeFallo({
               setCopiado(false);
             }
           }}
-          className="boton-secundario mt-2"
+          className="boton-sec"
         >
           {copiado ? "Copiado ✓" : "Copiar el detalle"}
         </button>
-      </details>
+      </Acordeon>
     </div>
   );
 }

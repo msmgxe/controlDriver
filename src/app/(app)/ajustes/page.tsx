@@ -1,12 +1,15 @@
 "use client";
 
-import { Suspense, useState, useSyncExternalStore } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 
 import { Acordeon } from "@/components/Acordeon";
 import { EditorDeTarifario } from "@/components/AdicionalPorZona";
 import { DialogoConfirmar } from "@/components/DialogoConfirmar";
 import { IconoDeSeccion } from "@/components/IconoDeSeccion";
+import { SeccionDeAjustes } from "@/components/SeccionDeAjustes";
+import { PuntosDePin, TecladoPin } from "@/components/TecladoPin";
+import { cerrarAplicacion } from "@/components/salirDeLaApp";
 import { TourDePantalla } from "@/components/TourDePantalla";
 import { SeccionApariencia } from "@/components/SeccionApariencia";
 import { SeccionComandas } from "@/components/SeccionComandas";
@@ -23,7 +26,6 @@ import { crearTipoDeAdicional } from "@/app/(app)/jornada/acciones";
 import { espacioOcupado } from "@/lib/db/sqlite/pruebas";
 import { avisarDeCambios } from "@/lib/cambios";
 import { formatearFecha, hoyEnLima, type FechaISO } from "@/lib/fechas";
-import { intentarSalir } from "@/lib/salir";
 import {
   instantaneaFechaAceptacion,
   instantaneaFechaAceptacionServidor,
@@ -56,6 +58,89 @@ export const dynamic = "force-static";
  * de correo todos los días.
  */
 export default function PaginaAjustes() {
+  const [abierta, setAbierta] = useState<string | null>(null);
+  const raiz = useRef<HTMLDivElement>(null);
+
+  const abrir = useCallback((clave: string | null) => {
+    setAbierta(clave);
+    // Al abrir o volver, se empieza arriba de la pantalla.
+    requestAnimationFrame(() => raiz.current?.scrollIntoView({ block: "start" }));
+  }, []);
+
+  // Se puede llegar directo a una sección con `?abre=tienda` o con `#aj-tienda`.
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("abre");
+    const h = window.location.hash.replace(/^#(aj-)?/, "");
+    const pedida = ALIAS[q ?? ""] ?? ALIAS[h] ?? null;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- se lee un dato externo (la dirección) tras montar
+    if (pedida) setAbierta(pedida);
+  }, []);
+
+  const celda = (clave: string, i: number, hijo: React.ReactNode) => (
+    <SeccionDeAjustes clave={clave} id={ANCLAS[clave]} indice={i} abierta={abierta} abrir={abrir}>
+      {hijo}
+    </SeccionDeAjustes>
+  );
+
+  return (
+    <div ref={raiz} className="mx-auto flex max-w-[880px] scroll-mt-4 flex-col gap-4">
+      <Suspense fallback={null}>
+        <TourDePantalla pantalla="ajustes" />
+      </Suspense>
+      {abierta === null && <h2 className="text-[30px] leading-tight">Ajustes</h2>}
+
+      {abierta === null && <SeccionVersion />}
+
+      <div className="aju-grid">
+        {celda("apariencia", 0, <SeccionApariencia />)}
+        {celda("metas", 1, <SeccionMetasYSonido />)}
+        {celda("tienda", 2, <SeccionModalidad />)}
+        {celda("adicionales", 3, <AdicionalesYTarifas />)}
+        {celda("comandas", 4, <ComandasYClientes />)}
+        {celda("pin", 5, <SeccionBloqueo />)}
+        {celda("licencia", 6, <SeccionLicencia />)}
+        {celda("respaldo", 7, <SeccionRespaldo />)}
+        {celda("terminos", 8, <SeccionTerminos />)}
+        {celda("ejemplo", 9, <SeccionEjemplo />)}
+        {celda("diagnostico", 10, <SeccionDiagnostico />)}
+      </div>
+
+      <SeccionSalir />
+    </div>
+  );
+}
+
+const ANCLAS: Record<string, string> = {
+  apariencia: "aj-apariencia",
+  metas: "aj-metas",
+  tienda: "aj-tienda",
+  adicionales: "aj-adicionales",
+  comandas: "aj-comandas",
+  pin: "aj-pin",
+  licencia: "aj-licencia",
+  respaldo: "aj-respaldo",
+  terminos: "aj-terminos",
+  ejemplo: "aj-ejemplo",
+  diagnostico: "aj-diagnostico",
+};
+
+/** Nombres con los que otras pantallas o recorridos pueden pedir una sección. */
+const ALIAS: Record<string, string> = {
+  ...Object.fromEntries(Object.keys(ANCLAS).map((k) => [k, k])),
+  bloqueo: "pin",
+  diag: "diagnostico",
+  capturas: "diagnostico",
+  tarifa: "tienda",
+  ubicacion: "tienda",
+  sonidos: "metas",
+  legal: "terminos",
+};
+
+/**
+ * El bloqueo del dispositivo: PIN de 4 números con puntos y teclado grande.
+ * Quitarlo pide confirmar, porque deja la app abierta a cualquiera.
+ */
+function SeccionBloqueo() {
   // El estado del bloqueo vive en el navegador, fuera de React. Se lee con
   // useSyncExternalStore para no tener que sincronizarlo con un efecto.
   const instantanea = useSyncExternalStore(
@@ -71,177 +156,145 @@ export default function PaginaAjustes() {
   const [repetir, setRepetir] = useState("");
   const [mensaje, setMensaje] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [quitando, setQuitando] = useState(false);
 
-  async function guardarPin(e: React.FormEvent) {
-    e.preventDefault();
+  function tocar(d: string) {
     setError(null);
     setMensaje(null);
+    if (pin.length < 4) setPin(pin + d);
+    else if (repetir.length < 4) setRepetir(repetir + d);
+  }
+  function borrar() {
+    setError(null);
+    if (repetir.length > 0) setRepetir(repetir.slice(0, -1));
+    else setPin(pin.slice(0, -1));
+  }
+  function reiniciar() {
+    setPin("");
+    setRepetir("");
+    setError(null);
+  }
 
+  async function guardarPin() {
+    setError(null);
+    setMensaje(null);
     if (!/^\d{4}$/.test(pin)) {
       setError("El PIN tiene que ser de 4 dígitos.");
       return;
     }
     if (pin !== repetir) {
-      setError("Los dos PIN no coinciden.");
+      setError("Los dos PIN no coinciden. Prueba otra vez.");
+      setRepetir("");
       return;
     }
     await fijarPin(pin);
     marcarAbierto();
-    setPin("");
-    setRepetir("");
+    reiniciar();
     setMensaje("Listo. La próxima vez que abras Control Driver te pedirá el PIN.");
   }
 
+  const largo = pin.length < 4 ? pin.length : repetir.length;
+
   return (
-    <div className="mx-auto flex max-w-[880px] flex-col gap-4">
-      <Suspense fallback={null}>
-        <TourDePantalla pantalla="ajustes" />
-      </Suspense>
-      <h2 className="text-[30px] leading-tight">Ajustes</h2>
-
-      <SeccionVersion />
-
-      <SeccionApariencia />
-
-      <div id="aj-metas">
-        <SeccionMetasYSonido />
-      </div>
-
-      <div id="aj-tienda">
-        <SeccionModalidad />
-      </div>
-
-      <div id="aj-adicionales">
-        <AdicionalesYTarifas />
-      </div>
-
-      <div id="aj-comandas">
-        <ComandasYClientes />
-      </div>
-
-      <Acordeon
-        id="aj-pin"
-        titulo="Bloqueo del dispositivo"
+    <Acordeon
+      titulo="Bloqueo"
       icono="candado"
-        resumen={configurado ? `PIN activo${conHuella ? " · con huella" : ""}` : "Sin PIN"}
-        aviso={!configurado}
-      >
-        <p className="text-sm text-tinta-2">
-          Un PIN de 4 dígitos al abrir la app. Tus ingresos, los códigos de tus pedidos y los datos
-          de tus clientes no quedan a la vista si prestas el celular.
-        </p>
+      resumen={configurado ? `PIN activo${conHuella ? " · con huella" : ""}` : "Sin PIN"}
+      aviso={!configurado}
+    >
+      <p className="text-sm text-tinta-2">
+        Un PIN de 4 números al abrir la app. Tus ingresos, los códigos de tus pedidos y los datos de tus
+        clientes no quedan a la vista si prestas el celular.
+      </p>
 
-        {configurado ? (
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-bien">
-              <Check className="size-4" />
-              PIN activo
-            </span>
+      {configurado ? (
+        <div className="flex flex-col gap-3">
+          <span className="inline-flex items-center gap-2 text-base font-bold text-bien">
+            <Check className="size-5" />
+            El PIN está activo
+          </span>
+          <button
+            type="button"
+            className="min-h-[var(--toque)] rounded-btn bg-mal-suave px-4 text-sm font-bold text-mal"
+            onClick={() => setQuitando(true)}
+          >
+            Quitar el PIN
+          </button>
+        </div>
+      ) : (
+        <div className="aju-cent">
+          <b className="font-display text-lg">{pin.length < 4 ? "Elige tu PIN de 4 números" : "Repítelo para confirmar"}</b>
+          <PuntosDePin largo={largo} error={!!error} />
+          <TecladoPin alTocar={tocar} alBorrar={borrar} />
+          <div className="flex w-full flex-col gap-2">
             <button
               type="button"
-              className="boton-sec"
-              onClick={() => {
-                quitarBloqueo();
-                setMensaje("Bloqueo quitado.");
-              }}
+              className="boton-principal"
+              disabled={repetir.length < 4}
+              onClick={() => void guardarPin()}
             >
-              Quitar bloqueo
-            </button>
-          </div>
-        ) : (
-          <form className="flex flex-col gap-3" onSubmit={(e) => void guardarPin(e)}>
-            <div className="flex flex-wrap gap-3">
-              <div className="flex flex-1 flex-col gap-1.5">
-                <label htmlFor="pin-nuevo" className="text-sm font-semibold">
-                  PIN nuevo
-                </label>
-                <input
-                  id="pin-nuevo"
-                  type="password"
-                  inputMode="numeric"
-                  maxLength={4}
-                  autoComplete="new-password"
-                  value={pin}
-                  onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                  className="min-h-12 rounded-btn border border-linea-fuerte bg-sup px-4 text-base tracking-[0.5em]"
-                />
-              </div>
-              <div className="flex flex-1 flex-col gap-1.5">
-                <label htmlFor="pin-repetir" className="text-sm font-semibold">
-                  Repítelo
-                </label>
-                <input
-                  id="pin-repetir"
-                  type="password"
-                  inputMode="numeric"
-                  maxLength={4}
-                  autoComplete="new-password"
-                  value={repetir}
-                  onChange={(e) => setRepetir(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                  className="min-h-12 rounded-btn border border-linea-fuerte bg-sup px-4 text-base tracking-[0.5em]"
-                />
-              </div>
-            </div>
-            <button type="submit" className="boton-sec self-start">
               Activar el bloqueo
             </button>
-          </form>
-        )}
-
-        {configurado && hayHuella && (
-          <div className="flex flex-wrap items-center gap-3 border-t border-linea pt-4">
-            <span className="grid size-10 shrink-0 place-items-center rounded-chip bg-sup-2">
-              <Huella className="size-5" />
-            </span>
-            {conHuella ? (
-              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-bien">
-                <Check className="size-4" />
-                Huella activa
-              </span>
-            ) : (
-              <button
-                type="button"
-                className="boton-sec"
-                onClick={async () => {
-                  const ok = await activarHuella("Control Driver");
-                  setMensaje(
-                    ok
-                      ? "Huella activada. El PIN sigue funcionando como respaldo."
-                      : "Tu dispositivo no pudo registrar la huella. El PIN sigue activo.",
-                  );
-                }}
-              >
-                Desbloquear también con huella
+            {pin.length > 0 && (
+              <button type="button" className="boton-sec" onClick={reiniciar}>
+                Empezar de nuevo
               </button>
             )}
           </div>
-        )}
+        </div>
+      )}
 
-        {mensaje && <p className="text-sm font-semibold text-bien">{mensaje}</p>}
-        {error && <p className="text-sm font-semibold text-mal">{error}</p>}
+      {configurado && hayHuella && (
+        <div className="flex flex-wrap items-center gap-3 border-t border-linea pt-4">
+          <span className="grid size-10 shrink-0 place-items-center rounded-chip bg-sup-2">
+            <Huella className="size-5" />
+          </span>
+          {conHuella ? (
+            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-bien">
+              <Check className="size-4" />
+              Huella activa
+            </span>
+          ) : (
+            <button
+              type="button"
+              className="boton-sec"
+              onClick={async () => {
+                const ok = await activarHuella("Control Driver");
+                setMensaje(
+                  ok
+                    ? "Huella activada. El PIN sigue funcionando como respaldo."
+                    : "Tu dispositivo no pudo registrar la huella. El PIN sigue activo.",
+                );
+              }}
+            >
+              Desbloquear también con huella
+            </button>
+          )}
+        </div>
+      )}
 
-        <p className="border-t border-linea pt-4 text-xs text-tinta-3">
-          El PIN se guarda solo en este teléfono, cifrado, y no viaja a ningún lado. Es lo único
-          que protege tus datos si alguien coge el aparato.
-        </p>
-      </Acordeon>
+      {mensaje && <p className="text-sm font-semibold text-bien">{mensaje}</p>}
+      {error && <p role="alert" className="text-sm font-semibold text-mal">{error}</p>}
 
-      <SeccionLicencia />
+      <p className="border-t border-linea pt-4 text-xs text-tinta-3">
+        El PIN se guarda solo en este teléfono, cifrado, y no viaja a ningún lado. Es lo único que protege tus
+        datos si alguien coge el aparato.
+      </p>
 
-      <SeccionTerminos />
-
-      <div id="aj-respaldo">
-        <SeccionRespaldo />
-      </div>
-
-      <SeccionCapturas />
-
-      <SeccionEjemplo />
-
-      <SeccionDiagnostico />
-
-      <SeccionSalir />
-    </div>
+      {quitando && (
+        <DialogoConfirmar
+          titulo="¿Quitar el PIN?"
+          texto="La app se abrirá sin pedir nada: tus ingresos y los datos de tus clientes quedarán a la vista si prestas el celular."
+          confirmar="Sí, quitar el PIN"
+          alCancelar={() => setQuitando(false)}
+          alConfirmar={() => {
+            setQuitando(false);
+            quitarBloqueo();
+            setMensaje("Bloqueo quitado.");
+          }}
+        />
+      )}
+    </Acordeon>
   );
 }
 
@@ -268,8 +321,8 @@ function AdicionalesYTarifas() {
 
   return (
     <Acordeon
-      titulo="Adicionales y sus tarifas"
-      icono="comanda"
+      titulo="Adicionales"
+      icono="adicional"
       resumen={lista.length === 0 ? "Crea un tipo (Expo Vino, Movilidad…)" : lista.map((t) => t.nombre).join(" · ")}
     >
       <div className="flex flex-col gap-3">
@@ -337,34 +390,6 @@ function ComandasYClientes() {
 }
 
 /**
- * Las fotos que quedaron como evidencia de pedidos. Una por pedido, en el
- * teléfono y en ningún servidor; aquí se ve cuánto ocupan.
- */
-function SeccionCapturas() {
-  const { datos: uso } = useDatos(() => espacioOcupado(), [], { conservar: true });
-  const mb = uso ? uso.bytes / (1024 * 1024) : 0;
-  return (
-    <Acordeon
-      titulo="Capturas y evidencias"
-      icono="camara"
-      resumen={
-        !uso
-          ? "…"
-          : uso.cuantas === 0
-            ? "Sin fotos guardadas"
-            : `${uso.cuantas} foto${uso.cuantas === 1 ? "" : "s"} · ${mb < 0.1 ? "menos de 0.1" : mb.toFixed(1)} MB`
-      }
-    >
-      <p className="text-sm text-tinta-2">
-        Las capturas se leen en el teléfono y no se guardan en ningún servidor. Solo se conserva lo
-        que leíste y confirmaste, y las fotos que dejaste como evidencia de un pedido o de una
-        comanda. Para borrar una foto, abre el pedido en su día.
-      </p>
-    </Acordeon>
-  );
-}
-
-/**
  * Datos de ejemplo.
  *
  * Existe para poder enseñar la aplicación: vacía no se ve el historial, ni el
@@ -380,6 +405,7 @@ function SeccionEjemplo() {
   const [fechaPrueba, setFechaPrueba] = useState<FechaISO>(hoyEnLima());
   const [preguntandoPrueba, setPreguntandoPrueba] = useState(false);
   const [preguntandoTodo, setPreguntandoTodo] = useState(false);
+  const [preguntandoEjemplo, setPreguntandoEjemplo] = useState(false);
 
   async function cargarPrueba(taxis: boolean, apoyo: boolean) {
     setOcupado("cargando");
@@ -442,8 +468,7 @@ function SeccionEjemplo() {
   }
 
   return (
-    <Acordeon titulo="Datos de ejemplo"
-      icono="probeta" resumen="Para enseñar la aplicación">
+    <Acordeon titulo="Datos de ejemplo" icono="probeta" resumen="Para enseñar la aplicación">
       <p className="text-sm text-tinta-2">
         Llena tres semanas con jornadas inventadas para poder enseñar la aplicación. Incluye un
         día flojo donde se ve pagar la permanencia en vez de los pedidos.
@@ -452,9 +477,10 @@ function SeccionEjemplo() {
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
-          onClick={() => void cargar()}
+          onClick={() => setPreguntandoEjemplo(true)}
           disabled={ocupado !== null}
-          className="boton-secundario min-h-11 px-4"
+          className="boton-accion !w-auto flex-1"
+          style={{ "--c": "var(--c-mano)" } as React.CSSProperties}
         >
           {ocupado === "cargando" ? "Cargando…" : "Cargar ejemplo"}
         </button>
@@ -462,7 +488,7 @@ function SeccionEjemplo() {
           type="button"
           onClick={() => setPreguntandoTodo(true)}
           disabled={ocupado !== null}
-          className="min-h-11 rounded-btn px-4 text-sm font-semibold text-mal"
+          className="min-h-[var(--toque)] rounded-btn bg-mal-suave px-4 text-sm font-bold text-mal disabled:opacity-50"
         >
           {ocupado === "borrando" ? "Borrando…" : "Borrar todo"}
         </button>
@@ -485,17 +511,30 @@ function SeccionEjemplo() {
           />
         </label>
         <div className="flex flex-wrap gap-2">
-          <button type="button" disabled={ocupado !== null} onClick={() => void cargarPrueba(true, false)} className="boton-secundario min-h-11 px-4">
+          <button type="button" disabled={ocupado !== null} onClick={() => void cargarPrueba(true, false)} className="boton-sec">
             Cargar 3 taxis
           </button>
-          <button type="button" disabled={ocupado !== null} onClick={() => void cargarPrueba(false, true)} className="boton-secundario min-h-11 px-4">
+          <button type="button" disabled={ocupado !== null} onClick={() => void cargarPrueba(false, true)} className="boton-sec">
             Cargar un apoyo
           </button>
-          <button type="button" disabled={ocupado !== null} onClick={() => setPreguntandoPrueba(true)} className="min-h-11 rounded-btn px-4 text-sm font-semibold text-mal">
+          <button type="button" disabled={ocupado !== null} onClick={() => setPreguntandoPrueba(true)} className="min-h-[var(--toque)] rounded-btn bg-mal-suave px-4 text-sm font-bold text-mal disabled:opacity-50">
             Quitar los de prueba
           </button>
         </div>
       </div>
+
+      {preguntandoEjemplo && (
+        <DialogoConfirmar
+          titulo="¿Cargar los datos de ejemplo?"
+          texto="Se reemplaza lo que tengas cargado en las últimas 3 semanas por jornadas inventadas. No se puede deshacer."
+          confirmar="Sí, reemplazar"
+          alCancelar={() => setPreguntandoEjemplo(false)}
+          alConfirmar={() => {
+            setPreguntandoEjemplo(false);
+            void cargar();
+          }}
+        />
+      )}
 
       {preguntandoTodo && (
         <DialogoConfirmar
@@ -514,6 +553,7 @@ function SeccionEjemplo() {
         <DialogoConfirmar
           titulo="¿Quitar los taxis y apoyos de prueba?"
           texto="Solo se quitan los que cargaste como prueba; tus registros de verdad no se tocan."
+          confirmar="Sí, quitarlos"
           alCancelar={() => setPreguntandoPrueba(false)}
           alConfirmar={() => {
             setPreguntandoPrueba(false);
@@ -538,6 +578,8 @@ function SeccionEjemplo() {
  * Va plegado y al final de Ajustes porque no es para el uso diario.
  */
 function SeccionDiagnostico() {
+  const { datos: uso } = useDatos(() => espacioOcupado(), [], { conservar: true });
+  const mb = uso ? uso.bytes / (1024 * 1024) : 0;
   const [ver, setVer] = useState<"captura" | "comanda" | null>(null);
   const [texto, setTexto] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
@@ -568,19 +610,32 @@ function SeccionDiagnostico() {
   }
 
   return (
-    <Acordeon titulo="Si algo no se leyó bien"
-      icono="lupa" resumen="Ver el texto que sacó el lector">
+    <Acordeon
+      titulo="Diagnóstico"
+      icono="lupa"
+      resumen={
+        !uso
+          ? "Ver lo que leyó el lector"
+          : uso.cuantas === 0
+            ? "Sin fotos guardadas"
+            : `${uso.cuantas} foto${uso.cuantas === 1 ? "" : "s"} · ${mb < 0.1 ? "menos de 0.1" : mb.toFixed(1)} MB`
+      }
+    >
       <p className="text-sm text-tinta-2">
-        Aquí está el texto que sacó el lector de la última carga. Cópialo y mándalo para que se
+        Las capturas se leen en el teléfono y no se guardan en ningún servidor. Solo se conserva lo que leíste y
+        confirmaste, y las fotos que dejaste como evidencia. Para borrar una foto, abre el pedido en su día.
+      </p>
+      <p className="text-sm text-tinta-2">
+        Si algo no se leyó bien, aquí está el texto que sacó el lector de la última carga. Cópialo y mándalo para que se
         pueda corregir. Puede contener nombres y teléfonos de clientes: mándalo solo a quien lo
         arregla.
       </p>
 
       <div className="flex flex-wrap gap-2">
-        <button type="button" onClick={() => void abrir("captura")} className="boton-secundario">
+        <button type="button" onClick={() => void abrir("captura")} className="boton-sec">
           Última captura
         </button>
-        <button type="button" onClick={() => void abrir("comanda")} className="boton-secundario">
+        <button type="button" onClick={() => void abrir("comanda")} className="boton-sec">
           Última comanda
         </button>
       </div>
@@ -590,7 +645,7 @@ function SeccionDiagnostico() {
           <pre className="max-h-64 overflow-auto rounded-btn bg-sup-2 p-3 font-mono text-xs whitespace-pre-wrap">
             {texto}
           </pre>
-          <button type="button" onClick={() => void copiar()} className="boton-secundario self-start">
+          <button type="button" onClick={() => void copiar()} className="boton-sec self-start">
             {copiado ? "Copiado ✓" : "Copiar"}
           </button>
         </>
@@ -623,8 +678,7 @@ function SeccionTerminos() {
   );
 
   return (
-    <Acordeon titulo="Términos y privacidad"
-      icono="escudo" resumen={fecha ? `Aceptado el ${formatearFecha(fecha)}` : "…"}>
+    <Acordeon titulo="Términos" icono="escudo" resumen={fecha ? `Aceptado el ${formatearFecha(fecha)}` : "Privacidad"}>
       <TextoLegal />
       <LineaCopyright className="border-t border-linea pt-3 text-xs text-tinta-3" />
     </Acordeon>
@@ -633,31 +687,37 @@ function SeccionTerminos() {
 
 function SeccionSalir() {
   const [mensaje, setMensaje] = useState<string | null>(null);
+  const [preguntando, setPreguntando] = useState(false);
 
-  async function pedirSalir() {
+  async function salir() {
+    setPreguntando(false);
     setMensaje(null);
-    const r = await intentarSalir("¿Seguro que quieres salir de Control Driver?");
-    if (!r.ok && r.motivo === "no-nativo") {
+    if ((await cerrarAplicacion()) === "no-nativo") {
       setMensaje("Esto solo cierra la aplicación instalada, no esta pestaña del navegador.");
     }
   }
 
   return (
-    <section className="tarjeta flex flex-col gap-3">
-      <div className="flex items-center gap-3">
-        <span className="grid size-10 shrink-0 place-items-center rounded-chip bg-sup-2 text-tinta-2">
-          <Salir className="size-5" />
-        </span>
-        <div>
-          <h3 className="text-lg">Salir de la app</h3>
-          <p className="text-sm text-tinta-2">Cierra Control Driver del todo. Tus datos se quedan igual.</p>
-        </div>
-      </div>
-      <button type="button" onClick={() => void pedirSalir()} className="boton-secundario self-start">
-        Salir
+    <div className="mt-2 flex flex-col gap-2">
+      <button
+        type="button"
+        onClick={() => setPreguntando(true)}
+        className="flex min-h-[var(--toque)] w-full items-center justify-center gap-2 rounded-btn bg-mal-suave px-4 text-base font-bold text-mal"
+      >
+        <Salir className="size-5" />
+        Salir de la app
       </button>
-      {mensaje && <p className="text-sm text-tinta-2">{mensaje}</p>}
-    </section>
+      {mensaje && <p className="text-center text-sm text-tinta-2">{mensaje}</p>}
+      {preguntando && (
+        <DialogoConfirmar
+          titulo="¿Salir de Control Driver?"
+          texto="Se cierra la aplicación del todo. Tus datos se quedan guardados."
+          confirmar="Sí, salir"
+          alCancelar={() => setPreguntando(false)}
+          alConfirmar={() => void salir()}
+        />
+      )}
+    </div>
   );
 }
 
@@ -673,13 +733,15 @@ function SeccionVersion() {
   const datos = useVersion();
 
   return (
-    <section className="tarjeta flex items-center gap-3">
-      <IconoDeSeccion clave="version" />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <h3 className="text-lg">Control Driver</h3>
-        <span className="text-sm text-tinta-2">{datos ? `Versión ${datos.version}` : "…"}</span>
+    <section className="aju-ver rise-v2">
+      <span className="aju-ver__fig">
+        <IconoDeSeccion clave="version" className="!bg-transparent" />
+      </span>
+      <div className="min-w-0">
+        <b>Control Driver</b>
+        <small>{datos ? `Versión ${datos.version}` : "…"}</small>
       </div>
-      <span className="rounded-chip bg-acento-suave px-3 py-1 font-mono text-sm font-bold text-acento-tinta">
+      <span className="aju-ver__chip">
         {datos && /^\d/.test(datos.version) ? `v${datos.version}` : (datos?.version ?? "?")}
       </span>
     </section>

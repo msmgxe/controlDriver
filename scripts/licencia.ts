@@ -4,9 +4,11 @@
  *   npm run licencia -- claves
  *       Crea el par de claves. Una sola vez en la vida del negocio.
  *
- *   npm run licencia -- emitir <código del teléfono> "<nombre>" [meses|Nd]
+ *   npm run licencia -- emitir <código del teléfono> "<nombre>" [meses|Nd] [--monto 15] [--metodo yape]
  *       Firma un certificado. Por defecto, 1 mes. "15d" son 15 días —para
- *       una renovación corta que no llega a un mes entero.
+ *       una renovación corta que no llega a un mes entero. --monto (en soles,
+ *       0-5000) y --metodo (Yape/Plin/Efectivo/otro) quedan registrados igual
+ *       que desde el panel web; también --telefono y --notas.
  *
  *   npm run licencia -- lista
  *       Quién tiene licencia y hasta cuándo.
@@ -39,8 +41,10 @@ import {
   sumarDiasDeVigencia,
   sumarMeses,
 } from "../src/lib/licencia/emitir";
+import { mensajeParaWhatsApp } from "../src/lib/licencia/panel";
 import { registrarEmision } from "../src/lib/licencia/repositorio";
 import { tursoConfigurado } from "../src/lib/licencia/turso";
+import { esquemaMetodo, esquemaMonto, esquemaNotas, esquemaTelefono, primerError } from "../src/lib/licencia/validar";
 
 const DIR = join(homedir(), ".rutas-a");
 const PRIVADA = join(DIR, "licencia-privada.jwk");
@@ -111,7 +115,53 @@ function leerRegistro(): Linea[] {
     });
 }
 
-async function emitir(codigo: string | undefined, nombre: string | undefined, duracionTexto: string) {
+interface Opciones {
+  monto?: string;
+  metodo?: string;
+  telefono?: string;
+  notas?: string;
+}
+
+/** Separa `--monto 15 --metodo yape` de los argumentos posicionales. */
+function separarOpciones(args: string[]): { posicionales: string[]; opciones: Opciones } {
+  const posicionales: string[] = [];
+  const opciones: Record<string, string> = {};
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    if (a.startsWith("--")) {
+      const clave = a.slice(2);
+      if (!["monto", "metodo", "telefono", "notas"].includes(clave) || args[i + 1] === undefined) {
+        salir(`Opción no válida: ${a}. Usa --monto, --metodo, --telefono o --notas, cada una con su valor.`);
+      }
+      opciones[clave] = args[++i];
+    } else posicionales.push(a);
+  }
+  return { posicionales, opciones };
+}
+
+/** Valida las opciones con las mismas reglas que el panel web. */
+function validarOpciones(o: Opciones) {
+  const r = {
+    monto: esquemaMonto.safeParse(o.monto),
+    metodo: esquemaMetodo.safeParse(o.metodo),
+    telefono: esquemaTelefono.safeParse(o.telefono),
+    notas: esquemaNotas.safeParse(o.notas),
+  };
+  for (const v of Object.values(r)) if (!v.success) salir(primerError(v.error));
+  return {
+    montoCentimos: r.monto.data as number | null,
+    metodo: r.metodo.data as string | null,
+    telefono: r.telefono.data as string | null,
+    notas: r.notas.data as string | null,
+  };
+}
+
+async function emitir(
+  codigo: string | undefined,
+  nombre: string | undefined,
+  duracionTexto: string,
+  opciones: Opciones = {},
+) {
   if (!codigo || !nombre) {
     salir('Uso: npm run licencia -- emitir <código del teléfono> "<nombre>" [meses|Nd]');
   }
@@ -119,6 +169,7 @@ async function emitir(codigo: string | undefined, nombre: string | undefined, du
   if (!/^[0-9a-f-]{36}$/i.test(codigo)) {
     salir("Ese código no parece el de un teléfono. Cópialo de Ajustes → Tu licencia.");
   }
+  const extra = validarOpciones(opciones);
   const duracion = parsearDuracion(duracionTexto);
   if (!duracion) salir("Duración inválida: un número de meses (1-24), o de días con 'd', como 15d.");
   if (duracion.unidad === "meses" && (duracion.cantidad < 1 || duracion.cantidad > 24)) {
@@ -166,6 +217,7 @@ async function emitir(codigo: string | undefined, nombre: string | undefined, du
         diasDeGracia: 7,
         fechaDePago: hoy,
         duracion: duracionTexto,
+        ...extra,
       });
       sincronizado = true;
     } catch (error) {
@@ -179,9 +231,7 @@ async function emitir(codigo: string | undefined, nombre: string | undefined, du
 
   Mándale este mensaje por WhatsApp:
   ──────────────────────────────────────────────────────────────
-  Tu licencia de Control Driver. Ábrela en Ajustes → Tu licencia → Pegar, y toca Activar:
-
-  ${certificado}
+  ${mensajeParaWhatsApp(certificado)}
   ──────────────────────────────────────────────────────────────
 `);
 }
@@ -204,6 +254,9 @@ function lista() {
 
 const [orden, ...resto] = process.argv.slice(2);
 if (orden === "claves") await claves();
-else if (orden === "emitir") await emitir(resto[0], resto[1], resto[2] ?? "1");
+else if (orden === "emitir") {
+  const { posicionales, opciones } = separarOpciones(resto);
+  await emitir(posicionales[0], posicionales[1], posicionales[2] ?? "1", opciones);
+}
 else if (orden === "lista") lista();
-else salir('Órdenes: claves · emitir <código> "<nombre>" [meses|Nd] · lista');
+else salir('Órdenes: claves · emitir <código> "<nombre>" [meses|Nd] [--monto 15 --metodo yape] · lista');

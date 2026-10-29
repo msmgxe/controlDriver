@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { Candado, Huella } from "@/components/iconos";
+import { PuntosDePin, TecladoPin } from "@/components/TecladoPin";
 import {
   huellaConfigurada,
   instantaneaBloqueo,
@@ -41,11 +42,10 @@ function Candadazo() {
   const [pin, setPin] = useState("");
   const [error, setError] = useState(false);
   const [comprobando, setComprobando] = useState(false);
-  const campo = useRef<HTMLInputElement>(null);
+  const [olvido, setOlvido] = useState(false);
   const conHuella = huellaConfigurada();
 
   useEffect(() => {
-    campo.current?.focus();
     // Si hay huella registrada se ofrece sola: es el camino de un toque.
     // `marcarAbierto` avisa al almacén y el componente de arriba se desmonta.
     if (conHuella) {
@@ -64,77 +64,97 @@ function Candadazo() {
     } else {
       setError(true);
       setPin("");
-      campo.current?.focus();
     }
   }
 
-  function alEscribir(valor: string) {
-    const limpio = valor.replace(/\D/g, "").slice(0, 4);
-    setPin(limpio);
+  const tocar = useCallback(
+    (d: string) => {
+      if (comprobando || pin.length >= 4) return;
+      setError(false);
+      const nuevo = pin + d;
+      setPin(nuevo);
+      if (nuevo.length === 4) void comprobar(nuevo);
+    },
+    [comprobando, pin],
+  );
+  const borrar = useCallback(() => {
+    if (comprobando) return;
     setError(false);
-    if (limpio.length === 4) void comprobar(limpio);
-  }
+    setPin((p) => p.slice(0, -1));
+  }, [comprobando]);
+
+  // También responde al teclado físico.
+  useEffect(() => {
+    const alTeclear = (e: KeyboardEvent) => {
+      if (/^\d$/.test(e.key)) tocar(e.key);
+      else if (e.key === "Backspace") borrar();
+    };
+    window.addEventListener("keydown", alTeclear);
+    return () => window.removeEventListener("keydown", alTeclear);
+  }, [tocar, borrar]);
 
   return (
-    <div className="grid min-h-dvh place-items-center bg-papel px-4">
-      <div className="flex w-full max-w-xs flex-col items-center gap-6">
-        <span className="grid size-14 place-items-center rounded-full bg-acento-suave text-acento-tinta">
-          <Candado className="size-7" />
+    <div className="grid min-h-dvh place-items-center bg-papel px-4 py-6">
+      <div className="aju-cent w-full max-w-xs rise-v2">
+        <span
+          className="grid size-[72px] place-items-center rounded-3xl text-white"
+          style={{ background: "var(--c-licencia)" }}
+        >
+          <Candado className="size-9 icono-balanceo" />
         </span>
 
-        <div className="text-center">
+        <div>
           <h1 className="text-2xl">Control Driver está bloqueado</h1>
-          <p className="mt-1 text-sm text-tinta-2">Escribe tu PIN para continuar.</p>
+          <p className="mt-1 text-sm text-tinta-2">Escribe tu PIN de 4 números</p>
         </div>
 
-        {/* Un solo campo real; los cuatro recuadros son su reflejo visual. */}
-        <div className="relative w-full">
-          <input
-            ref={campo}
-            id="pin-desbloqueo"
-            type="password"
-            inputMode="numeric"
-            autoComplete="off"
-            aria-label="PIN de 4 dígitos"
-            value={pin}
-            disabled={comprobando}
-            onChange={(e) => alEscribir(e.target.value)}
-            className="absolute inset-0 size-full opacity-0"
-          />
-          <div className="pointer-events-none flex justify-center gap-3">
-            {[0, 1, 2, 3].map((i) => (
-              <span
-                key={i}
-                className={`grid h-14 w-12 place-items-center rounded-btn border bg-sup text-2xl ${
-                  error ? "border-mal" : pin.length > i ? "border-acento" : "border-linea-fuerte"
-                }`}
+        <div key={error ? "e" : "n"} className={`w-full ${error ? "aju-sacude" : ""}`}>
+          <PuntosDePin largo={pin.length} error={error} />
+        </div>
+
+        <p role="alert" className="min-h-[22px] text-sm font-bold text-mal">
+          {error ? "Ese PIN no es correcto." : ""}
+        </p>
+
+        <TecladoPin
+          alTocar={tocar}
+          alBorrar={borrar}
+          deshabilitado={comprobando}
+          extra={
+            conHuella ? (
+              <button
+                type="button"
+                aria-label="Usar huella"
+                className="!bg-acento !text-acento-texto"
+                onClick={() => void pedirHuella().then((ok) => ok && marcarAbierto())}
               >
-                {pin.length > i ? "•" : ""}
-              </span>
-            ))}
-          </div>
-        </div>
+                <Huella className="size-7" />
+              </button>
+            ) : undefined
+          }
+        />
 
-        {error && (
-          <p role="alert" className="text-sm font-semibold text-mal">
-            Ese PIN no es correcto.
+        <div className="flex w-full flex-col gap-2">
+          {conHuella && (
+            <button
+              type="button"
+              className="boton-sec"
+              onClick={() => void pedirHuella().then((ok) => ok && marcarAbierto())}
+            >
+              <Huella className="size-4" />
+              Usar huella
+            </button>
+          )}
+          <button type="button" className="boton-sec" onClick={() => setOlvido((v) => !v)} aria-expanded={olvido}>
+            ¿Olvidaste el PIN?
+          </button>
+        </div>
+        {olvido && (
+          <p className="rise-v2 rounded-2xl bg-aviso-suave p-3 text-left text-sm font-semibold text-aviso">
+            Sin el PIN no se puede entrar. Si tienes un respaldo, puedes borrar la app, instalarla otra vez y
+            restaurarlo.
           </p>
         )}
-
-        {conHuella && (
-          <button
-            type="button"
-            className="boton-sec"
-            onClick={() => void pedirHuella().then((ok) => ok && marcarAbierto())}
-          >
-            <Huella className="size-4" />
-            Usar huella
-          </button>
-        )}
-
-        <p className="text-center text-xs text-tinta-3">
-          ¿Olvidaste el PIN? Cierra sesión y vuelve a entrar con tu correo; podrás poner uno nuevo.
-        </p>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { BotonPag } from "@/components/PagUi";
 import { ArchivoGenerado } from "@/components/ArchivoGenerado";
 import { Alerta, Hoja } from "@/components/iconos";
 import { nombreArchivo, type DatosExportacion } from "@/lib/exportar/datos";
@@ -55,25 +56,15 @@ export function BotonesExportar({ datos }: { datos: DatosExportacion }) {
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          className="boton-sec flex-1"
-          disabled={vacio || trabajando !== null}
-          onClick={() => void exportar("excel")}
-        >
-          <Hoja className="size-4" />
+      <div className="grid gap-2 sm:grid-cols-2">
+        <BotonPag k="cantidad" grande ancho disabled={vacio || trabajando !== null} onClick={() => void exportar("excel")}>
+          <Hoja className="size-5" />
           {trabajando === "excel" ? "Generando…" : "Exportar Excel"}
-        </button>
-        <button
-          type="button"
-          className="boton-sec flex-1"
-          disabled={vacio || trabajando !== null}
-          onClick={() => void exportar("pdf")}
-        >
-          <Hoja className="size-4" />
+        </BotonPag>
+        <BotonPag k="adicional" grande ancho disabled={vacio || trabajando !== null} onClick={() => void exportar("pdf")}>
+          <Hoja className="size-5" />
           {trabajando === "pdf" ? "Generando…" : "Exportar PDF"}
-        </button>
+        </BotonPag>
       </div>
 
       {listo && <ArchivoGenerado archivo={listo} alCerrar={() => setListo(null)} />}

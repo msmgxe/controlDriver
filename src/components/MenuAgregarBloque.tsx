@@ -6,7 +6,7 @@ import { useCapa } from "@/hooks/useCapa";
 import { Reloj, Suma, Taxi, Tienda } from "@/components/iconos";
 
 /**
- * El botón flotante «+» de Inicio: al tocarlo se abre en abanico con las tres
+ * El botón flotante «+» (ya no se usa en Inicio: «Cargar» vive en la barra de abajo): al tocarlo se abre en abanico con las tres
  * cosas que se pueden agregar al día. El «+» gira a «×», las opciones salen una
  * tras otra y el resto de la pantalla se oscurece. Mientras está cerrado,
  * «respira» —un pulso lento— para que se note que invita a tocar.
@@ -34,8 +34,8 @@ export function MenuAgregarBloque({
       {abierto && <Abanico alCerrar={() => setAbierto(false)} />}
       {abierto && (
         <div className="fixed right-5 bottom-[calc(150px+env(safe-area-inset-bottom,0px))] z-[45] flex flex-col items-end gap-3 sm:bottom-24">
-          <OpcionDelAbanico i={2} Icono={Taxi} texto="Adicionales" color="var(--f-taxi)" onClick={() => elegir(onElegirTaxi)} />
-          <OpcionDelAbanico i={1} Icono={Reloj} texto="Apoyo a otra tienda" color="var(--f-apoyo)" onClick={() => elegir(onElegirApoyo)} />
+          <OpcionDelAbanico i={2} Icono={Taxi} texto="Adicionales" color="var(--c-adic)" onClick={() => elegir(onElegirTaxi)} />
+          <OpcionDelAbanico i={1} Icono={Reloj} texto="Apoyo a otra tienda" color="var(--c-apoyo)" onClick={() => elegir(onElegirApoyo)} />
           <OpcionDelAbanico i={0} Icono={Tienda} texto="Pedidos de mi tienda" color="var(--acento)" onClick={() => elegir(onElegirTienda)} />
         </div>
       )}
@@ -79,7 +79,7 @@ function OpcionDelAbanico({
     <button
       type="button"
       onClick={onClick}
-      className="abanico-item flex items-center gap-2.5 rounded-full bg-sup py-1.5 pr-4 pl-1.5 text-sm font-bold shadow-alta active:scale-95"
+      className="abanico-item flex min-h-12 items-center gap-2.5 rounded-full bg-sup py-1.5 pr-5 pl-1.5 text-sm font-bold shadow-alta active:scale-95"
       style={{ "--i": i } as React.CSSProperties}
     >
       <span className="grid size-10 place-items-center rounded-full text-white" style={{ background: color }}>

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { BotonDeAccion } from "@/components/Acciones";
 import { Progreso } from "@/components/CargarCapturas";
 import { Aviso } from "@/components/ui";
 import { procesarCapturas, recogerCompartidas } from "@/lib/carga";
@@ -76,9 +77,9 @@ export function Contenido() {
               acabas de instalar la app, puede que Android tarde un momento en ofrecerla.
             </p>
           </Aviso>
-          <button type="button" className="boton-sec self-start" onClick={() => router.push("/")}>
+          <BotonDeAccion k="tienda" onClick={() => router.push("/")}>
             Ir a Hoy
-          </button>
+          </BotonDeAccion>
         </>
       )}
 
@@ -87,9 +88,9 @@ export function Contenido() {
           <Aviso tono="mal" titulo="No se pudo procesar">
             <p>{estado.mensaje}</p>
           </Aviso>
-          <button type="button" className="boton-sec self-start" onClick={() => router.push("/")}>
+          <BotonDeAccion k="tienda" onClick={() => router.push("/")}>
             Ir a Hoy
-          </button>
+          </BotonDeAccion>
         </>
       )}
     </div>

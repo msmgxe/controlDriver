@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
+
+import { DialogoConfirmar } from "@/components/DialogoConfirmar";
+import { useCifraAnimada } from "@/hooks/useCifraAnimada";
 
 import { guardarTarifarioDeAdicional } from "@/app/(app)/jornada/acciones";
 import type { CategoriaAdicional } from "@/lib/db/tipos";
@@ -34,10 +37,21 @@ export function lineasConMonto(
   });
 }
 
+/** El color de una zona según lo que paga: de barato (verde) a caro (vino). */
+const BANDAS: Array<{ hasta: number; color: string; texto: string }> = [
+  { hasta: 850, color: "var(--c-cantidad)", texto: "Hasta 8.50" },
+  { hasta: 900, color: "var(--c-apoyo)", texto: "9.00" },
+  { hasta: 1050, color: "var(--c-buscar)", texto: "10.00 – 10.50" },
+  { hasta: 1200, color: "var(--c-stats)", texto: "11.00 – 12.00" },
+  { hasta: Infinity, color: "var(--c-adic)", texto: "Más de 12" },
+];
+const bandaDe = (centimos: number) => BANDAS.find((b) => centimos <= b.hasta) ?? BANDAS[BANDAS.length - 1];
+
 /**
- * «Zonas del reparto»: por cada zona donde se entregó, la zona y cuántos
- * pedidos. El monto sale del tarifario (precio × pedidos) y se enseña, no se
- * escribe: así no hay una cuenta que equivocar con cinco pedidos y tres zonas.
+ * «Zonas del reparto»: una cuadrícula de botones de color, uno por zona del
+ * tarifario. Cada toque suma un pedido a esa zona (la insignia lo cuenta); el
+ * monto sale del tarifario (precio × pedidos), no se escribe. Debajo, las zonas
+ * ya tocadas con − y + para corregir, y «Deshacer» el último toque.
  */
 export function ZonasDelReparto({
   zonas,
@@ -51,103 +65,111 @@ export function ZonasDelReparto({
   const completas = lineasConMonto(zonas, lineas);
   const pedidos = completas.reduce((s, l) => s + l.cantidad, 0);
   const total = completas.reduce((s, l) => s + l.montoCentimos, 0);
-  const cambiar = (i: number, cambios: Partial<LineaDeZona>) =>
-    setLineas(lineas.map((l, k) => (k === i ? { ...l, ...cambios } : l)));
+  const totalAnimado = Math.round(useCifraAnimada(total, 500));
+  const [historial, setHistorial] = useState<string[]>([]);
+  const cuenta = (zona: string) => Number(lineas.find((l) => l.zona === zona)?.cantidad) || 0;
+
+  function cambiarCantidad(zona: string, delta: number) {
+    const actual = lineas.find((l) => l.zona === zona);
+    if (!actual) {
+      if (delta <= 0) return;
+      // La línea vacía del principio se aprovecha en vez de dejarla suelta.
+      const sinVacias = lineas.filter((l) => l.zona !== "");
+      setLineas([...sinVacias, { zona, cantidad: String(delta) }]);
+      return;
+    }
+    const nueva = (Number(actual.cantidad) || 0) + delta;
+    if (nueva <= 0) {
+      const resto = lineas.filter((l) => l.zona !== zona);
+      setLineas(resto.length ? resto : [lineaVacia()]);
+    } else {
+      setLineas(lineas.map((l) => (l.zona === zona ? { ...l, cantidad: String(nueva) } : l)));
+    }
+  }
+
+  function tocar(zona: string) {
+    setHistorial((h) => [...h, zona]);
+    cambiarCantidad(zona, 1);
+  }
+  function deshacer() {
+    const z = historial[historial.length - 1];
+    if (!z) return;
+    setHistorial(historial.slice(0, -1));
+    cambiarCantidad(z, -1);
+  }
+
+  const tocadas = lineas.filter((l) => l.zona && Number(l.cantidad) > 0);
 
   return (
-    <div className="flex flex-col gap-2">
-      <span className="text-sm font-semibold">Zonas del reparto</span>
-      {lineas.map((l, i) => {
-        const precio = zonas.find((z) => z.nombre === l.zona)?.montoCentimos;
-        return (
-          <div
-            key={i}
-            className="flex flex-col gap-1.5 rounded-btn border border-linea bg-sup-2/50 p-2.5"
-          >
-            <div className="flex items-center gap-2">
-              <select
-                value={l.zona}
-                onChange={(e) => cambiar(i, { zona: e.target.value })}
-                aria-label="Zona"
-                className="min-h-11 min-w-0 flex-1 rounded-btn border border-linea-fuerte bg-sup px-2 text-base"
-              >
-                <option value="">Elige la zona…</option>
-                {zonas.map((z) => (
-                  <option key={z.nombre} value={z.nombre}>
-                    {z.nombre} · {formatearSoles(z.montoCentimos)}
-                  </option>
-                ))}
-              </select>
-              {lineas.length > 1 && (
-                <button
-                  type="button"
-                  aria-label="Quitar esta zona"
-                  onClick={() => setLineas(lineas.filter((_, k) => k !== i))}
-                  className="grid size-11 shrink-0 place-items-center rounded-btn text-lg text-mal"
-                >
-                  ✕
-                </button>
+    <div className="flex flex-col gap-3">
+      <span className="text-sm font-semibold">Zonas del reparto · toca una por cada pedido</span>
+      <div className="com-zonas">
+        {zonas.map((z, k) => {
+          const n = cuenta(z.nombre);
+          return (
+            <button
+              key={z.nombre}
+              type="button"
+              className="com-zona rise-v2"
+              style={{ "--zc": bandaDe(z.montoCentimos).color, animationDelay: `${Math.min(k, 10) * 25}ms` } as CSSProperties}
+              onClick={() => tocar(z.nombre)}
+              aria-label={`${z.nombre}, ${formatearSoles(z.montoCentimos)}${n ? `, ${n} pedidos` : ""}`}
+            >
+              <b>{z.nombre}</b>
+              <small>{formatearSoles(z.montoCentimos)}</small>
+              {n > 0 && (
+                <i key={n} className="com-zona__n" aria-hidden>
+                  {n}
+                </i>
               )}
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-tinta-2">Pedidos</span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="com-leyenda" aria-hidden>
+        {BANDAS.map((b) => (
+          <span key={b.texto}>
+            <i style={{ background: b.color }} />
+            {b.texto}
+          </span>
+        ))}
+      </div>
+
+      {tocadas.length > 0 && (
+        <div className="flex flex-col gap-2">
+          {tocadas.map((l) => (
+            <div key={l.zona} className="com-dato !py-1.5">
+              <b className="!text-left">{l.zona}</b>
+              <span className="flex-none text-right font-mono text-sm">× {l.cantidad}</span>
               <button
                 type="button"
-                aria-label="Uno menos"
+                aria-label={`Un pedido menos en ${l.zona}`}
                 className="boton-sec !min-h-11 !w-11 !px-0"
-                onClick={() =>
-                  cambiar(i, {
-                    cantidad: String(
-                      Math.max(1, (Number(l.cantidad) || 1) - 1),
-                    ),
-                  })
-                }
+                onClick={() => cambiarCantidad(l.zona, -1)}
               >
                 −
               </button>
-              <input
-                value={l.cantidad}
-                onChange={(e) =>
-                  cambiar(i, {
-                    cantidad: e.target.value.replace(/\D/g, "").slice(0, 3),
-                  })
-                }
-                inputMode="numeric"
-                aria-label="Cuántos pedidos"
-                className="min-h-11 w-16 rounded-btn border border-linea-fuerte bg-sup px-2 text-center font-mono text-base"
-              />
               <button
                 type="button"
-                aria-label="Uno más"
+                aria-label={`Un pedido más en ${l.zona}`}
                 className="boton-sec !min-h-11 !w-11 !px-0"
-                onClick={() =>
-                  cambiar(i, {
-                    cantidad: String((Number(l.cantidad) || 0) + 1),
-                  })
-                }
+                onClick={() => cambiarCantidad(l.zona, 1)}
               >
                 +
               </button>
-              <span className="ml-auto font-mono text-sm font-semibold">
-                {precio !== undefined && Number(l.cantidad) > 0
-                  ? formatearSoles(precio * Number(l.cantidad))
-                  : "—"}
-              </span>
             </div>
-          </div>
-        );
-      })}
-      <button
-        type="button"
-        className="boton-sec self-start"
-        onClick={() => setLineas([...lineas, lineaVacia()])}
-      >
-        + Otra zona
-      </button>
-      <p className="rounded-btn bg-acento-suave px-3 py-2 text-sm font-semibold text-acento-tinta">
-        {pedidos} {pedidos === 1 ? "pedido" : "pedidos"} ·{" "}
-        {formatearSoles(total)}
-      </p>
+          ))}
+        </div>
+      )}
+
+      <div className="com-total" aria-live="polite">
+        <b>
+          {pedidos} {pedidos === 1 ? "pedido" : "pedidos"} · {formatearSoles(totalAnimado)}
+        </b>
+        <button type="button" className="boton-sec" disabled={historial.length === 0 || pedidos === 0} onClick={deshacer}>
+          Deshacer
+        </button>
+      </div>
     </div>
   );
 }
@@ -172,6 +194,7 @@ export function EditorDeTarifario({
   );
   const [pegado, setPegado] = useState("");
   const [guardando, setGuardando] = useState(false);
+  const [quitando, setQuitando] = useState<number | null>(null);
   const [mensaje, setMensaje] = useState<{
     tono: "bien" | "mal";
     texto: string;
@@ -289,8 +312,8 @@ export function EditorDeTarifario({
               <button
                 type="button"
                 aria-label={`Quitar ${f.nombre}`}
-                onClick={() => setFilas(filas.filter((_, k) => k !== i))}
-                className="grid size-11 shrink-0 place-items-center rounded-btn text-lg text-mal"
+                onClick={() => (f.nombre.trim() || f.texto.trim() ? setQuitando(i) : setFilas(filas.filter((_, k) => k !== i)))}
+                className="grid size-11 shrink-0 place-items-center rounded-btn bg-mal-suave text-lg text-mal"
               >
                 ✕
               </button>
@@ -332,6 +355,18 @@ export function EditorDeTarifario({
         >
           {mensaje.texto}
         </p>
+      )}
+      {quitando !== null && filas[quitando] && (
+        <DialogoConfirmar
+          titulo={`¿Quitar la zona ${filas[quitando].nombre.trim() || "sin nombre"}?`}
+          texto={`Ya no se podrá elegir en ${tipo.nombre} cuando pulses «Guardar tarifas». Lo ya registrado no cambia.`}
+          confirmar="Sí, quitar la zona"
+          alCancelar={() => setQuitando(null)}
+          alConfirmar={() => {
+            setFilas(filas.filter((_, k) => k !== quitando));
+            setQuitando(null);
+          }}
+        />
       )}
     </div>
   );

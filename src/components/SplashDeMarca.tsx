@@ -56,6 +56,9 @@ export function SplashDeMarca() {
           <em>Driver</em>
         </span>
         <span className="splash-marca-lema">Tus pedidos y tus pagos, claros en tu celular</span>
+        <span className="ini-splash-barra" aria-hidden>
+          <i />
+        </span>
       </div>
     </div>
   );

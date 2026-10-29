@@ -1,6 +1,6 @@
 "use client";
 
-import { Camara, Usuario } from "@/components/iconos";
+import { Camara, Check, Equis, Medio, Usuario } from "@/components/iconos";
 
 /**
  * Una fila de pedido, en la forma más simple que se pudo.
@@ -66,70 +66,80 @@ export function FilaPedidoSimple({
   onClick?: () => void;
 }) {
   const entregado = estado === "Entregado";
+  const parcial = estado === "Entrega parcial";
+  /* El estado va en color Y con figura Y con palabras: nunca solo el color. */
+  const tono = entregado
+    ? { fondo: "bg-bien-suave/60", bola: "bg-bien text-bien-suave", Icono: Check }
+    : parcial
+      ? { fondo: "bg-aviso-suave/60", bola: "bg-aviso text-aviso-suave", Icono: Medio }
+      : { fondo: "bg-sup-2", bola: "bg-linea-fuerte text-tinta", Icono: Equis };
 
   const fila = (
     <button
       type="button"
       onClick={onClick}
       disabled={!onClick}
-      className={`flex w-full min-w-0 flex-1 flex-col gap-2 py-3 text-left enabled:hover:bg-sup-2 enabled:active:bg-sup-2 ${
-        alContar ? "pr-4 pl-1" : "px-4"
-      } ${alContar ? "" : "border-b border-linea last:border-b-0"} ${porCompletar ? "bg-aviso-suave/40" : ""}`}
+      className={`ini-ped flex w-full min-w-0 flex-1 items-center gap-3 py-3 text-left enabled:hover:brightness-95 enabled:active:scale-[0.99] ${
+        alContar ? "pr-4 pl-1" : "px-3.5"
+      } ${alContar ? "" : "border-b border-linea last:border-b-0"} ${porCompletar ? "bg-aviso-suave/60" : tono.fondo}`}
     >
-      <span className="flex items-baseline justify-between gap-3">
-        {porCompletar ? (
-          <span className="text-[15px] font-semibold text-aviso">Pedido sin código · toca para completar</span>
-        ) : (
-          <span className="font-mono text-[15px] font-medium tracking-tight">{codigo}</span>
-        )}
-        <span className="shrink-0 font-mono text-xs text-tinta-3 tabular-nums">{monto}</span>
+      <span
+        className={`grid size-9 shrink-0 place-items-center rounded-full ${porCompletar ? "bg-aviso text-aviso-suave" : tono.bola}`}
+        aria-hidden
+      >
+        <tono.Icono className="size-[18px]" />
       </span>
-
-      <span className="flex flex-wrap items-center gap-2 text-xs">
-        {ruta !== null ? (
-          <span className="inline-flex items-center gap-1 rounded-chip bg-acento-suave px-2.5 py-1 font-semibold text-acento-tinta">
-            Ruta {ruta}
-            {hora && <span className="font-mono font-medium opacity-80">· {hora}</span>}
-          </span>
-        ) : (
-          <span className="inline-flex items-center rounded-chip bg-aviso-suave px-2.5 py-1 font-semibold text-aviso">
-            Sin ruta · toca para asignar
-          </span>
-        )}
-
-        <span
-          className={`inline-flex items-center gap-1 font-medium ${
-            entregado ? "text-bien" : "text-tinta-2"
-          }`}
-        >
-          <span aria-hidden>{entregado ? "✓" : "·"}</span>
-          {estado}
+      <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <span className="flex items-baseline justify-between gap-3">
+          {porCompletar ? (
+            <span className="text-[0.95rem] font-semibold text-aviso">Pedido sin código · toca para completar</span>
+          ) : (
+            <span className="font-mono text-[0.9rem] font-semibold tracking-tight break-all">{codigo}</span>
+          )}
+          <span className="shrink-0 font-display text-[0.95rem] font-semibold tabular-nums">{monto}</span>
         </span>
 
-        {zona ? (
-          <span className="rounded-chip border border-acento px-2 py-0.5 font-semibold text-acento-tinta">{zona}</span>
-        ) : (
-          tramo > 1 && (
-            <span className="rounded-chip border border-linea-fuerte px-2 py-0.5 font-mono text-tinta-2">
-              {tramo === 6 ? "+12 km" : `T${tramo}`}
+        <span className="flex flex-wrap items-center gap-2 text-xs">
+          {ruta !== null ? (
+            <span className="inline-flex items-center gap-1 rounded-chip bg-acento-suave px-2.5 py-1 font-semibold text-acento-tinta">
+              Ruta {ruta}
+              {hora && <span className="font-mono font-medium opacity-80">· {hora}</span>}
             </span>
-          )
-        )}
-        {km !== null && <span className="font-mono text-tinta-2">{km.toFixed(1)} km</span>}
-        {manual && <span className="text-tinta-3">· a mano</span>}
+          ) : (
+            <span className="inline-flex items-center rounded-chip bg-aviso-suave px-2.5 py-1 font-semibold text-aviso">
+              Sin ruta · toca para asignar
+            </span>
+          )}
 
-        {/* Lo que tiene guardado, sin abrir: el cliente y la foto de su comanda. */}
-        {(cliente || conFoto) && (
-          <span className="ml-auto flex min-w-0 items-center gap-2 text-tinta-3">
-            {cliente && (
-              <span className="flex min-w-0 items-center gap-1">
-                <Usuario className="size-3.5 shrink-0" aria-label="Con cliente" />
-                <span className="max-w-[9rem] truncate">{cliente}</span>
-              </span>
-            )}
-            {conFoto && <Camara className="size-3.5 shrink-0" aria-label="Con foto de la comanda" />}
+          <span className={`inline-flex items-center gap-1 font-semibold ${entregado ? "text-bien" : "text-tinta-2"}`}>
+            {estado}
           </span>
-        )}
+
+          {zona ? (
+            <span className="rounded-chip border border-acento px-2 py-0.5 font-semibold text-acento-tinta">{zona}</span>
+          ) : (
+            tramo > 1 && (
+              <span className="rounded-chip border border-linea-fuerte px-2 py-0.5 font-mono text-tinta-2">
+                {tramo === 6 ? "+12 km" : `T${tramo}`}
+              </span>
+            )
+          )}
+          {km !== null && <span className="font-mono text-tinta-2">{km.toFixed(1)} km</span>}
+          {manual && <span className="text-tinta-3">· a mano</span>}
+
+          {/* Lo que tiene guardado, sin abrir: el cliente y la foto de su comanda. */}
+          {(cliente || conFoto) && (
+            <span className="ml-auto flex min-w-0 items-center gap-2 text-tinta-2">
+              {cliente && (
+                <span className="flex min-w-0 items-center gap-1">
+                  <Usuario className="size-3.5 shrink-0" aria-label="Con cliente" />
+                  <span className="max-w-[9rem] truncate">{cliente}</span>
+                </span>
+              )}
+              {conFoto && <Camara className="size-3.5 shrink-0" aria-label="Con foto de la comanda" />}
+            </span>
+          )}
+        </span>
       </span>
     </button>
   );
