@@ -1328,3 +1328,253 @@ div:has(> [role="dialog"]) {
     padding-right: 16px;
   }
 }
+
+/* ===========================================================================
+   v2.0 · LENGUAJE DE COLOR, LETRA Y CONTROLES
+   ---------------------------------------------------------------------------
+   Una acción = un color + una figura (ver components/Acciones.tsx). Los tonos
+   son los mismos en las seis caras; en la oscura se aclaran para leerse.
+   Letra, tamaño, relieve, toques y animaciones salen de atributos `data-*` en
+   <html> que pone `lib/apariencia.ts` (Ajustes › Apariencia).
+   =========================================================================== */
+:root {
+  --c-comanda: #1f5cff;
+  --c-cantidad: #0c7d3c;
+  --c-mano: #b85a00;
+  --c-foto: #7a3ff2;
+  --c-adic: #a3274f;
+  --c-apoyo: #07727c;
+  --c-taxi: #ffc800;
+  --c-pagos: #0c7d3c;
+  --c-stats: #6a3fd6;
+  --c-buscar: #0f6fb0;
+  --c-historial: #8a5a00;
+  --c-aprender: #c23d7d;
+  --c-ajustes: #4a5780;
+  --c-licencia: #0a2260;
+  --sol-tinta: #0a2260;
+  --toque: 56px; /* alto mínimo de un botón grande; «compacto» lo baja */
+  --escala: 1; /* tamaño de letra; «grande» y «muy grande» lo suben */
+}
+:root[data-modo="oscuro"] {
+  --c-comanda: #5b86ff;
+  --c-cantidad: #2fa863;
+  --c-mano: #d9822a;
+  --c-foto: #9b6cff;
+  --c-adic: #cc4f7c;
+  --c-apoyo: #20a9b6;
+  --c-stats: #8d6cf0;
+  --c-buscar: #3a9be0;
+  --c-historial: #c59528;
+  --c-aprender: #e0629e;
+  --c-ajustes: #7c88b5;
+  --c-licencia: #5b86ff;
+}
+
+/* — letra — */
+:root[data-letra="redondeada"] {
+  --f-display: var(--fuente-fredoka), var(--fuente-nunito), system-ui, sans-serif;
+  --f-texto: var(--fuente-nunito), system-ui, sans-serif;
+  --zoom-titulo: 1;
+}
+:root[data-letra="clasica"] {
+  --f-display: var(--fuente-lora), Georgia, serif;
+  --f-texto: var(--fuente-dm-sans), system-ui, sans-serif;
+  --zoom-titulo: 1;
+}
+:root[data-letra="moderna"] {
+  --f-display: var(--fuente-space-grotesk), var(--fuente-inter), system-ui, sans-serif;
+  --f-texto: var(--fuente-inter), system-ui, sans-serif;
+  --zoom-titulo: 1;
+}
+:root[data-letra="condensada"] {
+  --f-display: var(--fuente-barlow-condensed), var(--fuente-barlow), system-ui, sans-serif;
+  --f-texto: var(--fuente-barlow), system-ui, sans-serif;
+  --zoom-titulo: 1.12;
+}
+:root[data-letra="amigable"] {
+  --f-display: var(--fuente-bricolage), var(--fuente-figtree), system-ui, sans-serif;
+  --f-texto: var(--fuente-figtree), system-ui, sans-serif;
+  --zoom-titulo: 1;
+}
+:root[data-letra="legible"] {
+  --f-display: var(--fuente-manrope), var(--fuente-inter), system-ui, sans-serif;
+  --f-texto: var(--fuente-inter), system-ui, sans-serif;
+  --zoom-titulo: 1;
+  letter-spacing: 0.01em;
+  word-spacing: 0.04em;
+}
+
+/* — tamaño de la letra — */
+:root[data-tamano="grande"] { --escala: 1.12; }
+:root[data-tamano="muy-grande"] { --escala: 1.25; }
+html { font-size: calc(100% * var(--escala)); }
+body { font-size: calc(15px * var(--escala)); }
+
+/* — toques — */
+:root[data-toques="compacto"] { --toque: 46px; }
+
+/* — animaciones: «reducida» las apaga todas (las de entrada, el carro, el confeti) — */
+:root[data-anim="reducida"] *,
+:root[data-anim="reducida"] *::before,
+:root[data-anim="reducida"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+@layer components {
+  /* Una figura de color: el cuadrito con el icono de la acción. */
+  .fig-color {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: var(--c, var(--acento));
+    color: var(--c-texto, #fff);
+  }
+
+  /* Cuadro grande de color para elegir entre acciones. */
+  .tile-accion {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: calc(var(--toque) * 2);
+    padding: 12px;
+    overflow: hidden;
+    border-radius: var(--r-card, 22px);
+    background: var(--c, var(--acento));
+    color: var(--c-texto, #fff);
+    text-align: left;
+    transition: transform 0.15s, box-shadow 0.15s, outline-color 0.15s;
+  }
+  .tile-accion__brillo {
+    position: absolute;
+    top: -24px;
+    right: -24px;
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.13);
+  }
+  .tile-accion__fig {
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.25);
+  }
+  .tile-accion__titulo {
+    display: block;
+    font-family: var(--f-display);
+    font-size: 1.06rem;
+    line-height: 1.1;
+    font-weight: 600;
+  }
+  .tile-accion__detalle {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    opacity: 0.92;
+  }
+  .tile-accion[aria-pressed="true"] {
+    outline: 4px solid var(--tinta);
+    outline-offset: 3px;
+  }
+  .tile-accion[aria-pressed="true"]::after {
+    content: "✓";
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #fff;
+    color: #111;
+    font-weight: 900;
+    animation: pop-v2 0.3s;
+  }
+  .tile-accion:disabled { opacity: 0.5; }
+
+  /* Fila con figura de color. */
+  .fila-color {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: var(--toque);
+    padding: 10px 12px;
+    border: var(--borde-ancho, 1px) solid var(--linea-fuerte);
+    border-radius: var(--r-card, 18px);
+    background: var(--sup);
+    color: var(--tinta);
+    font-size: 0.97rem;
+    font-weight: 600;
+    text-align: left;
+    transition: transform 0.12s, background 0.15s;
+  }
+  .fila-color:hover:not(:disabled) { background: var(--sup-2); }
+  .fila-color:active:not(:disabled) { transform: scale(0.98); }
+  .fila-color:disabled { opacity: 0.55; }
+  .fila-color__der {
+    margin-left: auto;
+    font-family: var(--f-display);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  /* Botón ancho del color de su acción: el principal de una hoja. */
+  .boton-accion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    min-height: var(--toque);
+    padding: 0 18px;
+    border-radius: var(--r-btn);
+    background: var(--c, var(--acento));
+    color: var(--c-texto, #fff);
+    font-family: var(--f-display);
+    font-size: 1.08rem;
+    font-weight: 600;
+    transition: filter 0.12s, transform 0.12s, box-shadow 0.12s;
+  }
+  .boton-accion:hover:not(:disabled) { filter: brightness(1.06); }
+  .boton-accion:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+
+  /* Los demás botones respetan el alto de «toques». */
+  .boton-fila { min-height: var(--toque); }
+  .boton-secundario,
+  .boton-sec { min-height: calc(var(--toque) - 12px); }
+  .boton-principal,
+  .boton-segundo { min-height: calc(var(--toque) + 4px); }
+}
+
+/* — botones con relieve (lo de fábrica): una sombra dura debajo que se hunde al tocar — */
+:root[data-botones="relieve"] .tile-accion { box-shadow: 0 6px 0 rgba(0, 0, 0, 0.18); }
+:root[data-botones="relieve"] .tile-accion:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0, 0, 0, 0.18); }
+:root[data-botones="relieve"] .boton-accion,
+:root[data-botones="relieve"] .boton-principal,
+:root[data-botones="relieve"] .boton-segundo { box-shadow: 0 5px 0 rgba(0, 0, 0, 0.18); }
+:root[data-botones="relieve"] .boton-accion:active:not(:disabled),
+:root[data-botones="relieve"] .boton-principal:active:not(:disabled),
+:root[data-botones="relieve"] .boton-segundo:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0, 0, 0, 0.18); }
+:root[data-botones="plano"] .tile-accion,
+:root[data-botones="plano"] .boton-accion { box-shadow: none; }
+
+@keyframes pop-v2 { 0% { transform: scale(0.3); } 70% { transform: scale(1.2); } 100% { transform: scale(1); } }
+@keyframes rise-v2 { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes bob-v2 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes trazo-v2 { to { stroke-dashoffset: 0; } }
+.rise-v2 { animation: rise-v2 0.45s both; }
+.pop-v2 { animation: pop-v2 0.3s both; }
+.bob-v2 { animation: bob-v2 2.2s ease-in-out infinite; }

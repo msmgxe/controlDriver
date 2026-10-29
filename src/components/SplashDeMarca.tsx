@@ -20,7 +20,7 @@ import { IconoApp } from "@/components/IconoApp";
  * entre pantallas, porque el layout raíz no se remonta con la navegación del
  * lado del cliente.
  */
-const DURACION_MS = 2000;
+const DURACION_MS = 1000;
 const SALIDA_MS = 450;
 
 export function SplashDeMarca() {

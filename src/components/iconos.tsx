@@ -260,3 +260,69 @@ export const Info = (p: Props) => (
   </Base>
 );
 
+/* ---------------------------------------------------------------------------
+ * Iconos de la v2.0: uno por acción, para el lenguaje de color (ver Acciones.tsx).
+ * ------------------------------------------------------------------------- */
+
+/** «Cuántos hice»: el símbolo de número. */
+export const Cantidad = (p: Props) => (
+  <Base {...p}>
+    <path d="M9 4 7 20M17 4l-2 16M4 9h16M3 15h16" />
+  </Base>
+);
+
+/** «A mano»: un lápiz. */
+export const Lapiz = (p: Props) => (
+  <Base {...p}>
+    <path d="m4 20 1-5L16 4l4 4L9 19zM14 6l4 4" />
+  </Base>
+);
+
+/** «Lista de fotos»: una foto con montaña y sol. */
+export const Galeria = (p: Props) => (
+  <Base {...p}>
+    <rect x="3" y="4" width="18" height="16" rx="3" />
+    <circle cx="9" cy="10" r="1.6" />
+    <path d="m4 18 5-5 4 4 3-3 4 4" />
+  </Base>
+);
+
+/** «Adicional»: una copa (Expo Vino y lo que se cobra aparte). */
+export const Copa = (p: Props) => (
+  <Base {...p}>
+    <path d="M7 3h10v5a5 5 0 0 1-10 0zM12 13v7M8 21h8" />
+  </Base>
+);
+
+export const Engranaje = (p: Props) => (
+  <Base {...p}>
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-2-1.2L14.2 3h-4l-.4 2.7a7 7 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5A7 7 0 0 0 5 12a7 7 0 0 0 .1 1.2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 2 1.2l.4 2.7h4l.4-2.7a7 7 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5c.1-.4.1-.8.1-1.2z" />
+  </Base>
+);
+
+export const Historial = (p: Props) => (
+  <Base {...p}>
+    <path d="M4 12a8 8 0 1 0 8-8 8 8 0 0 0-6 2.7M4 5v4h4M12 8v4l3 2" />
+  </Base>
+);
+
+export const Llave = (p: Props) => (
+  <Base {...p}>
+    <path d="M14 10a4 4 0 1 1-2 3.4L4 21v-3H2v-3h3v-2l4-4" />
+  </Base>
+);
+
+export const Escudo = (p: Props) => (
+  <Base {...p}>
+    <path d="M12 3 20 6v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" />
+  </Base>
+);
+
+export const Basura = (p: Props) => (
+  <Base {...p}>
+    <path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13M10 11v6M14 11v6" />
+  </Base>
+);
+
+export const Lapiz2 = Lapiz;

@@ -42,6 +42,8 @@ export type Preferencia = "auto" | Tema;
 export type Modo = Tema;
 
 export const CLAVE_APARIENCIA = "rutas-a.apariencia";
+/** Los ajustes de letra y controles, en un solo JSON. */
+export const CLAVE_VISUAL = "rutas-a.visual";
 
 const TEMAS: readonly Tema[] = ["claro", "oscuro", "turbo", "menta", "arcilla", "avispa"];
 const PREFERENCIAS: readonly Preferencia[] = ["auto", ...TEMAS];
@@ -103,4 +105,79 @@ export function elegirPreferencia(preferencia: Preferencia): void {
  * líneas lo que arriba hacen las funciones. Cualquier cambio aquí tiene que
  * hacerse en los dos sitios; la prueba de `apariencia.test.ts` lo comprueba.
  */
-export const SCRIPT_INICIAL = `(function(){var TEMAS=['claro','oscuro','turbo','menta','arcilla','avispa'];var m='claro';try{var p=localStorage.getItem('${CLAVE_APARIENCIA}');if(p==='auto')m=matchMedia('(prefers-color-scheme: dark)').matches?'oscuro':'claro';else if(TEMAS.indexOf(p)!==-1)m=p}catch(e){}document.documentElement.dataset.modo=m})();`;
+export const SCRIPT_INICIAL = `(function(){var TEMAS=['claro','oscuro','turbo','menta','arcilla','avispa'];var d=document.documentElement;var m='claro';try{var p=localStorage.getItem('${CLAVE_APARIENCIA}');if(p==='auto')m=matchMedia('(prefers-color-scheme: dark)').matches?'oscuro':'claro';else if(TEMAS.indexOf(p)!==-1)m=p}catch(e){}d.dataset.modo=m;var v={};try{v=JSON.parse(localStorage.getItem('${CLAVE_VISUAL}')||'{}')||{}}catch(e){}var D={letra:'tema',tamano:'normal',botones:'relieve',toques:'comodo',anim:'completa'};var O={letra:['tema','redondeada','clasica','moderna','condensada','amigable','legible'],tamano:['normal','grande','muy-grande'],botones:['relieve','plano'],toques:['comodo','compacto'],anim:['completa','reducida']};for(var k in D){d.dataset[k]=(O[k].indexOf(v[k])!==-1)?v[k]:D[k]}})();`;
+
+
+/* ---------------------------------------------------------------------------
+ * Letra y controles (v2.0)
+ *
+ * Aparte de la cara (colores), cada persona elige cómo se lee y cómo se toca:
+ * el tipo de letra, su tamaño, si los botones llevan relieve, cuánto miden los
+ * toques y si hay animaciones. Se guardan juntos y se ponen como atributos
+ * `data-*` en <html>; `globals.css` hace el resto.
+ * ------------------------------------------------------------------------- */
+
+export const OPCIONES_VISUALES = {
+  letra: ["tema", "redondeada", "clasica", "moderna", "condensada", "amigable", "legible"],
+  tamano: ["normal", "grande", "muy-grande"],
+  botones: ["relieve", "plano"],
+  toques: ["comodo", "compacto"],
+  anim: ["completa", "reducida"],
+} as const;
+
+export type Letra = (typeof OPCIONES_VISUALES.letra)[number];
+export type Tamano = (typeof OPCIONES_VISUALES.tamano)[number];
+export type Botones = (typeof OPCIONES_VISUALES.botones)[number];
+export type Toques = (typeof OPCIONES_VISUALES.toques)[number];
+export type Anim = (typeof OPCIONES_VISUALES.anim)[number];
+
+export interface Visual {
+  letra: Letra;
+  tamano: Tamano;
+  botones: Botones;
+  toques: Toques;
+  anim: Anim;
+}
+
+/** Lo de fábrica: la letra de cada cara, tamaño normal, botones con relieve, toques cómodos y movimiento completo. */
+export const VISUAL_DEFECTO: Visual = { letra: "tema", tamano: "normal", botones: "relieve", toques: "comodo", anim: "completa" };
+
+/** Lo guardado, completado con lo de fábrica donde falte o venga un valor raro. */
+export function normalizarVisual(crudo: unknown): Visual {
+  const o = (typeof crudo === "object" && crudo !== null ? crudo : {}) as Record<string, unknown>;
+  const salida = { ...VISUAL_DEFECTO } as Record<string, string>;
+  for (const k of Object.keys(OPCIONES_VISUALES) as Array<keyof Visual>) {
+    if ((OPCIONES_VISUALES[k] as readonly unknown[]).includes(o[k])) salida[k] = o[k] as string;
+  }
+  return salida as unknown as Visual;
+}
+
+export function leerVisual(): Visual {
+  try {
+    return normalizarVisual(JSON.parse(localStorage.getItem(CLAVE_VISUAL) ?? "{}"));
+  } catch {
+    return { ...VISUAL_DEFECTO };
+  }
+}
+
+/** Pone los ajustes en la página. */
+export function aplicarVisual(v: Visual): void {
+  const d = document.documentElement.dataset;
+  d.letra = v.letra;
+  d.tamano = v.tamano;
+  d.botones = v.botones;
+  d.toques = v.toques;
+  d.anim = v.anim;
+}
+
+/** Cambia uno o varios ajustes, los guarda y los aplica al instante. Devuelve los ajustes resultantes. */
+export function elegirVisual(cambio: Partial<Visual>): Visual {
+  const nuevo = normalizarVisual({ ...leerVisual(), ...cambio });
+  try {
+    localStorage.setItem(CLAVE_VISUAL, JSON.stringify(nuevo));
+  } catch {
+    /* Sin dónde guardarlo, vale para esta sesión. */
+  }
+  aplicarVisual(nuevo);
+  return nuevo;
+}

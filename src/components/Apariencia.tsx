@@ -3,11 +3,15 @@
 import { useEffect, useState } from "react";
 
 import {
+  VISUAL_DEFECTO,
   aplicarModo,
   elegirPreferencia,
+  elegirVisual,
   leerPreferencia,
+  leerVisual,
   modoDe,
   type Preferencia,
+  type Visual,
 } from "@/lib/apariencia";
 
 /**
@@ -49,4 +53,23 @@ export function useApariencia() {
   }
 
   return { preferencia, cambiar };
+}
+
+/**
+ * Los ajustes de letra y controles (v2.0): leerlos al montar y cambiarlos con
+ * efecto inmediato en toda la app.
+ */
+export function useVisual() {
+  const [visual, setVisual] = useState<Visual>(VISUAL_DEFECTO);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- se lee un dato externo tras montar
+    setVisual(leerVisual());
+  }, []);
+
+  function cambiar(cambio: Partial<Visual>) {
+    setVisual(elegirVisual(cambio));
+  }
+
+  return { visual, cambiar };
 }
