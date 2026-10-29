@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 
 import { FiguraDeAccion } from "@/components/Acciones";
 import { Armazon } from "@/components/Armazon";
 import { BotonAtras } from "@/components/BotonAtras";
 import { RedDeSeguridad } from "@/components/RedDeSeguridad";
 import { ProveedorLicencia, useLicencia } from "@/components/Licencia";
-import { Alerta, Llave } from "@/components/iconos";
+import { Alerta, Equis, Llave } from "@/components/iconos";
 import { useDatos } from "@/hooks/useDatos";
 import { mensajeDeLicencia } from "@/lib/licencia/estado";
 import { repararMontosDeMoto } from "@/lib/db/sqlite/jornadas";
@@ -20,6 +21,24 @@ import { perfilActual, sembrarSiHaceFalta } from "@/lib/db/sqlite/perfil";
  * base, así que no hay nadie de quien proteger los datos. Lo que sí decide
  * aquí es si la licencia permite cargar jornadas nuevas (§ licencias).
  */
+/**
+ * Una «x» para cerrar el aviso de licencia y ver la pantalla con sus datos.
+ * Se cierra mientras la app esté abierta; al abrirla otra vez vuelve a salir,
+ * porque la licencia sigue pendiente.
+ */
+function CerrarAviso({ alCerrar }: { alCerrar: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={alCerrar}
+      aria-label="Cerrar el aviso"
+      className="absolute top-2 right-2 grid size-11 place-items-center rounded-full bg-black/10 text-current active:scale-95"
+    >
+      <Equis className="size-5" />
+    </button>
+  );
+}
+
 export default function LayoutApp({ children }: { children: React.ReactNode }) {
   return (
     <ProveedorLicencia>
@@ -30,6 +49,7 @@ export default function LayoutApp({ children }: { children: React.ReactNode }) {
 
 function Contenido({ children }: { children: React.ReactNode }) {
   const licencia = useLicencia();
+  const [avisoCerrado, setAvisoCerrado] = useState(false);
 
   /* La primera vez que se abre la app no hay ni tienda ni perfil, y sin tienda
      no hay regla de pago que aplicar. Sembrar aquí evita que la primera
@@ -73,9 +93,10 @@ function Contenido({ children }: { children: React.ReactNode }) {
 
   return (
     <Armazon nombre={perfil?.nombre ?? ""} email={perfil?.email ?? null} rol="driver">
-      {licencia && !licencia.puedeEscribir && (
-        <div className="ini-lic ini-rise mx-auto mb-4 max-w-[880px]">
-          <div className="flex items-center gap-3">
+      {licencia && !licencia.puedeEscribir && !avisoCerrado && (
+        <div className="ini-lic ini-rise relative mx-auto mb-4 max-w-[880px]">
+          <CerrarAviso alCerrar={() => setAvisoCerrado(true)} />
+          <div className="flex items-center gap-3 pr-11">
             <FiguraDeAccion k="licencia" />
             <div className="min-w-0">
               <strong className="block leading-tight font-bold">
@@ -96,9 +117,10 @@ function Contenido({ children }: { children: React.ReactNode }) {
       )}
       {/* Recordatorio suave cuando quedan pocos días: no bloquea nada, solo
           avisa a tiempo para renovar sin quedarse un día sin poder cargar. */}
-      {licencia && licencia.puedeEscribir && licencia.debeAvisar && (
-        <div className="ini-lic ini-lic--suave ini-rise mx-auto mb-4 max-w-[880px]">
-          <div className="flex items-center gap-3">
+      {licencia && licencia.puedeEscribir && licencia.debeAvisar && !avisoCerrado && (
+        <div className="ini-lic ini-lic--suave ini-rise relative mx-auto mb-4 max-w-[880px]">
+          <CerrarAviso alCerrar={() => setAvisoCerrado(true)} />
+          <div className="flex items-center gap-3 pr-11">
             <FiguraDeAccion k="licencia" />
             <p className="min-w-0 flex-1 text-sm font-semibold">{mensajeDeLicencia(licencia)}</p>
             <Link

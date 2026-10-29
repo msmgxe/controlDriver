@@ -37,6 +37,14 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 2.01 — 29/10/2026
+- **La tarjeta del día vuelve a ser compacta** (anillo a la izquierda y las fuentes a la derecha,
+  como antes), para que entre en el ancho de la pantalla y se vea justo después de la tira de
+  días.
+- **Aviso de licencia con una «x»** arriba a la derecha para cerrarlo y ver la pantalla con sus
+  datos. Se cierra mientras la app esté abierta; al abrirla de nuevo vuelve a salir si la
+  licencia sigue pendiente.
+
 ### 2.00 — 29/10/2026 · Rediseño completo
 **Una app de colores, botones grandes y menos texto.**
 - **Lenguaje de color:** cada acción tiene su color y su figura en toda la app (comanda azul,
