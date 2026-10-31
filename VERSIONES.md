@@ -37,6 +37,12 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 2.02 — 31/10/2026
+- **Licencia: el cuadro «Pega aquí la licencia» ya no confunde.** Si pegas un código de teléfono
+  (los que parecen `313d0332-f987-…`) avisa que eso es el código y no la licencia. Si pegas el
+  mensaje entero de WhatsApp, toma solo el texto largo que empieza por «eyJ». «Activar» se
+  enciende en cuanto ve una licencia dentro de lo pegado.
+
 ### 2.01 — 29/10/2026
 - **La tarjeta del día vuelve a ser compacta** (anillo a la izquierda y las fuentes a la derecha,
   como antes), para que entre en el ancho de la pantalla y se vea justo después de la tira de

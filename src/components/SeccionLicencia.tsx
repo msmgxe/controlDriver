@@ -19,6 +19,18 @@ import { mensajeDeLicencia, type EstadoLicencia } from "@/lib/licencia/estado";
  *   2. pagas, y te devuelve un texto largo por WhatsApp;
  *   3. lo pegas aquí y tocas Activar.
  */
+/**
+ * La licencia dentro de lo que se pegó. Acepta el mensaje entero de WhatsApp
+ * («Tu licencia de Control Driver. Ábrela en…») o solo el texto largo, y se
+ * queda con ese texto largo, que empieza por «eyJ».
+ */
+function extraerLicencia(pegado: string): string | null {
+  return /eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}/.exec(pegado)?.[0] ?? null;
+}
+
+/** El código de un teléfono (un UUID) no es una licencia: es lo que se manda para pedirla. */
+const parecidoACodigo = (t: string) => /^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(t.trim());
+
 export function SeccionLicencia() {
   const licencia = useLicencia();
   const { datos: codigo } = useDatos(() => identificadorDelDispositivo(), []);
@@ -26,6 +38,8 @@ export function SeccionLicencia() {
   const [copiado, setCopiado] = useState(false);
   const [resultado, setResultado] = useState<{ ok: boolean; texto: string } | null>(null);
   const [activando, setActivando] = useState(false);
+
+  const licenciaPegada = extraerLicencia(texto);
 
   async function copiar() {
     if (!codigo) return;
@@ -42,7 +56,7 @@ export function SeccionLicencia() {
     setActivando(true);
     setResultado(null);
     try {
-      const r = await activarCertificado(texto);
+      const r = await activarCertificado(licenciaPegada ?? texto);
       if (r.ok) {
         setResultado({
           ok: true,
@@ -119,10 +133,21 @@ export function SeccionLicencia() {
           placeholder="eyJ1c3Vhcmlv…"
           className="rounded-btn border border-linea-fuerte bg-sup px-3 py-2 font-mono text-xs"
         />
+        {parecidoACodigo(texto) ? (
+          <p role="status" className="rounded-btn bg-aviso-suave px-3 py-2 text-sm text-aviso">
+            Eso es un <b>código de teléfono</b>, no una licencia. La licencia es un texto largo que empieza por{" "}
+            <b className="font-mono">eyJ</b>: pídela mandando el código de arriba y pega aquí lo que te devuelvan.
+          </p>
+        ) : texto.trim() !== "" && licenciaPegada === null ? (
+          <p role="status" className="text-xs text-tinta-3">
+            Todavía no veo una licencia ahí. Pega el texto largo completo (empieza por «eyJ»); si te mandaron el mensaje
+            entero con «Tu licencia de Control Driver…», también sirve.
+          </p>
+        ) : null}
         <button
           type="button"
           onClick={() => void activar()}
-          disabled={activando || texto.trim().length < 40}
+          disabled={activando || licenciaPegada === null}
           className="boton-principal"
           style={{ background: "var(--c-licencia)", color: "#fff" }}
         >
