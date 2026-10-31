@@ -9,17 +9,18 @@
 import "server-only";
 import { cookies, headers } from "next/headers";
 
+import { entorno } from "./entorno";
 import { crearToken, DURACION_SESION_SEGUNDOS, igualesEnTiempoConstante, ipDeCabeceras, tokenValido } from "./seguridad";
 
 const COOKIE = "licencias_sesion";
 
 /** Si no hay contraseña puesta en el servidor, el panel no se puede usar —no se cae a "sin clave". */
 export function panelConfigurado(): boolean {
-  return Boolean(process.env.LICENCIAS_PASSWORD);
+  return Boolean(entorno("LICENCIAS_PASSWORD"));
 }
 
 export async function haySesion(): Promise<boolean> {
-  const secreto = process.env.LICENCIAS_PASSWORD;
+  const secreto = entorno("LICENCIAS_PASSWORD");
   if (!secreto) return false;
   const jar = await cookies();
   return tokenValido(secreto, jar.get(COOKIE)?.value);
@@ -32,7 +33,7 @@ export async function ipDelCliente(): Promise<string> {
 
 /** Comprueba la contraseña en tiempo constante y pone la cookie si era correcta. */
 export async function iniciarSesion(clave: string): Promise<boolean> {
-  const secreto = process.env.LICENCIAS_PASSWORD;
+  const secreto = entorno("LICENCIAS_PASSWORD");
   if (!secreto || !igualesEnTiempoConstante(clave, secreto)) return false;
   const jar = await cookies();
   jar.set(COOKIE, crearToken(secreto), {

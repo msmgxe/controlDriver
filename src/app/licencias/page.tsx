@@ -56,7 +56,31 @@ export default async function PaginaLicencias() {
     );
   }
 
-  const [licencias, pagos] = await Promise.all([listarLicencias(), listarPagos()]);
+  let licencias: Awaited<ReturnType<typeof listarLicencias>>;
+  let pagos: Awaited<ReturnType<typeof listarPagos>>;
+  try {
+    [licencias, pagos] = await Promise.all([listarLicencias(), listarPagos()]);
+  } catch (fallo) {
+    /* En producción React oculta el mensaje de un error del servidor («error #441»).
+       Aquí se atrapa y se enseña lo esencial —sin direcciones ni claves— para saber
+       qué variable de Vercel revisar. */
+    const detalle = (fallo instanceof Error ? `${fallo.name}: ${fallo.message}` : String(fallo))
+      .replace(/(libsql|https?|wss?):\/\/\S+/gi, "<dirección>")
+      .replace(/eyJ[\w.-]+/g, "<token>")
+      .slice(0, 240);
+    return (
+      <Aviso
+        texto={
+          <>
+            No se pudo leer la base de licencias (Turso). Revisa en Vercel que{" "}
+            <span className="codigo">TURSO_DATABASE_URL</span> y{" "}
+            <span className="codigo">TURSO_AUTH_TOKEN</span> estén copiadas tal cual, sin comillas, y vuelve a desplegar.
+            <span className="mt-2 block font-mono text-xs break-words">{detalle}</span>
+          </>
+        }
+      />
+    );
+  }
   const hoy = hoyEnLima();
   const resumen = resumenDelTablero(licencias, pagos, hoy);
 

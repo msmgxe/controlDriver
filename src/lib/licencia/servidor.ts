@@ -17,6 +17,7 @@
 import "server-only";
 
 import { hoyEnLima } from "../fechas";
+import { entorno } from "./entorno";
 import { emitirCertificado, importarClavePrivada, sumarMeses } from "./emitir";
 import { mensajeParaWhatsApp } from "./panel";
 import { auditar } from "./acceso";
@@ -34,7 +35,7 @@ export const CAMPOS_EMISION = ["codigo", "nombre", "meses", "monto", "metodo", "
 
 /** Firma con la clave del servidor. La clave se lee y se descarta aquí mismo. */
 async function firmar(datos: { codigo: string; nombre: string; hasta: string }): Promise<string> {
-  const texto = process.env.LICENCIA_CLAVE_PRIVADA;
+  const texto = entorno("LICENCIA_CLAVE_PRIVADA");
   if (!texto) throw new Error("FALTA_CLAVE");
   let jwk: JsonWebKey;
   try {

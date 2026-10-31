@@ -14,13 +14,15 @@
  */
 import { createClient, type Client } from "@libsql/client";
 
+import { entorno } from "./entorno";
+
 let cliente: Client | null | undefined;
 
 export function clienteTurso(): Client | null {
   if (cliente !== undefined) return cliente;
 
-  const url = process.env.TURSO_DATABASE_URL;
-  const authToken = process.env.TURSO_AUTH_TOKEN;
+  const url = entorno("TURSO_DATABASE_URL");
+  const authToken = entorno("TURSO_AUTH_TOKEN");
   cliente = url && authToken ? createClient({ url, authToken }) : null;
   return cliente;
 }
