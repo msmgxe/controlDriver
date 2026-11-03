@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { usarMotor } from "./conexion";
 import { motorEnMemoria } from "./motor-en-memoria";
 import { guardarJornada, jornadaPorFecha } from "./jornadas";
-import { actualizarPedido, marcarContado, marcarContados, pedidosParaCotejo } from "./pedidos";
+import { actualizarPedido, aplicarBono, marcarContado, marcarContados, pedidosParaCotejo, quitarBono } from "./pedidos";
 import type { JornadaParaGuardar } from "../tipos";
 import type { FechaISO } from "@/lib/fechas";
 
@@ -31,6 +31,10 @@ const dia: JornadaParaGuardar = {
     { codigo: "v33333333wofp-01", estado: "Entregado", posicion: 3, ruta: null, tramo: 1, km: null, montoCentimos: 1000 },
   ],
 };
+
+async function idDeCodigo(codigo: string): Promise<string> {
+  return idDe(codigo);
+}
 
 async function idDe(codigo: string): Promise<string> {
   const j = await jornadaPorFecha(FECHA);
@@ -138,5 +142,36 @@ describe("cotejo en bloque", () => {
 
     await marcarContados([todos[0].id, todos[2].id], true);
     expect((await pedidosParaCotejo()).map((p) => p.contado)).toEqual([true, false, true]);
+  });
+});
+
+describe("bono de campaña (CyberNow)", () => {
+  const montos = async () => Object.fromEntries((await jornadaPorFecha(FECHA))!.ordenes.map((o) => [o.codigo, o.montoCentimos]));
+
+  it("suma el bono a los pedidos elegidos, lo cambia sin acumularlo y lo quita", async () => {
+    const a = await idDeCodigo("v11111111wofp-01");
+    const b = await idDeCodigo("v22222222wofp-01");
+    await aplicarBono([a, b], 200, "CyberNow");
+    expect(await montos()).toMatchObject({ "v11111111wofp-01": 1200, "v22222222wofp-01": 1200, "v33333333wofp-01": 1000 });
+    const o = (await jornadaPorFecha(FECHA))!.ordenes.find((x) => x.id === a)!;
+    expect(o).toMatchObject({ bonoCentimos: 200, bonoNombre: "CyberNow" });
+
+    await aplicarBono([a], 300, "CyberNow"); // cambiar el bono no lo acumula
+    expect((await montos())["v11111111wofp-01"]).toBe(1300);
+
+    await quitarBono([a, b]);
+    expect(await montos()).toMatchObject({ "v11111111wofp-01": 1000, "v22222222wofp-01": 1000 });
+  });
+
+  it("cambiar el tramo de un pedido con bono conserva el bono", async () => {
+    const { actualizarTramo } = await import("./jornadas");
+    const a = await idDeCodigo("v11111111wofp-01");
+    await aplicarBono([a], 200, "CyberNow");
+    await actualizarTramo(a, 2, 1150, null, { conservarKm: true });
+    expect((await montos())["v11111111wofp-01"]).toBe(1350); // tarifa 11.50 + bono 2.00
+  });
+
+  it("rechaza un bono fuera de rango", async () => {
+    await expect(aplicarBono([await idDeCodigo("v11111111wofp-01")], -5, "x")).rejects.toThrow();
   });
 });

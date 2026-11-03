@@ -41,6 +41,7 @@ export function FilaPedidoSimple({
   contado,
   alContar,
   zona,
+  bono = null,
   onClick,
 }: {
   codigo: string;
@@ -62,6 +63,8 @@ export function FilaPedidoSimple({
   contado?: boolean;
   /** Tarifa por zona: el nombre de la zona del pedido, que se enseña en vez de «T2». */
   zona?: string | null;
+  /** Bono de campaña que lleva este pedido, ya incluido en el monto. */
+  bono?: { monto: string; nombre: string | null } | null;
   alContar?: (contado: boolean) => void;
   onClick?: () => void;
 }) {
@@ -125,6 +128,12 @@ export function FilaPedidoSimple({
             )
           )}
           {km !== null && <span className="font-mono text-tinta-2">{km.toFixed(1)} km</span>}
+        {bono && (
+          <span className="rounded-chip px-2 py-0.5 font-bold text-white" style={{ background: "var(--c-adic)" }}>
+            +{bono.monto}
+            {bono.nombre ? ` ${bono.nombre}` : ""}
+          </span>
+        )}
           {manual && <span className="text-tinta-3">· a mano</span>}
 
           {/* Lo que tiene guardado, sin abrir: el cliente y la foto de su comanda. */}

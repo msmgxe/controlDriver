@@ -106,6 +106,9 @@ export interface OrdenFila {
   origen: OrigenDePedido;
   /** Marcado al cotejar con el reporte de la empresa: ella sí lo contó para el pago. */
   contado: boolean;
+  /** Bono de campaña incluido en `montoCentimos` (0 si no tiene) y cómo se llama. */
+  bonoCentimos: number;
+  bonoNombre: string | null;
 }
 
 export type OrigenDePedido = "captura" | "comanda" | "manual";

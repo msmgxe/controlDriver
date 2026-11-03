@@ -106,6 +106,7 @@ function aLiquidable(j: JornadaCompleta, bloques?: readonly BloqueExtraFila[]): 
       estado: o.estado,
       ruta: o.ruta,
       montoManualCentimos: o.montoCentimos,
+      bonoCentimos: o.bonoCentimos,
     })),
     bloquesExtra: bloques?.map((b) => ({ tipo: b.tipo, montoCentimos: b.montoCentimos })),
   };

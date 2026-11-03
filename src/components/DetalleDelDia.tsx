@@ -4,11 +4,12 @@ import { useState, useTransition } from "react";
 
 import { cambiarHorarioDeJornada, eliminarJornada } from "@/app/(app)/jornada/acciones";
 import { BotonDeAccion } from "@/components/Acciones";
+import { BonoDePedidos } from "@/components/BonoDePedidos";
 import { DialogoConfirmar } from "@/components/DialogoConfirmar";
 import { DueloDePago } from "@/components/DueloDePago";
 import { FilaPedidoSimple } from "@/components/FilaPedidoSimple";
 import { HojaDePedido } from "@/components/HojaDePedido";
-import { Basura, Camara, Flecha, Reloj, Equis } from "@/components/iconos";
+import { Basura, Camara, Equis, Estrella, Flecha, Reloj } from "@/components/iconos";
 import { Pestanas } from "@/components/Pestanas";
 import { PedidosPorTramo } from "@/components/PedidosPorTramo";
 import { PruebasDelDia } from "@/components/PruebasDelDia";
@@ -58,6 +59,7 @@ export function DetalleDelDia({
   const [verTodos, setVerTodos] = useState(false);
   const [abierta, setAbierta] = useState<"capturas" | "horario" | "borrar" | null>(null);
   const [editando, setEditando] = useState<string | null>(null);
+  const [conBono, setConBono] = useState(false);
   const [pendiente, iniciar] = useTransition();
   const [aviso, setAviso] = useState<{ tono: "bien" | "mal"; texto: string } | null>(null);
 
@@ -110,11 +112,23 @@ export function DetalleDelDia({
                   km={o.km}
                   cliente={o.cliente?.nombre ?? null}
                   conFoto={o.fotos > 0}
+                  bono={o.bonoCentimos > 0 ? { monto: formatearSoles(o.bonoCentimos), nombre: o.bonoNombre } : null}
                   onClick={() => setEditando(o.id)}
                 />
               ))
             )}
           </div>
+          {editable && jornada.ordenes.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setConBono(true)}
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-btn font-bold text-white"
+              style={{ background: "var(--c-adic)" }}
+            >
+              <Estrella className="size-5" />
+              Bono de campaña (CyberNow…)
+            </button>
+          )}
           {jornada.ordenes.length > PEDIDOS_A_LA_VISTA && (
             <button type="button" onClick={() => setVerTodos((v) => !v)} className="boton-sec w-full" aria-expanded={verTodos}>
               <Flecha className={`size-4 ${verTodos ? "-rotate-90" : "rotate-90"}`} />
@@ -232,6 +246,10 @@ export function DetalleDelDia({
           alCerrar={() => setEditando(null)}
           alCambiar={alCambiar}
         />
+      )}
+
+      {conBono && (
+        <BonoDePedidos fecha={fecha} ordenes={jornada.ordenes} alCerrar={() => setConBono(false)} alCambiar={alCambiar} />
       )}
     </>
   );

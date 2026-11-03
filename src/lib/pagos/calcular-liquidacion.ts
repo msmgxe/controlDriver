@@ -35,6 +35,8 @@ interface PedidoLiquidable {
   ruta: number | null;
   /** Solo para el tramo 6, mientras la tarifa de más de 12 km siga sin definirse. */
   montoManualCentimos?: number | null;
+  /** Bono de campaña de este pedido, que se suma a la tarifa de su tramo. */
+  bonoCentimos?: number;
 }
 
 interface RutaLiquidable {
@@ -352,7 +354,10 @@ function montoDelPedido(
   if (pedido.tramo === TRAMO_MAS_DE_12_KM && !esPorZona(regla)) {
     return pedido.montoManualCentimos ?? null;
   }
-  return pagoDelTramo(regla, pedido.tramo);
+  // La tarifa del tramo más el bono de campaña, si lo tiene. (El monto manual de «más de
+  // 12 km» ya viene con el bono dentro, porque es el monto guardado del pedido.)
+  const tarifa = pagoDelTramo(regla, pedido.tramo);
+  return tarifa === null ? null : tarifa + (pedido.bonoCentimos ?? 0);
 }
 
 /** Diferencia entre lo calculado y lo que realmente pagaron (§13, conciliación). */

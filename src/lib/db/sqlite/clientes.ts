@@ -122,7 +122,7 @@ export async function guardarDistancia(
     if (datos.montoCentimos === undefined) {
       throw new Error("Cambiar el tramo exige también el monto.");
     }
-    columnas.push("tramo = ?", "monto_centimos = ?", "tramo_auto = ?");
+    columnas.push("tramo = ?", "monto_centimos = ? + bono_centimos", "tramo_auto = ?");
     valores.push(datos.tramo, datos.montoCentimos, datos.tramoAuto ? 1 : 0);
   }
 

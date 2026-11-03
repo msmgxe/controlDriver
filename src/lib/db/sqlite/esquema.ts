@@ -210,6 +210,12 @@ export const ESQUEMA: string[] = [
         persona al cotejar su semana con ese reporte; los que quedan sin marcar
         son los que la empresa no tuvo en cuenta. No cambia el monto. */
      contado_empresa  integer not null default 0,
+     /* Bono de una campaña (CyberNow…): lo que se suma a la tarifa de este pedido.
+        «monto_centimos» YA lo incluye, así que todas las sumas lo cuentan solas;
+        esta columna dice cuánto de ese monto es bono, para poder quitarlo y para
+        que cambiar el tramo no lo pierda. */
+     bono_centimos    integer not null default 0,
+     bono_nombre      text,
      /* La misma razón que en rutas, y además lo que permite el modo
         "combinar": un pedido ya registrado se actualiza, no se repite. */
      unique (jornada_id, codigo)
@@ -433,6 +439,8 @@ const COLUMNAS_ANADIDAS: ReadonlyArray<[tabla: string, columna: string, definici
   ["ordenes", "tramo_auto", "integer not null default 0"],
   ["ordenes", "origen", "text not null default 'captura'"],
   ["ordenes", "contado_empresa", "integer not null default 0"],
+  ["ordenes", "bono_centimos", "integer not null default 0"],
+  ["ordenes", "bono_nombre", "text"],
   ["bloques_extra", "categoria_id", "text"],
   ["bloques_extra", "descripcion", "text"],
   ["bloques_extra", "zona", "text"],

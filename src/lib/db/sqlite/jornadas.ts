@@ -196,10 +196,12 @@ export async function jornadasPorRango(
     tramo_auto: number;
     origen: string | null;
     contado_empresa: number;
+    bono_centimos: number;
+    bono_nombre: string | null;
     fotos: number;
   }>(
     `select id, jornada_id, ruta_id, codigo, estado, posicion, tramo, km, monto_centimos, manual, origen,
-            cliente_nombre, cliente_telefono, direccion, lat, lng, km_fuente, tramo_auto, contado_empresa,
+            cliente_nombre, cliente_telefono, direccion, lat, lng, km_fuente, tramo_auto, contado_empresa, bono_centimos, bono_nombre,
             (select count(*) from pruebas p where p.orden_id = ordenes.id) as fotos
        from ordenes where jornada_id in (${huecos})`,
     ids,
@@ -243,6 +245,8 @@ export async function jornadasPorRango(
         fotos: o.fotos ?? 0,
         origen: (o.origen as OrigenDePedido | null) ?? "captura",
         contado: aBool(o.contado_empresa),
+        bonoCentimos: o.bono_centimos ?? 0,
+        bonoNombre: o.bono_nombre ?? null,
       }))
       /* En el orden en que se hicieron: por la hora de salida de su ruta, y
          dentro de cada ruta en el orden de la lista. Ordenar solo por la
@@ -560,7 +564,7 @@ export async function guardarJornada(
               tramo 1, y pisarlos borraría lo que la distancia ya decidió. */
            tramo          = ${combinando ? "ordenes.tramo" : "case when ordenes.km is not null then ordenes.tramo else excluded.tramo end"},
            km             = ${combinando ? "ordenes.km" : "case when ordenes.km is not null then ordenes.km else excluded.km end"},
-           monto_centimos = ${combinando ? "ordenes.monto_centimos" : "case when ordenes.km is not null then ordenes.monto_centimos else excluded.monto_centimos end"}`,
+           monto_centimos = ${combinando ? "ordenes.monto_centimos" : "case when ordenes.km is not null then ordenes.monto_centimos else excluded.monto_centimos + ordenes.bono_centimos end"}`,
         [
           nuevoId(), jornadaId,
           o.ruta === null ? null : (idPorNumero.get(o.ruta) ?? null),
@@ -597,7 +601,8 @@ export async function actualizarTramo(
   km: number | null,
   opciones: { auto?: boolean; kmFuente?: FuenteDeKm | null; conservarKm?: boolean } = {},
 ): Promise<void> {
-  const columnas = ["tramo = ?", "monto_centimos = ?", "tramo_auto = ?"];
+  // El bono de campaña se conserva: el monto nuevo es la tarifa del tramo más lo que ya tenía de bono.
+  const columnas = ["tramo = ?", "monto_centimos = ? + bono_centimos", "tramo_auto = ?"];
   const valores: unknown[] = [tramo, montoCentimos, deBool(opciones.auto ?? false)];
   if (!opciones.conservarKm) {
     columnas.push("km = ?", "km_fuente = ?");

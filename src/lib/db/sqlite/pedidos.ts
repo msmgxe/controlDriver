@@ -133,6 +133,40 @@ export async function marcarContado(ordenId: string, contado: boolean): Promise<
   await ejecutar(`update ordenes set contado_empresa = ? where id = ?`, [contado ? 1 : 0, ordenId]);
 }
 
+/**
+ * Pone el bono de una campaña (CyberNow…) a varios pedidos, o lo cambia si ya lo tenían.
+ *
+ * `monto_centimos` ya trae la tarifa **más** el bono, así que se le resta el bono
+ * anterior y se le suma el nuevo: todas las pantallas y la liquidación lo cuentan
+ * solas. Va en una transacción: o entran todos o ninguno.
+ */
+export async function aplicarBono(ordenIds: readonly string[], bonoCentimos: number, nombre: string): Promise<void> {
+  if (!Number.isInteger(bonoCentimos) || bonoCentimos < 0 || bonoCentimos > 100_000) {
+    throw new Error("El bono tiene que ser un monto entre 0 y S/ 1000.");
+  }
+  const etiqueta = nombre.trim().slice(0, 40) || null;
+  const momento = ahora();
+  await enTransaccion(async () => {
+    for (const id of ordenIds) {
+      await ejecutar(
+        `update ordenes
+            set monto_centimos = coalesce(monto_centimos, 0) - bono_centimos + ?,
+                bono_centimos = ?, bono_nombre = ?
+          where id = ?`,
+        [bonoCentimos, bonoCentimos, bonoCentimos === 0 ? null : etiqueta, id],
+      );
+      await ejecutar(
+        `update jornadas set actualizado_en = ?, sincronizado = 0
+          where id = (select jornada_id from ordenes where id = ?)`,
+        [momento, id],
+      );
+    }
+  });
+}
+
+/** Quita el bono: el pedido vuelve a su tarifa. */
+export const quitarBono = (ordenIds: readonly string[]) => aplicarBono(ordenIds, 0, "");
+
 /** Marca (o desmarca) varios a la vez, en una sola transacción: o entran todos o ninguno. */
 export async function marcarContados(ordenIds: readonly string[], contado: boolean): Promise<void> {
   await enTransaccion(async () => {

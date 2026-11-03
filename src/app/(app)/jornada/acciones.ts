@@ -23,7 +23,7 @@ import {
 import { guardarCliente, guardarDistancia, quitarCliente } from "@/lib/db/sqlite/clientes";
 import { estadoDeSemana } from "@/lib/db/sqlite/liquidaciones";
 import { reordenarRutasDelDia } from "@/lib/db/sqlite/rutas";
-import { ESTADOS_DE_PEDIDO, actualizarPedido } from "@/lib/db/sqlite/pedidos";
+import { ESTADOS_DE_PEDIDO, actualizarPedido, aplicarBono } from "@/lib/db/sqlite/pedidos";
 import { perfilActual } from "@/lib/db/sqlite/perfil";
 import { esFechaISO, formatearFecha, hoyEnLima, type FechaISO } from "@/lib/fechas";
 import { RE_CODIGO_PEDIDO } from "@/lib/extraccion/esquema";
@@ -618,4 +618,39 @@ export async function eliminarBloque(fecha: string, bloqueId: string): Promise<R
     return { ok: false, error: error instanceof Error ? error.message : "No se pudo borrar." };
   }
   return { ok: true, mensaje: "Bloque borrado." };
+}
+
+const esquemaBono = z.object({
+  fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  ordenIds: z.array(z.string().min(1).max(64)).min(1).max(300),
+  /** Céntimos por pedido; 0 quita el bono. */
+  bonoCentimos: z.number().int().min(0).max(100_000),
+  nombre: z.string().trim().max(40),
+});
+
+/**
+ * Suma el bono de una campaña (CyberNow…) a los pedidos elegidos, o lo quita (0).
+ * Es dinero: no se toca una semana ya pagada, y el monto lo escribe la persona.
+ */
+export async function aplicarBonoAPedidos(datos: unknown): Promise<Resultado> {
+  const parseado = esquemaBono.safeParse(datos);
+  if (!parseado.success) return { ok: false, error: "Revisa el bono: el monto y los pedidos elegidos." };
+  const { fecha, ordenIds, bonoCentimos, nombre } = parseado.data;
+
+  const editable = await semanaEditable(fecha as FechaISO);
+  if (!editable.ok) return { ok: false, error: editable.error };
+
+  try {
+    await aplicarBono(ordenIds, bonoCentimos, nombre);
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "No se pudo aplicar el bono." };
+  }
+  const n = ordenIds.length;
+  return {
+    ok: true,
+    mensaje:
+      bonoCentimos === 0
+        ? `Bono quitado de ${n} pedido${n === 1 ? "" : "s"}.`
+        : `Bono de S/ ${(bonoCentimos / 100).toFixed(2)} aplicado a ${n} pedido${n === 1 ? "" : "s"}.`,
+  };
 }

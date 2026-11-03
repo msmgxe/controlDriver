@@ -37,6 +37,15 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 2.03 — 03/11/2026
+- **Bono de campaña (CyberNow…).** En el detalle del día, pestaña Pedidos, el botón morado
+  «Bono de campaña»: eliges la campaña, cuánto suma por pedido (S/ 1, 2, 3, 5 u otro monto) y
+  tocas los pedidos que entran (o «Todos» / «Sin bono»). Pregunta antes de aplicar y se puede
+  quitar después. El bono queda dentro del monto del pedido, así que Inicio, Pagos, el detalle
+  y las exportaciones lo cuentan solos, y la liquidación de la semana lo suma a la tarifa.
+  Cambiar el tramo de un pedido o volver a cargar sus capturas no pierde el bono. No se puede
+  en una semana ya pagada.
+
 ### 2.02 — 31/10/2026
 - **Licencia: el cuadro «Pega aquí la licencia» ya no confunde.** Si pegas un código de teléfono
   (los que parecen `313d0332-f987-…`) avisa que eso es el código y no la licencia. Si pegas el
