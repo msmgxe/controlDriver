@@ -1352,6 +1352,7 @@ div:has(> [role="dialog"]) {
   --c-aprender: #c23d7d;
   --c-ajustes: #4a5780;
   --c-licencia: #0a2260;
+  --c-campana: #c2410c;
   --sol-tinta: #0a2260;
   --toque: 56px; /* alto mínimo de un botón grande; «compacto» lo baja */
   --escala: 1; /* tamaño de letra; «grande» y «muy grande» lo suben */
@@ -1369,6 +1370,7 @@ div:has(> [role="dialog"]) {
   --c-aprender: #e0629e;
   --c-ajustes: #7c88b5;
   --c-licencia: #5b86ff;
+  --c-campana: #ea6a2a;
 }
 
 /* — letra — */

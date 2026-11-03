@@ -37,6 +37,20 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 2.04 — 03/11/2026
+- **Ajustes › Campañas.** Cuando la tienda sube la tarifa una semana (CyberNow) creas la
+  campaña una vez: nombre, tienda, **fechas** (con atajos «Esta semana» / «La próxima semana») y
+  cuánto suma **por pedido** (+S/ 1, 2, 3, 5 u otro). El bono se pone **solo** a todos los pedidos
+  de esas fechas en esa tienda, los que ya cargaste y los que cargues después. Si le quitas el
+  bono a un pedido a mano, la campaña no se lo vuelve a poner; lo que pusiste a mano se respeta.
+  No toca semanas ya pagadas.
+- **Bono fijo por cumplir el horario** (el «S/ 100» del afiche): marcas los días que descansas
+  (martes y sábado, por ejemplo) y la app cuenta **tu horario**, no los 7 días: «4 de 5 días de
+  tu horario», con lo que falta por cargar. Al terminar el período tocas **«Lo cumplí»** y entra
+  en Pagos como un adicional «Bono de campaña», sumado a esa semana. Se puede desmarcar.
+- «Usar la del afiche» deja lista CyberNow del 2 al 8 de noviembre con +S/ 2 y S/ 100.
+- Preguntas de seguridad al borrar la campaña, marcar o desmarcar el bono fijo.
+
 ### 2.03 — 03/11/2026
 - **Bono de campaña (CyberNow…).** En el detalle del día, pestaña Pedidos, el botón morado
   «Bono de campaña»: eliges la campaña, cuánto suma por pedido (S/ 1, 2, 3, 5 u otro monto) y

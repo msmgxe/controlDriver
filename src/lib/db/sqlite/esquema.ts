@@ -216,6 +216,10 @@ export const ESQUEMA: string[] = [
         que cambiar el tramo no lo pierda. */
      bono_centimos    integer not null default 0,
      bono_nombre      text,
+     /* La campaña que puso ese bono (null si es manual) y si la persona lo quitó a
+        propósito: una campaña no vuelve a ponérselo. */
+     campana_id       text,
+     sin_bono         integer not null default 0,
      /* La misma razón que en rutas, y además lo que permite el modo
         "combinar": un pedido ya registrado se actualiza, no se repite. */
      unique (jornada_id, codigo)
@@ -308,6 +312,26 @@ export const ESQUEMA: string[] = [
      "qué día fue", que es lo único que de verdad comparten los tres tipos. */
   /* Los tipos de adicional que la persona crea («Taxi», «Movilidad», «Expo Vino»…).
      Se archivan, no se borran: un adicional ya cobrado conserva su categoría. */
+  /* Campañas de la tienda (CyberNow…): un rango de fechas con un bono por pedido y,
+     si lo hay, un bono fijo que se cobra aparte al cumplir el horario. */
+  `create table if not exists campanas (
+     id                     text primary key,
+     nombre                 text not null,
+     tienda_id              text,
+     desde                  text not null,
+     hasta                  text not null,
+     bono_pedido_centimos   integer not null default 0,
+     bono_fijo_centimos     integer not null default 0,
+     condicion              text,
+     /* Días de la semana que la persona descansa (1 = lunes … 7 = domingo), «2,6». */
+     dias_descanso          text not null default '',
+     cumplido               integer not null default 0,
+     bono_bloque_id         text,
+     activa                 integer not null default 1,
+     creado_en              text not null,
+     actualizado_en         text not null
+   );`,
+
   `create table if not exists categorias_adicional (
      id             text primary key,
      nombre         text not null,
@@ -441,6 +465,8 @@ const COLUMNAS_ANADIDAS: ReadonlyArray<[tabla: string, columna: string, definici
   ["ordenes", "contado_empresa", "integer not null default 0"],
   ["ordenes", "bono_centimos", "integer not null default 0"],
   ["ordenes", "bono_nombre", "text"],
+  ["ordenes", "campana_id", "text"],
+  ["ordenes", "sin_bono", "integer not null default 0"],
   ["bloques_extra", "categoria_id", "text"],
   ["bloques_extra", "descripcion", "text"],
   ["bloques_extra", "zona", "text"],

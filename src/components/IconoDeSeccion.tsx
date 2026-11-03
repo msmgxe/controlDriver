@@ -37,7 +37,8 @@ export type ClaveDeIcono =
   | "lupa"
   | "meta"
   | "sonido"
-  | "version";
+  | "version"
+  | "campana";
 
 type Icono = (p: React.SVGProps<SVGSVGElement>) => React.JSX.Element;
 
@@ -56,6 +57,7 @@ export const FIGURA_DE_SECCION: Record<ClaveDeIcono, { Icono: Icono; color: stri
   meta: { Icono: Trofeo, color: "var(--c-cantidad)", movimiento: "icono-pulso" },
   sonido: { Icono: Estrella, color: "var(--c-aprender)", movimiento: "icono-pulso" },
   version: { Icono: Info, color: "var(--c-licencia)", movimiento: "icono-avanza" },
+  campana: { Icono: Estrella, color: "var(--c-campana)", movimiento: "icono-pulso" },
 };
 
 // `Engranaje` queda disponible como figura por defecto de una sección sin icono.

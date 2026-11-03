@@ -28,6 +28,7 @@ import {
 } from "@/lib/pagos/reglas";
 import { formatearFecha, lunesDeLaSemana, type FechaISO } from "@/lib/fechas";
 import { montoDelDia } from "@/lib/pagos/calcular-liquidacion";
+import { aplicarCampanasEnRango } from "./campanas";
 import { perfilActual } from "./perfil";
 import type {
   CampoDeBusqueda,
@@ -132,6 +133,8 @@ export async function jornadasPorRango(
   desde: FechaISO,
   hasta: FechaISO,
 ): Promise<JornadaCompleta[]> {
+  // Los bonos de las campañas se reparten antes de leer, para que todo lo que suma pedidos los vea.
+  await aplicarCampanasEnRango(desde, hasta);
   const jornadas = await consultar<{
     id: string;
     fecha: string;

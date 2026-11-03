@@ -151,9 +151,11 @@ export async function aplicarBono(ordenIds: readonly string[], bonoCentimos: num
       await ejecutar(
         `update ordenes
             set monto_centimos = coalesce(monto_centimos, 0) - bono_centimos + ?,
-                bono_centimos = ?, bono_nombre = ?
+                bono_centimos = ?, bono_nombre = ?,
+                campana_id = null, sin_bono = ?
           where id = ?`,
-        [bonoCentimos, bonoCentimos, bonoCentimos === 0 ? null : etiqueta, id],
+        // Quitarlo a mano deja constancia (sin_bono): una campaña no lo vuelve a poner.
+        [bonoCentimos, bonoCentimos, bonoCentimos === 0 ? null : etiqueta, bonoCentimos === 0 ? 1 : 0, id],
       );
       await ejecutar(
         `update jornadas set actualizado_en = ?, sincronizado = 0

@@ -12,6 +12,7 @@ import { PuntosDePin, TecladoPin } from "@/components/TecladoPin";
 import { cerrarAplicacion } from "@/components/salirDeLaApp";
 import { TourDePantalla } from "@/components/TourDePantalla";
 import { SeccionApariencia } from "@/components/SeccionApariencia";
+import { SeccionCampanas } from "@/components/SeccionCampanas";
 import { SeccionComandas } from "@/components/SeccionComandas";
 import { SeccionMetasYSonido } from "@/components/SeccionMetasYSonido";
 import { SeccionModalidad } from "@/components/SeccionModalidad";
@@ -95,6 +96,7 @@ export default function PaginaAjustes() {
         {celda("apariencia", 0, <SeccionApariencia />)}
         {celda("metas", 1, <SeccionMetasYSonido />)}
         {celda("tienda", 2, <SeccionModalidad />)}
+        {celda("campanas", 3, <SeccionCampanas />)}
         {celda("adicionales", 3, <AdicionalesYTarifas />)}
         {celda("comandas", 4, <ComandasYClientes />)}
         {celda("pin", 5, <SeccionBloqueo />)}
@@ -114,6 +116,7 @@ const ANCLAS: Record<string, string> = {
   apariencia: "aj-apariencia",
   metas: "aj-metas",
   tienda: "aj-tienda",
+  campanas: "aj-campanas",
   adicionales: "aj-adicionales",
   comandas: "aj-comandas",
   pin: "aj-pin",
