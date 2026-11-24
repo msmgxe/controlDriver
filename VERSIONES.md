@@ -37,6 +37,16 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 2.05 — 24/11/2026
+- **Pagos › «PDF de la semana».** Un PDF con todos los pedidos de la semana: fecha, ruta, número
+  de pedido, destino (Miraflores, Chorrillos…), si entró por el **sistema**, por una **comanda**
+  o **a mano**, el bono de campaña si lo lleva, el **subtotal de cada día** y el total de la
+  semana. Se manda por WhatsApp con «Compartir».
+- **Cotejado con la empresa:** si ya subiste el reporte de la empresa, cada pedido lleva
+  «Sí» o **«NO FIGURA»** (en rojo), el resumen dice cuántos y cuánto suman los que no figuran,
+  y al final hay una lista corta de esos pedidos para reclamarlos. Con **«Solo los que no
+  figuran»** sale el papel corto, solo con ellos.
+
 ### 2.04 — 03/11/2026
 - **Ajustes › Campañas.** Cuando la tienda sube la tarifa una semana (CyberNow) creas la
   campaña una vez: nombre, tienda, **fechas** (con atajos «Esta semana» / «La próxima semana») y

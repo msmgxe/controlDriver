@@ -6,6 +6,7 @@ import { AccionesSemana } from "@/components/AccionesSemana";
 import { Acordeon } from "@/components/Acordeon";
 import { CarreteraDeMeta } from "@/components/CarreteraDeMeta";
 import { DesgloseDeFuentes } from "@/components/DesgloseDeFuentes";
+import { PdfDeLaSemana } from "@/components/PdfDeLaSemana";
 import { DesgloseDeIngresos } from "@/components/DesgloseDeIngresos";
 import { DueloDePago } from "@/components/DueloDePago";
 import { DialogoConfirmar } from "@/components/DialogoConfirmar";
@@ -86,7 +87,7 @@ export default function PaginaPagos() {
         leerMetas(),
       ]);
       const tienda = tiendas.find((t) => t.id === perfil?.tiendaId) ?? null;
-      return { s, regla, jornadas, bloques, tienda, ajustes, metas };
+      return { s, regla, jornadas, bloques, tienda, ajustes, metas, conductor: perfil?.nombre ?? "" };
     },
     [semana.inicio],
     // Marcar un descanso recarga la pantalla; sin conservar, pasaría por el
@@ -128,7 +129,7 @@ export default function PaginaPagos() {
   }
 
   if (!tira || !datos || !otras) return <Esqueleto />;
-  const { s: elegida, regla, jornadas, bloques, tienda, ajustes, metas } = datos;
+  const { s: elegida, regla, jornadas, bloques, tienda, ajustes, metas, conductor } = datos;
   /* Horas trabajadas de la semana: en ruta + las de los apoyos por hora. */
   const horasTrabajadas =
     elegida.liquidacion.minutosEnRuta / 60 +
@@ -280,6 +281,15 @@ export default function PaginaPagos() {
           alCambiar={recargar}
         />
       </div>
+
+      <PdfDeLaSemana
+        jornadas={jornadas}
+        regla={regla}
+        conductor={conductor}
+        tienda={tienda?.nombre ?? null}
+        desde={semana.inicio}
+        hasta={semana.fin}
+      />
 
       {/* Lo que falta, a la vista sin abrir nada. */}
       {faltan.length > 0 && (
