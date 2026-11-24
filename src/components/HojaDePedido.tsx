@@ -336,7 +336,9 @@ function TabPedido({
               ? "la comanda física (tal como está impreso)"
               : orden.origen === "manual"
                 ? "lo escrito a mano"
-                : "las capturas de la app de reparto"}
+                : orden.origen === "reporte"
+                  ? "el reporte de la empresa (lo contó y no estaba anotado: revisa su zona)"
+                  : "las capturas de la app de reparto"}
           </b>
           .
         </p>

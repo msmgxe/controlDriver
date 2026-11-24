@@ -112,6 +112,7 @@ export function DetalleDelDia({
                   km={o.km}
                   cliente={o.cliente?.nombre ?? null}
                   conFoto={o.fotos > 0}
+                  delReporte={o.origen === "reporte"}
                   bono={o.bonoCentimos > 0 ? { monto: formatearSoles(o.bonoCentimos), nombre: o.bonoNombre } : null}
                   onClick={() => setEditando(o.id)}
                 />

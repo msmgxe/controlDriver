@@ -37,6 +37,16 @@ más que una tarde de trabajo a ciegas.
 
 ## Historial
 
+### 2.06 — 24/11/2026
+- **Pedidos que la empresa contó y tú no anotaste.** En el cotejo (Pagos › «Subir el reporte de
+  la empresa»), bajo «La empresa los contó y no los tienes», sale **«¿Son de un día que no
+  anotaste?»**: eliges el día (los del período sin nada cargado salen como botones; si hay uno
+  solo ya viene elegido) y **«Añadir N pedidos al 18 de noviembre»**. Pregunta antes, y entran
+  con el código de la empresa, **ya marcados como contados** y con la etiqueta **«Del reporte de
+  la empresa»**. Después abres cada uno y le pones su zona.
+- **Salen en el PDF de la semana:** con origen «Reporte empresa», sumados en el subtotal de su día
+  y el total, y en una lista aparte, «Pedidos que la empresa contó y no estaban anotados».
+
 ### 2.05 — 24/11/2026
 - **Pagos › «PDF de la semana».** Un PDF con todos los pedidos de la semana: fecha, ruta, número
   de pedido, destino (Miraflores, Chorrillos…), si entró por el **sistema**, por una **comanda**

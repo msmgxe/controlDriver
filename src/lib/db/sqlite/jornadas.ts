@@ -744,6 +744,8 @@ export interface PedidoLeido {
 export async function agregarPedidosLeidos(
   fecha: FechaISO,
   pedidos: readonly PedidoLeido[],
+  /** De dónde vienen y si ya cuentan como contados por la empresa (para los que salen de su reporte). */
+  opciones: { origen?: "captura" | "reporte"; contado?: boolean } = {},
 ): Promise<{ nuevos: number; repetidos: Array<{ codigo: string; fecha: FechaISO }> }> {
   // Un mismo código dos veces en la lista entra una sola.
   const unicos = [...new Map(pedidos.map((p) => [p.codigo, p])).values()];
@@ -805,12 +807,12 @@ export async function agregarPedidosLeidos(
       posicion += 1;
       await ejecutar(
         `insert into ordenes
-           (id, jornada_id, ruta_id, codigo, estado, posicion, tramo, km, monto_centimos)
-         values (?, ?, ?, ?, ?, ?, 1, null, ?)`,
+           (id, jornada_id, ruta_id, codigo, estado, posicion, tramo, km, monto_centimos, origen, contado_empresa)
+         values (?, ?, ?, ?, ?, ?, 1, null, ?, ?, ?)`,
         [
           nuevoId(), jornadaId,
           p.ruta === null ? null : (idPorNumero.get(p.ruta) ?? null),
-          p.codigo, p.estado, posicion, monto,
+          p.codigo, p.estado, posicion, monto, opciones.origen ?? "captura", opciones.contado ? 1 : 0,
         ],
       );
     }

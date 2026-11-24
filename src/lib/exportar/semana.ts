@@ -12,7 +12,7 @@ import type { FechaISO } from "@/lib/fechas";
 import { montoDelDia } from "@/lib/pagos/calcular-liquidacion";
 import { TRAMO_MAS_DE_12_KM, esPorZona, etiquetaTramo, type ReglaPago } from "@/lib/pagos/reglas";
 
-export type OrigenDePedido = "Sistema" | "Comanda" | "Manual";
+export type OrigenDePedido = "Sistema" | "Comanda" | "Manual" | "Reporte empresa";
 
 export interface PedidoDeSemana {
   fecha: FechaISO;
@@ -27,6 +27,8 @@ export interface PedidoDeSemana {
   bonoNombre: string | null;
   /** La empresa lo contó en su reporte. */
   contado: boolean;
+  /** No estaba anotado: se añadió desde la lista de la empresa. */
+  delReporte: boolean;
 }
 
 export interface DiaDeSemana {
@@ -55,11 +57,15 @@ export interface DatosDeSemana {
     contadosCentimos: number;
     noFiguran: number;
     noFiguranCentimos: number;
+    /** Los que se añadieron desde el reporte de la empresa porque no estaban anotados. */
+    delReporte: number;
+    delReporteCentimos: number;
   };
 }
 
 /** Cómo entró el pedido: del resumen de la app de reparto, de una comanda física, o escrito a mano. */
 export function origenDe(o: Pick<OrdenFila, "origen" | "manual">): OrigenDePedido {
+  if (o.origen === "reporte") return "Reporte empresa";
   if (o.origen === "manual" || o.manual) return "Manual";
   return o.origen === "comanda" ? "Comanda" : "Sistema";
 }
@@ -95,6 +101,7 @@ export function armarSemana(entrada: {
         bonoCentimos: o.bonoCentimos ?? 0,
         bonoNombre: o.bonoNombre ?? null,
         contado: o.contado,
+        delReporte: o.origen === "reporte",
       }));
       // Por ruta y, dentro de cada ruta, por el orden en que se hicieron (como en la app).
       pedidos.sort((a, b) => (a.ruta ?? 99) - (b.ruta ?? 99));
@@ -112,6 +119,7 @@ export function armarSemana(entrada: {
   const todos = dias.flatMap((d) => d.pedidos);
   const contados = todos.filter((p) => p.contado);
   const noFiguran = todos.filter((p) => !p.contado);
+  const delReporte = todos.filter((p) => p.delReporte);
   return {
     conductor: entrada.conductor,
     tienda: entrada.tienda,
@@ -127,6 +135,8 @@ export function armarSemana(entrada: {
       contadosCentimos: contados.reduce((s, p) => s + p.montoCentimos, 0),
       noFiguran: noFiguran.length,
       noFiguranCentimos: noFiguran.reduce((s, p) => s + p.montoCentimos, 0),
+      delReporte: delReporte.length,
+      delReporteCentimos: delReporte.reduce((s, p) => s + p.montoCentimos, 0),
     },
   };
 }

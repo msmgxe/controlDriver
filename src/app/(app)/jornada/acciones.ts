@@ -654,3 +654,36 @@ export async function aplicarBonoAPedidos(datos: unknown): Promise<Resultado> {
         : `Bono de S/ ${(bonoCentimos / 100).toFixed(2)} aplicado a ${n} pedido${n === 1 ? "" : "s"}.`,
   };
 }
+
+const esquemaNumerosDeEmpresa = z.array(z.string().regex(/^\d{8}$/)).min(1).max(200);
+
+/**
+ * Añade a un día los pedidos que la empresa contó en su reporte y que la persona no
+ * había anotado (p. ej. un día que olvidó cargar). Nacen con el código del reporte,
+ * en el primer tramo o zona —se corrigen después— y ya marcados como contados por la
+ * empresa. Entran con el origen «reporte», para poder distinguirlos en la lista y en
+ * el PDF de la semana.
+ */
+export async function agregarPedidosDeEmpresa(
+  fecha: string,
+  numeros: unknown,
+): Promise<
+  | { ok: true; nuevos: number; repetidos: Array<{ codigo: string; fecha: FechaISO }> }
+  | { ok: false; error: string }
+> {
+  if (!esFechaISO(fecha)) return { ok: false, error: "Fecha no válida." };
+  if (fecha > hoyEnLima()) return { ok: false, error: "No puedes añadir pedidos a una fecha futura." };
+  const parseado = esquemaNumerosDeEmpresa.safeParse(numeros);
+  if (!parseado.success) return { ok: false, error: "Los números de pedido no son válidos." };
+
+  const editable = await semanaEditable(fecha);
+  if (!editable.ok) return { ok: false, error: editable.error };
+
+  try {
+    const pedidos = parseado.data.map((n) => ({ codigo: `v${n}wofp-01`, ruta: null, estado: "Entregado" as const }));
+    const { nuevos, repetidos } = await agregarPedidosLeidos(fecha, pedidos, { origen: "reporte", contado: true });
+    return { ok: true, nuevos, repetidos };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "No se pudieron añadir los pedidos." };
+  }
+}

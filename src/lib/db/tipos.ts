@@ -111,7 +111,8 @@ export interface OrdenFila {
   bonoNombre: string | null;
 }
 
-export type OrigenDePedido = "captura" | "comanda" | "manual";
+/** «reporte»: lo añadió la persona desde la lista de la empresa, porque ella lo contó y no lo había anotado. */
+export type OrigenDePedido = "captura" | "comanda" | "manual" | "reporte";
 
 /**
  * Un ingreso del día que no es un pedido de la tienda principal (§ plan de

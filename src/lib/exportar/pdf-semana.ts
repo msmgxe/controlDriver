@@ -109,6 +109,9 @@ export async function generarPdfSemana(datos: DatosDeSemana, opciones: { soloNoF
   const resumen: Array<Array<string | Record<string, unknown>>> = [
     ["Pedidos", String(t.pedidos), formatearSoles(t.subtotalCentimos)],
   ];
+  if (t.delReporte > 0) {
+    resumen.push(["Añadidos desde el reporte (no estaban anotados)", String(t.delReporte), formatearSoles(t.delReporteCentimos)]);
+  }
   if (datos.cotejado) {
     resumen.push(["Figuran en el reporte de la empresa", String(t.contados), formatearSoles(t.contadosCentimos)]);
     resumen.push([
@@ -132,6 +135,29 @@ export async function generarPdfSemana(datos: DatosDeSemana, opciones: { soloNoF
     columnStyles: { 1: { halign: "right", cellWidth: 22 }, 2: { halign: "right", cellWidth: 30 } },
     margin: { left: 14, right: 14 },
   });
+
+  /* ---- lo que la empresa contó y no estaba anotado (añadido desde su reporte) ---- */
+  const delReporte = datos.dias.flatMap((d) => d.pedidos.filter((p) => p.delReporte));
+  if (delReporte.length > 0 && !solo) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text(`Pedidos que la empresa contó y no estaban anotados (${delReporte.length} · ${formatearSoles(t.delReporteCentimos)})`, 14, ultimaY() + 10);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(90);
+    doc.text("Se añadieron desde el reporte de la empresa, con la zona por confirmar.", 14, ultimaY() + 14.5);
+    doc.setTextColor(0);
+    autoTabla(doc, {
+      startY: ultimaY() + 17,
+      head: [["Fecha", "Pedido", "Destino", "Monto"]],
+      body: delReporte.map((p) => [formatearFecha(p.fecha), p.codigo, p.destino, formatearSoles(p.montoCentimos)]),
+      theme: "grid",
+      styles: { fontSize: 8, cellPadding: 1.5, lineColor: [210, 210, 210], lineWidth: 0.1 },
+      headStyles: { fillColor: [219, 234, 254], textColor: [30, 64, 175], fontStyle: "bold" },
+      columnStyles: { 3: { halign: "right", cellWidth: 26 } },
+      margin: { left: 14, right: 14 },
+    });
+  }
 
   /* ----------------- lista corta de lo que no figura -------------------- */
   const faltantes = datos.dias.flatMap((d) => d.pedidos.filter((p) => !p.contado));

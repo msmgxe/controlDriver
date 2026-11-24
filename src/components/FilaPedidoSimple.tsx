@@ -42,6 +42,7 @@ export function FilaPedidoSimple({
   alContar,
   zona,
   bono = null,
+  delReporte = false,
   onClick,
 }: {
   codigo: string;
@@ -65,6 +66,8 @@ export function FilaPedidoSimple({
   zona?: string | null;
   /** Bono de campaña que lleva este pedido, ya incluido en el monto. */
   bono?: { monto: string; nombre: string | null } | null;
+  /** Lo añadió la persona desde el reporte de la empresa: ella lo contó y no estaba anotado. */
+  delReporte?: boolean;
   alContar?: (contado: boolean) => void;
   onClick?: () => void;
 }) {
@@ -128,6 +131,9 @@ export function FilaPedidoSimple({
             )
           )}
           {km !== null && <span className="font-mono text-tinta-2">{km.toFixed(1)} km</span>}
+        {delReporte && (
+          <span className="rounded-chip border-2 border-acento px-2 py-0.5 font-bold text-acento-tinta">Del reporte de la empresa</span>
+        )}
         {bono && (
           <span className="rounded-chip px-2 py-0.5 font-bold text-white" style={{ background: "var(--c-adic)" }}>
             +{bono.monto}

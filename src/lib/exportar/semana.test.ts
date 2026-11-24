@@ -91,6 +91,16 @@ describe("reporte de pagos de la semana", () => {
     expect(s.dias[0].pedidos[0].codigo).toBe("Sin código");
   });
 
+  it("los añadidos desde el reporte de la empresa se señalan, se cuentan aparte y entran en el PDF", async () => {
+    const s = semana([
+      dia("2026-11-16", [pedido(1, { contado: true })]),
+      dia("2026-11-18", [pedido(7, { origen: "reporte", contado: true }), pedido(8, { origen: "reporte", contado: true })]),
+    ]);
+    expect(s.dias[1].pedidos.map((p) => [p.origen, p.delReporte])).toEqual([["Reporte empresa", true], ["Reporte empresa", true]]);
+    expect(s.totales).toMatchObject({ pedidos: 3, delReporte: 2, delReporteCentimos: 1900 });
+    expect((await generarPdfSemana(s)).size).toBeGreaterThan(1500);
+  });
+
   it("genera el PDF, completo y solo con los que no figuran", async () => {
     const s = semana(jornadas);
     const completo = await generarPdfSemana(s);

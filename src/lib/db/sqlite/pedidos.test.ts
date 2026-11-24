@@ -175,3 +175,29 @@ describe("bono de campaña (CyberNow)", () => {
     await expect(aplicarBono([await idDeCodigo("v11111111wofp-01")], -5, "x")).rejects.toThrow();
   });
 });
+
+describe("pedidos que la empresa contó y no estaban anotados", () => {
+  it("se añaden al día elegido con origen «reporte», ya contados, y sin repetir los que ya existen", async () => {
+    const { agregarPedidosLeidos } = await import("./jornadas");
+    const dia18 = "2026-09-18" as FechaISO;
+    const r = await agregarPedidosLeidos(
+      dia18,
+      [
+        { codigo: "v12399001wofp-01", ruta: null, estado: "Entregado" },
+        { codigo: "v12399002wofp-01", ruta: null, estado: "Entregado" },
+        { codigo: "v11111111wofp-01", ruta: null, estado: "Entregado" }, // ya existe en otro día
+      ],
+      { origen: "reporte", contado: true },
+    );
+    expect(r.nuevos).toBe(2);
+    expect(r.repetidos.map((x) => x.codigo)).toEqual(["v11111111wofp-01"]);
+
+    const j = (await jornadaPorFecha(dia18))!;
+    expect(j.ordenes.map((o) => [o.codigo, o.origen, o.contado])).toEqual([
+      ["v12399001wofp-01", "reporte", true],
+      ["v12399002wofp-01", "reporte", true],
+    ]);
+    // Entran con el monto del primer tramo, como cualquier pedido nuevo.
+    expect(j.ordenes.every((o) => (o.montoCentimos ?? 0) > 0)).toBe(true);
+  });
+});

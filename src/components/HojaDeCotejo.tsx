@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 
+import { agregarPedidosDeEmpresa } from "@/app/(app)/jornada/acciones";
 import { BotonDeAccion } from "@/components/Acciones";
+import { DialogoConfirmar } from "@/components/DialogoConfirmar";
 import { Check, Equis, Galeria } from "@/components/iconos";
 import { useCifraAnimada } from "@/hooks/useCifraAnimada";
 import { Aviso } from "@/components/ui";
@@ -14,7 +16,13 @@ import {
   type ResultadoDeCotejo,
 } from "@/lib/comanda/cotejo";
 import { marcarContados, pedidosParaCotejo } from "@/lib/db/sqlite/pedidos";
-import { formatearFecha } from "@/lib/fechas";
+import { fechasDelRango } from "@/lib/db/sqlite/campanas";
+import {
+  formatearFecha,
+  hoyEnLima,
+  nombreDelDia,
+  type FechaISO,
+} from "@/lib/fechas";
 import { formatearSoles } from "@/lib/pagos/reglas";
 
 function aDataUrl(blob: Blob): Promise<string> {
@@ -50,6 +58,14 @@ export function HojaDeCotejo({
   const [error, setError] = useState<string | null>(null);
   const [resultado, setResultado] = useState<ResultadoDeCotejo | null>(null);
   const [marcado, setMarcado] = useState<number | null>(null);
+  // Para añadir los que la empresa contó y no estaban anotados: qué días ya tienen pedidos y cuál se eligió.
+  const [diasConCarga, setDiasConCarga] = useState<Set<string>>(new Set());
+  const [diaElegido, setDiaElegido] = useState<string>("");
+  const [preguntandoAnadir, setPreguntandoAnadir] = useState(false);
+  const [anadidos, setAnadidos] = useState<{ n: number; fecha: string } | null>(
+    null,
+  );
+  const [errorAnadir, setErrorAnadir] = useState<string | null>(null);
 
   async function alElegir(e: React.ChangeEvent<HTMLInputElement>) {
     const archivos = Array.from(e.target.files ?? []);
@@ -77,7 +93,20 @@ export function HojaDeCotejo({
           "No encontré códigos de pedido en la imagen. Sube la captura de la lista, con los códigos bien visibles.",
         );
       }
-      setResultado(cotejar(numeros, await pedidosParaCotejo()));
+      const mios = await pedidosParaCotejo();
+      const cotejo = cotejar(numeros, mios);
+      const conCarga = new Set(mios.map((p) => p.fecha as string));
+      setDiasConCarga(conCarga);
+      setAnadidos(null);
+      setErrorAnadir(null);
+      // Si en el período hay un solo día sin nada cargado, casi seguro es de ahí: ya viene elegido.
+      const huecos = cotejo.periodo
+        ? fechasDelRango(cotejo.periodo.desde, cotejo.periodo.hasta).filter(
+            (f) => !conCarga.has(f) && f <= hoyEnLima(),
+          )
+        : [];
+      setDiaElegido(huecos.length === 1 ? huecos[0] : "");
+      setResultado(cotejo);
     } catch (fallo) {
       setError(
         fallo instanceof Error ? fallo.message : "No se pudo leer la imagen.",
@@ -98,6 +127,24 @@ export function HojaDeCotejo({
   }
 
   const r = resultado;
+  const hoy = hoyEnLima();
+  const huecos: FechaISO[] = r?.periodo
+    ? fechasDelRango(r.periodo.desde, r.periodo.hasta).filter(
+        (f) => !diasConCarga.has(f) && f <= hoy,
+      )
+    : [];
+
+  async function anadirFaltantes() {
+    if (!r || !diaElegido) return;
+    setErrorAnadir(null);
+    const res = await agregarPedidosDeEmpresa(diaElegido, r.faltanEnMiRegistro);
+    if (!res.ok) {
+      setErrorAnadir(res.error);
+      return;
+    }
+    setAnadidos({ n: res.nuevos, fecha: diaElegido });
+    alCambiar();
+  }
   const faltaSumar = r
     ? r.noContados.reduce((s, p) => s + p.montoCentimos, 0)
     : 0;
@@ -166,7 +213,12 @@ export function HojaDeCotejo({
           {r && (
             <>
               <div className="grid grid-cols-2 gap-2 text-center">
-                <Cifra valor={r.enReporte} etiqueta="La empresa contó" color="var(--c-ajustes)" indice={0} />
+                <Cifra
+                  valor={r.enReporte}
+                  etiqueta="La empresa contó"
+                  color="var(--c-ajustes)"
+                  indice={0}
+                />
                 <Cifra
                   valor={r.coinciden.length}
                   etiqueta="Coinciden con los tuyos"
@@ -176,13 +228,21 @@ export function HojaDeCotejo({
                 <Cifra
                   valor={r.faltanEnMiRegistro.length}
                   etiqueta="No los tienes registrados"
-                  color={r.faltanEnMiRegistro.length > 0 ? "var(--c-mano)" : "var(--c-ajustes)"}
+                  color={
+                    r.faltanEnMiRegistro.length > 0
+                      ? "var(--c-mano)"
+                      : "var(--c-ajustes)"
+                  }
                   indice={2}
                 />
                 <Cifra
                   valor={r.noContados.length}
                   etiqueta="Tuyos que no contó"
-                  color={r.noContados.length > 0 ? "var(--c-adic)" : "var(--c-ajustes)"}
+                  color={
+                    r.noContados.length > 0
+                      ? "var(--c-adic)"
+                      : "var(--c-ajustes)"
+                  }
                   indice={3}
                 />
               </div>
@@ -195,7 +255,11 @@ export function HojaDeCotejo({
               )}
 
               {r.coinciden.length > 0 && (
-                <BotonDeAccion k="pagos" disabled={marcado !== null} onClick={() => void marcar()}>
+                <BotonDeAccion
+                  k="pagos"
+                  disabled={marcado !== null}
+                  onClick={() => void marcar()}
+                >
                   <Check className="size-5" />
                   {marcado === null
                     ? `Marcar los ${r.coinciden.length} que coinciden`
@@ -227,10 +291,75 @@ export function HojaDeCotejo({
                     <Fila
                       key={n}
                       izq={`v${n}wofp-01`}
-                      der="falta registrarlo"
+                      der={anadidos ? "ya añadido" : "falta registrarlo"}
                     />
                   ))}
                 </Seccion>
+              )}
+
+              {r.faltanEnMiRegistro.length > 0 && !anadidos && (
+                <div
+                  className="flex flex-col gap-3 rounded-card border-2 p-3"
+                  style={{ borderColor: "var(--c-mano)" }}
+                >
+                  <b className="text-[15px]">¿Son de un día que no anotaste?</b>
+                  <p className="text-xs text-tinta-2">
+                    Elige el día y se añaden a tu app con el código de la
+                    empresa, ya marcados como contados. Después puedes corregir
+                    la zona de cada uno, y salen en Pagos y en el PDF de la
+                    semana.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {huecos.map((f) => (
+                      <button
+                        key={f}
+                        type="button"
+                        aria-pressed={diaElegido === f}
+                        onClick={() => setDiaElegido(f)}
+                        className={`min-h-11 rounded-chip border-2 px-4 text-sm font-bold ${diaElegido === f ? "border-tinta bg-sup-2" : "border-linea-fuerte"}`}
+                      >
+                        <span className="capitalize">
+                          {nombreDelDia(f).slice(0, 3)}
+                        </span>{" "}
+                        {Number(f.slice(8))}
+                        <small className="ml-1 font-semibold text-tinta-3">
+                          sin carga
+                        </small>
+                      </button>
+                    ))}
+                    <input
+                      type="date"
+                      value={diaElegido}
+                      max={hoy}
+                      aria-label="Otro día"
+                      onChange={(e) => setDiaElegido(e.target.value)}
+                      className="min-h-11 rounded-btn border border-linea-fuerte bg-sup px-2 text-base"
+                    />
+                  </div>
+                  {errorAnadir && <Aviso tono="mal" titulo={errorAnadir} />}
+                  <BotonDeAccion
+                    k="mano"
+                    disabled={!diaElegido}
+                    onClick={() => setPreguntandoAnadir(true)}
+                  >
+                    {diaElegido
+                      ? `Añadir ${r.faltanEnMiRegistro.length} pedido${r.faltanEnMiRegistro.length === 1 ? "" : "s"} al ${formatearFecha(diaElegido as FechaISO)}`
+                      : "Elige el día para añadirlos"}
+                  </BotonDeAccion>
+                </div>
+              )}
+
+              {anadidos && (
+                <Aviso
+                  tono="bien"
+                  titulo={`Listo: ${anadidos.n} pedido${anadidos.n === 1 ? "" : "s"} añadido${anadidos.n === 1 ? "" : "s"} al ${formatearFecha(anadidos.fecha as FechaISO)}`}
+                >
+                  <p>
+                    Los ves en Inicio, en ese día, con la etiqueta «Del reporte
+                    de la empresa», y entran en Pagos y en el PDF de la semana.
+                    Abre cada uno para poner su zona.
+                  </p>
+                </Aviso>
               )}
 
               {r.sinCodigo.length > 0 && (
@@ -258,6 +387,19 @@ export function HojaDeCotejo({
           )}
         </div>
       </div>
+
+      {preguntandoAnadir && r && (
+        <DialogoConfirmar
+          titulo={`¿Añadir ${r.faltanEnMiRegistro.length} pedido${r.faltanEnMiRegistro.length === 1 ? "" : "s"} al ${formatearFecha(diaElegido as FechaISO)}?`}
+          texto="Son los que la empresa contó y tú no tenías. Entran con el primer tramo o zona y su monto; revisa la zona de cada uno después. Si ya existen en otro día, no se repiten."
+          confirmar="Sí, añadirlos"
+          alCancelar={() => setPreguntandoAnadir(false)}
+          alConfirmar={() => {
+            setPreguntandoAnadir(false);
+            void anadirFaltantes();
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -275,7 +417,15 @@ function Cifra({
 }) {
   const animado = Math.round(useCifraAnimada(valor, 700));
   return (
-    <div className="reg-kpi" style={{ "--c": color, animationDelay: `${indice * 70}ms` } as React.CSSProperties}>
+    <div
+      className="reg-kpi"
+      style={
+        {
+          "--c": color,
+          animationDelay: `${indice * 70}ms`,
+        } as React.CSSProperties
+      }
+    >
       <b>{animado}</b>
       <small>{etiqueta}</small>
     </div>
